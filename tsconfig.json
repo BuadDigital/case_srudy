@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./apps/shell" },
+    { "path": "./packages/types" },
+    { "path": "./packages/design-system" },
+    { "path": "./packages/auth-client" },
+    { "path": "./packages/api-client" }
+  ]
+}

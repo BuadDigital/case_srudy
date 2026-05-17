@@ -1,0 +1,15 @@
+{
+  "name": "study-realstate-eval",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @platform/shell",
+    "build": "npm run build -w @platform/shell",
+    "start": "npm run start -w @platform/shell",
+    "lint": "npm run lint -w @platform/shell"
+  }
+}

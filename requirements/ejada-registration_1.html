@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>إجادة ERP — تسجيل المستخدمين</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  /* Shared */
+  --tx:#111827;--tx2:#374151;--tx3:#6b7280;--tx4:#9ca3af;
+  --bd:#e5e7eb;--bd2:#d1d5db;
+  --sf:#fff;--sf2:#f9fafb;--sf3:#f3f4f6;
+  --err:#991b1b;--err-bg:#fee2e2;
+  --ok:#166534;--ok-bg:#dcfce7;
+  --warn:#92400e;--warn-bg:#fef3c7;
+  --r:10px;--rl:14px;--rxl:20px;
+  --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+
+  /* HR — deep forest green */
+  --hr-pr:#0F3D2E;--hr-dk:#091f18;--hr-mid:#1a5c44;
+  --hr-lt:#e8f2ee;--hr-pale:#f0f7f3;
+  --hr-gold:#C9A84C;--hr-gold-lt:#fdf6e7;
+
+  /* PROC — navy blue */
+  --pr-pr:#1e3a5f;--pr-dk:#122540;--pr-mid:#2d5282;
+  --pr-lt:#e8f0fb;--pr-pale:#f0f4fc;
+  --pr-ac:#3b82f6;--pr-ac-lt:#dbeafe;
+
+  /* CRM — warm burgundy/slate */
+  --crm-pr:#5b2333;--crm-dk:#3d1522;--crm-mid:#7c3048;
+  --crm-lt:#fce8ed;--crm-pale:#fdf4f6;
+  --crm-ac:#f59e0b;--crm-ac-lt:#fef3c7;
+}
+
+html,body{font-family:'IBM Plex Sans Arabic',sans-serif;min-height:100vh;color:var(--tx);}
+
+/* ══════════════════════════════
+   PORTAL (source selector)
+══════════════════════════════ */
+#portal{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:2rem 1.5rem;
+  background:#0d1117;
+  position:relative;overflow:hidden;
+}
+#portal::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    radial-gradient(circle at 20% 30%,rgba(15,61,46,.4) 0%,transparent 50%),
+    radial-gradient(circle at 80% 70%,rgba(30,58,95,.4) 0%,transparent 50%),
+    radial-gradient(circle at 50% 90%,rgba(91,35,51,.3) 0%,transparent 40%);
+}
+#portal::after{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+.portal-brand{
+  position:relative;z-index:1;
+  text-align:center;margin-bottom:3rem;
+  animation:fadeUp .6s ease both;
+}
+.portal-logo{
+  width:56px;height:56px;background:var(--hr-gold);border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;color:var(--hr-pr);
+  margin:0 auto 1rem;
+  box-shadow:0 0 40px rgba(201,168,76,.3);
+}
+.portal-title{font-size:28px;font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:.35rem;}
+.portal-sub{font-size:13.5px;color:rgba(255,255,255,.4);}
+
+.portal-cards{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
+  max-width:840px;width:100%;
+  position:relative;z-index:1;
+  animation:fadeUp .6s .15s ease both;
+}
+@media(max-width:700px){.portal-cards{grid-template-columns:1fr;max-width:380px;}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+.src-card{
+  border-radius:var(--rxl);border:1px solid rgba(255,255,255,.08);
+  padding:2rem 1.5rem;cursor:pointer;
+  transition:all .25s cubic-bezier(.22,1,.36,1);
+  position:relative;overflow:hidden;
+  background:rgba(255,255,255,.04);
+  text-align:center;
+}
+.src-card::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  transition:opacity .25s;
+}
+.src-card.hr::before{background:radial-gradient(circle at 50% 0%,rgba(15,61,46,.6),transparent 70%);}
+.src-card.proc::before{background:radial-gradient(circle at 50% 0%,rgba(30,58,95,.6),transparent 70%);}
+.src-card.crm::before{background:radial-gradient(circle at 50% 0%,rgba(91,35,51,.6),transparent 70%);}
+.src-card:hover::before{opacity:1;}
+.src-card:hover{border-color:rgba(255,255,255,.2);transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.3);}
+
+.src-card-ico{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 1.1rem;font-size:24px;
+  position:relative;z-index:1;transition:transform .2s;
+}
+.src-card:hover .src-card-ico{transform:scale(1.08);}
+.src-card.hr .src-card-ico{background:rgba(15,61,46,.4);border:1px solid rgba(201,168,76,.3);}
+.src-card.proc .src-card-ico{background:rgba(30,58,95,.4);border:1px solid rgba(59,130,246,.3);}
+.src-card.crm .src-card-ico{background:rgba(91,35,51,.4);border:1px solid rgba(245,158,11,.3);}
+
+.src-card-dept{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:.4rem;position:relative;z-index:1;
+}
+.src-card.hr .src-card-dept{color:var(--hr-gold);}
+.src-card.proc .src-card-dept{color:#60a5fa;}
+.src-card.crm .src-card-dept{color:var(--crm-ac);}
+
+.src-card-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:.5rem;position:relative;z-index:1;}
+.src-card-desc{font-size:12px;color:rgba(255,255,255,.45);line-height:1.6;position:relative;z-index:1;}
+.src-card-tags{
+  display:flex;flex-wrap:wrap;gap:.35rem;justify-content:center;
+  margin-top:.85rem;position:relative;z-index:1;
+}
+.src-tag{
+  font-size:10.5px;padding:2px 9px;border-radius:10px;font-weight:500;
+}
+.src-card.hr .src-tag{background:rgba(15,61,46,.4);color:rgba(201,168,76,.9);border:1px solid rgba(201,168,76,.2);}
+.src-card.proc .src-tag{background:rgba(30,58,95,.4);color:rgba(96,165,250,.9);border:1px solid rgba(96,165,250,.2);}
+.src-card.crm .src-tag{background:rgba(91,35,51,.4);color:rgba(245,158,11,.9);border:1px solid rgba(245,158,11,.2);}
+
+.portal-note{
+  position:relative;z-index:1;margin-top:1.5rem;
+  font-size:12px;color:rgba(255,255,255,.25);text-align:center;
+  animation:fadeUp .6s .3s ease both;
+}
+
+/* ══════════════════════════════
+   REGISTRATION SCREENS
+══════════════════════════════ */
+.reg-scr{display:none;min-height:100vh;align-items:stretch;}
+.reg-scr.on{display:flex;}
+
+/* Left panel */
+.reg-side{
+  width:300px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  padding:2.5rem 2rem;
+  position:relative;overflow:hidden;
+}
+.reg-side::after{
+  content:'';position:absolute;bottom:-60px;left:-60px;
+  width:250px;height:250px;border-radius:50%;
+  background:rgba(255,255,255,.04);
+}
+.reg-side-back{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.1);border:none;border-radius:8px;
+  color:rgba(255,255,255,.7);font-size:12.5px;font-family:inherit;
+  padding:6px 12px;cursor:pointer;margin-bottom:2rem;
+  transition:all .15s;width:fit-content;
+}
+.reg-side-back:hover{background:rgba(255,255,255,.18);color:#fff;}
+.reg-side-logo{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;margin-bottom:1.25rem;
+}
+.reg-side-dept{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.5rem;}
+.reg-side-title{font-size:22px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:.75rem;}
+.reg-side-desc{font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:2rem;}
+.reg-side-users{margin-top:auto;}
+.reg-side-users-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:.6rem;}
+.reg-side-user-type{
+  display:flex;align-items:center;gap:8px;
+  padding:.45rem .6rem;border-radius:7px;
+  background:rgba(255,255,255,.06);margin-bottom:.3rem;
+  font-size:12px;color:rgba(255,255,255,.7);
+}
+.reg-side-user-type svg{width:14px;height:14px;flex-shrink:0;opacity:.6;}
+
+/* Right panel (form) */
+.reg-main{
+  flex:1;background:var(--sf2);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.reg-topbar{
+  background:var(--sf);border-bottom:1px solid var(--bd);
+  padding:.85rem 2rem;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.reg-tb-title{font-size:15px;font-weight:700;color:var(--tx);}
+.reg-tb-sub{font-size:12px;color:var(--tx3);margin-top:1px;}
+.reg-tb-right{display:flex;align-items:center;gap:.6rem;}
+
+/* Steps indicator */
+.steps-wrap{
+  background:var(--sf);border-bottom:1px solid var(--bd);
+  padding:.75rem 2rem;display:flex;align-items:center;gap:0;
+  flex-shrink:0;overflow-x:auto;
+}
+.step-item{display:flex;align-items:center;gap:7px;flex:1;}
+.step-item:last-child{flex:0;}
+.step-circle{
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;flex-shrink:0;
+  border:2px solid var(--bd2);color:var(--tx3);background:var(--sf);
+  transition:all .2s;
+}
+.step-circle.done{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);}
+.step-label{font-size:11.5px;color:var(--tx3);font-weight:500;white-space:nowrap;}
+.step-label.active{font-weight:700;}
+.step-label.done{color:var(--tx2);}
+.step-line{flex:1;height:1.5px;background:var(--bd2);margin:0 6px;min-width:12px;transition:background .2s;}
+.step-line.done{background:var(--ok);}
+
+.reg-body{flex:1;padding:2rem;max-width:760px;width:100%;}
+
+/* Form helpers */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem;}
+.fg1{display:grid;grid-template-columns:1fr;gap:.85rem;}
+.sp2{grid-column:span 2;}
+.sp3{grid-column:span 3;}
+@media(max-width:600px){.fg2,.fg3{grid-template-columns:1fr;}.sp2,.sp3{grid-column:span 1;}}
+
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;margin-bottom:1rem;animation:slideIn .25s ease both;}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card-hd{padding:.9rem 1.25rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px;}
+.card-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.card-hd h3{font-size:13.5px;font-weight:700;color:var(--tx);}
+.card-hd p{font-size:11.5px;color:var(--tx3);margin-top:1px;}
+.card-hd-right{margin-right:auto;}
+.card-body{padding:1.1rem 1.25rem;}
+
+.fl{display:block;font-size:11.5px;font-weight:600;color:var(--tx2);margin-bottom:4px;letter-spacing:.1px;}
+.req{color:var(--err);}
+.fi{width:100%;padding:9px 11px;font-size:13px;font-family:inherit;direction:rtl;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--sf2);color:var(--tx);outline:none;transition:all .15s;}
+.fi:focus{background:#fff;box-shadow:0 0 0 3px rgba(0,0,0,.06);}
+.fi:disabled{background:var(--sf3);color:var(--tx3);cursor:not-allowed;}
+
+/* Sub-type pills */
+.type-pills{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;}
+.type-pill{
+  padding:.55rem 1.1rem;border-radius:8px;font-size:12.5px;font-weight:600;
+  border:2px solid var(--bd);background:var(--sf);
+  cursor:pointer;transition:all .18s;font-family:inherit;color:var(--tx2);
+  display:flex;align-items:center;gap:7px;
+}
+.type-pill svg{width:15px;height:15px;}
+.type-pill:hover{border-color:currentColor;}
+.type-pill.sel{color:#fff;}
+
+/* Org tree */
+.org-tree{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:1rem;}
+.org-tree-lbl{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:.6rem;display:flex;align-items:center;gap:5px;}
+.org-node{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;color:var(--tx2);}
+.org-node.hl{font-weight:700;}
+.org-node svg{width:13px;height:13px;color:var(--tx3);}
+.org-node.hl svg{opacity:1;}
+.org-sub{margin-right:18px;font-size:12.5px;color:var(--tx3);padding:2px 0;display:flex;align-items:center;gap:5px;}
+.org-sub.hl{font-weight:600;}
+.org-sub svg{width:11px;height:11px;}
+
+/* Person rows */
+.person-rows{display:flex;flex-direction:column;gap:.4rem;}
+.person-row{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:.6rem .85rem;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;align-items:center;}
+@media(max-width:600px){.person-row{grid-template-columns:1fr 1fr;}}
+.rm-btn{background:none;border:none;cursor:pointer;color:var(--tx3);padding:3px;border-radius:5px;display:flex;align-items:center;transition:all .15s;}
+.rm-btn:hover{color:var(--err);background:var(--err-bg);}
+.add-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--r);font-size:12px;font-weight:600;border:none;cursor:pointer;margin-top:.4rem;font-family:inherit;transition:background .15s;}
+
+/* Ops unit */
+.ops-unit{border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;margin-bottom:.65rem;}
+.ops-hd{padding:.6rem .9rem;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--bd);background:var(--sf2);}
+.ops-num{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ops-body{padding:.75rem .9rem;}
+.ops-mem-row{background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:.5rem .75rem;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.4rem;align-items:center;margin-bottom:.3rem;}
+@media(max-width:600px){.ops-mem-row{grid-template-columns:1fr 1fr;}}
+.add-ops-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-size:12px;font-weight:600;border:1px dashed var(--bd2);cursor:pointer;font-family:inherit;width:100%;justify-content:center;margin-top:.5rem;background:transparent;transition:all .15s;}
+
+/* Section divider */
+.sec-div{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--tx3);margin:1.1rem 0 .65rem;display:flex;align-items:center;gap:7px;}
+.sec-div::after{content:'';flex:1;height:1px;background:var(--bd);}
+
+/* Info box */
+.info-box{padding:.7rem .9rem;border-radius:var(--r);font-size:12.5px;display:flex;align-items:flex-start;gap:7px;margin:.65rem 0;border-right:3px solid transparent;}
+.info-box svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;}
+.ib-green{background:var(--hr-lt);border-right-color:var(--hr-pr);color:var(--tx2);}
+.ib-blue{background:#dbeafe;border-right-color:#1e40af;color:var(--tx2);}
+.ib-gold{background:var(--hr-gold-lt);border-right-color:var(--hr-gold);color:var(--tx2);}
+.ib-warn{background:var(--warn-bg);border-right-color:var(--warn);color:var(--warn);}
+
+/* Alert */
+.w-alert{display:none;padding:.65rem .9rem;border-radius:var(--r);font-size:12.5px;align-items:center;gap:7px;margin-top:.6rem;border:1px solid transparent;}
+.w-alert.on{display:flex;}
+.w-alert-err{background:var(--err-bg);color:var(--err);border-color:rgba(153,27,27,.12);}
+
+/* Footer bar */
+.reg-foot{
+  background:var(--sf);border-top:1px solid var(--bd);
+  padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;position:sticky;bottom:0;z-index:20;
+}
+.reg-foot-hint{font-size:12px;color:var(--tx3);display:flex;align-items:center;gap:5px;}
+.reg-foot-hint svg{width:13px;height:13px;}
+.reg-foot-btns{display:flex;gap:.6rem;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .15s;}
+.btn-ol{background:var(--sf);color:var(--tx2);border:1.5px solid var(--bd);}
+.btn-ol:hover{background:var(--sf2);}
+
+/* Summary */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 2rem;}
+.sum-row{padding:.45rem 0;border-bottom:1px solid var(--bd);}
+.sum-row:last-child{border-bottom:none;}
+.sum-lbl{font-size:11px;color:var(--tx3);font-weight:600;letter-spacing:.1px;}
+.sum-val{font-size:13px;color:var(--tx);font-weight:500;margin-top:2px;}
+
+/* Success */
+.success-wrap{text-align:center;padding:3rem 2rem;}
+.success-ico{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:28px;}
+.success-info{border-radius:var(--r);padding:.9rem 1.1rem;text-align:right;display:inline-block;margin:0 auto 1.25rem;}
+.si-row{display:flex;align-items:center;gap:7px;font-size:12.5px;margin-bottom:5px;}
+.si-row:last-child{margin-bottom:0;}
+.si-row svg{width:13px;height:13px;flex-shrink:0;}
+.si-row strong{font-weight:600;}
+.success-btns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.b-ok{background:var(--ok-bg);color:var(--ok);}
+.b-info{background:#dbeafe;color:#1e40af;}
+.b-warn{background:var(--warn-bg);color:var(--warn);}
+.b-gray{background:var(--sf3);color:var(--tx2);}
+
+/* ══════════════════════
+   HR THEME
+══════════════════════ */
+.hr-theme .reg-side{background:linear-gradient(160deg,var(--hr-pr) 0%,var(--hr-dk) 100%);}
+.hr-theme .reg-side-dept{color:var(--hr-gold);}
+.hr-theme .reg-side-logo{background:var(--hr-gold);color:var(--hr-pr);}
+.hr-theme .step-circle.active{background:var(--hr-pr);border-color:var(--hr-pr);color:#fff;}
+.hr-theme .step-label.active{color:var(--hr-pr);}
+.hr-theme .fi:focus{border-color:var(--hr-pr);box-shadow:0 0 0 3px rgba(15,61,46,.08);}
+.hr-theme .card-ico{background:var(--hr-lt);color:var(--hr-pr);}
+.hr-theme .type-pill.sel{background:var(--hr-pr);border-color:var(--hr-pr);}
+.hr-theme .type-pill:hover{border-color:var(--hr-pr);color:var(--hr-pr);}
+.hr-theme .type-pill.sel:hover{color:#fff;}
+.hr-theme .org-node.hl{color:var(--hr-pr);}
+.hr-theme .org-sub.hl{color:var(--hr-pr);}
+.hr-theme .add-btn{background:var(--hr-lt);color:var(--hr-pr);}
+.hr-theme .add-btn:hover{background:#d1e8de;}
+.hr-theme .ops-num{background:var(--hr-lt);color:var(--hr-pr);}
+.hr-theme .add-ops-btn{color:var(--hr-pr);border-color:rgba(15,61,46,.25);}
+.hr-theme .add-ops-btn:hover{background:var(--hr-lt);}
+.hr-theme .btn-primary{background:var(--hr-pr);color:#fff;}
+.hr-theme .btn-primary:hover{background:var(--hr-dk);}
+.hr-theme .success-ico{background:var(--hr-lt);color:var(--hr-pr);}
+.hr-theme .success-info{background:var(--hr-lt);border:1px solid rgba(15,61,46,.12);}
+.hr-theme .si-row svg{color:var(--hr-pr);}
+.hr-theme .si-row strong{color:var(--hr-pr);}
+.hr-theme .reg-topbar-accent{background:var(--hr-pr);}
+
+/* ══════════════════════
+   PROC THEME
+══════════════════════ */
+.proc-theme .reg-side{background:linear-gradient(160deg,var(--pr-pr) 0%,var(--pr-dk) 100%);}
+.proc-theme .reg-side-dept{color:#60a5fa;}
+.proc-theme .reg-side-logo{background:#3b82f6;color:#fff;}
+.proc-theme .step-circle.active{background:var(--pr-pr);border-color:var(--pr-pr);color:#fff;}
+.proc-theme .step-label.active{color:var(--pr-pr);}
+.proc-theme .fi:focus{border-color:var(--pr-pr);box-shadow:0 0 0 3px rgba(30,58,95,.08);}
+.proc-theme .card-ico{background:var(--pr-lt);color:var(--pr-pr);}
+.proc-theme .type-pill.sel{background:var(--pr-pr);border-color:var(--pr-pr);}
+.proc-theme .type-pill:hover{border-color:var(--pr-pr);color:var(--pr-pr);}
+.proc-theme .type-pill.sel:hover{color:#fff;}
+.proc-theme .add-btn{background:var(--pr-lt);color:var(--pr-pr);}
+.proc-theme .add-btn:hover{background:#d0e2f9;}
+.proc-theme .ops-num{background:var(--pr-lt);color:var(--pr-pr);}
+.proc-theme .add-ops-btn{color:var(--pr-pr);border-color:rgba(30,58,95,.25);}
+.proc-theme .add-ops-btn:hover{background:var(--pr-lt);}
+.proc-theme .btn-primary{background:var(--pr-pr);color:#fff;}
+.proc-theme .btn-primary:hover{background:var(--pr-dk);}
+.proc-theme .success-ico{background:var(--pr-lt);color:var(--pr-pr);}
+.proc-theme .success-info{background:var(--pr-lt);border:1px solid rgba(30,58,95,.12);}
+.proc-theme .si-row svg{color:var(--pr-pr);}
+.proc-theme .si-row strong{color:var(--pr-pr);}
+
+/* ══════════════════════
+   CRM THEME
+══════════════════════ */
+.crm-theme .reg-side{background:linear-gradient(160deg,var(--crm-pr) 0%,var(--crm-dk) 100%);}
+.crm-theme .reg-side-dept{color:var(--crm-ac);}
+.crm-theme .reg-side-logo{background:var(--crm-ac);color:#fff;}
+.crm-theme .step-circle.active{background:var(--crm-pr);border-color:var(--crm-pr);color:#fff;}
+.crm-theme .step-label.active{color:var(--crm-pr);}
+.crm-theme .fi:focus{border-color:var(--crm-pr);box-shadow:0 0 0 3px rgba(91,35,51,.08);}
+.crm-theme .card-ico{background:var(--crm-lt);color:var(--crm-pr);}
+.crm-theme .type-pill.sel{background:var(--crm-pr);border-color:var(--crm-pr);}
+.crm-theme .type-pill:hover{border-color:var(--crm-pr);color:var(--crm-pr);}
+.crm-theme .type-pill.sel:hover{color:#fff;}
+.crm-theme .add-btn{background:var(--crm-lt);color:var(--crm-pr);}
+.crm-theme .add-btn:hover{background:#f7d0d9;}
+.crm-theme .btn-primary{background:var(--crm-pr);color:#fff;}
+.crm-theme .btn-primary:hover{background:var(--crm-dk);}
+.crm-theme .success-ico{background:var(--crm-lt);color:var(--crm-pr);}
+.crm-theme .success-info{background:var(--crm-lt);border:1px solid rgba(91,35,51,.12);}
+.crm-theme .si-row svg{color:var(--crm-pr);}
+.crm-theme .si-row strong{color:var(--crm-pr);}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     PORTAL — اختيار المصدر
+══════════════════════════════════════════ -->
+<div id="portal">
+  <div class="portal-brand">
+    <div class="portal-logo">إج</div>
+    <div class="portal-title">تسجيل المستخدمين</div>
+    <div class="portal-sub">اختر الإدارة المسؤولة لبدء تسجيل المستخدم</div>
+  </div>
+
+  <div class="portal-cards">
+
+    <div class="src-card hr" onclick="openReg('hr')">
+      <div class="src-card-ico">👥</div>
+      <div class="src-card-dept">الموارد البشرية · HR</div>
+      <div class="src-card-title">تسجيل موظف</div>
+      <div class="src-card-desc">لتسجيل جميع أنواع الموظفين الداخليين المرتبطين بالهيكل التنظيمي للشركة</div>
+      <div class="src-card-tags">
+        <span class="src-tag">دوام كامل</span>
+        <span class="src-tag">جزئي</span>
+        <span class="src-tag">عن بعد</span>
+        <span class="src-tag">متعاون</span>
+        <span class="src-tag">متدرب</span>
+        <span class="src-tag">معار</span>
+      </div>
+    </div>
+
+    <div class="src-card proc" onclick="openReg('proc')">
+      <div class="src-card-ico">🔧</div>
+      <div class="src-card-dept">العقود والمشتريات · PROC</div>
+      <div class="src-card-title">تسجيل مقدم خدمة</div>
+      <div class="src-card-desc">لتسجيل الأفراد المستقلين والجهات الخارجية المزودة للخدمات والعقود</div>
+      <div class="src-card-tags">
+        <span class="src-tag">فرد مستقل</span>
+        <span class="src-tag">جهة / مؤسسة</span>
+        <span class="src-tag">فرق تشغيلية</span>
+        <span class="src-tag">فوترة</span>
+      </div>
+    </div>
+
+    <div class="src-card crm" onclick="openReg('crm')">
+      <div class="src-card-ico">🤝</div>
+      <div class="src-card-dept">علاقات العملاء · CRM</div>
+      <div class="src-card-title">تسجيل عميل</div>
+      <div class="src-card-desc">لتسجيل العملاء المحتملين والفعليين — أفراد أو شركات — بعقد أو مباشرة</div>
+      <div class="src-card-tags">
+        <span class="src-tag">عميل محتمل</span>
+        <span class="src-tag">عميل فعلي</span>
+        <span class="src-tag">فرد</span>
+        <span class="src-tag">شركة</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="portal-note">نظام إجادة ERP · إجادة المهنية للتقييم · 2025</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     HR — شاشة الموارد البشرية
+══════════════════════════════════════════ -->
+<div id="reg-hr" class="reg-scr hr-theme">
+
+  <div class="reg-side">
+    <button class="reg-side-back" onclick="backPortal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      رجوع
+    </button>
+    <div class="reg-side-logo">👥</div>
+    <div class="reg-side-dept">الموارد البشرية · HR</div>
+    <div class="reg-side-title">تسجيل موظف داخلي</div>
+    <div class="reg-side-desc">يتم تسجيل الموظف ومنحه حساباً في النظام وفق الإدارة والقسم المحددين في الهيكل التنظيمي.</div>
+    <div class="reg-side-users">
+      <div class="reg-side-users-label">أنواع الموظفين</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>دوام كامل / جزئي / عن بعد</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>متعاون داخلي</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>متدرب / مؤقت / معار</div>
+    </div>
+  </div>
+
+  <div class="reg-main">
+    <div class="reg-topbar">
+      <div>
+        <div class="reg-tb-title" id="hrTopTitle">الخطوة 1 من 3 — نوع التوظيف والهيكل التنظيمي</div>
+        <div class="reg-tb-sub">entity_owner: HR · entity_type: employee</div>
+      </div>
+      <div class="reg-tb-right">
+        <span class="badge b-ok" id="hrStepBadge">الخطوة 1</span>
+      </div>
+    </div>
+
+    <div class="steps-wrap" id="hrSteps"></div>
+    <div class="reg-body" id="hrBody"></div>
+
+    <div class="reg-foot">
+      <div class="reg-foot-hint">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="hrHint">اختر نوع التوظيف والإدارة</span>
+      </div>
+      <div class="reg-foot-btns">
+        <button class="btn btn-ol" id="hrPrev" onclick="hrPrev()" style="display:none">← السابق</button>
+        <button class="btn btn-primary" id="hrNext" onclick="hrNext()">التالي →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     PROC — شاشة العقود والمشتريات
+══════════════════════════════════════════ -->
+<div id="reg-proc" class="reg-scr proc-theme">
+
+  <div class="reg-side">
+    <button class="reg-side-back" onclick="backPortal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      رجوع
+    </button>
+    <div class="reg-side-logo">🔧</div>
+    <div class="reg-side-dept">العقود والمشتريات · PROC</div>
+    <div class="reg-side-title">تسجيل مقدم خدمة</div>
+    <div class="reg-side-desc">يُسجَّل مقدم الخدمة ويُربط بعقد أو اتفاقية، والفوترة تكون على مستوى الفرد أو الجهة.</div>
+    <div class="reg-side-users">
+      <div class="reg-side-users-label">أنواع مقدمي الخدمة</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>فرد مستقل (معاين، مراجع...)</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>جهة / مكتب هندسي</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>فرق تشغيلية تابعة للجهة</div>
+    </div>
+  </div>
+
+  <div class="reg-main">
+    <div class="reg-topbar">
+      <div>
+        <div class="reg-tb-title" id="procTopTitle">الخطوة 1 من 3 — نوع مقدم الخدمة</div>
+        <div class="reg-tb-sub">entity_owner: PROCUREMENT · entity_type: provider_ind / provider_org</div>
+      </div>
+      <div class="reg-tb-right">
+        <span class="badge b-info" id="procStepBadge">الخطوة 1</span>
+      </div>
+    </div>
+
+    <div class="steps-wrap" id="procSteps"></div>
+    <div class="reg-body" id="procBody"></div>
+
+    <div class="reg-foot">
+      <div class="reg-foot-hint">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="procHint">اختر نوع مقدم الخدمة</span>
+      </div>
+      <div class="reg-foot-btns">
+        <button class="btn btn-ol" id="procPrev" onclick="procPrev()" style="display:none">← السابق</button>
+        <button class="btn btn-primary" id="procNext" onclick="procNext()">التالي →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     CRM — شاشة علاقات العملاء
+══════════════════════════════════════════ -->
+<div id="reg-crm" class="reg-scr crm-theme">
+
+  <div class="reg-side">
+    <button class="reg-side-back" onclick="backPortal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      رجوع
+    </button>
+    <div class="reg-side-logo">🤝</div>
+    <div class="reg-side-dept">علاقات العملاء · CRM</div>
+    <div class="reg-side-title">تسجيل عميل</div>
+    <div class="reg-side-desc">يُسجَّل العميل ويُحدَّد تصنيفه — محتمل أو فعلي، مباشر أو بعقد — لمتابعة دورة حياته في النظام.</div>
+    <div class="reg-side-users">
+      <div class="reg-side-users-label">أنواع العملاء</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>عميل محتمل (Lead)</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>عميل فعلي — مباشر / بعقد</div>
+      <div class="reg-side-user-type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>فرد / شركة / مؤسسة</div>
+    </div>
+  </div>
+
+  <div class="reg-main">
+    <div class="reg-topbar">
+      <div>
+        <div class="reg-tb-title" id="crmTopTitle">الخطوة 1 من 3 — تصنيف العميل</div>
+        <div class="reg-tb-sub">entity_owner: CRM · entity_type: lead / client</div>
+      </div>
+      <div class="reg-tb-right">
+        <span class="badge b-warn" id="crmStepBadge">الخطوة 1</span>
+      </div>
+    </div>
+
+    <div class="steps-wrap" id="crmSteps"></div>
+    <div class="reg-body" id="crmBody"></div>
+
+    <div class="reg-foot">
+      <div class="reg-foot-hint">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="crmHint">اختر تصنيف العميل</span>
+      </div>
+      <div class="reg-foot-btns">
+        <button class="btn btn-ol" id="crmPrev" onclick="crmPrev()" style="display:none">← السابق</button>
+        <button class="btn btn-primary" id="crmNext" onclick="crmNext()">التالي →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const ORG={
+  'الإدارة التنفيذية':{subs:[],execOnly:true},
+  'إدارة التقييم العقاري':{subs:['قسم تقييم الأفراد','قسم تقييم المشاريع','قسم دراسة الحالة']},
+  'الإدارة المالية':{subs:['قسم المحاسبة']},
+  'إدارة الجودة':{subs:[]},
+};
+const JOB_TITLES={
+  'قسم دراسة الحالة':['مشرف قسم دراسة الحالة','منسق العمليات','مراجع حكومي','أخصائي دراسة حالة','مدخل بيانات'],
+};
+const EMP_TYPES=['دوام كامل','دوام جزئي','عن بعد','متعاون','مؤقت','متدرب','معار'];
+const SERVICES=['معاينة ميدانية','مراجعة حكومية','خدمة هندسية','مسح ميداني','استشارات','أخرى'];
+const REGIONS=['الرياض','مكة المكرمة','المدينة المنورة','القصيم','المنطقة الشرقية','عسير','تبوك','حائل','جازان','نجران','الباحة','الجوف'];
+const SECTORS=['عقاري','صناعي','تجاري','خدمي','حكومي','مقاولات','أخرى'];
+const PERMS=['مدير','مشرف','محرر','قارئ'];
+
+// ══════════════════════════════════════════════
+// SHARED DATABASE
+// ══════════════════════════════════════════════
+const DB = {
+  users: [],
+  nextId: 1,
+  add(user){ user.id = 'USR-' + String(this.nextId++).padStart(3,'0'); user.createdAt = new Date().toLocaleDateString('ar-SA'); this.users.push(user); return user; }
+};
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function openReg(src){
+  hideAll();
+  document.getElementById('reg-'+src).style.display='flex';
+  if(src==='hr'){hrStep=1;hrD={};hrRender();}
+  else if(src==='proc'){procStep=1;procD={subtype:''};procTeamCount=2;procOpsCount=1;procOpsMem={0:1};procRender();}
+  else{crmStep=1;crmD={clientStatus:'lead',entitySubtype:'individual',clientType:'direct'};crmRender();}
+}
+function backPortal(){
+  hideAll();
+  document.getElementById('portal').style.display='flex';
+}
+function hideAll(){
+  document.getElementById('portal').style.display='none';
+  ['hr','proc','crm'].forEach(s=>document.getElementById('reg-'+s).style.display='none');
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+const fi=(id,lbl,type='text',req=false,ph='',val='')=>`
+  <div><label class="fl">${lbl}${req?'<span class="req"> *</span>':''}</label>
+  <input class="fi" type="${type}" id="${id}" value="${val||''}" placeholder="${ph}" autocomplete="off"/></div>`;
+const fs=(id,lbl,opts=[],req=false,val='')=>`
+  <div><label class="fl">${lbl}${req?'<span class="req"> *</span>':''}</label>
+  <select class="fi" id="${id}"><option value="">اختر...</option>${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select></div>`;
+
+function buildSteps(steps,current,containerId){
+  let h='';
+  steps.forEach((s,i)=>{
+    const n=i+1,isDone=n<current,isOn=n===current;
+    h+=`<div class="step-item"><div class="step-circle${isDone?' done':isOn?' active':''}">${isDone?'✓':n}</div><span class="step-label${isDone?' done':isOn?' active':''}">${s}</span></div>`;
+    if(i<steps.length-1)h+=`<div class="step-line${isDone?' done':''}"></div>`;
+  });
+  document.getElementById(containerId).innerHTML=h;
+}
+
+function getVal(id){ const el=document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function validateFields(ids, errId, errMsg){
+  for(const id of ids){
+    const el=document.getElementById(id);
+    if(el && !el.value.trim()){
+      showAlert(errId, errMsg || 'يرجى تعبئة الحقول المطلوبة (*)');
+      el.focus(); el.style.borderColor='var(--err)';
+      setTimeout(()=>{ el.style.borderColor=''; }, 3000);
+      return false;
+    }
+  }
+  hideAlert(errId); return true;
+}
+
+function showAlert(id, msg){ const el=document.getElementById(id); if(el){ el.textContent=msg; el.classList.add('on'); } }
+function hideAlert(id){ const el=document.getElementById(id); if(el) el.classList.remove('on'); }
+
+function collect(ids,obj){
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) obj[id]=el.value.trim(); });
+}
+
+function buildSummary(rows){
+  const half=Math.ceil(rows.length/2);
+  const sr=r=>`<div class="sum-row"><div class="sum-lbl">${r.l}</div><div class="sum-val">${r.v||'—'}</div></div>`;
+  return`<div class="sum-grid"><div>${rows.slice(0,half).map(sr).join('')}</div><div>${rows.slice(half).map(sr).join('')}</div></div>`;
+}
+
+function buildSuccess(theme, user){
+  const typeLabels={
+    hr:'موظف داخلي — '+user.employment_type,
+    proc_individual:'مقدم خدمة — فرد مستقل',
+    proc_org:'مقدم خدمة — جهة / مؤسسة',
+    crm_lead:'عميل محتمل (Lead)',
+    crm_active_direct:'عميل فعلي — مباشر',
+    crm_active_contract:'عميل فعلي — بعقد',
+  };
+  const entityTypeKey = theme==='hr'?'hr':theme==='proc'?`proc_${user.subtype}`:`crm_${user.clientStatus}${user.clientStatus==='active'?'_'+user.clientType:''}`;
+  const typeLabel = typeLabels[entityTypeKey] || user.entity_type || '—';
+  const themeColors={hr:'var(--hr-pr)',proc:'var(--pr-pr)',crm:'var(--crm-pr)'};
+  const col = themeColors[theme];
+
+  // Recent users from same source
+  const srcLabel={hr:'HR',proc:'PROCUREMENT',crm:'CRM'}[theme];
+  const srcUsers = DB.users.filter(u=>u.entity_owner===srcLabel).slice(-5).reverse();
+  const recentHTML = srcUsers.length ? `
+    <div style="margin-top:1.5rem;text-align:right;">
+      <div style="font-size:11px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:.6rem;">المسجلون حديثاً من هذا المصدر</div>
+      <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;">
+        ${srcUsers.map(u=>`
+          <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 1rem;border-bottom:1px solid var(--bd);">
+            <div style="width:28px;height:28px;border-radius:50%;background:${col}20;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${col};flex-shrink:0;">${(u.name||u.orgname||'—').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12.5px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.name||u.orgname||'—'}</div>
+              <div style="font-size:11px;color:var(--tx3);">${u.entity_type_label||'—'} · ${u.createdAt}</div>
+            </div>
+            <span style="font-size:10px;background:${col}15;color:${col};padding:1px 8px;border-radius:10px;font-weight:600;">${u.id}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  return`<div class="success-wrap">
+    <div class="success-ico" style="background:${col}15;color:${col};">✓</div>
+    <h2 style="font-size:19px;font-weight:700;margin-bottom:.4rem;">تم إنشاء الحساب بنجاح</h2>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:1.1rem;line-height:1.7;">تم إضافة المستخدم للنظام. رقم المستخدم: <strong style="color:${col};font-family:monospace;">${user.id}</strong></p>
+    <div class="success-info" style="background:${col}0d;border:1px solid ${col}20;">
+      <div class="si-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="color:${col};"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>الاسم: <strong style="color:${col};">${user.name||user.orgname||'—'}</strong></span></div>
+      <div class="si-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="color:${col};"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/></svg><span>النوع: <strong style="color:${col};">${typeLabel}</strong></span></div>
+      <div class="si-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="color:${col};"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg><span>البريد: <strong style="color:${col};">${user.email||'—'}</strong></span></div>
+      <div class="si-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="color:${col};"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>اسم المستخدم: <strong style="color:${col};">${user.username||'—'}</strong></span></div>
+    </div>
+    ${recentHTML}
+    <div class="success-btns" style="margin-top:1.5rem;">
+      <button class="btn btn-primary" style="background:${col};" onclick="backPortal()">← بوابة التسجيل</button>
+      <button class="btn btn-ol" onclick="openReg('${theme}')">+ تسجيل مستخدم آخر</button>
+    </div>
+  </div>`;
+}
+
+function saveToDb(user){ return DB.add(user); }
+
+// ══════════════════════════════════════════════
+// HR SCREEN
+// ══════════════════════════════════════════════
+let hrStep=1, hrD={};
+const HR_STEPS=['نوع التوظيف والهيكل','البيانات الشخصية','بيانات الحساب','مراجعة وحفظ'];
+const HR_HINTS=['اختر نوع التوظيف والإدارة','بيانات الموظف الشخصية','إعداد حساب الدخول','راجع ثم احفظ'];
+
+function hrRender(){
+  buildSteps(HR_STEPS,hrStep,'hrSteps');
+  document.getElementById('hrTopTitle').textContent=`الخطوة ${hrStep} من ${HR_STEPS.length} — ${HR_STEPS[hrStep-1]||''}`;
+  document.getElementById('hrStepBadge').textContent=`الخطوة ${Math.min(hrStep,HR_STEPS.length)}`;
+  document.getElementById('hrHint').textContent=HR_HINTS[hrStep-1]||'';
+  document.getElementById('hrPrev').style.display=hrStep>1&&hrStep<=HR_STEPS.length?'':'none';
+  const nb=document.getElementById('hrNext');
+  nb.disabled=false;
+  nb.style.display=hrStep>HR_STEPS.length?'none':'';
+  nb.textContent=hrStep===HR_STEPS.length?'💾 حفظ وإنشاء الحساب':'التالي →';
+  document.getElementById('hrBody').innerHTML=
+    hrStep===1?hrPanel1():hrStep===2?hrPanel2():hrStep===3?hrPanel3():hrStep===4?hrPanel4():hrPanelSuccess();
+}
+
+function hrPrev(){ if(hrStep>1){ hrStep--; hrRender(); } }
+
+function hrNext(){
+  if(hrStep===1){
+    if(!getVal('hr_empType')){ showAlert('hrErr1','يرجى اختيار نوع التوظيف'); return; }
+    if(!getVal('hr_dept')){ showAlert('hrErr1','يرجى اختيار الإدارة'); return; }
+    collect(['hr_empType','hr_dept','hr_section','hr_jobTitle','hr_perms'],hrD);
+    hrStep=2; hrRender(); return;
+  }
+  if(hrStep===2){
+    if(!validateFields(['hr_name','hr_phone'],'hrErr2')) return;
+    collect(['hr_name','hr_idno','hr_phone','hr_empNo','hr_joinDate'],hrD);
+    hrStep=3; hrRender(); return;
+  }
+  if(hrStep===3){
+    if(!validateFields(['hr_email','hr_username','hr_pwd'],'hrErr3')) return;
+    const p=getVal('hr_pwd'), p2=getVal('hr_pwd2');
+    if(p!==p2){ showAlert('hrErr3','كلمة المرور وتأكيدها غير متطابقتين'); return; }
+    collect(['hr_email','hr_username','hr_pwd'],hrD);
+    hrStep=4; hrRender(); return;
+  }
+  if(hrStep===4){
+    const nb=document.getElementById('hrNext');
+    nb.disabled=true; nb.textContent='⏳ جارٍ الحفظ...';
+    setTimeout(()=>{
+      const user = saveToDb({
+        name: hrD.hr_name, email: hrD.hr_email, username: hrD.hr_username,
+        phone: hrD.hr_phone, idno: hrD.hr_idno, empNo: hrD.hr_empNo,
+        entity_owner:'HR', entity_type:'employee',
+        entity_type_label:'موظف داخلي',
+        employment_type: hrD.hr_empType,
+        dept: hrD.hr_dept, section: hrD.hr_section,
+        jobTitle: hrD.hr_jobTitle, perms: hrD.hr_perms,
+        status:'active',
+      });
+      hrStep=5; nb.style.display='none';
+      document.getElementById('hrPrev').style.display='none';
+      document.getElementById('hrBody').innerHTML=buildSuccess('hr',user);
+      document.getElementById('hrTopTitle').textContent='تم التسجيل بنجاح';
+      document.getElementById('hrStepBadge').textContent='مكتمل ✓';
+    },1400);
+  }
+}
+
+function hrPanel1(){
+  const dept=hrD.hr_dept||'';
+  const subs=dept&&ORG[dept]?ORG[dept].subs:[];
+  const titles=hrD.hr_section&&JOB_TITLES[hrD.hr_section]?JOB_TITLES[hrD.hr_section]:[];
+  let tree='';
+  Object.keys(ORG).forEach(d=>{
+    const isSel=d===dept;
+    tree+=`<div class="org-node${isSel?' hl':''}">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>${d}
+      ${ORG[d].execOnly?'<span class="badge b-gray" style="font-size:9px;margin-right:5px;">تنفيذية</span>':''}
+    </div>`;
+    ORG[d].subs.forEach(s=>{
+      const isSecSel=isSel&&s===hrD.hr_section;
+      tree+=`<div class="org-sub${isSecSel?' hl':''}">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>${s}
+      </div>`;
+    });
+  });
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">💼</div><div><h3>نوع التوظيف</h3><p>يحدد آلية العقد والفوترة</p></div></div>
+    <div class="card-body">
+      <div class="type-pills">
+        ${EMP_TYPES.map(t=>`<button class="type-pill${hrD.hr_empType===t?' sel':''}" onclick="hrD.hr_empType='${t}';document.querySelectorAll('#reg-hr .type-pill').forEach(p=>p.classList.remove('sel'));this.classList.add('sel');document.getElementById('hr_empType').value='${t}'">${t}</button>`).join('')}
+      </div>
+      <input type="hidden" id="hr_empType" value="${hrD.hr_empType||''}"/>
+      <div class="w-alert w-alert-err" id="hrErr1" style="margin-top:.5rem;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ico">🏢</div><div><h3>الهيكل التنظيمي</h3><p>الإدارة والقسم والمسمى الوظيفي</p></div></div>
+    <div class="card-body">
+      <div class="fg2" style="margin-bottom:.85rem;">
+        ${fs('hr_dept','الإدارة',Object.keys(ORG),true,dept)}
+        ${fs('hr_section','القسم',subs,false,hrD.hr_section||'')}
+      </div>
+      ${dept?`<div class="org-tree"><div class="org-tree-lbl" style="color:var(--hr-pr);">⚙ الموقع في الهيكل التنظيمي</div>${tree}</div>`:''}
+      ${ORG[dept]?.execOnly?`<div class="info-box ib-green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>الإدارة التنفيذية مخصصة للمدير التنفيذي فقط</div>`:''}
+      <div class="fg2" style="margin-top:.85rem;">
+        ${fs('hr_jobTitle','المسمى الوظيفي',titles.length?titles:[],false,hrD.hr_jobTitle||'')}
+        ${fs('hr_perms','مستوى الصلاحيات',PERMS,true,hrD.hr_perms||'')}
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('hr_dept').onchange=function(){hrD.hr_dept=this.value;hrD.hr_section='';hrRender();};
+    document.getElementById('hr_section').onchange=function(){hrD.hr_section=this.value;hrD.hr_jobTitle='';hrRender();};
+  <\/script>`;
+}
+
+function hrPanel2(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">👤</div><div><h3>البيانات الشخصية</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fi('hr_name','الاسم الكامل','text',true,'',hrD.hr_name||'')}
+      ${fi('hr_idno','رقم الهوية الوطنية','text',false,'',hrD.hr_idno||'')}
+      ${fi('hr_phone','رقم الجوال','tel',true,'05xxxxxxxx',hrD.hr_phone||'')}
+      ${fi('hr_empNo','رقم الموظف','text',false,'اختياري',hrD.hr_empNo||'')}
+      ${fi('hr_joinDate','تاريخ الانضمام','date',false,'',hrD.hr_joinDate||'')}
+    </div>
+    <div class="w-alert w-alert-err" id="hrErr2" style="margin-top:.65rem;"></div>
+    </div>
+  </div>`;
+}
+
+function hrPanel3(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">🔐</div><div><h3>بيانات حساب الدخول</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fi('hr_email','البريد الإلكتروني','email',true,'',hrD.hr_email||'')}
+      ${fi('hr_username','اسم المستخدم','text',true,'اسم الدخول',hrD.hr_username||'')}
+      ${fi('hr_pwd','كلمة المرور الأولية','password',true)}
+      ${fi('hr_pwd2','تأكيد كلمة المرور','password',true)}
+    </div>
+    <div class="w-alert w-alert-err" id="hrErr3" style="margin-top:.65rem;"></div>
+    <div class="info-box ib-green" style="margin-top:.75rem;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+      ستُرسل بيانات الدخول تلقائياً إلى البريد الإلكتروني بعد الحفظ
+    </div></div>
+  </div>`;
+}
+
+function hrPanel4(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">✅</div><div><h3>مراجعة البيانات</h3><p>تحقق من البيانات قبل الحفظ</p></div></div>
+    <div class="card-body">
+      ${buildSummary([
+        {l:'الإدارة المسؤولة',v:'الموارد البشرية (HR)'},
+        {l:'نوع الكيان',v:'employee'},
+        {l:'نوع التوظيف',v:hrD.hr_empType},
+        {l:'الإدارة',v:hrD.hr_dept},
+        {l:'القسم',v:hrD.hr_section},
+        {l:'المسمى الوظيفي',v:hrD.hr_jobTitle},
+        {l:'الصلاحيات',v:hrD.hr_perms},
+        {l:'الاسم الكامل',v:hrD.hr_name},
+        {l:'رقم الهوية',v:hrD.hr_idno},
+        {l:'البريد الإلكتروني',v:hrD.hr_email},
+        {l:'رقم الجوال',v:hrD.hr_phone},
+        {l:'اسم المستخدم',v:hrD.hr_username},
+      ])}
+      <div class="info-box ib-gold" style="margin-top:1rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        بعد الحفظ لا يمكن تغيير الإدارة المسؤولة — تواصل مع مدير النظام لأي تعديل جوهري
+      </div>
+    </div>
+  </div>`;
+}
+
+function hrPanelSuccess(){ return ''; }
+
+// ══════════════════════════════════════════════
+// PROC SCREEN
+// ══════════════════════════════════════════════
+let procStep=1, procD={subtype:''};
+const PROC_STEPS_IND=['نوع مقدم الخدمة','البيانات الأساسية','الخدمة والفوترة','مراجعة وحفظ'];
+const PROC_STEPS_ORG=['نوع مقدم الخدمة','بيانات الجهة','فريق الإدارة والفرق','الفوترة','مراجعة وحفظ'];
+let procTeamCount=2, procOpsCount=1, procOpsMem={0:1};
+
+function procRender(){
+  const steps=procD.subtype==='org'?PROC_STEPS_ORG:PROC_STEPS_IND;
+  buildSteps(steps,procStep,'procSteps');
+  document.getElementById('procTopTitle').textContent=`الخطوة ${procStep} من ${steps.length} — ${steps[procStep-1]||''}`;
+  document.getElementById('procStepBadge').textContent=`الخطوة ${Math.min(procStep,steps.length)}`;
+  const hints=['اختر نوع مقدم الخدمة','البيانات الأساسية','بيانات الخدمة','بيانات الفوترة','راجع ثم احفظ'];
+  document.getElementById('procHint').textContent=hints[procStep-1]||'';
+  document.getElementById('procPrev').style.display=procStep>1&&procStep<=steps.length?'':'none';
+  const nb=document.getElementById('procNext');
+  nb.disabled=false; nb.style.display=procStep>steps.length?'none':'';
+  nb.textContent=procStep===steps.length?'💾 حفظ وإنشاء الحساب':'التالي →';
+  document.getElementById('procBody').innerHTML=
+    procStep===1?procPanel1():
+    procD.subtype==='individual'?
+      (procStep===2?procPanel2Ind():procStep===3?procPanel3Ind():procStep===4?procPanel4Sum():''):
+      (procStep===2?procPanel2Org():procStep===3?procPanel3Team():procStep===4?procPanel4Bill():procStep===5?procPanel5Sum():'');
+}
+
+function procPrev(){ if(procStep>1){ procStep--; procRender(); } }
+
+function procNext(){
+  const steps=procD.subtype==='org'?PROC_STEPS_ORG:PROC_STEPS_IND;
+  if(procStep===1){
+    if(!procD.subtype){ showAlert('procErr1','يرجى اختيار نوع مقدم الخدمة'); return; }
+    procStep=2; procRender(); return;
+  }
+  if(procStep===2){
+    const req=procD.subtype==='individual'?['pc_name','pc_idno','pc_email','pc_phone','pc_username','pc_pwd']:['pc_orgname','pc_crn','pc_delegate','pc_email','pc_phone','pc_username','pc_pwd'];
+    if(!validateFields(req,'procErr2')) return;
+    collect([...req,'pc_pwd2'],procD); procStep=3; procRender(); return;
+  }
+  if(procStep===3){ collect(['pc_service','pc_region','pc_bankname','pc_iban','pc_contract','pc_sector','pc_address'],procD); procStep=4; procRender(); return; }
+  if(procStep===4&&procD.subtype==='org'){ collect(['pc_billingemail','pc_vatreg'],procD); procStep=5; procRender(); return; }
+  if(procStep===steps.length){
+    const nb=document.getElementById('procNext');
+    nb.disabled=true; nb.textContent='⏳ جارٍ الحفظ...';
+    setTimeout(()=>{
+      const user = saveToDb({
+        name: procD.subtype==='individual'?procD.pc_name:procD.pc_delegate,
+        orgname: procD.pc_orgname||'',
+        email: procD.pc_email, username: procD.pc_username,
+        phone: procD.pc_phone, idno: procD.pc_idno,
+        crn: procD.pc_crn, delegate: procD.pc_delegate,
+        entity_owner:'PROCUREMENT',
+        entity_type: procD.subtype==='individual'?'provider_ind':'provider_org',
+        entity_type_label: procD.subtype==='individual'?'مقدم خدمة — فرد':'مقدم خدمة — جهة',
+        subtype: procD.subtype,
+        serviceType: procD.pc_service, region: procD.pc_region,
+        bankName: procD.pc_bankname, iban: procD.pc_iban,
+        status:'active',
+      });
+      nb.style.display='none';
+      document.getElementById('procPrev').style.display='none';
+      document.getElementById('procBody').innerHTML=buildSuccess('proc',user);
+      document.getElementById('procTopTitle').textContent='تم التسجيل بنجاح';
+      document.getElementById('procStepBadge').textContent='مكتمل ✓';
+    },1400);
+  }
+}
+
+function procPanel1(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">🔧</div><div><h3>نوع مقدم الخدمة</h3><p>يحدد هيكل التسجيل وآلية الفوترة</p></div></div>
+    <div class="card-body">
+      <div class="type-pills">
+        <button class="type-pill${procD.subtype==='individual'?' sel':''}" onclick="procD.subtype='individual';document.querySelectorAll('#reg-proc .type-pill').forEach(p=>p.classList.remove('sel'));this.classList.add('sel');procRender()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          فرد مستقل
+        </button>
+        <button class="type-pill${procD.subtype==='org'?' sel':''}" onclick="procD.subtype='org';document.querySelectorAll('#reg-proc .type-pill').forEach(p=>p.classList.remove('sel'));this.classList.add('sel');procRender()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+          جهة / مؤسسة
+        </button>
+      </div>
+      ${procD.subtype==='individual'?`<div class="info-box ib-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>حساب شخصي واحد — الفوترة مباشرة للفرد</div>`:''}
+      ${procD.subtype==='org'?`<div class="info-box ib-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>حساب واحد للجهة — فريق الإدارة والفرق التشغيلية بيانات داخلية — الفوترة للجهة</div>`:''}
+    </div>
+  </div>`;
+}
+
+function procPanel2Ind(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">👤</div><div><h3>بيانات الفرد المستقل</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fi('pc_name','الاسم الكامل','text',true,'',procD.pc_name||'')}
+      ${fi('pc_idno','رقم الهوية الوطنية','text',true,'',procD.pc_idno||'')}
+      ${fi('pc_email','البريد الإلكتروني','email',true,'',procD.pc_email||'')}
+      ${fi('pc_phone','رقم الجوال','tel',true,'05xxxxxxxx',procD.pc_phone||'')}
+      ${fi('pc_username','اسم المستخدم','text',true,'اسم الدخول',procD.pc_username||'')}
+      ${fi('pc_pwd','كلمة المرور','password',true)}
+      ${fi('pc_pwd2','تأكيد كلمة المرور','password',true)}
+    </div></div>
+  </div>`;
+}
+
+function procPanel3Ind(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">📍</div><div><h3>الخدمة والتغطية والفوترة</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fs('pc_service','نوع الخدمة',SERVICES,true,procD.pc_service||'')}
+      ${fs('pc_region','المنطقة الجغرافية',REGIONS,false,procD.pc_region||'')}
+      ${fi('pc_bankname','اسم البنك','text',false,'',procD.pc_bankname||'')}
+      ${fi('pc_iban','رقم الآيبان (IBAN)','text',false,'SA...',procD.pc_iban||'')}
+    </div></div>
+  </div>`;
+}
+
+function procPanel4Sum(sub){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">✅</div><div><h3>مراجعة البيانات</h3></div></div>
+    <div class="card-body">
+      ${buildSummary([
+        {l:'الإدارة المسؤولة',v:'العقود والمشتريات (PROC)'},
+        {l:'نوع الكيان',v:'provider_ind'},
+        {l:'الاسم',v:procD.pc_name},
+        {l:'رقم الهوية',v:procD.pc_idno},
+        {l:'البريد الإلكتروني',v:procD.pc_email},
+        {l:'رقم الجوال',v:procD.pc_phone},
+        {l:'اسم المستخدم',v:procD.pc_username},
+        {l:'نوع الخدمة',v:procD.pc_service},
+        {l:'المنطقة',v:procD.pc_region},
+        {l:'الآيبان',v:procD.pc_iban},
+      ])}
+      <div class="info-box ib-gold" style="margin-top:1rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>تأكد من صحة بيانات الفوترة قبل الحفظ</div>
+    </div>
+  </div>`;
+}
+
+function procPanel2Org(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">🏢</div><div><h3>بيانات الجهة</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fi('pc_orgname','اسم الجهة / المؤسسة','text',true,'',procD.pc_orgname||'')}
+      ${fi('pc_crn','رقم السجل التجاري','text',true,'',procD.pc_crn||'')}
+      ${fi('pc_delegate','اسم المفوض / المدير','text',true,'',procD.pc_delegate||'')}
+      ${fi('pc_idno','رقم هوية المفوض','text',true,'',procD.pc_idno||'')}
+      ${fi('pc_email','البريد الإلكتروني الرسمي','email',true,'',procD.pc_email||'')}
+      ${fi('pc_phone','رقم الجوال','tel',true,'',procD.pc_phone||'')}
+      ${fi('pc_username','اسم المستخدم','text',true,'',procD.pc_username||'')}
+      ${fi('pc_pwd','كلمة المرور','password',true)}
+      ${fs('pc_service','نوع الخدمة الرئيسية',SERVICES,true,procD.pc_service||'')}
+      ${fs('pc_sector','القطاع',SECTORS,false,procD.pc_sector||'')}
+      ${fi('pc_address','العنوان الرئيسي','text',false,'',procD.pc_address||'')}
+      ${fs('pc_region','المنطقة الجغرافية',REGIONS,false,procD.pc_region||'')}
+      <div class="sp2">${fi('pc_contract','رقم العقد / الاتفاقية','text',false,'',procD.pc_contract||'')}</div>
+    </div></div>
+  </div>`;
+}
+
+function procPanel3Team(){
+  let teamRows='';
+  const defs=['المدير العام / المفوض','المحاسب','مدير الإدارة','مسؤول المشاريع'];
+  for(let i=0;i<procTeamCount;i++){
+    teamRows+=`<div class="person-row" id="ptm${i}">
+      <input class="fi" placeholder="الاسم الكامل" id="ptm_n${i}" style="padding:6px 9px;font-size:12.5px;"/>
+      <input class="fi" placeholder="${defs[i]||'المنصب'}" id="ptm_r${i}" value="${i<4?defs[i]:''}" style="padding:6px 9px;font-size:12.5px;"/>
+      <input class="fi" placeholder="رقم الجوال" id="ptm_p${i}" style="padding:6px 9px;font-size:12.5px;"/>
+      <button class="rm-btn" onclick="document.getElementById('ptm${i}').remove()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`;
+  }
+  let opsHTML='';
+  for(let i=0;i<procOpsCount;i++)opsHTML+=procOpsUnit(i);
+  return`
+  <div class="card">
+    <div class="card-hd"><div class="card-ico">👥</div><div><h3>فريق الإدارة</h3><p>بيانات تواصل — لا يملكون حسابات حالياً</p></div><div class="card-hd-right"><button class="btn btn-ol" style="padding:4px 10px;font-size:12px;" onclick="procTeamCount++;procRender()">+ إضافة</button></div></div>
+    <div class="card-body">
+      <div class="person-rows" id="procTeamList">${teamRows}</div>
+      <div class="info-box ib-blue" style="margin-top:.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>يمكن تحويل أي منهم لحساب مستقل لاحقاً بطلب من مدير النظام</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ico">🗺</div><div><h3>الفرق التشغيلية / المنافذ</h3><p>التغطية الجغرافية وأفراد الفريق</p></div><div class="card-hd-right"><button class="btn btn-ol" style="padding:4px 10px;font-size:12px;" onclick="procOpsCount++;procOpsMem[procOpsCount-1]=1;procRender()">+ إضافة فريق</button></div></div>
+    <div class="card-body"><div id="procOpsList">${opsHTML}</div></div>
+  </div>`;
+}
+
+function procOpsUnit(i){
+  if(!procOpsMem[i])procOpsMem[i]=1;
+  const rOpts=REGIONS.map(r=>`<option>${r}</option>`).join('');
+  const sOpts=SERVICES.map(s=>`<option>${s}</option>`).join('');
+  let mems='';
+  for(let m=0;m<procOpsMem[i];m++){
+    mems+=`<div class="ops-mem-row" id="pom${i}_${m}">
+      <input class="fi" placeholder="الاسم" style="padding:5px 8px;font-size:12px;" id="pom_n${i}_${m}"/>
+      <input class="fi" placeholder="الدور" style="padding:5px 8px;font-size:12px;" id="pom_r${i}_${m}"/>
+      <input class="fi" placeholder="الجوال" style="padding:5px 8px;font-size:12px;" id="pom_p${i}_${m}"/>
+      <button class="rm-btn" onclick="document.getElementById('pom${i}_${m}').remove()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`;
+  }
+  return`<div class="ops-unit" id="pops${i}">
+    <div class="ops-hd"><div class="ops-num" style="background:var(--pr-lt);color:var(--pr-pr);">${i+1}</div>
+      <span style="flex:1;font-size:12.5px;font-weight:700;">فريق / منفذ ${i+1}</span>
+      <button class="rm-btn" onclick="document.getElementById('pops${i}').remove()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="ops-body">
+      <div class="fg3" style="margin-bottom:.65rem;">
+        <div><label class="fl">اسم الفريق <span class="req">*</span></label><input class="fi" placeholder="مثال: فريق الرياض" id="pops_n${i}" style="padding:7px 9px;"/></div>
+        <div><label class="fl">نوع الفريق</label><select class="fi" id="pops_t${i}" style="padding:7px 9px;"><option value="">اختر...</option>${sOpts}</select></div>
+        <div><label class="fl">التغطية الجغرافية</label><select class="fi" id="pops_r${i}" style="padding:7px 9px;"><option value="">اختر...</option>${rOpts}</select></div>
+      </div>
+      <div style="font-size:10.5px;font-weight:700;color:var(--tx3);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px;">أفراد الفريق (بيانات تواصل)</div>
+      <div id="pomList${i}">${mems}</div>
+      <button class="add-ops-btn" style="color:var(--pr-pr);border-color:rgba(30,58,95,.25);" onclick="if(!procOpsMem[${i}])procOpsMem[${i}]=1;const m=procOpsMem[${i}]++;const d=document.createElement('div');d.innerHTML='<div class=ops-mem-row id=pom${i}_'+m+'><input class=fi placeholder=الاسم style=padding:5px_8px;font-size:12px;/><input class=fi placeholder=الدور style=padding:5px_8px;font-size:12px;/><input class=fi placeholder=الجوال style=padding:5px_8px;font-size:12px;/><button class=rm-btn onclick=this.closest(\\'.ops-mem-row\\').remove()>✕</button></div>';document.getElementById('pomList${i}').appendChild(d.firstElementChild);">+ إضافة فرد</button>
+    </div>
+  </div>`;
+}
+
+function procPanel4Bill(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">💳</div><div><h3>بيانات الفوترة</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fi('pc_bankname','اسم البنك','text',false,'',procD.pc_bankname||'')}
+      ${fi('pc_iban','رقم الآيبان (IBAN)','text',false,'SA...',procD.pc_iban||'')}
+      ${fi('pc_billingemail','بريد الفوترة','email',false,'',procD.pc_billingemail||'')}
+      ${fi('pc_vatreg','الرقم الضريبي','text',false,'',procD.pc_vatreg||'')}
+    </div></div>
+  </div>`;
+}
+
+function procPanel5Sum(){
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">✅</div><div><h3>مراجعة البيانات</h3></div></div>
+    <div class="card-body">
+      ${buildSummary([
+        {l:'الإدارة المسؤولة',v:'العقود والمشتريات (PROC)'},
+        {l:'نوع الكيان',v:'provider_org'},
+        {l:'اسم الجهة',v:procD.pc_orgname},
+        {l:'رقم السجل',v:procD.pc_crn},
+        {l:'المفوض',v:procD.pc_delegate},
+        {l:'البريد الإلكتروني',v:procD.pc_email},
+        {l:'رقم الجوال',v:procD.pc_phone},
+        {l:'اسم المستخدم',v:procD.pc_username},
+        {l:'نوع الخدمة',v:procD.pc_service},
+        {l:'المنطقة',v:procD.pc_region},
+        {l:'الآيبان',v:procD.pc_iban},
+        {l:'الرقم الضريبي',v:procD.pc_vatreg},
+      ])}
+    </div>
+  </div>`;
+}
+
+function procPanelSuccess(){ return ''; }
+
+// ══════════════════════════════════════════════
+// CRM SCREEN
+// ══════════════════════════════════════════════
+let crmStep=1, crmD={clientStatus:'lead',entitySubtype:'individual',clientType:'direct'};
+const CRM_STEPS=['تصنيف العميل','البيانات الأساسية','بيانات إضافية','مراجعة وحفظ'];
+const CRM_HINTS=['اختر حالة العميل ونوع الكيان','البيانات الأساسية للعميل','معلومات إضافية وجهة التواصل','راجع ثم احفظ'];
+
+function crmRender(){
+  buildSteps(CRM_STEPS,crmStep,'crmSteps');
+  document.getElementById('crmTopTitle').textContent=`الخطوة ${crmStep} من ${CRM_STEPS.length} — ${CRM_STEPS[crmStep-1]||''}`;
+  document.getElementById('crmStepBadge').textContent=`الخطوة ${Math.min(crmStep,CRM_STEPS.length)}`;
+  document.getElementById('crmHint').textContent=CRM_HINTS[crmStep-1]||'';
+  document.getElementById('crmPrev').style.display=crmStep>1&&crmStep<=CRM_STEPS.length?'':'none';
+  const nb=document.getElementById('crmNext');
+  nb.disabled=false; nb.style.display=crmStep>CRM_STEPS.length?'none':'';
+  nb.textContent=crmStep===CRM_STEPS.length?'💾 حفظ وإنشاء الحساب':'التالي →';
+  document.getElementById('crmBody').innerHTML=
+    crmStep===1?crmPanel1():crmStep===2?crmPanel2():crmStep===3?crmPanel3():crmStep===4?crmPanel4():'';
+}
+
+function crmPrev(){ if(crmStep>1){ crmStep--; crmRender(); } }
+
+function crmNext(){
+  if(crmStep===1){
+    collect(['crm_clientStatus','crm_entitySubtype','crm_clientType'],crmD);
+    crmD.clientStatus = getVal('crm_clientStatus')||crmD.clientStatus||'lead';
+    crmD.entitySubtype = getVal('crm_entitySubtype')||crmD.entitySubtype||'individual';
+    crmD.clientType = getVal('crm_clientType')||crmD.clientType||'direct';
+    crmStep=2; crmRender(); return;
+  }
+  if(crmStep===2){
+    const req=['crm_name','crm_email','crm_phone','crm_username','crm_pwd'];
+    if(crmD.entitySubtype==='company') req.unshift('crm_orgname');
+    if(!validateFields(req,'crmErr2')) return;
+    collect([...req,'crm_crn','crm_pwd2'],crmD);
+    crmStep=3; crmRender(); return;
+  }
+  if(crmStep===3){
+    collect(['crm_region','crm_sector','crm_address','crm_rep','crm_contactPerson','crm_contactRole','crm_contactPhone','crm_vatreg'],crmD);
+    crmStep=4; crmRender(); return;
+  }
+  if(crmStep===4){
+    const nb=document.getElementById('crmNext');
+    nb.disabled=true; nb.textContent='⏳ جارٍ الحفظ...';
+    setTimeout(()=>{
+      const statusLbl=crmD.clientStatus==='lead'?'عميل محتمل':'عميل فعلي — '+(crmD.clientType==='contract'?'بعقد':'مباشر');
+      const user = saveToDb({
+        name: crmD.crm_name,
+        orgname: crmD.crm_orgname||'',
+        email: crmD.crm_email, username: crmD.crm_username,
+        phone: crmD.crm_phone, crn: crmD.crm_crn,
+        entity_owner:'CRM',
+        entity_type: crmD.clientStatus==='lead'?'lead':'client',
+        entity_type_label: statusLbl,
+        clientStatus: crmD.clientStatus,
+        clientType: crmD.clientType,
+        entitySubtype: crmD.entitySubtype,
+        region: crmD.crm_region, sector: crmD.crm_sector,
+        rep: crmD.crm_rep, status:'active',
+      });
+      nb.style.display='none';
+      document.getElementById('crmPrev').style.display='none';
+      document.getElementById('crmBody').innerHTML=buildSuccess('crm',user);
+      document.getElementById('crmTopTitle').textContent='تم التسجيل بنجاح';
+      document.getElementById('crmStepBadge').textContent='مكتمل ✓';
+    },1400);
+  }
+}
+
+function crmPanel1(){
+  const cs=crmD.clientStatus||'lead';
+  const es=crmD.entitySubtype||'individual';
+  const ct=crmD.clientType||'direct';
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">🎯</div><div><h3>حالة العميل</h3><p>تحدد دورة حياة العميل في النظام</p></div></div>
+    <div class="card-body">
+      <div class="type-pills">
+        <button class="type-pill${cs==='lead'?' sel':''}" onclick="crmD.clientStatus='lead';crmD.clientType='';document.querySelectorAll('#reg-crm .type-pill[data-group=status]').forEach(p=>p.classList.remove('sel'));this.classList.add('sel');crmRender()" data-group="status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          عميل محتمل (Lead)
+        </button>
+        <button class="type-pill${cs==='active'?' sel':''}" onclick="crmD.clientStatus='active';document.querySelectorAll('#reg-crm .type-pill[data-group=status]').forEach(p=>p.classList.remove('sel'));this.classList.add('sel');crmRender()" data-group="status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          عميل فعلي
+        </button>
+      </div>
+      ${cs==='lead'?`<div class="info-box ib-gold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>العميل المحتمل يتحول تلقائياً لعميل فعلي عند شراء الخدمة</div>`:''}
+      ${cs==='active'?`<div style="margin-top:.75rem;"><div class="sec-div">تصنيف العميل الفعلي</div>
+        <div class="type-pills">
+          <button class="type-pill${ct==='direct'?' sel':''}" onclick="crmD.clientType='direct';document.querySelectorAll('#reg-crm .type-pill[data-group=type]').forEach(p=>p.classList.remove('sel'));this.classList.add('sel')" data-group="type">عميل مباشر — عرض سعر</button>
+          <button class="type-pill${ct==='contract'?' sel':''}" onclick="crmD.clientType='contract';document.querySelectorAll('#reg-crm .type-pill[data-group=type]').forEach(p=>p.classList.remove('sel'));this.classList.add('sel')" data-group="type">عميل بعقد — خدمة مستمرة</button>
+        </div></div>`:''}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ico">🏷</div><div><h3>نوع الكيان</h3><p>فرد أو شركة</p></div></div>
+    <div class="card-body">
+      <div class="type-pills">
+        <button class="type-pill${es==='individual'?' sel':''}" onclick="crmD.entitySubtype='individual';document.querySelectorAll('#reg-crm .type-pill[data-group=entity]').forEach(p=>p.classList.remove('sel'));this.classList.add('sel')" data-group="entity">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>فرد
+        </button>
+        <button class="type-pill${es==='company'?' sel':''}" onclick="crmD.entitySubtype='company';document.querySelectorAll('#reg-crm .type-pill[data-group=entity]').forEach(p=>p.classList.remove('sel'));this.classList.add('sel')" data-group="entity">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>شركة / مؤسسة
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function crmPanel2(){
+  const isCompany=crmD.entitySubtype==='company';
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">👤</div><div><h3>البيانات الأساسية — ${isCompany?'شركة / مؤسسة':'فرد'}</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${isCompany?fi('crm_orgname','اسم الشركة / المؤسسة','text',true,'',crmD.crm_orgname||''):''}
+      ${isCompany?fi('crm_crn','رقم السجل التجاري','text',false,'',crmD.crm_crn||''):''}
+      ${fi('crm_name',isCompany?'اسم المسؤول الرئيسي':'الاسم الكامل','text',true,'',crmD.crm_name||'')}
+      ${!isCompany?fi('crm_idno','رقم الهوية الوطنية','text',false,'',crmD.crm_idno||''):''}
+      ${fi('crm_email','البريد الإلكتروني','email',true,'',crmD.crm_email||'')}
+      ${fi('crm_phone','رقم الجوال','tel',true,'05xxxxxxxx',crmD.crm_phone||'')}
+      ${fi('crm_username','اسم المستخدم','text',true,'اسم الدخول',crmD.crm_username||'')}
+      ${fi('crm_pwd','كلمة المرور','password',true)}
+      ${fi('crm_pwd2','تأكيد كلمة المرور','password',true)}
+    </div></div>
+  </div>`;
+}
+
+function crmPanel3(){
+  const isCompany=crmD.entitySubtype==='company';
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">📍</div><div><h3>البيانات الإضافية</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fs('crm_region','المدينة / المنطقة',REGIONS,false,crmD.crm_region||'')}
+      ${fs('crm_sector','القطاع',SECTORS,false,crmD.crm_sector||'')}
+      ${fi('crm_address','العنوان','text',false,'',crmD.crm_address||'')}
+      ${fi('crm_rep','المسؤول الميداني المرتبط','text',false,'اسم الموظف الداخلي',crmD.crm_rep||'')}
+      ${isCompany?fi('crm_vatreg','الرقم الضريبي','text',false,'اختياري',crmD.crm_vatreg||''):''}
+    </div></div>
+  </div>
+  ${isCompany?`<div class="card">
+    <div class="card-hd"><div class="card-ico">📞</div><div><h3>جهة التواصل في الشركة</h3></div></div>
+    <div class="card-body"><div class="fg2">
+      ${fi('crm_contactPerson','اسم المسؤول','text',true,'',crmD.crm_contactPerson||'')}
+      ${fi('crm_contactRole','المنصب','text',false,'مدير المشتريات...',crmD.crm_contactRole||'')}
+      ${fi('crm_contactPhone','رقم الجوال','tel',false,'',crmD.crm_contactPhone||'')}
+    </div></div>
+  </div>`:''}`;
+}
+
+function crmPanel4(){
+  const statusLbl=crmD.clientStatus==='lead'?'عميل محتمل (Lead)':'عميل فعلي';
+  const typeLbl=crmD.clientStatus==='active'?(crmD.clientType==='contract'?'بعقد':'مباشر'):'—';
+  const entityLbl=crmD.entitySubtype==='company'?'شركة / مؤسسة':'فرد';
+  return`<div class="card">
+    <div class="card-hd"><div class="card-ico">✅</div><div><h3>مراجعة البيانات</h3></div></div>
+    <div class="card-body">
+      ${buildSummary([
+        {l:'الإدارة المسؤولة',v:'علاقات العملاء (CRM)'},
+        {l:'نوع الكيان',v:crmD.clientStatus==='lead'?'lead':'client'},
+        {l:'حالة العميل',v:statusLbl},
+        {l:'تصنيف العميل',v:typeLbl},
+        {l:'نوع الكيان',v:entityLbl},
+        {l:'الاسم / الشركة',v:crmD.crm_orgname||crmD.crm_name},
+        {l:'البريد الإلكتروني',v:crmD.crm_email},
+        {l:'رقم الجوال',v:crmD.crm_phone},
+        {l:'اسم المستخدم',v:crmD.crm_username},
+        {l:'المنطقة',v:crmD.crm_region},
+        {l:'القطاع',v:crmD.crm_sector},
+        {l:'المسؤول الميداني',v:crmD.crm_rep},
+      ])}
+      <div class="info-box ib-gold" style="margin-top:1rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        سيتم إرسال بيانات الدخول إلى <strong>${crmD.crm_email||'—'}</strong> بعد الحفظ
+      </div>
+    </div>
+  </div>`;
+}
+
+// Init
+hideAll();
+document.getElementById('portal').style.display='flex';
+</script>
+</body>
+</html>

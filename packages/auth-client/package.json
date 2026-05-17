@@ -1,0 +1,17 @@
+{
+  "name": "@platform/auth-client",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "next": "^16",
+    "react": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "next": "16.2.6",
+    "react": "19.2.4"
+  }
+}

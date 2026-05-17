@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة إدارة التقييم العقاري</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary:#0F3460;--primary-mid:#1A5276;--primary-light:#2E86C1;
+  --accent:#1ABC9C;--accent-dark:#148F77;
+  --sidebar:#0A2138;--surface:#FFFFFF;--surface2:#F4F7FB;--surface3:#EAF0F8;
+  --border:#D5E3F0;--border2:#BDD0E8;--text:#1A2B3C;--text2:#4A6272;--text3:#8FA8BC;
+  --success:#1ABC9C;--success-bg:#D5F5EF;--warning:#F39C12;--warning-bg:#FEF3D7;
+  --danger:#E74C3C;--danger-bg:#FADBD8;--info:#2980B9;--info-bg:#D6EAF8;
+  --purple:#8E44AD;--purple-bg:#EBD9F7;--orange:#D35400;--orange-bg:#FAE5D3;
+  --radius:8px;--radius-lg:14px;--shadow:0 1px 4px rgba(15,52,96,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--surface2);color:var(--text);font-size:13px;overflow:hidden;}
+#app{display:flex;height:100vh;}
+#sidebar{width:234px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#topbar{height:54px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;flex-shrink:0;box-shadow:var(--shadow);}
+#content{flex:1;overflow-y:auto;padding:22px;}
+.sb-brand{padding:16px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-brand-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.sb-icon{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sb-brand h1{font-size:11.5px;font-weight:600;color:#fff;line-height:1.4;}
+.sb-brand p{font-size:10px;color:rgba(255,255,255,.3);}
+.sb-role{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-role-lbl{font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+.sb-role select{width:100%;font-size:11px;padding:6px 8px;border-radius:var(--radius);background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.12);cursor:pointer;font-family:inherit;}
+.sb-role select option{background:#0F3460;}
+.sb-grp{padding:8px 0 2px;}
+.sb-grp-lbl{font-size:9px;font-weight:600;color:rgba(255,255,255,.22);text-transform:uppercase;letter-spacing:.08em;padding:4px 16px 2px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;cursor:pointer;color:rgba(255,255,255,.48);font-size:12px;border-right:3px solid transparent;transition:all .15s;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+.nav-item.active{background:rgba(26,188,156,.12);color:var(--accent);border-right-color:var(--accent);font-weight:500;}
+.nav-item.locked{opacity:.2;cursor:not-allowed;pointer-events:none;}
+.nav-item svg{width:14px;height:14px;flex-shrink:0;}
+.nav-badge{margin-right:auto;background:var(--danger);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:600;}
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-breadcrumb{font-size:11px;color:var(--text3);}
+.tb-title{font-size:14px;font-weight:600;color:var(--text);}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.user-chip{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 6px;}
+.avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.role-pill{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:500;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;border-top:3px solid var(--accent);}
+.stat-card.blue{border-top-color:var(--primary-light);}
+.stat-card.green{border-top-color:var(--success);}
+.stat-card.warn{border-top-color:var(--warning);}
+.stat-card.red{border-top-color:var(--danger);}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:7px;}
+.stat-value{font-size:26px;font-weight:700;color:var(--text);line-height:1;}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow);}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+.card-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px;}
+.card-body{padding:16px;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:11px;font-weight:500;color:var(--text2);padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;}
+.tbl td{font-size:12px;padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tbody tr:hover td{background:var(--surface2);cursor:pointer;}
+.id-cell{color:var(--primary-light)!important;font-weight:600;font-size:11px;}
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap;}
+.b-new{background:var(--info-bg);color:var(--info);}
+.b-prog{background:var(--warning-bg);color:var(--warning);}
+.b-done{background:var(--success-bg);color:var(--success);}
+.b-fail{background:var(--danger-bg);color:var(--danger);}
+.b-cancel{background:#EEF0F3;color:#6B7A8D;}
+.b-key{background:var(--orange-bg);color:var(--orange);}
+.b-survey{background:var(--purple-bg);color:var(--purple);}
+.b-int{background:var(--info-bg);color:var(--info);}
+.b-free{background:var(--warning-bg);color:var(--warning);}
+.b-ext{background:#EEF0F3;color:#6B7A8D;}
+.btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);transition:all .15s;font-weight:500;}
+.btn:hover{background:var(--surface2);}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+.btn-primary:hover{background:var(--primary-mid);}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success);}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger);}
+.btn-sm{font-size:11px;padding:4px 9px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px;display:block;}
+.form-control{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);transition:border-color .15s;}
+.form-control:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(41,128,185,.1);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.prog-wrap{background:var(--surface3);border-radius:4px;height:5px;overflow:hidden;}
+.prog-bar{height:100%;border-radius:4px;background:var(--primary-light);transition:width .4s;}
+.prog-bar.g{background:var(--success);}
+.prog-bar.o{background:var(--warning);}
+.prog-bar.r{background:var(--danger);}
+.track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.track-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.track-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
+.track-name{font-size:12px;font-weight:500;color:var(--text);}
+.track-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.tl-item{display:flex;gap:11px;padding:6px 0;}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--primary-light);margin-top:4px;flex-shrink:0;}
+.tl-dot.g{background:var(--success);}
+.tl-dot.o{background:var(--warning);}
+.tl-body{flex:1;border-bottom:1px solid var(--border);padding-bottom:6px;}
+.tl-item:last-child .tl-body{border-bottom:none;}
+.tl-action{font-size:12px;font-weight:500;color:var(--text);}
+.tl-meta{font-size:10px;color:var(--text3);margin-top:1px;}
+.msg-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.msg-item:hover{background:var(--surface2);}
+.msg-item.unread{background:#EBF5FF;}
+.msg-udot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;}
+.msg-content{flex:1;min-width:0;}
+.msg-from{font-size:12px;font-weight:600;color:var(--text);}
+.msg-dept{font-size:10px;color:var(--text3);}
+.msg-preview{font-size:11px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.msg-time{font-size:10px;color:var(--text3);white-space:nowrap;}
+.sec-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.note{padding:10px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:12px;border-right:3px solid;line-height:1.6;}
+.note-info{background:var(--info-bg);border-color:var(--info);color:#1a5276;}
+.note-warn{background:var(--warning-bg);border-color:var(--warning);color:#784212;}
+.note-success{background:var(--success-bg);border-color:var(--success);color:#0e6655;}
+.note-danger{background:var(--danger-bg);border-color:var(--danger);color:#922b21;}
+.kpi-lbl{font-size:11px;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;}
+.team-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;display:flex;align-items:center;gap:10px;}
+.team-info{flex:1;min-width:0;}
+.team-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.team-role{font-size:10px;color:var(--text3);margin-top:1px;}
+.team-count{font-size:22px;font-weight:700;color:var(--primary-light);min-width:30px;text-align:left;}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.tab{padding:8px 14px;cursor:pointer;font-size:12px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:500;}
+.doc-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.doc-row:last-child{border-bottom:none;}
+.doc-info{display:flex;align-items:center;gap:9px;}
+.doc-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.fail-card{background:var(--surface);border:1px solid var(--border);border-right:3px solid var(--danger);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;}
+.field-form{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;}
+.field-sec-title{font-size:11px;font-weight:600;color:var(--primary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.radio-group{display:flex;gap:12px;flex-wrap:wrap;margin-top:5px;}
+.radio-opt{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer;}
+.photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;}
+.photo-ph{aspect-ratio:1;background:var(--surface3);border:2px dashed var(--border2);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:10px;gap:4px;transition:all .15s;}
+.photo-ph:hover{border-color:var(--primary-light);color:var(--primary-light);}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-row">
+      <div class="sb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+      <h1>منصة التقييم العقاري</h1>
+    </div>
+    <p>إدارة سالم الغريب</p>
+  </div>
+  <div class="sb-role">
+    <div class="sb-role-lbl">تبديل الدور</div>
+    <select id="roleSelect" onchange="switchRole(this.value)">
+      <optgroup label="الإدارة">
+        <option value="general-manager">سالم الغريب — مدير الإدارة</option>
+        <option value="section-supervisor">عبدالرحمن النفيعي — مشرف دراسة الحالة</option>
+      </optgroup>
+      <optgroup label="قسم دراسة الحالة">
+        <option value="operations-coordinator">منسق العمليات</option>
+        <option value="case-specialist">أخصائي دراسة الحالة</option>
+        <option value="report-preparer">معد التقرير</option>
+        <option value="court-delegate">مندوب المحكمة</option>
+      </optgroup>
+      <optgroup label="قسم التقييم العقاري">
+        <option value="valuation-coordinator">منسق عمليات التقييم</option>
+        <option value="real-estate-appraiser">مقيم عقاري</option>
+        <option value="field-inspector">معاين ميداني</option>
+      </optgroup>
+      <optgroup label="المالية">
+        <option value="financial-officer">إيمان النهدي — موظف مالي</option>
+      </optgroup>
+    </select>
+  </div>
+  <nav id="nav"></nav>
+</div>
+<div id="main">
+  <div id="topbar">
+    <div class="tb-left">
+      <div class="tb-breadcrumb" id="tb-bc">الرئيسية</div>
+      <div class="tb-title" id="page-title">لوحة التحكم</div>
+    </div>
+    <div class="tb-right">
+      <div class="user-chip">
+        <div class="avatar" id="uav" style="background:var(--info-bg);color:var(--info)">سغ</div>
+        <div>
+          <div id="uname" style="font-size:12px;font-weight:500">سالم الغريب</div>
+          <div id="udept" style="font-size:10px;color:var(--text3)">مدير الإدارة</div>
+        </div>
+      </div>
+      <div class="role-pill b-new" id="rpill">مدير الإدارة</div>
+    </div>
+  </div>
+  <div id="content"></div>
+</div>
+</div>
+<script>
+const ROLES={
+  'general-manager':{name:'سالم الغريب',dept:'مدير الإدارة العام',init:'سغ',bg:'var(--info-bg)',tc:'var(--info)',pages:['dashboard','org','po','properties','assignment','survey','keys','failures','valuation-requests','field-form','messages','financial','kpi','users']},
+  'section-supervisor':{name:'عبدالرحمن النفيعي',dept:'مشرف قسم دراسة الحالة',init:'عن',bg:'var(--warning-bg)',tc:'var(--warning)',pages:['dashboard','org','po','properties','assignment','survey','keys','failures','valuation-requests','messages','financial','kpi','users']},
+  'operations-coordinator':{name:'منسق العمليات',dept:'قسم دراسة الحالة',init:'من',bg:'var(--purple-bg)',tc:'var(--purple)',pages:['dashboard','po','properties','assignment','survey','messages']},
+  'case-specialist':{name:'أسامة الصالحي',dept:'أخصائي دراسة الحالة',init:'أص',bg:'var(--success-bg)',tc:'var(--success)',pages:['dashboard','properties','failures','messages']},
+  'report-preparer':{name:'صالح الحبشي',dept:'معد التقرير',init:'صح',bg:'var(--success-bg)',tc:'var(--success)',pages:['dashboard','properties','messages']},
+  'court-delegate':{name:'فراس كمرين',dept:'مندوب المحكمة',init:'فك',bg:'var(--orange-bg)',tc:'var(--orange)',pages:['dashboard','keys','messages']},
+  'valuation-coordinator':{name:'منسق التقييم',dept:'قسم التقييم العقاري',init:'قت',bg:'var(--purple-bg)',tc:'var(--purple)',pages:['dashboard','valuation-requests','messages']},
+  'real-estate-appraiser':{name:'عبدالله الكثيري',dept:'مقيم عقاري',init:'عك',bg:'var(--info-bg)',tc:'var(--info)',pages:['dashboard','valuation-requests','messages']},
+  'field-inspector':{name:'أحمد سعيد',dept:'معاين ميداني',init:'أس',bg:'var(--info-bg)',tc:'var(--info)',pages:['dashboard','field-form','messages']},
+  'financial-officer':{name:'إيمان النهدي',dept:'موظف الشؤون المالية',init:'إن',bg:'var(--danger-bg)',tc:'var(--danger)',pages:['dashboard','financial','messages']},
+};
+const NAV=[
+  {id:'dashboard',label:'لوحة التحكم',icon:'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',grp:null},
+  {id:'org',label:'الهيكل التنظيمي',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',grp:null},
+  {id:'po',label:'أوامر العمل (PO)',icon:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',grp:'قسم دراسة الحالة'},
+  {id:'properties',label:'العقارات',icon:'M3 3h18v18H3z',grp:null},
+  {id:'assignment',label:'الإسناد والتوزيع',icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',grp:null},
+  {id:'survey',label:'الرفع المساحي',icon:'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z',grp:null},
+  {id:'keys',label:'المفاتيح',icon:'M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4',grp:null},
+  {id:'failures',label:'التعذرات',icon:'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z',grp:null,badge:'5'},
+  {id:'valuation-requests',label:'طلبات التقييم',icon:'M9 11l3 3L22 4',grp:'قسم التقييم العقاري'},
+  {id:'field-form',label:'نموذج المعاين',icon:'M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 0 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z',grp:null},
+  {id:'messages',label:'المراسلة الداخلية',icon:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',grp:'عام',badge:'3'},
+  {id:'financial',label:'التقارير المالية',icon:'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',grp:null},
+  {id:'kpi',label:'مؤشرات الأداء',icon:'M18 20V10M12 20V4M6 20v-6',grp:null},
+  {id:'users',label:'إدارة المستخدمين',icon:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',grp:null},
+];
+const PO=[
+  {id:'PO-2024-018',type:'قضائي',count:12,done:8,status:'progress',date:'2025-01-14',specialist:'أسامة الصالحي'},
+  {id:'PO-2024-017',type:'خاص',count:3,done:3,status:'done',date:'2025-01-13',specialist:'عمر الحمراني'},
+  {id:'PO-2024-016',type:'قضائي',count:27,done:14,status:'progress',date:'2025-01-12',specialist:'أيمن مجرشي'},
+  {id:'PO-2024-015',type:'خاص',count:1,done:1,status:'done',date:'2025-01-11',specialist:'وليد باشماخ'},
+];
+const PROPS=[
+  {id:'E-4401',po:'PO-2024-018',area:'مكة المكرمة',type:'أرض',key:false,survey:'done',val:'done',study:'progress',status:'progress',specialist:'أسامة الصالحي',preparer:'صالح الحبشي'},
+  {id:'E-4402',po:'PO-2024-018',area:'مكة المكرمة',type:'شقة',key:true,survey:'progress',val:'progress',study:'new',status:'progress',specialist:'أسامة الصالحي',preparer:'أيمن بن محفوظ'},
+  {id:'E-4403',po:'PO-2024-016',area:'جدة',type:'فيلا',key:true,survey:'done',val:'done',study:'done',status:'done',specialist:'أيمن مجرشي',preparer:'صالح الحبشي'},
+  {id:'E-4404',po:'PO-2024-016',area:'جدة',type:'أرض',key:false,survey:'new',val:'new',study:'new',status:'new',specialist:'أيمن مجرشي',preparer:'أيمن بن محفوظ'},
+  {id:'E-4405',po:'PO-2024-016',area:'الطائف',type:'عمارة',key:false,survey:'progress',val:'progress',study:'new',status:'progress',specialist:'وليد باشماخ',preparer:'صالح الحبشي'},
+  {id:'E-4406',po:'PO-2024-018',area:'مكة المكرمة',type:'محل',key:false,survey:'done',val:'new',study:'new',status:'progress',specialist:'عمر الحمراني',preparer:'أيمن بن محفوظ'},
+  {id:'E-4407',po:'PO-2024-016',area:'جدة',type:'أرض',key:true,survey:'new',val:'new',study:'fail',status:'fail',specialist:'أيمن مجرشي',preparer:'صالح الحبشي'},
+];
+const VR=[
+  {id:'VR-441',propId:'E-4401',area:'مكة المكرمة',type:'أرض',appraiser:'عبدالله الكثيري',status:'done',date:'2025-01-13'},
+  {id:'VR-442',propId:'E-4402',area:'مكة المكرمة',type:'شقة',appraiser:'محمد العساف',status:'progress',date:'2025-01-14'},
+  {id:'VR-443',propId:'E-4403',area:'جدة',type:'فيلا',appraiser:'عبدالله الكثيري',status:'done',date:'2025-01-12'},
+  {id:'VR-444',propId:'E-4405',area:'الطائف',type:'عمارة',appraiser:'محمد العساف',status:'progress',date:'2025-01-14'},
+];
+const STAFF=[
+  {name:'عبدالرحمن النفيعي',role:'مشرف قسم دراسة الحالة',email:'abdulrahman.nafiei@company.com',type:'internal'},
+  {name:'عبدالله البسيوني',role:'منسق العمليات',email:'abdullah.basyouni@company.com',type:'internal'},
+  {name:'أسامة الصالحي',role:'أخصائي دراسة الحالة',email:'osama.salehi@company.com',type:'internal'},
+  {name:'عمر الحمراني',role:'أخصائي دراسة الحالة',email:'omar.hamrani@company.com',type:'internal'},
+  {name:'أيمن مجرشي',role:'أخصائي دراسة الحالة',email:'ayman.magrshi@company.com',type:'internal'},
+  {name:'وليد باشماخ',role:'أخصائي دراسة الحالة',email:'walid.bashmakh@company.com',type:'internal'},
+  {name:'صالح الحبشي',role:'معد التقرير',email:'saleh.habshi@company.com',type:'internal'},
+  {name:'أيمن بن محفوظ',role:'معد التقرير',email:'ayman.mahmoud@company.com',type:'internal'},
+  {name:'فراس كمرين',role:'مندوب المحكمة',email:'feras.kamreen@company.com',type:'internal'},
+  {name:'خالد الشريف',role:'مندوب المحكمة',email:'khaled.sharif@company.com',type:'internal'},
+  {name:'إيمان النهدي',role:'موظف الشؤون المالية',email:'eman.nahdi@company.com',type:'internal'},
+  {name:'عبدالله الكثيري',role:'مقيم عقاري',email:'abdullah.kathiri@company.com',type:'internal'},
+  {name:'محمد العساف',role:'مقيم عقاري',email:'mohammed.assaf@company.com',type:'internal'},
+  {name:'أحمد سعيد',role:'معاين ميداني — مكة المكرمة',email:'ahmed.saeed@company.com',type:'internal'},
+  {name:'عبدالله عبدالمانع',role:'معاين ميداني — جدة',email:'abdullah.abdelmani@company.com',type:'internal'},
+  {name:'حسن عطية',role:'معاين ميداني — الطائف',email:'hassan.atiya@company.com',type:'freelance'},
+  {name:'مكتب الرياض الهندسي',role:'مكتب هندسي معتمد',email:'info@riyadheng.sa',type:'external'},
+];
+let role='general-manager',page='dashboard',ptab=0;
+const isViewOnly=()=>role==='general-manager';
+const ic=(d,s=14)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+function sb(s){const m={new:['جديد','b-new'],progress:['قيد التنفيذ','b-prog'],done:['مكتمل','b-done'],fail:['متعذر','b-fail'],review:['قيد المراجعة','b-prog'],approved:['معتمد','b-done']};const[l,c]=m[s]||['—','b-cancel'];return`<span class="badge ${c}">${l}</span>`;}
+function tb(s){const m={new:['لم يبدأ','b-cancel'],progress:['جارٍ','b-prog'],done:['مكتمل','b-done'],fail:['متعذر','b-fail']};const[l,c]=m[s]||['—','b-cancel'];return`<span class="badge ${c}">${l}</span>`;}
+function switchRole(r){
+  role=r;const d=ROLES[r];
+  document.getElementById('uname').textContent=d.name;
+  document.getElementById('udept').textContent=d.dept;
+  document.getElementById('rpill').textContent=d.dept;
+  document.getElementById('uav').textContent=d.init;
+  document.getElementById('uav').style.background=d.bg;
+  document.getElementById('uav').style.color=d.tc;
+  renderNav();
+  if(!ROLES[r].pages.includes(page))page='dashboard';
+  nav(page);
+}
+function renderNav(){
+  const al=ROLES[role].pages;let h='',lg=null;
+  NAV.forEach(item=>{
+    if(item.grp&&item.grp!==lg){if(lg)h+='</div>';h+=`<div class="sb-grp"><div class="sb-grp-lbl">${item.grp}</div>`;lg=item.grp;}
+    const ac=page===item.id?'active':'',lk=!al.includes(item.id)?'locked':'',cl=lk?'':`onclick="nav('${item.id}')"`;
+    const bd=item.badge&&al.includes(item.id)?`<span class="nav-badge">${item.badge}</span>`:'';
+    h+=`<div class="nav-item ${ac} ${lk}" ${cl}>${ic(item.icon,13)}<span>${item.label}</span>${bd}</div>`;
+  });
+  if(lg)h+='</div>';
+  document.getElementById('nav').innerHTML=h;
+}
+function nav(p){
+  if(!ROLES[role].pages.includes(p))return;
+  page=p;
+  const T={dashboard:'لوحة التحكم',org:'الهيكل التنظيمي',po:'أوامر العمل',properties:'العقارات',assignment:'الإسناد والتوزيع',survey:'الرفع المساحي',keys:'المفاتيح',failures:'التعذرات','valuation-requests':'طلبات التقييم','field-form':'نموذج المعاين',messages:'المراسلة',financial:'التقارير المالية',kpi:'مؤشرات الأداء',users:'إدارة المستخدمين'};
+  const B={dashboard:'الرئيسية',org:'الرئيسية',po:'دراسة الحالة',properties:'دراسة الحالة',assignment:'دراسة الحالة',survey:'دراسة الحالة',keys:'دراسة الحالة',failures:'دراسة الحالة','valuation-requests':'التقييم العقاري','field-form':'التقييم العقاري',messages:'عام',financial:'المالية',kpi:'الإدارة',users:'الإدارة'};
+  document.getElementById('page-title').textContent=T[p]||p;
+  document.getElementById('tb-bc').textContent=B[p]||'';
+  renderNav();
+  const pages={dashboard:pgDash,org:pgOrg,po:pgPO,properties:pgProps,assignment:pgAssign,survey:pgSurvey,keys:pgKeys,failures:pgFail,'valuation-requests':pgVal,'field-form':pgField,messages:pgMsg,financial:pgFin,kpi:pgKPI,users:pgUsers};
+  document.getElementById('content').innerHTML=(pages[p]||(() => ''))();
+}
+
+function pgDash(){
+  const mgr=['general-manager','section-supervisor','operations-coordinator'].includes(role);
+  return`<div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">عقارات نشطة اليوم</div><div class="stat-value">43</div><div class="stat-sub">هدف 40–50 يومياً</div></div>
+    <div class="stat-card warn"><div class="stat-label">قيد التنفيذ</div><div class="stat-value">28</div><div class="stat-sub">8 تنتهي اليوم</div></div>
+    <div class="stat-card green"><div class="stat-label">مكتملة هذا الأسبوع</div><div class="stat-value">134</div><div class="stat-sub">↑ 9% عن الأسبوع الماضي</div></div>
+    <div class="stat-card red"><div class="stat-label">تعذرات مفتوحة</div><div class="stat-value">5</div><div class="stat-sub">تحتاج مراجعة</div></div>
+  </div>
+  ${mgr?`<div class="grid-2" style="margin-bottom:16px">
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">أوامر العمل النشطة</span><button class="btn btn-sm" onclick="nav('po')">عرض الكل</button></div>
+    <table class="tbl"><thead><tr><th>PO</th><th>النوع</th><th>التقدم</th><th>الحالة</th></tr></thead><tbody>
+    ${PO.filter(p=>p.status==='progress').map(p=>`<tr onclick="nav('po')"><td class="id-cell">${p.id}</td><td><span class="badge ${p.type==='قضائي'?'b-survey':'b-key'}">${p.type}</span></td><td style="min-width:100px"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">${p.done}/${p.count}</div><div class="prog-wrap"><div class="prog-bar" style="width:${Math.round(p.done/p.count*100)}%"></div></div></td><td>${sb(p.status)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">طلبات التقييم الأخيرة</span><button class="btn btn-sm" onclick="nav('valuation-requests')">عرض الكل</button></div>
+    <table class="tbl"><thead><tr><th>الطلب</th><th>العقار</th><th>المقيم</th><th>الحالة</th></tr></thead><tbody>
+    ${VR.map(v=>`<tr><td class="id-cell">${v.id}</td><td>${v.propId}</td><td style="font-size:11px">${v.appraiser}</td><td>${sb(v.status)}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>`:''}
+  <div class="sec-title">الفريق الميداني — مزودو الخدمة الداخليين</div>
+  <div class="note note-info">المعاينون والمقيمون يتبعون قسم التقييم العقاري ويخدمون القسمين كمورد مشترك</div>
+  <div class="grid-3">
+    ${[['أس','أحمد سعيد','معاين — مكة المكرمة','internal',9],['عم','عبدالله عبدالمانع','معاين — جدة','internal',11],['حع','حسن عطية','معاين — الطائف (متعاون)','freelance',7],['عك','عبدالله الكثيري','مقيم عقاري','internal',8],['مع','محمد العساف','مقيم عقاري','internal',6],['هـ','مكاتب هندسية','4 مكاتب معتمدة','external',16]].map(([i,n,r,t,c])=>`
+    <div class="team-card"><div class="avatar" style="background:var(--${t==='internal'?'info':t==='freelance'?'warning':'success'}-bg);color:var(--${t==='internal'?'info':t==='freelance'?'warning':'success'});width:34px;height:34px;font-size:11px">${i}</div><div class="team-info"><div class="team-name">${n}</div><div class="team-role">${r}</div></div><div class="team-count">${c}</div></div>`).join('')}
+  </div>`;
+}
+
+function pgOrg(){
+  return`<div class="note note-info">الهيكل التنظيمي المعتمد — المقيمون والمعاينون يتبعون قسم التقييم العقاري ويخدمون القسمين كمزودي خدمة داخليين</div>
+  <div class="card"><div class="card-header"><span class="card-title">هيكل إدارة التقييم العقاري</span></div>
+  <div class="card-body" style="overflow-x:auto">
+    <div style="display:flex;flex-direction:column;align-items:center;min-width:720px;gap:0">
+      <div style="background:var(--primary);border-radius:var(--radius-lg);padding:12px 28px;text-align:center">
+        <div style="color:#fff;font-weight:600;font-size:13px">سالم الغريب</div>
+        <div style="color:rgba(255,255,255,.55);font-size:11px;margin-top:2px">مدير إدارة التقييم العقاري</div>
+      </div>
+      <div style="width:2px;height:28px;background:var(--border2)"></div>
+      <div style="display:flex;gap:48px;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div style="background:var(--primary-mid);border-radius:var(--radius-lg);padding:10px 20px;text-align:center;min-width:180px">
+            <div style="color:#fff;font-weight:600;font-size:12px">قسم دراسة الحالة</div>
+            <div style="color:rgba(255,255,255,.55);font-size:10px;margin-top:2px">عبدالرحمن النفيعي</div>
+          </div>
+          <div style="width:2px;height:20px;background:var(--border2)"></div>
+          <div style="display:flex;gap:8px">
+            ${['منسق العمليات','أخصائي (×4)','معد التقرير (×2)','مندوب المحكمة (×2)'].map(r=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;text-align:center;min-width:90px"><div style="font-size:11px;font-weight:500;color:var(--text)">${r}</div></div>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div style="background:var(--accent-dark);border-radius:var(--radius-lg);padding:10px 20px;text-align:center;min-width:180px">
+            <div style="color:#fff;font-weight:600;font-size:12px">قسم التقييم العقاري</div>
+            <div style="color:rgba(255,255,255,.55);font-size:10px;margin-top:2px">منسق عمليات التقييم</div>
+          </div>
+          <div style="width:2px;height:20px;background:var(--border2)"></div>
+          <div style="display:flex;gap:8px">
+            ${['مقيمون عقاريون','معاينون ميدانيون'].map(r=>`<div style="background:var(--success-bg);border:1px solid var(--success);border-radius:var(--radius);padding:7px 12px;text-align:center;min-width:130px"><div style="font-size:11px;font-weight:500;color:var(--success)">${r}</div><div style="font-size:10px;color:var(--text3);margin-top:2px">مورد مشترك</div></div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:24px;padding:12px 20px;background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--radius-lg);text-align:center;max-width:460px">
+        <div style="font-size:11px;color:var(--text2);line-height:1.8">
+          دراسة الحالة تطلب التقييم عبر النظام ←<br>
+          التقييم يسلّم التقارير عبر النظام<br>
+          <strong style="color:var(--primary)">لا تبعية إدارية بين القسمين — علاقة خدمة داخلية</strong>
+        </div>
+      </div>
+    </div>
+  </div></div>`;
+}
+
+function pgPO(){
+  return`<div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">PO نشطة</div><div class="stat-value">7</div></div>
+    <div class="stat-card green"><div class="stat-label">مكتملة هذا الشهر</div><div class="stat-value">23</div></div>
+    <div class="stat-card warn"><div class="stat-label">عقارات نشطة</div><div class="stat-value">43</div></div>
+    <div class="stat-card"><div class="stat-label">متوسط العقارات/PO</div><div class="stat-value">8.6</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">أوامر العمل الواردة من إنفاذ</span>${!isViewOnly()?'<button class="btn btn-sm btn-primary">+ استلام PO جديد</button>':''}</div>
+  <table class="tbl"><thead><tr><th>رقم PO</th><th>نوع الإسناد</th><th>العقارات</th><th>المكتملة</th><th>التقدم</th><th>الحالة</th><th>تاريخ الاستلام</th><th>الأخصائي</th></tr></thead><tbody>
+  ${PO.map(p=>`<tr onclick="showPO('${p.id}')"><td class="id-cell">${p.id}</td><td><span class="badge ${p.type==='قضائي'?'b-survey':'b-key'}">${p.type}</span></td><td>${p.count}</td><td>${p.done}</td><td style="min-width:110px"><div class="prog-wrap"><div class="prog-bar ${p.status==='done'?'g':''}" style="width:${Math.round(p.done/p.count*100)}%"></div></div></td><td>${sb(p.status)}</td><td style="color:var(--text3);font-size:11px">${p.date}</td><td style="font-size:11px">${p.specialist}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function showPO(id){
+  const p=PO.find(x=>x.id===id),pr=PROPS.filter(x=>x.po===id);
+  document.getElementById('content').innerHTML=`
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button class="btn btn-sm" onclick="nav('po')">← رجوع</button>
+    <span style="font-size:15px;font-weight:600">${p.id}</span>
+    <span class="badge ${p.type==='قضائي'?'b-survey':'b-key'}">${p.type}</span>${sb(p.status)}
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">إجمالي العقارات</div><div class="stat-value">${p.count}</div></div>
+    <div class="stat-card green"><div class="stat-label">مكتملة</div><div class="stat-value">${p.done}</div></div>
+    <div class="stat-card warn"><div class="stat-label">قيد التنفيذ</div><div class="stat-value">${p.count-p.done}</div></div>
+    <div class="stat-card"><div class="stat-label">تاريخ الاستلام</div><div class="stat-value" style="font-size:16px">${p.date}</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">عقارات ${p.id}</span></div>
+  <table class="tbl"><thead><tr><th>رقم العقار</th><th>المنطقة</th><th>النوع</th><th>مفتاح</th><th>رفع مساحي</th><th>تقييم</th><th>دراسة الحالة</th><th>الحالة</th></tr></thead><tbody>
+  ${pr.map(x=>`<tr onclick="showProp('${x.id}')"><td class="id-cell">${x.id}</td><td>${x.area}</td><td>${x.type}</td><td>${x.key?'<span class="badge b-key">نعم</span>':'—'}</td><td>${tb(x.survey)}</td><td>${tb(x.val)}</td><td>${tb(x.study)}</td><td>${sb(x.status)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function pgProps(){
+  return`<div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">إجمالي العقارات</div><div class="stat-value">${PROPS.length}</div></div>
+    <div class="stat-card green"><div class="stat-label">مكتملة</div><div class="stat-value">${PROPS.filter(p=>p.status==='done').length}</div></div>
+    <div class="stat-card warn"><div class="stat-label">قيد التنفيذ</div><div class="stat-value">${PROPS.filter(p=>p.status==='progress').length}</div></div>
+    <div class="stat-card red"><div class="stat-label">متعذرة</div><div class="stat-value">${PROPS.filter(p=>p.status==='fail').length}</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">جميع العقارات</span>
+    <div style="display:flex;gap:8px">
+      <select class="form-control" style="width:auto;font-size:11px"><option>جميع المناطق</option><option>مكة المكرمة</option><option>جدة</option><option>الطائف</option></select>
+      <select class="form-control" style="width:auto;font-size:11px"><option>جميع الحالات</option><option>جديد</option><option>قيد التنفيذ</option><option>مكتمل</option></select>
+    </div>
+  </div>
+  <table class="tbl"><thead><tr><th>رقم العقار</th><th>PO</th><th>المنطقة</th><th>النوع</th><th>مفتاح</th><th>رفع مساحي</th><th>تقييم</th><th>دراسة الحالة</th><th>الأخصائي</th><th>الحالة</th></tr></thead><tbody>
+  ${PROPS.map(p=>`<tr onclick="showProp('${p.id}')"><td class="id-cell">${p.id}</td><td style="color:var(--primary-light);font-size:11px">${p.po}</td><td>${p.area}</td><td>${p.type}</td><td>${p.key?'<span class="badge b-key">نعم</span>':'—'}</td><td>${tb(p.survey)}</td><td>${tb(p.val)}</td><td>${tb(p.study)}</td><td style="font-size:11px">${p.specialist}</td><td>${sb(p.status)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function showProp(id,tab=0){
+  ptab=tab;const p=PROPS.find(x=>x.id===id);
+  const tabs=['المعلومات','المسارات','التقارير','نموذج دراسة الحالة','السجل الزمني'];
+
+  // ── CASE STUDY FORM DATA ──
+  const DEED_Q=['هل الصك فعال','هل رقم القطعة مطابق للصك.','هل رقم المخطط مطابق للصك.','هل القطعة زائدة تنظيمية.','هل يوجد نزع على منطقة العقار.','هل الأرض موقوفة','هل العقاروقوف.','هل تم التأكد من استخدام العقار(سكني – تجاري – ...).','هل تم الاستعلام من وزارة الزراعة حيال الأرض الزراعية.','هل الصك مشاع.','في حال ان الصك مشاع هل المساحة المملوكة بالصك لكامل مساحة العقار او لجزء محدد وتحديد النسبة في الملاحظات.'];
+  const SURVEY_Q=['هل الصك مطابق للرفع المساحي.','هل تم ذكر جميع الاختلافات في الرفع المساحي.','هل تم تطبيق جميع التعليمات الصادرة من المركز في الرفع المساحي.','هل تم التوقيع وارفاق إقرار على صحة الموقع.','هل يوجد تداخل في الأصل.','هل يوجد على الأصل مبنى مشترك.','هل ذكر المرجع المعتمد في الاستدلال على استخدام العقار.'];
+  const COMP_Q=['هل يوجد في العقار بئر.','هل يوجد في العقار غرفة كهرباء.','هل يوجد في العقار أبراج كهرباء.','هل يوجد في العقار أبراج اتصالات.','هل يوجد في العقار مضخة دفاع مدني.','هل يوجد في العقار منقولات.','هل يوجد في العقار مركبات.','هل يوجد في العقار معدات زراعية او موجودات حيوية.','هل تم مطابقة مكونات العقار على الطبيعة مع المكونات المذكورة في الصك. (للأصول المجمدة)'];
+  const OCC_Q=['هل العقار مأهول بالسكن.','هل يوجد عقد إيجار.','هل تم مطابقة رقم الصك بالمذكوربعقد الإيجار.','هل عقد الإيجار ساري.','هل عقد الإيجار إلكتروني.','هل يوجد اتحاد ملاك؟'];
+  const EXTRA_Q=['هل تم ذكر جميع الملاحظات للتوضيح في حال عدم المطابقة','هل يوجد ملاحظات فنية قد تؤثر على قيمة العقار','هل هناك أي عوامل بيئية أوتنظيمية قد تؤثر على العقار(مثل طريق مستقبلي أو قيود بناء).','هل العقاريحتوي على أي إضافات غير مسجلة في الصك.'];
+  const FA={}; // form answers for this property
+
+  function csRow(q,key,colA,colB){
+    return`<tr>
+      <td style="font-size:12px;line-height:1.5;color:var(--text)">${q}</td>
+      <td style="text-align:center;width:90px"><div style="display:flex;justify-content:center"><div id="cb_${key}_A" onclick="csTog('${key}','A')" style="width:20px;height:20px;border:2px solid var(--border2);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--surface)"></div></div></td>
+      <td style="text-align:center;width:110px"><div style="display:flex;justify-content:center"><div id="cb_${key}_B" onclick="csTog('${key}','B')" style="width:20px;height:20px;border:2px solid var(--border2);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--surface)"></div></div></td>
+    </tr>`;
+  }
+  function csTog(key,val){
+    FA[key]=FA[key]===val?null:val;
+    ['A','B'].forEach(v=>{
+      const el=document.getElementById(`cb_${key}_${v}`);
+      if(!el)return;
+      if(FA[key]===v){el.style.background='var(--primary)';el.style.borderColor='var(--primary)';el.innerHTML='<span style="color:#fff;font-size:12px;font-weight:700">✓</span>';}
+      else{el.style.background='var(--surface)';el.style.borderColor='var(--border2)';el.innerHTML='';}
+    });
+    // update progress
+    const total=DEED_Q.length+SURVEY_Q.length+COMP_Q.length+OCC_Q.length+EXTRA_Q.length;
+    const done=Object.values(FA).filter(v=>v).length;
+    const pct=Math.round(done/total*100);
+    const bar=document.getElementById('cs-prog-bar');
+    const lbl=document.getElementById('cs-prog-lbl');
+    if(bar)bar.style.width=pct+'%';
+    if(lbl)lbl.textContent=done+'/'+total+' ('+pct+'%)';
+  }
+  window.csTog=csTog;
+
+  function csSection(title,icon,qs,prefix,colA,colB){
+    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)">
+      <div style="padding:11px 16px;background:var(--primary);display:flex;align-items:center;gap:8px">
+        <div style="width:26px;height:26px;background:rgba(255,255,255,.15);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px">${icon}</div>
+        <span style="color:#fff;font-size:12px;font-weight:600">${title}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="font-size:11px;font-weight:500;color:var(--text2);padding:7px 14px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:right">الأسئلة</th>
+          <th style="font-size:11px;font-weight:500;color:var(--text2);padding:7px 14px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:center;width:90px">${colA}</th>
+          <th style="font-size:11px;font-weight:500;color:var(--text2);padding:7px 14px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:center;width:110px">${colB}</th>
+        </tr></thead>
+        <tbody>${qs.map((q,i)=>csRow(q,prefix+'_'+i,colA,colB)).join('')}</tbody>
+      </table>
+      <div style="padding:10px 14px;background:var(--warning-bg);border-top:1px solid var(--border)">
+        <div style="font-size:10px;color:#784212;margin-bottom:4px">الملاحظات</div>
+        <textarea style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:11px;font-family:inherit;resize:vertical;min-height:50px;background:var(--surface)" placeholder="في حال وجود اختلاف في البيانات أعلاه يتم التوضيح هنا..."></textarea>
+      </div>
+    </div>`;
+  }
+
+  const csForm=`
+    <div style="padding:10px 14px;background:var(--info-bg);border-radius:var(--radius);border-right:3px solid var(--info);font-size:11px;color:#1a5276;margin-bottom:14px">
+      نموذج دراسة الحالة للعقار ${p.id} — ${p.type} — ${p.area}
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:500;color:var(--text2)">تقدم اكتمال النموذج</span>
+        <span id="cs-prog-lbl" style="font-size:11px;color:var(--text3)">0/${DEED_Q.length+SURVEY_Q.length+COMP_Q.length+OCC_Q.length+EXTRA_Q.length} (0%)</span>
+      </div>
+      <div style="background:var(--surface3);border-radius:4px;height:6px;overflow:hidden">
+        <div id="cs-prog-bar" style="height:100%;border-radius:4px;background:var(--primary-light);width:0%;transition:width .3s"></div>
+      </div>
+    </div>
+    ${csSection('بيانات الصك والعقار','📄',DEED_Q,'deed','فعال / مطابق / نعم','غير فعال / لا')}
+    ${csSection('الرفع المساحي والطبيعة','🗺️',SURVEY_Q,'survey','تم التطبيق','لم يتم التطبيق')}
+    ${csSection('مكونات العقار','🏠',COMP_Q,'comp','يوجد','لا يوجد')}
+    ${csSection('الإشغال والإيجار','🔑',OCC_Q,'occ','نعم','لا')}
+    ${csSection('ملاحظات إضافية','📝',EXTRA_Q,'extra','يوجد','لا يوجد')}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px">
+      <div style="padding:11px 16px;background:var(--accent-dark);display:flex;align-items:center;gap:8px">
+        <span style="color:#fff;font-size:12px;font-weight:600">✍️ الاعتماد والتوقيع</span>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.6;padding:8px 12px;background:var(--info-bg);border-radius:var(--radius)">
+          نقرر بصحة ما ورد في النموذج أعلاه مع تحمل كافة المسؤولية نحو ذلك.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">معتمد التقرير</div><input style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit" placeholder="الاسم الكامل"></div>
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">التاريخ</div><input type="date" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit" value="2026-05-14"></div>
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">رقم الصك</div><input style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit" value="${p.id}" readonly style="background:var(--surface3)"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px">
+      <button class="btn btn-sm" onclick="alert('تم حفظ المسودة')">💾 حفظ مسودة</button>
+      <button class="btn btn-sm btn-primary" onclick="alert('تم رفع نموذج دراسة الحالة للنظام')">✅ رفع النموذج</button>
+    </div>`;
+
+  const tc=[
+    `<div class="form-row"><div><div class="form-label">رقم العقار</div><div class="form-control" style="background:var(--surface2)">${p.id}</div></div><div><div class="form-label">PO</div><div class="form-control" style="background:var(--surface2)">${p.po}</div></div><div><div class="form-label">المنطقة</div><div class="form-control" style="background:var(--surface2)">${p.area}</div></div><div><div class="form-label">نوع العقار</div><div class="form-control" style="background:var(--surface2)">${p.type}</div></div></div>
+    <div style="margin-top:10px;display:flex;gap:10px;align-items:center"><div class="form-label" style="margin-bottom:0">يحتاج مفتاح:</div>${p.key?'<span class="badge b-key">نعم — يُستلم من المحكمة</span>':'<span class="badge b-cancel">لا</span>'}</div>
+    <div class="divider"></div><div class="form-label">الفريق المسؤول</div>
+    <div class="grid-3" style="margin-top:8px">
+      <div class="track-card"><div class="track-title">الأخصائي</div><div class="track-name">${p.specialist}</div><div class="track-sub">قسم دراسة الحالة</div></div>
+      <div class="track-card"><div class="track-title">معد التقرير</div><div class="track-name">${p.preparer}</div><div class="track-sub">توزيع تلقائي</div></div>
+      <div class="track-card"><div class="track-title">المعاين الميداني</div><div class="track-name">${p.area==='جدة'?'عبدالله عبدالمانع':p.area==='الطائف'?'حسن عطية':'أحمد سعيد'}</div><div class="track-sub">مزود خدمة داخلي</div></div>
+    </div>`,
+
+    `<div class="note note-warn">المسارات الثلاثة تسير بالتوازي — لا ينتظر أحدها اكتمال الآخر</div>
+    <div class="track-grid">
+      <div class="track-card"><div class="track-title">الرفع المساحي</div><div class="track-name" style="margin-bottom:5px">${tb(p.survey)}</div><div class="track-sub">مكتب الرياض الهندسي</div></div>
+      <div class="track-card"><div class="track-title">المفتاح ${!p.key?'(لا ينطبق)':''}</div><div class="track-name" style="margin-bottom:5px">${p.key?tb('progress'):'<span class="badge b-cancel">أرض</span>'}</div><div class="track-sub">${p.key?'فراس كمرين':'—'}</div></div>
+      <div class="track-card"><div class="track-title">التقييم الميداني</div><div class="track-name" style="margin-bottom:5px">${tb(p.val)}</div><div class="track-sub">عبدالله الكثيري</div></div>
+    </div>
+    <div class="track-card"><div class="track-title">دراسة الحالة — المرحلة النهائية</div><div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between"><div>${tb(p.study)}</div><div style="font-size:11px;color:var(--text3)">تبدأ بعد اكتمال المسارات أعلاه</div></div></div>`,
+
+    `<div class="note note-warn">ثلاثة مستندات مطلوبة للرفع على منصة إنفاذ</div>
+    <div class="doc-row"><div class="doc-info"><div class="doc-icon" style="background:var(--info-bg);color:var(--info)">📄</div><div><div style="font-size:12px;font-weight:500">تقرير دراسة الحالة</div><div style="font-size:11px;color:var(--text3)">PDF من إنفاذ — يُعدّه الأخصائي ومعد التقرير</div></div></div><div style="display:flex;align-items:center;gap:8px">${p.study==='done'?'<span class="badge b-done">مرفوع</span>':'<span class="badge b-cancel">لم يُرفع</span>'}<button class="btn btn-sm">رفع</button></div></div>
+    <div class="doc-row"><div class="doc-info"><div class="doc-icon" style="background:var(--success-bg);color:var(--success)">📊</div><div><div style="font-size:12px;font-weight:500">تقرير التقييم العقاري</div><div style="font-size:11px;color:var(--text3)">مُنتَج عبر برنامج مقياس — يرفعه المقيم</div></div></div><div style="display:flex;align-items:center;gap:8px">${p.val==='done'?'<span class="badge b-done">مرفوع</span>':'<span class="badge b-cancel">لم يُرفع</span>'}<button class="btn btn-sm">رفع</button></div></div>
+    <div class="doc-row"><div class="doc-info"><div class="doc-icon" style="background:var(--purple-bg);color:var(--purple)">🗺️</div><div><div style="font-size:12px;font-weight:500">تقرير الرفع المساحي</div><div style="font-size:11px;color:var(--text3)">مُنتَج من المكتب الهندسي</div></div></div><div style="display:flex;align-items:center;gap:8px">${p.survey==='done'?'<span class="badge b-done">مرفوع</span>':'<span class="badge b-cancel">لم يُرفع</span>'}<button class="btn btn-sm">رفع</button></div></div>
+    <div class="divider"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:12px;font-weight:500">الرفع على منصة إنفاذ</div><div style="font-size:11px;color:var(--text3)">يتطلب اكتمال الثلاثة مستندات</div></div><button class="btn btn-primary btn-sm" ${p.status!=='done'?'disabled style="opacity:.4"':''}>رفع على إنفاذ</button></div>`,
+
+    `<div class="tl-item"><div class="tl-dot g"></div><div class="tl-body"><div class="tl-action">استُلم ضمن ${p.po}</div><div class="tl-meta">منسق العمليات — 2025-01-12 09:15</div></div></div>
+    <div class="tl-item"><div class="tl-dot g"></div><div class="tl-body"><div class="tl-action">أُسند إلى ${p.specialist}</div><div class="tl-meta">منسق العمليات — 2025-01-12 09:22</div></div></div>
+    <div class="tl-item"><div class="tl-dot g"></div><div class="tl-body"><div class="tl-action">أُرسل طلب تقييم لقسم التقييم العقاري</div><div class="tl-meta">النظام تلقائياً — 2025-01-12 09:23</div></div></div>
+    <div class="tl-item"><div class="tl-dot g"></div><div class="tl-body"><div class="tl-action">أُرسل للرفع المساحي — مكتب الرياض الهندسي</div><div class="tl-meta">منسق العمليات — 2025-01-12 10:00</div></div></div>
+    ${p.key?`<div class="tl-item"><div class="tl-dot"></div><div class="tl-body"><div class="tl-action">طلب استلام المفتاح من المحكمة</div><div class="tl-meta">فراس كمرين — 2025-01-13 08:30</div></div></div>`:''}
+    <div class="tl-item"><div class="tl-dot ${p.survey==='done'?'g':'o'}"></div><div class="tl-body"><div class="tl-action">الرفع المساحي: ${p.survey==='done'?'مكتمل':'قيد التنفيذ'}</div><div class="tl-meta">${p.survey==='done'?'مكتب الرياض الهندسي — 2025-01-14 14:00':'جارٍ...'}</div></div></div>`,
+  ];
+  // insert case study form as tab index 3, timeline becomes index 4
+  tc.splice(3,0,csForm);
+  document.getElementById('content').innerHTML=`
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button class="btn btn-sm" onclick="nav('properties')">← رجوع</button>
+    <span style="font-size:15px;font-weight:600">${p.id}</span>
+    <span class="badge b-cancel">${p.type}</span><span class="badge b-cancel">${p.area}</span>${sb(p.status)}
+    ${p.status==='fail'?`<button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger)" onclick="nav('failures')">عرض التعذر</button>`:''}
+  </div>
+  <div class="card">
+    <div style="padding:0 16px;border-bottom:1px solid var(--border)">
+      <div class="tabs" style="margin-bottom:0">
+        ${tabs.map((t,i)=>`<div class="tab ${ptab===i?'active':''}" onclick="showProp('${p.id}',${i})">${t}</div>`).join('')}
+      </div>
+    </div>
+    <div class="card-body">${tc[tab]}</div>
+  </div>`;
+}
+
+function pgAssign(){
+  return`<div class="note note-warn">التوزيع التلقائي: الأقل حملاً ← نوع الإسناد ← الأخصائي المرتبط ← الأقل إجمالاً</div>
+  <div class="grid-2">
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">إسناد عقار جديد</span></div><div class="card-body">
+      <div class="form-group"><label class="form-label">أمر العمل (PO)</label><select class="form-control"><option>PO-2024-018</option><option>PO-2024-016</option></select></div>
+      <div class="form-group"><label class="form-label">أخصائي دراسة الحالة</label><select class="form-control"><option>أسامة الصالحي (14 عقار)</option><option>عمر الحمراني (10 عقارات)</option><option>أيمن مجرشي (11 عقاراً)</option><option>وليد باشماخ (8 عقارات)</option></select></div>
+      <div class="form-group"><label class="form-label">معد التقرير <span style="color:var(--accent);font-size:10px">● تلقائي</span></label><select class="form-control"><option>صالح الحبشي (14/20) — مقترح</option><option>أيمن بن محفوظ (11/20)</option></select></div>
+      <div class="form-group"><label class="form-label">المعاين الميداني <span style="color:var(--text3);font-size:10px">مزود خدمة داخلي</span></label><select class="form-control"><option>أحمد سعيد — مكة</option><option>عبدالله عبدالمانع — جدة</option><option>حسن عطية — الطائف (متعاون)</option></select></div>
+      <div class="form-group"><label class="form-label">المكتب الهندسي</label><select class="form-control"><option>مكتب الرياض الهندسي</option><option>مكتب جدة للمساحة</option><option>مكتب مكة الهندسي</option></select></div>
+      <button class="btn btn-primary" onclick="alert('تم الإسناد وإشعار الفريق')">تأكيد الإسناد</button>
+    </div></div>
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">حمل الفريق الحالي</span></div><div class="card-body">
+      ${[['أسامة الصالحي','أخصائي',14,20,'o'],['عمر الحمراني','أخصائي',10,20,'g'],['أيمن مجرشي','أخصائي',11,20,'o'],['وليد باشماخ','أخصائي',8,20,'g']].map(([n,r,v,m,c])=>`<div style="margin-bottom:12px"><div class="kpi-lbl"><span>${n} <span style="color:var(--text3)">(${r})</span></span><span style="font-weight:600">${v}/${m}</span></div><div class="prog-wrap"><div class="prog-bar ${c}" style="width:${Math.round(v/m*100)}%"></div></div></div>`).join('')}
+      <div class="divider"></div>
+      ${[['صالح الحبشي','معد تقرير',14,20,'o'],['أيمن بن محفوظ','معد تقرير',11,20,'g']].map(([n,r,v,m,c])=>`<div style="margin-bottom:10px"><div class="kpi-lbl"><span>${n} <span style="color:var(--text3)">(${r})</span></span><span>${v}/${m}</span></div><div class="prog-wrap"><div class="prog-bar ${c}" style="width:${Math.round(v/m*100)}%"></div></div></div>`).join('')}
+    </div></div>
+  </div>`;
+}
+
+function pgSurvey(){
+  return`<div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">إجمالي طلبات الرفع</div><div class="stat-value">43</div></div>
+    <div class="stat-card green"><div class="stat-label">مكتملة</div><div class="stat-value">18</div></div>
+    <div class="stat-card warn"><div class="stat-label">قيد التنفيذ</div><div class="stat-value">21</div></div>
+    <div class="stat-card red"><div class="stat-label">لم تُسند</div><div class="stat-value">4</div></div>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">المكاتب الهندسية المعتمدة</span>${!isViewOnly()?'<button class="btn btn-sm btn-primary">+ إضافة مكتب</button>':''}</div>
+  <table class="tbl"><thead><tr><th>اسم المكتب</th><th>نشطة</th><th>مكتملة هذا الشهر</th><th>متوسط الإنجاز</th><th>آلية التعاقد</th><th>الحالة</th></tr></thead><tbody>
+  <tr><td style="font-weight:500">مكتب الرياض الهندسي</td><td>12</td><td>34</td><td>3.2 يوم</td><td><span class="badge b-cancel">اتفاقية سنوية</span></td><td><span class="badge b-done">نشط</span></td></tr>
+  <tr><td style="font-weight:500">مكتب جدة للمساحة</td><td>8</td><td>28</td><td>2.8 يوم</td><td><span class="badge b-cancel">اتفاقية سنوية</span></td><td><span class="badge b-done">نشط</span></td></tr>
+  <tr><td style="font-weight:500">مكتب مكة الهندسي</td><td>7</td><td>22</td><td>3.5 يوم</td><td><span class="badge b-cancel">اتفاقية سنوية</span></td><td><span class="badge b-done">نشط</span></td></tr>
+  <tr><td style="font-weight:500">مكتب الطائف التقني</td><td>4</td><td>14</td><td>4.1 يوم</td><td><span class="badge b-cancel">اتفاقية سنوية</span></td><td><span class="badge b-prog">مشغول</span></td></tr>
+  </tbody></table></div>`;
+}
+
+function pgKeys(){
+  const kp=PROPS.filter(p=>p.key);
+  return`<div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">إجمالي المفاتيح</div><div class="stat-value">${kp.length}</div></div>
+    <div class="stat-card green"><div class="stat-label">مستلمة</div><div class="stat-value">1</div></div>
+    <div class="stat-card warn"><div class="stat-label">بانتظار الاستلام</div><div class="stat-value">${kp.length-1}</div></div>
+    <div class="stat-card"><div class="stat-label">مندوبو المحكمة</div><div class="stat-value">2</div></div>
+  </div>
+  <div class="note note-warn">مندوبا المحكمة المعتمدان: فراس كمرين — خالد الشريف</div>
+  <div class="card"><div class="card-header"><span class="card-title">العقارات التي تحتاج مفاتيح</span></div>
+  <table class="tbl"><thead><tr><th>رقم العقار</th><th>PO</th><th>المنطقة</th><th>المحكمة</th><th>حالة المفتاح</th><th>المندوب</th><th>إجراء</th></tr></thead><tbody>
+  ${kp.map(p=>`<tr><td class="id-cell">${p.id}</td><td style="font-size:11px;color:var(--primary-light)">${p.po}</td><td>${p.area}</td><td>محكمة ${p.area}</td><td>${p.id==='E-4403'?'<span class="badge b-done">مستلم</span>':'<span class="badge b-prog">بانتظار الاستلام</span>'}</td><td>فراس كمرين</td><td>${p.id==='E-4403'||isViewOnly()?'—':'<button class="btn btn-sm btn-primary" onclick="alert(\'تم تسجيل استلام المفتاح\')">تسجيل الاستلام</button>'}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function pgFail(){
+  const ce=['case-specialist','report-preparer'].includes(role);
+  const ca=['section-supervisor'].includes(role);
+  const fl=[
+    {id:'E-4407',po:'PO-2024-016',title:'تعارض في بيانات الصك والمخطط',status:'review',body:'تعارض بين مساحة الصك (800م²) والمخطط الهندسي (650م²). يحتاج مراجعة من المكتب الهندسي.',specialist:'أيمن مجرشي',date:'2025-01-14'},
+    {id:'E-3901',po:'PO-2024-011',title:'عدم استجابة العميل لتسليم الوثائق',status:'pending',body:'طُلب تقديم وثيقة السكن منذ 5 أيام دون استجابة. ثلاث محاولات تواصل فاشلة.',specialist:'أسامة الصالحي',date:'2025-01-12'},
+    {id:'E-3756',po:'PO-2024-009',title:'ندرة البيانات السوقية في المنطقة',status:'approved',body:'لا توجد معاملات عقارية في المنطقة خلال 24 شهراً مما يتعذر معه التقييم السوقي.',specialist:'وليد باشماخ',date:'2025-01-10'},
+  ];
+  return`<div class="stat-grid">
+    <div class="stat-card red"><div class="stat-label">تعذرات مفتوحة</div><div class="stat-value">${fl.length}</div></div>
+    <div class="stat-card warn"><div class="stat-label">قيد المراجعة</div><div class="stat-value">1</div></div>
+    <div class="stat-card green"><div class="stat-label">معتمدة هذا الأسبوع</div><div class="stat-value">3</div></div>
+    <div class="stat-card"><div class="stat-label">متوسط وقت الحل</div><div class="stat-value">2.6 يوم</div></div>
+  </div>
+  ${!ce&&!ca?`<div class="note note-info">${isViewOnly()?'أنت في وضع الاطلاع — صلاحية التعديل للمشرف فقط':'أنت في وضع المراقبة — لا تملك صلاحية تعديل التعذرات'}</div>`:''}
+  ${ca?'<div class="note note-success">صلاحية الاعتماد: يمكنك اعتماد التعذرات أو إعادتها للأخصائي</div>':''}
+  ${fl.map(f=>`<div class="fail-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:13px;font-weight:500">${f.id} — ${f.title} <span style="font-size:11px;color:var(--text3)">${f.po}</span></span>
+      <div style="display:flex;align-items:center;gap:8px">${sb(f.status)}<span style="font-size:11px;color:var(--text3)">${f.date}</span></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6">${f.body}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:5px">الأخصائي: ${f.specialist}</div>
+    ${ce?`<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm btn-primary" onclick="alert('تم تحديث حالة التعذر')">تحديث</button><button class="btn btn-sm" onclick="alert('تم إرسال للمراجعة')">إرسال للمراجعة</button></div>`:''}
+    ${ca&&f.status==='review'?`<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm btn-success" onclick="alert('تم اعتماد التعذر')">اعتماد</button><button class="btn btn-sm btn-danger" onclick="alert('إعادة للأخصائي')">إعادة</button></div>`:''}
+  </div>`).join('')}`;
+}
+
+function pgVal(){
+  const mgr=['general-manager','section-supervisor','valuation-coordinator'].includes(role);
+  const isApp=role==='real-estate-appraiser';
+  return`<div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">طلبات نشطة</div><div class="stat-value">${VR.length}</div></div>
+    <div class="stat-card green"><div class="stat-label">مكتملة</div><div class="stat-value">${VR.filter(v=>v.status==='done').length}</div></div>
+    <div class="stat-card warn"><div class="stat-label">قيد التنفيذ</div><div class="stat-value">${VR.filter(v=>v.status==='progress').length}</div></div>
+    <div class="stat-card"><div class="stat-label">مقيمون متاحون</div><div class="stat-value">2</div></div>
+  </div>
+  <div class="note note-info">هذه الطلبات واردة من قسم دراسة الحالة — يتولى منسق التقييم توزيعها على المقيمين المؤهلين</div>
+  <div class="card"><div class="card-header"><span class="card-title">طلبات التقييم الواردة من دراسة الحالة</span></div>
+  <table class="tbl"><thead><tr><th>رقم الطلب</th><th>العقار</th><th>المنطقة</th><th>النوع</th><th>المقيم المُسند</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody>
+  ${VR.map(v=>`<tr><td class="id-cell">${v.id}</td><td style="color:var(--primary-light);font-size:11px">${v.propId}</td><td>${v.area}</td><td>${v.type}</td><td style="font-size:11px">${v.appraiser}</td><td>${sb(v.status)}</td><td style="color:var(--text3);font-size:11px">${v.date}</td>
+  <td style="display:flex;gap:4px">
+    ${isApp&&v.status==='progress'?`<button class="btn btn-sm btn-accent" onclick="alert('تم رفع تقرير التقييم')">رفع التقرير</button><button class="btn btn-sm btn-danger" onclick="alert('تم تسجيل التعذر')">تعذّر</button>`:''}
+    ${mgr&&v.status==='progress'?`<button class="btn btn-sm" onclick="alert('تم فتح العقار')">عرض</button>`:''}
+  </td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function pgField(){
+  return`<div class="note note-info">هذا النموذج مُحسَّن للموبايل — يفتحه المعاين في الميدان بجانب برنامج مقياس</div>
+  <div class="field-form">
+    <div class="field-sec-title">١ — بيانات العقار الأساسية</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">رقم العقار</label><input class="form-control" value="E-4402" readonly style="background:var(--surface3)"></div>
+      <div class="form-group"><label class="form-label">نوع العقار</label><select class="form-control"><option>شقة</option><option>أرض</option><option>فيلا</option><option>عمارة</option><option>محل تجاري</option></select></div>
+      <div class="form-group"><label class="form-label">المنطقة / الحي</label><input class="form-control" placeholder="مثال: حي النزهة، مكة المكرمة"></div>
+      <div class="form-group"><label class="form-label">المساحة الفعلية (م²)</label><input class="form-control" type="number" placeholder="0.00"></div>
+    </div>
+  </div>
+  <div class="field-form">
+    <div class="field-sec-title">٢ — حالة العقار</div>
+    <div class="form-group"><label class="form-label">الحالة الإنشائية</label><div class="radio-group">${['ممتاز','جيد','متوسط','يحتاج صيانة','مهجور'].map(o=>`<label class="radio-opt"><input type="radio" name="cond"> ${o}</label>`).join('')}</div></div>
+    <div class="form-group"><label class="form-label">هل يوجد منقولات داخل العقار؟</label><div class="radio-group"><label class="radio-opt"><input type="radio" name="items"> نعم</label><label class="radio-opt"><input type="radio" name="items"> لا</label></div></div>
+    <div class="form-group"><label class="form-label">هل العقار مؤجر حالياً؟</label><div class="radio-group"><label class="radio-opt"><input type="radio" name="rent"> نعم</label><label class="radio-opt"><input type="radio" name="rent"> لا</label><label class="radio-opt"><input type="radio" name="rent"> غير معروف</label></div></div>
+    <div class="form-group"><label class="form-label">إمكانية الوصول للعقار</label><div class="radio-group">${['سهل','متوسط','صعب','غير ممكن'].map(o=>`<label class="radio-opt"><input type="radio" name="acc"> ${o}</label>`).join('')}</div></div>
+  </div>
+  <div class="field-form">
+    <div class="field-sec-title">٣ — البيانات السوقية</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">متوسط سعر م² في المنطقة</label><input class="form-control" type="number" placeholder="ريال / م²"></div>
+      <div class="form-group"><label class="form-label">مستوى نشاط السوق</label><select class="form-control"><option>نشط جداً</option><option>نشط</option><option>متوسط</option><option>ضعيف</option><option>نادر</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">ملاحظات سوقية إضافية</label><textarea class="form-control" rows="2" placeholder="أي معلومات إضافية عن السوق..."></textarea></div>
+  </div>
+  <div class="field-form">
+    <div class="field-sec-title">٤ — المستندات الموقعة</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">اسم الشخص المسؤول</label><input class="form-control" placeholder="الاسم الكامل"></div>
+      <div class="form-group"><label class="form-label">صفته</label><select class="form-control"><option>مالك</option><option>وكيل</option><option>مستأجر</option><option>حارس</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">صور المستندات الموقعة</label>
+      <div class="photo-grid">
+        ${['📷','📷','📷','+'].map((i,n)=>`<div class="photo-ph" onclick="alert('فتح الكاميرا')">${i}<span>${n<3?'إضافة صورة':'المزيد'}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="field-form">
+    <div class="field-sec-title">٥ — صور العقار</div>
+    <div class="photo-grid">
+      ${['واجهة رئيسية','المدخل','الداخل','المحيط'].map(l=>`<div class="photo-ph" onclick="alert('فتح الكاميرا')">📷<span>${l}</span></div>`).join('')}
+    </div>
+    <div class="form-group" style="margin-top:12px"><label class="form-label">ملاحظات عامة</label><textarea class="form-control" rows="2" placeholder="أي ملاحظات إضافية..."></textarea></div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-primary" onclick="alert('تم الحفظ وإرساله لقسم دراسة الحالة')">حفظ وإرسال</button>
+    <button class="btn" onclick="alert('تم الحفظ كمسودة')">حفظ مسودة</button>
+  </div>`;
+}
+
+function pgMsg(){
+  const msgs=[
+    {from:'عبدالله البسيوني',dept:'دراسة الحالة',preview:'تم استلام PO-2024-018 — 12 عقاراً يرجى المتابعة',time:'18 د',unread:true},
+    {from:'عبدالله الكثيري',dept:'التقييم العقاري',preview:'اكتمل تقييم E-4401 وتم رفع التقرير على النظام',time:'45 د',unread:true},
+    {from:'مكتب الرياض الهندسي',dept:'مزود خارجي',preview:'استلمنا طلبات PO-2024-016 وسنبدأ غداً',time:'2 س',unread:false},
+    {from:'إيمان النهدي',dept:'الشؤون المالية',preview:'التقرير المالي لشهر يناير جاهز للمراجعة',time:'3 س',unread:false},
+    {from:'أحمد سعيد',dept:'التقييم العقاري',preview:'نموذج معاينة E-4402 مكتمل ومرسل',time:'أمس',unread:false},
+  ];
+  return`<div class="grid-2" style="height:440px">
+    <div class="card" style="margin-bottom:0;display:flex;flex-direction:column;overflow:hidden">
+      <div class="card-header"><span class="card-title">الرسائل</span><button class="btn btn-sm btn-primary">+ رسالة جديدة</button></div>
+      <div style="flex:1;overflow-y:auto">
+        ${msgs.map(m=>`<div class="msg-item ${m.unread?'unread':''}">
+          ${m.unread?'<div class="msg-udot"></div>':'<div style="width:6px;flex-shrink:0"></div>'}
+          <div class="msg-content"><div class="msg-from">${m.from} <span class="msg-dept">(${m.dept})</span></div><div class="msg-preview">${m.preview}</div></div>
+          <div class="msg-time">${m.time}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
+      <div class="card-header"><span class="card-title">عبدالله الكثيري</span><span class="badge b-done">متصل</span></div>
+      <div style="flex:1;padding:16px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:12px;text-align:center;line-height:1.7">
+        اكتمل تقييم E-4401 وتم رفع التقرير.<br><span style="color:var(--text3)">هل أبدأ في E-4406؟</span>
+      </div>
+      <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+        <input class="form-control" placeholder="اكتب ردك..." style="flex:1">
+        <button class="btn btn-primary btn-sm">إرسال</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function pgFin(){
+  return`<div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-label">إيرادات يناير</div><div class="stat-value" style="font-size:20px">312,400</div><div class="stat-sub">ريال سعودي</div></div>
+    <div class="stat-card red"><div class="stat-label">تكاليف خارجية</div><div class="stat-value" style="font-size:20px">87,600</div><div class="stat-sub">مكاتب + متعاونون</div></div>
+    <div class="stat-card green"><div class="stat-label">هامش الربح</div><div class="stat-value" style="font-size:20px">224,800</div><div class="stat-sub">72% من الإيرادات</div></div>
+    <div class="stat-card warn"><div class="stat-label">مستحقات معلقة</div><div class="stat-value" style="font-size:20px">43,200</div><div class="stat-sub">ريال سعودي</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">إيرادات إنفاذ</span></div>
+    <table class="tbl"><thead><tr><th>PO</th><th>مُفوتَرة</th><th>مستثنيات</th><th>القيمة</th><th>الحالة</th></tr></thead><tbody>
+    <tr><td class="id-cell">PO-2024-014</td><td>8</td><td>0</td><td>18,400 ر</td><td><span class="badge b-done">مُفوتَر</span></td></tr>
+    <tr><td class="id-cell">PO-2024-015</td><td>1</td><td>0</td><td>2,200 ر</td><td><span class="badge b-done">مُفوتَر</span></td></tr>
+    <tr><td class="id-cell">PO-2024-017</td><td>3</td><td>0</td><td>6,600 ر</td><td><span class="badge b-done">مُفوتَر</span></td></tr>
+    <tr><td class="id-cell">PO-2024-016</td><td>13</td><td>2</td><td>28,600 ر</td><td><span class="badge b-prog">جزئي</span></td></tr>
+    <tr style="background:var(--surface2);font-weight:600"><td colspan="3">الإجمالي</td><td>55,800 ر</td><td></td></tr>
+    </tbody></table></div>
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">تكاليف مزودي الخدمة</span></div>
+    <table class="tbl"><thead><tr><th>المزود</th><th>النوع</th><th>التكلفة</th><th>الفئة</th></tr></thead><tbody>
+    <tr><td style="font-weight:500">مكتب الرياض الهندسي</td><td><span class="badge b-ext">خارجي</span></td><td>18,400 ر</td><td>رفع مساحي</td></tr>
+    <tr><td style="font-weight:500">عبدالله الكثيري</td><td><span class="badge b-int">داخلي</span></td><td>12,000 ر</td><td>تقييم</td></tr>
+    <tr><td style="font-weight:500">حسن عطية</td><td><span class="badge b-free">متعاون</span></td><td>3,200 ر</td><td>معاينة</td></tr>
+    <tr style="background:var(--surface2);font-weight:600"><td colspan="2">الإجمالي</td><td>33,600 ر</td><td></td></tr>
+    </tbody></table></div>
+  </div>`;
+}
+
+function pgKPI(){
+  return`<div class="stat-grid">
+    <div class="stat-card green"><div class="stat-label">معدل الإنجاز في الموعد</div><div class="stat-value">89%</div><div class="stat-sub">هدف: 90%</div></div>
+    <div class="stat-card blue"><div class="stat-label">متوسط إنجاز العقار</div><div class="stat-value">3.6 يوم</div><div class="stat-sub">هدف: أقل من 4</div></div>
+    <div class="stat-card warn"><div class="stat-label">معدل التعذرات</div><div class="stat-value">3.8%</div><div class="stat-sub">هدف: أقل من 5%</div></div>
+    <div class="stat-card"><div class="stat-label">عقارات مُنجزة اليوم</div><div class="stat-value">43</div><div class="stat-sub">هدف: 40-50</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">أداء أخصائيي دراسة الحالة</span></div><div class="card-body">
+      ${[['أسامة الصالحي',82],['عمر الحمراني',76],['أيمن مجرشي',69],['وليد باشماخ',91]].map(([n,v])=>`<div style="margin-bottom:14px"><div class="kpi-lbl"><span>${n}</span><span style="font-weight:600">${v}%</span></div><div class="prog-wrap"><div class="prog-bar ${v>=85?'g':v>=70?'':'r'}" style="width:${v}%"></div></div></div>`).join('')}
+    </div></div>
+    <div class="card" style="margin-bottom:0"><div class="card-header"><span class="card-title">أداء مزودي الخدمة</span></div><div class="card-body">
+      ${[['أحمد سعيد — معاين',88],['عبدالله عبدالمانع — معاين',94],['حسن عطية — معاين (متعاون)',79],['عبدالله الكثيري — مقيم',85],['محمد العساف — مقيم',82]].map(([n,v])=>`<div style="margin-bottom:12px"><div class="kpi-lbl"><span>${n}</span><span style="font-weight:600">${v}%</span></div><div class="prog-wrap"><div class="prog-bar ${v>=85?'g':v>=70?'':'r'}" style="width:${v}%"></div></div></div>`).join('')}
+    </div></div>
+  </div>`;
+}
+
+function pgUsers(){
+  return`<div class="card"><div class="card-header"><span class="card-title">جميع المستخدمين (${STAFF.length})</span>${!isViewOnly()?'<button class="btn btn-sm btn-primary">+ إضافة مستخدم</button>':'<span class="badge b-cancel">اطلاع فقط</span>'}</div>
+  <table class="tbl"><thead><tr><th>الاسم</th><th>الدور</th><th>البريد الإلكتروني</th><th>نوع التعاقد</th><th>الحالة</th></tr></thead><tbody>
+  ${STAFF.map(u=>`<tr><td style="font-weight:500">${u.name}</td><td style="font-size:11px;color:var(--text2)">${u.role}</td><td style="direction:ltr;text-align:right;font-size:11px;color:var(--primary-light)">${u.email}</td><td><span class="badge ${u.type==='internal'?'b-int':u.type==='freelance'?'b-free':'b-ext'}">${u.type==='internal'?'موظف داخلي':u.type==='freelance'?'متعاون':'خارجي'}</span></td><td><span class="badge b-done">نشط</span></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+switchRole('general-manager');
+nav('dashboard');
+</script>
+</body>
+</html>

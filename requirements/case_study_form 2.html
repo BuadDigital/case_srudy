@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نموذج دراسة الحالة</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0F3460;
+  --primary-mid: #1A5276;
+  --primary-light: #2E86C1;
+  --accent: #1A6B5A;
+  --accent-light: #1ABC9C;
+  --gold: #C9A84C;
+  --surface: #FFFFFF;
+  --surface2: #F7F9FC;
+  --surface3: #EEF3F9;
+  --border: #D5E3F0;
+  --border2: #B8CDE0;
+  --text: #1A2B3C;
+  --text2: #4A6272;
+  --text3: #8FA8BC;
+  --success: #1ABC9C;
+  --success-bg: #D5F5EF;
+  --warning: #F39C12;
+  --warning-bg: #FEF3D7;
+  --danger: #E74C3C;
+  --danger-bg: #FADBD8;
+  --info: #2980B9;
+  --info-bg: #D6EAF8;
+  --radius: 8px;
+  --radius-lg: 14px;
+  --shadow: 0 2px 8px rgba(15,52,96,.08);
+  --shadow-lg: 0 8px 32px rgba(15,52,96,.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.page-header {
+  background: var(--primary);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,.2);
+}
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo {
+  width: 36px;
+  height: 36px;
+  background: var(--accent-light);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-title { color: #fff; font-size: 14px; font-weight: 600; }
+.header-sub { color: rgba(255,255,255,.5); font-size: 11px; margin-top: 1px; }
+.header-meta { display: flex; align-items: center; gap: 8px; }
+.hmeta-item {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: rgba(255,255,255,.8);
+  font-size: 11px;
+}
+.hmeta-item span { color: #fff; font-weight: 600; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  background: rgba(255,255,255,.1);
+  height: 3px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent-light);
+  transition: width .4s ease;
+  width: 16%;
+}
+
+/* ── STEPS NAV ── */
+.steps-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 67px;
+  z-index: 99;
+  box-shadow: var(--shadow);
+}
+.steps-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  overflow-x: auto;
+  gap: 0;
+}
+.step-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 12px;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.step-tab:hover { color: var(--text2); }
+.step-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+.step-tab.done { color: var(--success); }
+.step-tab.done .step-num { background: var(--success); color: #fff; }
+.step-num {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--surface3);
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.step-tab.active .step-num { background: var(--primary); color: #fff; }
+
+/* ── MAIN CONTENT ── */
+.main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ── SECTION CARD ── */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.section-head {
+  padding: 14px 20px;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-head h2 {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.section-head-icon {
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,.15);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+.section-body { padding: 0; }
+
+/* ── TABLE FORM ── */
+.form-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.form-table th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  padding: 8px 14px;
+  background: var(--surface3);
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+.form-table th.center { text-align: center; }
+.form-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.form-table tr:last-child td { border-bottom: none; }
+.form-table tr:hover td { background: #FAFCFF; }
+.form-table td.center { text-align: center; }
+.form-table td.question { color: var(--text); line-height: 1.5; }
+
+/* ── CHECKBOX ── */
+.cb-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cb-custom {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border2);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.cb-custom:hover { border-color: var(--primary-light); }
+.cb-custom.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.cb-custom.checked::after {
+  content: '✓';
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.cb-custom.na {
+  background: var(--surface3);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+.cb-custom.na::after {
+  content: '—';
+  color: var(--text3);
+  font-size: 11px;
+}
+
+/* ── RADIO GROUP ── */
+.radio-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.radio-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text2);
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  transition: all .15s;
+}
+.radio-opt:hover { border-color: var(--primary-light); color: var(--primary); }
+.radio-opt.selected {
+  background: var(--info-bg);
+  border-color: var(--info);
+  color: var(--primary);
+  font-weight: 500;
+}
+.radio-opt.selected-yes {
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--accent);
+}
+.radio-opt.selected-no {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.radio-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.radio-opt.selected .radio-dot,
+.radio-opt.selected-yes .radio-dot { border-color: var(--success); }
+.radio-opt.selected-yes .radio-dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.radio-opt.selected-no .radio-dot { border-color: var(--danger); }
+.radio-opt.selected-no .radio-dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
+
+/* ── TEXT INPUT ── */
+.form-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .15s;
+}
+.form-input:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(41,128,185,.1); }
+.form-input[readonly] { background: var(--surface3); color: var(--text2); }
+textarea.form-input { resize: vertical; min-height: 70px; line-height: 1.6; }
+
+/* ── NOTE ROW ── */
+.note-row td {
+  background: var(--warning-bg) !important;
+  color: #784212;
+  font-size: 11px;
+  font-style: italic;
+  padding: 8px 14px !important;
+}
+.note-row-info td {
+  background: var(--info-bg) !important;
+  color: #1a5276;
+  font-size: 11px;
+  padding: 8px 14px !important;
+}
+
+/* ── REMARKS ROW ── */
+.remarks-row td { background: var(--surface2) !important; }
+
+/* ── FOOTER INFO ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--surface3);
+  border-top: 1px solid var(--border);
+}
+.info-item { }
+.info-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+.info-value { font-size: 12px; font-weight: 500; color: var(--text); }
+
+/* ── SIGNATURE AREA ── */
+.sig-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sig-table th {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  padding: 8px 14px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.sig-table td {
+  padding: 20px 14px;
+  border: 1px solid var(--border);
+  text-align: center;
+  vertical-align: middle;
+}
+.sig-box {
+  width: 120px; height: 50px;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.sig-box:hover { border-color: var(--primary-light); color: var(--primary-light); }
+
+/* ── ACTION BUTTONS ── */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 8px;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .15s;
+  background: var(--surface);
+  color: var(--text);
+}
+.btn:hover { background: var(--surface2); }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-mid); }
+.btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+.btn-success:hover { background: #17a589; }
+.btn-outline { background: transparent; color: var(--primary); border-color: var(--primary); }
+
+/* ── STATUS BADGE ── */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; padding: 2px 8px;
+  border-radius: 10px; font-weight: 500;
+}
+.b-done { background: var(--success-bg); color: var(--success); }
+.b-prog { background: var(--warning-bg); color: var(--warning); }
+.b-new  { background: var(--info-bg); color: var(--info); }
+
+/* ── SUMMARY ── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.sum-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  border-top: 3px solid var(--accent-light);
+}
+.sum-card.warn { border-top-color: var(--warning); }
+.sum-card.danger { border-top-color: var(--danger); }
+.sum-card.info { border-top-color: var(--info); }
+.sum-label { font-size: 10px; color: var(--text3); margin-bottom: 5px; }
+.sum-value { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1; }
+
+/* ── PAGE SECTIONS ── */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── TOP NOTE ── */
+.top-note {
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  margin-bottom: 14px;
+  border-right: 3px solid;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.top-note.info { background: var(--info-bg); border-color: var(--info); color: #1a5276; }
+.top-note.warn { background: var(--warning-bg); border-color: var(--warning); color: #784212; }
+.top-note.success { background: var(--success-bg); border-color: var(--success); color: #0e6655; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="page-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="header-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div>
+        <div class="header-title">نموذج دراسة الحالة</div>
+        <div class="header-sub">منصة إدارة التقييم العقاري</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="hmeta-item">رقم الطلب: <span id="hdr-req">—</span></div>
+      <div class="hmeta-item">رقم الصك: <span id="hdr-deed">—</span></div>
+      <div class="hmeta-item" id="hdr-status"><span class="badge b-new">جديد</span></div>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<!-- STEPS NAV -->
+<div class="steps-nav">
+  <div class="steps-inner">
+    <div class="step-tab active" onclick="goStep(0)"><div class="step-num">١</div>بيانات التعميد</div>
+    <div class="step-tab" onclick="goStep(1)"><div class="step-num">٢</div>بيانات الصك والعقار</div>
+    <div class="step-tab" onclick="goStep(2)"><div class="step-num">٣</div>الرفع المساحي والطبيعة</div>
+    <div class="step-tab" onclick="goStep(3)"><div class="step-num">٤</div>مكونات العقار</div>
+    <div class="step-tab" onclick="goStep(4)"><div class="step-num">٥</div>الإشغال والإيجار</div>
+    <div class="step-tab" onclick="goStep(5)"><div class="step-num">٦</div>ملاحظات إضافية</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ══════════════════════════════════════
+     STEP 0 — بيانات التعميد
+══════════════════════════════════════ -->
+<div class="page-section active" id="step-0">
+  <div class="top-note info">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    بيانات التعميد تُعبأ تلقائياً من النظام عند ربط النموذج بالعقار
+  </div>
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <h2>بيانات التعميد</h2>
+    </div>
+    <div class="section-body" style="padding:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px">اسم مزود الخدمة</div>
+          <input class="form-input" value="شركة إجادة المهنية للتقييم" readonly>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px">رقم الطلب</div>
+          <input class="form-input" id="inp-req" oninput="document.getElementById('hdr-req').textContent=this.value||'—'" placeholder="مثال: 032785">
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px">تاريخ الطلب</div>
+          <input class="form-input" type="date" id="inp-date" value="2026-05-13">
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px">رقم الصك</div>
+          <input class="form-input" id="inp-deed" oninput="document.getElementById('hdr-deed').textContent=this.value||'—'" placeholder="مثال: 315703003914">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <div></div>
+    <button class="btn btn-primary" onclick="goStep(1)">التالي — بيانات الصك والعقار ←</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STEP 1 — بيانات الصك والعقار
+══════════════════════════════════════ -->
+<div class="page-section" id="step-1">
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+      </div>
+      <h2>بيانات الصك والعقار</h2>
+    </div>
+    <div class="section-body">
+      <table class="form-table">
+        <thead>
+          <tr>
+            <th>الأسئلة</th>
+            <th class="center" style="width:100px">فعال / مطابق / نعم</th>
+            <th class="center" style="width:130px">غيرفعال / غير مطابق / لا</th>
+          </tr>
+        </thead>
+        <tbody id="deed-table">
+          <!-- rows injected by JS -->
+        </tbody>
+      </table>
+      <div style="padding:12px 16px;background:var(--warning-bg);border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:#784212;font-weight:500;margin-bottom:6px">في حال وجود اختلاف في البيانات أعلاه يتم التوضيح في الملاحظات ادناه</div>
+        <textarea class="form-input" id="deed-remarks" placeholder="الملاحظات..." rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-outline" onclick="goStep(0)">→ السابق</button>
+    <button class="btn btn-primary" onclick="goStep(2)">التالي — الرفع المساحي ←</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STEP 2 — الرفع المساحي والطبيعة
+══════════════════════════════════════ -->
+<div class="page-section" id="step-2">
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3,11 22,2 13,21 11,13"/></svg>
+      </div>
+      <h2>الرفع المساحي والطبيعة</h2>
+    </div>
+    <div class="section-body">
+      <table class="form-table">
+        <thead>
+          <tr>
+            <th>الأسئلة</th>
+            <th class="center" style="width:100px">تم التطبيق</th>
+            <th class="center" style="width:120px">لم يتم التطبيق</th>
+          </tr>
+        </thead>
+        <tbody id="survey-table"></tbody>
+      </table>
+      <div style="padding:12px 16px;background:var(--warning-bg);border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:#784212;font-weight:500;margin-bottom:6px">في حال وجود اختلاف في البيانات أعلاه يتم التوضيح في الملاحظات ادناه</div>
+        <textarea class="form-input" id="survey-remarks" placeholder="الملاحظات..." rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-outline" onclick="goStep(1)">→ السابق</button>
+    <button class="btn btn-primary" onclick="goStep(3)">التالي — مكونات العقار ←</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STEP 3 — مكونات العقار
+══════════════════════════════════════ -->
+<div class="page-section" id="step-3">
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      </div>
+      <h2>مكونات العقار</h2>
+    </div>
+    <div class="section-body">
+      <table class="form-table">
+        <thead>
+          <tr>
+            <th>الأسئلة</th>
+            <th class="center" style="width:80px">يوجد</th>
+            <th class="center" style="width:80px">لا يوجد</th>
+          </tr>
+        </thead>
+        <tbody id="components-table"></tbody>
+      </table>
+      <div style="padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:6px">عداد الكهرباء رقم ( )</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="radio" name="meter" value="electronic"> إلكتروني
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="radio" name="meter" value="analog"> مؤرشف
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+            <input type="radio" name="meter" value="none"> لا يوجد
+          </label>
+          <input class="form-input" style="width:160px" placeholder="رقم العداد">
+        </div>
+        <div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px">ملاحظات</div>
+          <textarea class="form-input" id="comp-remarks" placeholder="الملاحظات..." rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-outline" onclick="goStep(2)">→ السابق</button>
+    <button class="btn btn-primary" onclick="goStep(4)">التالي — الإشغال والإيجار ←</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STEP 4 — الإشغال والإيجار
+══════════════════════════════════════ -->
+<div class="page-section" id="step-4">
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 9v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9"/><path d="M9 22V12h6v10M2 10.6L12 2l10 8.6"/></svg>
+      </div>
+      <h2>الإشغال والإيجار</h2>
+    </div>
+    <div class="section-body">
+      <table class="form-table">
+        <thead>
+          <tr>
+            <th>الأسئلة</th>
+            <th class="center" style="width:80px">نعم</th>
+            <th class="center" style="width:80px">لا</th>
+          </tr>
+        </thead>
+        <tbody id="occupancy-table"></tbody>
+      </table>
+      <div style="padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px">قيمة اشتراك اتحاد الملاك</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input class="form-input" style="width:200px" type="number" placeholder="القيمة">
+          <span style="font-size:12px;color:var(--text2)">ريال سعودي</span>
+        </div>
+        <div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px">ملاحظات</div>
+          <textarea class="form-input" id="occ-remarks" placeholder="الملاحظات..." rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-outline" onclick="goStep(3)">→ السابق</button>
+    <button class="btn btn-primary" onclick="goStep(5)">التالي — ملاحظات إضافية ←</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STEP 5 — ملاحظات إضافية + التوقيع
+══════════════════════════════════════ -->
+<div class="page-section" id="step-5">
+
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"/><path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z"/></svg>
+      </div>
+      <h2>ملاحظات إضافية</h2>
+    </div>
+    <div class="section-body">
+      <table class="form-table">
+        <thead>
+          <tr>
+            <th>الأسئلة</th>
+            <th class="center" style="width:80px">يوجد</th>
+            <th class="center" style="width:80px">لا يوجد</th>
+          </tr>
+        </thead>
+        <tbody id="extra-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head" style="background:var(--accent)">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <h2>الاعتماد والتوقيع</h2>
+    </div>
+    <div class="section-body" style="padding:16px">
+      <div style="padding:10px 14px;background:var(--info-bg);border-radius:var(--radius);border-right:3px solid var(--info);font-size:12px;color:#1a5276;margin-bottom:14px;line-height:1.6">
+        نقرنحن شركة اجادة المهنية للتقييم العقاريبصحة ما ورد في النموذج أعلاه مع تحمل كافة المسؤولية نحوذلك.
+      </div>
+      <table class="sig-table">
+        <thead>
+          <tr>
+            <th>رقم الصك</th>
+            <th>معتمد التقرير</th>
+            <th>التاريخ</th>
+            <th>التوقيع</th>
+            <th>ختم الشركة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input class="form-input" id="sig-deed" placeholder="رقم الصك" style="text-align:center"></td>
+            <td><input class="form-input" id="sig-approver" placeholder="اسم المعتمد" style="text-align:center"></td>
+            <td><input class="form-input" type="date" id="sig-date" value="2026-05-13" style="text-align:center"></td>
+            <td><div class="sig-box" onclick="alert('منطقة التوقيع الإلكتروني')">✍️ توقيع</div></td>
+            <td><div class="sig-box" onclick="alert('رفع ختم الشركة')">🏢 الختم</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-head" style="background:var(--primary-mid)">
+      <div class="section-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,11 12,14 22,4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <h2>ملخص النموذج</h2>
+    </div>
+    <div class="section-body" style="padding:16px">
+      <div class="summary-grid">
+        <div class="sum-card"><div class="sum-label">إجمالي الأسئلة</div><div class="sum-value" id="sum-total">0</div></div>
+        <div class="sum-card"><div class="sum-label">مُجابة</div><div class="sum-value" id="sum-answered" style="color:var(--success)">0</div></div>
+        <div class="sum-card warn"><div class="sum-label">غير مُجابة</div><div class="sum-value" id="sum-pending" style="color:var(--warning)">0</div></div>
+        <div class="sum-card info"><div class="sum-label">اكتمال النموذج</div><div class="sum-value" id="sum-pct" style="color:var(--info)">0%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-outline" onclick="goStep(4)">→ السابق</button>
+    <div style="display:flex;gap:10px">
+      <button class="btn" onclick="saveDraft()">💾 حفظ مسودة</button>
+      <button class="btn btn-success" onclick="submitForm()">✅ رفع النموذج للنظام</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+const DEED_Q = [
+  'هل الصك فعال',
+  'هل رقم القطعة مطابق للصك.',
+  'هل رقم المخطط مطابق للصك.',
+  'هل القطعة زائدة تنظيمية.',
+  'هل يوجد نزع على منطقة العقار.',
+  'هل الأرض موقوفة',
+  'هل العقاروقوف.',
+  'هل تم التأكد من استخدام العقار(سكني – تجاري – ...).',
+  'هل تم الاستعلام من وزارة الزراعة حيال الأرض الزراعية.',
+  'هل الصك مشاع.',
+  'في حال ان الصك مشاع هل المساحة المملوكة بالصك لكامل مساحة العقار او لجزء محدد وتحديد النسبة في الملاحظات.',
+];
+
+const SURVEY_Q = [
+  'هل الصك مطابق للرفع المساحي.',
+  'هل تم ذكر جميع الاختلافات في الرفع المساحي.',
+  'هل تم تطبيق جميع التعليمات الصادرة من المركز في الرفع المساحي.',
+  'هل تم التوقيع وارفاق إقرار على صحة الموقع.',
+  'هل يوجد تداخل في الأصل.',
+  'هل يوجد على الأصل مبنى مشترك.',
+  'هل ذكر المرجع المعتمد في الاستدلال على استخدام العقار.',
+];
+
+const COMPONENTS_Q = [
+  'هل يوجد في العقار بئر.',
+  'هل يوجد في العقار غرفة كهرباء.',
+  'هل يوجد في العقار أبراج كهرباء.',
+  'هل يوجد في العقار أبراج اتصالات.',
+  'هل يوجد في العقار مضخة دفاع مدني.',
+  'هل يوجد في العقار منقولات.',
+  'هل يوجد في العقار مركبات.',
+  'هل يوجد في العقار معدات زراعية او موجودات حيوية.',
+  'هل تم مطابقة مكونات العقار على الطبيعة مع المكونات المذكورة في الصك. (للأصول المجمدة)',
+];
+
+const OCCUPANCY_Q = [
+  'هل العقار مأهول بالسكن.',
+  'هل يوجد عقد إيجار.',
+  'هل تم مطابقة رقم الصك بالمذكوربعقد الإيجار.',
+  'هل عقد الإيجار ساري.',
+  'هل عقد الإيجار إلكتروني.',
+  'هل يوجد اتحاد ملاك؟',
+];
+
+const EXTRA_Q = [
+  'هل تم ذكر جميع الملاحظات للتوضيح في حال عدم المطابقة',
+  'هل يوجد ملاحظات فنية قد تؤثر على قيمة العقار',
+  'هل هناك أي عوامل بيئية أوتنظيمية قد تؤثر على العقار(مثل طريق مستقبلي أو قيود بناء).',
+  'هل العقاريحتوي على أي إضافات غير مسجلة في الصك.',
+];
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const answers = {};
+let currentStep = 0;
+const totalSteps = 6;
+
+// ══════════════════════════════════════════
+//  RENDER TABLES
+// ══════════════════════════════════════════
+function renderTable(tbodyId, questions, prefix, colA, colB) {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+  questions.forEach((q, i) => {
+    const key = `${prefix}_${i}`;
+    const val = answers[key];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="question">${q}</td>
+      <td class="center">
+        <div class="cb-wrap">
+          <div class="cb-custom ${val==='A'?'checked':''}" onclick="setAnswer('${key}','A','${tbodyId}','${prefix}',${i})"></div>
+        </div>
+      </td>
+      <td class="center">
+        <div class="cb-wrap">
+          <div class="cb-custom ${val==='B'?'checked':''}" onclick="setAnswer('${key}','B','${tbodyId}','${prefix}',${i})"></div>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function setAnswer(key, val, tbodyId, prefix, idx) {
+  answers[key] = answers[key] === val ? null : val;
+  const questions = {
+    deed: DEED_Q, survey: SURVEY_Q,
+    comp: COMPONENTS_Q, occ: OCCUPANCY_Q, extra: EXTRA_Q
+  };
+  renderTable(tbodyId, questions[prefix], prefix, '', '');
+  updateSummary();
+}
+
+function initTables() {
+  renderTable('deed-table',       DEED_Q,       'deed',   'فعال/مطابق/نعم',   'غير فعال/لا');
+  renderTable('survey-table',     SURVEY_Q,     'survey', 'تم التطبيق',        'لم يتم');
+  renderTable('components-table', COMPONENTS_Q, 'comp',   'يوجد',              'لا يوجد');
+  renderTable('occupancy-table',  OCCUPANCY_Q,  'occ',    'نعم',               'لا');
+  renderTable('extra-table',      EXTRA_Q,      'extra',  'يوجد',              'لا يوجد');
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function goStep(n) {
+  document.getElementById(`step-${currentStep}`).classList.remove('active');
+  document.querySelectorAll('.step-tab')[currentStep].classList.remove('active');
+
+  currentStep = n;
+
+  document.getElementById(`step-${currentStep}`).classList.add('active');
+  const tabs = document.querySelectorAll('.step-tab');
+  tabs[currentStep].classList.add('active');
+
+  // mark done
+  tabs.forEach((t, i) => {
+    if (i < currentStep) t.classList.add('done');
+    else t.classList.remove('done');
+  });
+
+  // progress
+  const pct = Math.round((currentStep / (totalSteps - 1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // scroll top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (n === 5) updateSummary();
+}
+
+// ══════════════════════════════════════════
+//  SUMMARY
+// ══════════════════════════════════════════
+function updateSummary() {
+  const allQ = DEED_Q.length + SURVEY_Q.length + COMPONENTS_Q.length + OCCUPANCY_Q.length + EXTRA_Q.length;
+  const answered = Object.values(answers).filter(v => v !== null && v !== undefined).length;
+  const pct = Math.round(answered / allQ * 100);
+  document.getElementById('sum-total').textContent = allQ;
+  document.getElementById('sum-answered').textContent = answered;
+  document.getElementById('sum-pending').textContent = allQ - answered;
+  document.getElementById('sum-pct').textContent = pct + '%';
+}
+
+// ══════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════
+function saveDraft() {
+  document.getElementById('hdr-status').innerHTML = '<span class="badge b-prog">مسودة محفوظة</span>';
+  alert('✅ تم حفظ المسودة بنجاح — يمكنك مواصلة التعبئة لاحقاً');
+}
+
+function submitForm() {
+  const allQ = DEED_Q.length + SURVEY_Q.length + COMPONENTS_Q.length + OCCUPANCY_Q.length + EXTRA_Q.length;
+  const answered = Object.values(answers).filter(v => v !== null && v !== undefined).length;
+  const pct = Math.round(answered / allQ * 100);
+  if (pct < 100) {
+    if (!confirm(`تم الإجابة على ${answered} من ${allQ} سؤالاً (${pct}%). هل تريد الرفع رغم ذلك؟`)) return;
+  }
+  document.getElementById('hdr-status').innerHTML = '<span class="badge b-done">مرفوع للنظام</span>';
+  alert('✅ تم رفع نموذج دراسة الحالة للنظام بنجاح\nسيُعلَم الأخصائي المسؤول فوراً.');
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+initTables();
+updateSummary();
+</script>
+</body>
+</html>
