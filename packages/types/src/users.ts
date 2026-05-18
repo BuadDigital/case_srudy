@@ -1,0 +1,34 @@
+export type ContractType = "Internal" | "Freelance" | "ServiceProvider";
+export type RegistrationSourceApi = "Hr" | "Proc" | "Crm";
+export type UserStatusApi = "Active";
+
+export type UserDetailField = {
+  section: string;
+  label: string;
+  value: string;
+};
+
+export type UserListItem = {
+  id: string;
+  displayName: string;
+  jobTitle: string;
+  email: string;
+  userName: string;
+  contractType: ContractType;
+  status: UserStatusApi;
+  registrationSource: RegistrationSourceApi;
+  phoneNumber?: string | null;
+  createdAtUtc?: string;
+  systemRoles?: string[];
+  details?: UserDetailField[];
+};
+
+export type RegistrationPayload = Record<string, string>;
+
+export type FieldErrorsResponse = {
+  errors: Record<string, string>;
+};
+
+export type CreateUserResponse = {
+  user: UserListItem;
+};

@@ -284,36 +284,27 @@ export const DASHBOARD_TEAM_ROWS: TeamCardRow[] = [
   ["هـ", "مكاتب هندسية", "4 مكاتب معتمدة", "external", 16],
 ];
 
+export type StaffUserDetail = {
+  section: string;
+  label: string;
+  value: string;
+};
+
 export type StaffUser = {
+  id: string;
   name: string;
   role: string;
   email: string;
+  userName?: string;
   password?: string;
   type: "internal" | "freelance" | "external";
   source?: "hr" | "proc" | "crm";
+  phone?: string | null;
+  createdAt?: string;
+  systemRoles?: string[];
+  details?: StaffUserDetail[];
   registration?: Record<string, string>;
 };
-
-/** Same as `STAFF` in system_prototype_4.html */
-export const MOCK_STAFF: StaffUser[] = [
-  { name: "عبدالرحمن النفيعي", role: "مشرف قسم دراسة الحالة", email: "abdulrahman.nafiei@company.com", type: "internal" },
-  { name: "عبدالله البسيوني", role: "منسق العمليات", email: "abdullah.basyouni@company.com", type: "internal" },
-  { name: "أسامة الصالحي", role: "أخصائي دراسة الحالة", email: "osama.salehi@company.com", type: "internal" },
-  { name: "عمر الحمراني", role: "أخصائي دراسة الحالة", email: "omar.hamrani@company.com", type: "internal" },
-  { name: "أيمن مجرشي", role: "أخصائي دراسة الحالة", email: "ayman.magrshi@company.com", type: "internal" },
-  { name: "وليد باشماخ", role: "أخصائي دراسة الحالة", email: "walid.bashmakh@company.com", type: "internal" },
-  { name: "صالح الحبشي", role: "معد التقرير", email: "saleh.habshi@company.com", type: "internal" },
-  { name: "أيمن بن محفوظ", role: "معد التقرير", email: "ayman.mahmoud@company.com", type: "internal" },
-  { name: "فراس كمرين", role: "مندوب المحكمة", email: "feras.kamreen@company.com", type: "internal" },
-  { name: "خالد الشريف", role: "مندوب المحكمة", email: "khaled.sharif@company.com", type: "internal" },
-  { name: "إيمان النهدي", role: "موظف الشؤون المالية", email: "eman.nahdi@company.com", type: "internal" },
-  { name: "عبدالله الكثيري", role: "مقيم عقاري", email: "abdullah.kathiri@company.com", type: "internal" },
-  { name: "محمد العساف", role: "مقيم عقاري", email: "mohammed.assaf@company.com", type: "internal" },
-  { name: "أحمد سعيد", role: "معاين ميداني — مكة المكرمة", email: "ahmed.saeed@company.com", type: "internal" },
-  { name: "عبدالله عبدالمانع", role: "معاين ميداني — جدة", email: "abdullah.abdelmani@company.com", type: "internal" },
-  { name: "حسن عطية", role: "معاين ميداني — الطائف", email: "hassan.atiya@company.com", type: "freelance" },
-  { name: "مكتب الرياض الهندسي", role: "مكتب هندسي معتمد", email: "info@riyadheng.sa", type: "external" },
-];
 
 export type FailureItem = {
   id: string;

@@ -18,3 +18,13 @@ export function createApiClient(config: ApiClientConfig = {}) {
     getToken: config.getToken ?? (() => null),
   };
 }
+
+export {
+  createCrmUser,
+  createHrUser,
+  createProcUser,
+  listUsers,
+  type CreateUserResult,
+  type ListUsersResult,
+  type UsersApiConfig,
+} from "./users";

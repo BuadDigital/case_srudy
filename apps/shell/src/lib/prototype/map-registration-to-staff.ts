@@ -18,6 +18,7 @@ export function mapRegistrationToStaff(
   if (source === "hr") {
     const isFreelance = data.hr_empType === "متعاون";
     return {
+      id: (data.hr_email ?? "").toLowerCase(),
       name: data.hr_name ?? "",
       role: data.hr_jobTitle || data.hr_perms || "موظف",
       email: (data.hr_email ?? "").toLowerCase(),
@@ -31,6 +32,7 @@ export function mapRegistrationToStaff(
   if (source === "proc") {
     const isOrg = data.subtype === "org";
     return {
+      id: (data.pc_email ?? "").toLowerCase(),
       name: isOrg
         ? data.pc_delegate || data.pc_orgname || ""
         : data.pc_name || "",
@@ -46,6 +48,7 @@ export function mapRegistrationToStaff(
   }
 
   return {
+    id: (data.crm_email ?? "").toLowerCase(),
     name: data.crm_name || data.crm_orgname || "",
     role: crmTypeLabel(data),
     email: (data.crm_email ?? "").toLowerCase(),

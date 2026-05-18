@@ -677,6 +677,8 @@ Phase 6            Module Federation + separate deploys per MFE
 
 | Document | Description |
 |----------|-------------|
+| [docs/DATABASE_OVERVIEW.html](docs/DATABASE_OVERVIEW.html) | **Current PostgreSQL schema** (HTML, PM-friendly) |
+| [docs/DATABASE_OVERVIEW.md](docs/DATABASE_OVERVIEW.md) | Same content in Markdown |
 | [docs/FRONTEND.md](docs/FRONTEND.md) | Frontend apps, shell, MFE plan |
 | [apps/README.md](apps/README.md) | Short pointer to `docs/FRONTEND.md` |
 | [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) | Full architecture & phases |

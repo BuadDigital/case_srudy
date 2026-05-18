@@ -2,10 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { StaffUser } from "@/lib/prototype/constants";
-import {
-  mapRegistrationToStaff,
-  type RegistrationFormData,
-} from "@/lib/prototype/map-registration-to-staff";
+import { userListItemToStaff } from "@/lib/users-api";
+import type { SubmitRegistrationFn } from "./RegisterUserFlow";
 import {
   CRM_HINTS,
   CRM_STEPS,
@@ -43,11 +41,13 @@ const REVIEW_STEP = 4;
 
 export function CrmRegistrationFlow({
   existingEmails,
+  submitRegistration,
   onComplete,
   onBack,
   onAddAnother,
 }: {
   existingEmails: Set<string>;
+  submitRegistration: SubmitRegistrationFn;
   onComplete: (user: StaffUser) => void;
   onBack: () => void;
   onAddAnother: () => void;
@@ -61,6 +61,7 @@ export function CrmRegistrationFlow({
     setData,
     fieldErrors,
     error,
+    setError,
     pendingConfirm,
     setPendingConfirm,
     patch,
@@ -133,16 +134,26 @@ export function CrmRegistrationFlow({
     return true;
   }
 
-  function saveUser() {
+  async function saveUser() {
     setSaving(true);
-    window.setTimeout(() => {
-      const user = mapRegistrationToStaff("crm", data);
+    try {
+      const result = await submitRegistration("crm", data);
+      if (!result.ok) {
+        applyFieldErrors(result.errors);
+        setPendingConfirm(false);
+        return;
+      }
+      const user = userListItemToStaff(result.user);
       setSavedUser(user);
       onComplete(user);
       setStep(CRM_STEPS.length + 1);
-      setSaving(false);
       setPendingConfirm(false);
-    }, 600);
+    } catch {
+      setError("تعذر حفظ المستخدم. تحقق من الاتصال بالخادم.");
+      setPendingConfirm(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleNext() {

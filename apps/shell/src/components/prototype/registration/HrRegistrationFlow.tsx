@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from "react";
 import type { StaffUser } from "@/lib/prototype/constants";
-import {
-  mapRegistrationToStaff,
-  type RegistrationFormData,
-} from "@/lib/prototype/map-registration-to-staff";
+import { userListItemToStaff } from "@/lib/users-api";
+import type { RegistrationFormData } from "@/lib/prototype/map-registration-to-staff";
+import type { SubmitRegistrationFn } from "./RegisterUserFlow";
 import {
   EMP_TYPES,
   HR_HINTS,
@@ -41,11 +40,13 @@ const REVIEW_STEP = HR_STEPS.length;
 
 export function HrRegistrationFlow({
   existingEmails,
+  submitRegistration,
   onComplete,
   onBack,
   onAddAnother,
 }: {
   existingEmails: Set<string>;
+  submitRegistration: SubmitRegistrationFn;
   onComplete: (user: StaffUser) => void;
   onBack: () => void;
   onAddAnother: () => void;
@@ -135,16 +136,26 @@ export function HrRegistrationFlow({
     return true;
   }
 
-  function saveUser() {
+  async function saveUser() {
     setSaving(true);
-    window.setTimeout(() => {
-      const user = mapRegistrationToStaff("hr", data);
+    try {
+      const result = await submitRegistration("hr", data);
+      if (!result.ok) {
+        applyFieldErrors(result.errors);
+        setPendingConfirm(false);
+        return;
+      }
+      const user = userListItemToStaff(result.user);
       setSavedUser(user);
       onComplete(user);
       setStep(HR_STEPS.length + 1);
-      setSaving(false);
       setPendingConfirm(false);
-    }, 600);
+    } catch {
+      setError("تعذر حفظ المستخدم. تحقق من الاتصال بالخادم.");
+      setPendingConfirm(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleNext() {

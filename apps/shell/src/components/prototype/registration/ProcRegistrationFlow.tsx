@@ -2,10 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { StaffUser } from "@/lib/prototype/constants";
-import {
-  mapRegistrationToStaff,
-  type RegistrationFormData,
-} from "@/lib/prototype/map-registration-to-staff";
+import { userListItemToStaff } from "@/lib/users-api";
+import type { SubmitRegistrationFn } from "./RegisterUserFlow";
 import {
   PROC_STEPS_IND,
   PROC_STEPS_ORG,
@@ -37,11 +35,13 @@ import { useRegistrationDraft } from "./useRegistrationDraft";
 
 export function ProcRegistrationFlow({
   existingEmails,
+  submitRegistration,
   onComplete,
   onBack,
   onAddAnother,
 }: {
   existingEmails: Set<string>;
+  submitRegistration: SubmitRegistrationFn;
   onComplete: (user: StaffUser) => void;
   onBack: () => void;
   onAddAnother: () => void;
@@ -55,6 +55,7 @@ export function ProcRegistrationFlow({
     setData,
     fieldErrors,
     error,
+    setError,
     pendingConfirm,
     setPendingConfirm,
     patch,
@@ -146,16 +147,26 @@ export function ProcRegistrationFlow({
     return true;
   }
 
-  function saveUser() {
+  async function saveUser() {
     setSaving(true);
-    window.setTimeout(() => {
-      const user = mapRegistrationToStaff("proc", data);
+    try {
+      const result = await submitRegistration("proc", data);
+      if (!result.ok) {
+        applyFieldErrors(result.errors);
+        setPendingConfirm(false);
+        return;
+      }
+      const user = userListItemToStaff(result.user);
       setSavedUser(user);
       onComplete(user);
       setStep(steps.length + 1);
-      setSaving(false);
       setPendingConfirm(false);
-    }, 600);
+    } catch {
+      setError("تعذر حفظ المستخدم. تحقق من الاتصال بالخادم.");
+      setPendingConfirm(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleNext() {
