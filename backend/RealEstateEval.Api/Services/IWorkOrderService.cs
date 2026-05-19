@@ -1,0 +1,36 @@
+using RealEstateEval.Api.Contracts;
+
+namespace RealEstateEval.Api.Services;
+
+public interface IWorkOrderService
+{
+    Task<IReadOnlyList<WorkOrderListItemDto>> ListAsync(CancellationToken cancellationToken);
+    Task<WorkOrderDto?> GetByPoNumberAsync(string poNumber, CancellationToken cancellationToken);
+    Task<bool> ExistsAsync(string poNumber, CancellationToken cancellationToken);
+    Task<PriorDeedRegistrationDto?> FindPriorDeedAsync(
+        string deedNumber,
+        string? excludePoNumber,
+        CancellationToken cancellationToken);
+    Task<(WorkOrderDto? Result, Dictionary<string, string>? Errors)> CreateAsync(
+        CreateWorkOrderRequest request,
+        string? userId,
+        CancellationToken cancellationToken);
+    Task<(WorkOrderDto? Result, Dictionary<string, string>? Errors)> UpdateHeaderAsync(
+        string poNumber,
+        UpdateWorkOrderHeaderRequest request,
+        CancellationToken cancellationToken);
+    Task<(bool Ok, string? Error)> DeleteAsync(string poNumber, CancellationToken cancellationToken);
+    Task<(WorkOrderPropertyDto? Result, Dictionary<string, string>? Errors)> AddPropertyAsync(
+        string poNumber,
+        WorkOrderPropertyDto property,
+        CancellationToken cancellationToken);
+    Task<(WorkOrderPropertyDto? Result, Dictionary<string, string>? Errors)> UpdatePropertyAsync(
+        string poNumber,
+        Guid propertyId,
+        WorkOrderPropertyDto property,
+        CancellationToken cancellationToken);
+    Task<(bool Ok, string? Error)> DeletePropertyAsync(
+        string poNumber,
+        Guid propertyId,
+        CancellationToken cancellationToken);
+}

@@ -83,6 +83,7 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IUserRegistrationService, UserRegistrationService>();
+builder.Services.AddScoped<IWorkOrderService, WorkOrderService>();
 
 builder.Services.AddCors(options =>
 {

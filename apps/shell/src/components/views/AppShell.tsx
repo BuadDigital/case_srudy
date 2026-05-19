@@ -1,9 +1,8 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, startTransition } from "react";
-import { NavIcon } from "@/components/prototype/NavIcon";
+import { NavIcon } from "@/components/views/NavIcon";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { clearAuthSession, getAuthDisplayName } from "@platform/auth-client";
 import type { PageId, RoleId } from "@platform/types";

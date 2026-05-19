@@ -28,3 +28,33 @@ export {
   type ListUsersResult,
   type UsersApiConfig,
 } from "./users";
+
+export {
+  addWorkOrderProperty,
+  createWorkOrder,
+  deleteWorkOrder,
+  deleteWorkOrderProperty,
+  findPriorDeed,
+  getWorkOrder,
+  listWorkOrders,
+  updateWorkOrderHeader,
+  updateWorkOrderProperty,
+  workOrderExists,
+  type ApiErr,
+  type ApiOk,
+  type CreateWorkOrderRequest,
+  type PropertyContactDto,
+  type UpdateWorkOrderHeaderRequest,
+  type WorkOrderDto,
+  type WorkOrderListItemDto,
+  type WorkOrderPropertyDto,
+  type WorkOrdersApiConfig,
+} from "./work-orders";
+
+export {
+  listCourts,
+  replaceCourtsCatalog,
+  type CourtCatalogEntryDto,
+  type CourtsApiConfig,
+  type CourtsListResult,
+} from "./courts";

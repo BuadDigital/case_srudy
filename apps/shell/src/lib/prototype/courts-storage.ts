@@ -1,0 +1,88 @@
+import { listCourts, replaceCourtsCatalog } from "@platform/api-client";
+import { COURTS_BY_CITY } from "@/lib/prototype/po-intake-data";
+import {
+  apiErrorMessage,
+  courtsApiConfig,
+} from "@/lib/work-orders-api-config";
+
+export type CourtCatalogEntry = {
+  id: string;
+  city: string;
+  court: string;
+  circuits: string[];
+};
+
+function newId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `c-${Date.now()}`;
+}
+
+function seedFromDefaults(): CourtCatalogEntry[] {
+  const entries: CourtCatalogEntry[] = [];
+  for (const [city, courts] of Object.entries(COURTS_BY_CITY)) {
+    for (const c of courts) {
+      entries.push({
+        id: newId(),
+        city,
+        court: c.court,
+        circuits: [...c.circuits],
+      });
+    }
+  }
+  return entries;
+}
+
+export async function loadCourtsCatalog(): Promise<CourtCatalogEntry[]> {
+  const config = courtsApiConfig();
+  if (!config) return seedFromDefaults();
+
+  const result = await listCourts(config);
+  if (!result.ok) {
+    console.warn(apiErrorMessage(result.kind, "Courts API"));
+    return seedFromDefaults();
+  }
+
+  return result.entries.map((e) => ({
+    id: String(e.id),
+    city: e.city,
+    court: e.court,
+    circuits: e.circuits ?? [],
+  }));
+}
+
+export async function saveCourtsCatalog(
+  entries: CourtCatalogEntry[],
+): Promise<boolean> {
+  const config = courtsApiConfig();
+  if (!config) return false;
+
+  const result = await replaceCourtsCatalog(
+    config,
+    entries.map((e) => ({
+      id: e.id,
+      city: e.city,
+      court: e.court,
+      circuits: e.circuits,
+    })),
+  );
+  return result.ok;
+}
+
+export function courtsForCity(
+  entries: CourtCatalogEntry[],
+  city: string,
+): CourtCatalogEntry[] {
+  if (!city.trim()) return [];
+  return entries.filter((e) => e.city === city);
+}
+
+export function circuitsForCourt(
+  entries: CourtCatalogEntry[],
+  city: string,
+  court: string,
+): string[] {
+  const row = entries.find((e) => e.city === city && e.court === court);
+  return row?.circuits ?? [];
+}

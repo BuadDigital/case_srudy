@@ -1,18 +1,19 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { AssignmentView } from "@/components/prototype/AssignmentView";
-import { DashboardView } from "@/components/prototype/DashboardView";
-import { FailuresView } from "@/components/prototype/FailuresView";
-import { FieldFormView } from "@/components/prototype/FieldFormView";
-import { FinancialView } from "@/components/prototype/FinancialView";
-import { KeysView } from "@/components/prototype/KeysView";
-import { KpiView } from "@/components/prototype/KpiView";
-import { MessagesView } from "@/components/prototype/MessagesView";
-import { PoListView } from "@/components/prototype/PoListView";
-import { PropertiesListView } from "@/components/prototype/PropertiesListView";
-import { SurveyView } from "@/components/prototype/SurveyView";
-import { UsersView } from "@/components/prototype/UsersView";
-import { ValuationRequestsView } from "@/components/prototype/ValuationRequestsView";
+import { AssignmentView } from "@/components/views/AssignmentView";
+import { CourtsView } from "@/components/views/CourtsView";
+import { DashboardView } from "@/components/views/DashboardView";
+import { FailuresView } from "@/components/views/FailuresView";
+import { FieldFormView } from "@/components/views/FieldFormView";
+import { FinancialView } from "@/components/views/FinancialView";
+import { KeysView } from "@/components/views/KeysView";
+import { KpiView } from "@/components/views/KpiView";
+import { MessagesView } from "@/components/views/MessagesView";
+import { PoListView } from "@/components/views/PoListView";
+import { PropertiesListView } from "@/components/views/PropertiesListView";
+import { SurveyView } from "@/components/views/SurveyView";
+import { UsersView } from "@/components/views/UsersView";
+import { ValuationRequestsView } from "@/components/views/ValuationRequestsView";
 import { VALID_PAGE_IDS } from "@/lib/prototype/constants";
 import type { PageId } from "@platform/types";
 
@@ -30,6 +31,7 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   financial: <FinancialView />,
   kpi: <KpiView />,
   users: <UsersView />,
+  courts: <CourtsView />,
 };
 
 export default async function PrototypePage({

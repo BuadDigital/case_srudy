@@ -26,6 +26,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "financial",
       "kpi",
       "users",
+      "courts",
     ],
   },
   "section-supervisor": {
@@ -47,6 +48,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "financial",
       "kpi",
       "users",
+      "courts",
     ],
   },
   "operations-coordinator": {
@@ -63,7 +65,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "أص",
     bg: "var(--success-bg)",
     tc: "var(--success)",
-    pages: ["dashboard", "properties", "failures", "messages"],
+    pages: ["dashboard", "po", "properties", "failures", "messages"],
   },
   "report-preparer": {
     name: "صالح الحبشي",
@@ -176,6 +178,12 @@ export const NAV: NavItem[] = [
     icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
     grp: null,
   },
+  {
+    id: "courts",
+    label: "المحاكم والدوائر",
+    icon: "M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6",
+    grp: "الإدارة",
+  },
 ];
 
 export const PAGE_TITLES: Record<PageId, string> = {
@@ -192,6 +200,7 @@ export const PAGE_TITLES: Record<PageId, string> = {
   financial: "التقارير المالية",
   kpi: "مؤشرات الأداء",
   users: "إدارة المستخدمين",
+  courts: "المحاكم والدوائر",
 };
 
 export const PAGE_BREADCRUMB: Record<PageId, string> = {
@@ -208,6 +217,7 @@ export const PAGE_BREADCRUMB: Record<PageId, string> = {
   financial: "المالية",
   kpi: "الإدارة",
   users: "الإدارة",
+  courts: "الإدارة",
 };
 
 /** Mock rows aligned with `requirment/system_prototype_4.html` (PO / VR / عقارات). */
@@ -218,6 +228,7 @@ export type PoRow = {
   done: number;
   status: "progress" | "done";
   date: string;
+  dueDate: string;
   specialist: string;
 };
 
@@ -248,10 +259,10 @@ export type PropertyRow = {
 };
 
 export const MOCK_PO: PoRow[] = [
-  { id: "PO-2024-018", type: "قضائي", count: 12, done: 8, status: "progress", date: "2025-01-14", specialist: "أسامة الصالحي" },
-  { id: "PO-2024-017", type: "خاص", count: 3, done: 3, status: "done", date: "2025-01-13", specialist: "عمر الحمراني" },
-  { id: "PO-2024-016", type: "قضائي", count: 27, done: 14, status: "progress", date: "2025-01-12", specialist: "أيمن مجرشي" },
-  { id: "PO-2024-015", type: "خاص", count: 1, done: 1, status: "done", date: "2025-01-11", specialist: "وليد باشماخ" },
+  { id: "PO-2024-018", type: "قضائي", count: 12, done: 8, status: "progress", date: "2025-01-14", dueDate: "2025-01-20", specialist: "أسامة الصالحي" },
+  { id: "PO-2024-017", type: "خاص", count: 3, done: 3, status: "done", date: "2025-01-13", dueDate: "2025-01-19", specialist: "عمر الحمراني" },
+  { id: "PO-2024-016", type: "قضائي", count: 27, done: 14, status: "progress", date: "2025-01-12", dueDate: "2025-01-18", specialist: "أيمن مجرشي" },
+  { id: "PO-2024-015", type: "خاص", count: 1, done: 1, status: "done", date: "2025-01-11", dueDate: "2025-01-17", specialist: "وليد باشماخ" },
 ];
 
 export const MOCK_VR: VrRow[] = [

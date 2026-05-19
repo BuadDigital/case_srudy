@@ -12,7 +12,8 @@ export type PageId =
   | "messages"
   | "financial"
   | "kpi"
-  | "users";
+  | "users"
+  | "courts";
 
 export type RoleId =
   | "general-manager"
@@ -57,6 +58,7 @@ export function isPageId(value: string): value is PageId {
     value === "messages" ||
     value === "financial" ||
     value === "kpi" ||
-    value === "users"
+    value === "users" ||
+    value === "courts"
   );
 }

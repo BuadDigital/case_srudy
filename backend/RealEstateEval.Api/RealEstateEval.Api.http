@@ -1,6 +1,54 @@
-@RealEstateEval.Api_HostAddress = http://localhost:5160
+@host = http://localhost:5160
+@token = {{login.response.body.token}}
 
-GET {{RealEstateEval.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Login (copy token into @token)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "email": "admin@example.com",
+  "password": "your-password"
+}
+
+### List work orders
+GET {{host}}/api/work-orders
+Authorization: Bearer {{token}}
+
+### Check PO exists
+GET {{host}}/api/work-orders/exists?poNumber=PO-2025-001
+Authorization: Bearer {{token}}
+
+### Create work order (intake)
+POST {{host}}/api/work-orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "poNumber": "PO-2025-001",
+  "assignmentType": "تنفيذ",
+  "receivedFromEnfathAt": "2025-04-10",
+  "receivedFromEnfathTime": "10:00",
+  "internalAssignmentAt": "2025-04-10",
+  "assignmentSpecialist": "أسامة الصالحي",
+  "properties": [
+    {
+      "identifierType": "deed",
+      "deedNumber": "1234567890",
+      "city": "مكة المكرمة",
+      "district": "الشوقية",
+      "classification": "أرض",
+      "propertyType": "سكنية",
+      "assignmentDocFileName": "decree.pdf",
+      "contacts": [{ "name": "أحمد", "phone": "0500000000" }]
+    }
+  ]
+}
+
+### Get work order
+GET {{host}}/api/work-orders/PO-2025-001
+Authorization: Bearer {{token}}
+
+### Courts catalog
+GET {{host}}/api/courts
+Authorization: Bearer {{token}}

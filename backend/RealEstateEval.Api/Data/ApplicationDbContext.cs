@@ -16,6 +16,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<HrEmployeeProfile> HrEmployeeProfiles => Set<HrEmployeeProfile>();
     public DbSet<ProcServiceProviderProfile> ProcServiceProviderProfiles => Set<ProcServiceProviderProfile>();
     public DbSet<CrmClientProfile> CrmClientProfiles => Set<CrmClientProfile>();
+    public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
+    public DbSet<WorkOrderProperty> WorkOrderProperties => Set<WorkOrderProperty>();
+    public DbSet<PropertyContact> PropertyContacts => Set<PropertyContact>();
+    public DbSet<CourtCatalogEntry> CourtCatalogEntries => Set<CourtCatalogEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -70,6 +74,53 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithOne(x => x.CrmClient)
                 .HasForeignKey<CrmClientProfile>(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<WorkOrder>(e =>
+        {
+            e.ToTable("WorkOrders");
+            e.HasIndex(x => x.PoNumber).IsUnique();
+            e.Property(x => x.PoNumber).HasMaxLength(64);
+            e.Property(x => x.AssignmentSpecialist).HasMaxLength(256);
+            e.Property(x => x.ReceivedFromEnfathTime).HasMaxLength(8);
+            e.HasOne(x => x.RegisteredBy)
+                .WithMany()
+                .HasForeignKey(x => x.RegisteredByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(x => x.Properties)
+                .WithOne(x => x.WorkOrder)
+                .HasForeignKey(x => x.WorkOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<WorkOrderProperty>(e =>
+        {
+            e.ToTable("WorkOrderProperties");
+            e.Property(x => x.DeedNumber).HasMaxLength(128);
+            e.Property(x => x.City).HasMaxLength(128);
+            e.Property(x => x.District).HasMaxLength(128);
+            e.Property(x => x.Classification).HasMaxLength(128);
+            e.Property(x => x.PropertyType).HasMaxLength(128);
+            e.HasIndex(x => new { x.WorkOrderId, x.DeedNumber });
+            e.HasMany(x => x.Contacts)
+                .WithOne(x => x.Property)
+                .HasForeignKey(x => x.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PropertyContact>(e =>
+        {
+            e.ToTable("PropertyContacts");
+            e.Property(x => x.Name).HasMaxLength(256);
+            e.Property(x => x.Phone).HasMaxLength(32);
+        });
+
+        builder.Entity<CourtCatalogEntry>(e =>
+        {
+            e.ToTable("CourtCatalogEntries");
+            e.Property(x => x.City).HasMaxLength(128);
+            e.Property(x => x.Court).HasMaxLength(256);
+            e.Property(x => x.CircuitsJson).HasColumnType("jsonb");
         });
     }
 }
