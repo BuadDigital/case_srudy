@@ -119,5 +119,5 @@ amqp://dev:dev@localhost:5672/
 
 ## Related docs
 
-- [ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](./ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) — §6.1 platform stack roles
-- Phase A checklist — gateway + Case Study API (same architecture doc §7)
+- [ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](./ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) — section 6.1 platform stack roles
+- Phase A checklist — gateway + Case Study API (same architecture doc section 7)

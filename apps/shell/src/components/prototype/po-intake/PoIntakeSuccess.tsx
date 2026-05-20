@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import type { PoIntakeRecord } from "@/lib/prototype/po-intake-data";
 import { formatDateAr } from "@/lib/prototype/po-intake-data";
+import { SummaryGrid } from "@/components/prototype/registration/SummaryGrid";
 
 export function PoIntakeSuccess({
   record,
@@ -15,39 +16,41 @@ export function PoIntakeSuccess({
 }) {
   const router = useRouter();
 
+  const summaryRows = [
+    { l: "رقم PO", v: record.poNumber },
+    { l: "نوع الإسناد", v: record.assignmentType },
+    {
+      l: "تاريخ الاستلام من إنفاذ",
+      v: formatDateAr(record.receivedFromEnfathAt),
+    },
+    { l: "تاريخ الاستحقاق", v: formatDateAr(record.dueDateAt) },
+    { l: "أخصائي الإسناد", v: record.assignmentSpecialist },
+    {
+      l: "عدد العقارات",
+      v: String(record.properties.length),
+    },
+  ];
+
   return (
-    <div className="reg-success-wrap">
-      <div className="reg-success-ico" aria-hidden />
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
-        تم استلام أمر العمل بنجاح
-      </h2>
-      <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 16 }}>
-        سجّل النظام {record.properties.length} عقاراً تحت{" "}
-        <strong>{record.poNumber}</strong>. يمكنك متابعة تسجيل العقارات والإسناد
-        من الشاشة التالية.
-      </p>
-      <div className="reg-success-info">
-        <div className="reg-si-row">
-          رقم PO: <strong>{record.poNumber}</strong>
-        </div>
-        <div className="reg-si-row">
-          نوع الإسناد: <strong>{record.assignmentType}</strong>
-        </div>
-        <div className="reg-si-row">
-          تاريخ الاستلام من إنفاذ:{" "}
-          <strong>{formatDateAr(record.receivedFromEnfathAt)}</strong>
-        </div>
-        <div className="reg-si-row">
-          تاريخ الاستحقاق: <strong>{formatDateAr(record.dueDateAt)}</strong>
-        </div>
-        <div className="reg-si-row">
-          أخصائي الإسناد: <strong>{record.assignmentSpecialist}</strong>
-        </div>
-        <div className="reg-si-row">
-          عدد العقارات: <strong>{record.properties.length}</strong>
-        </div>
+    <div className="po-intake-success-card" role="status" aria-live="polite">
+      <div className="po-intake-success-card-head">
+        <div className="reg-success-ico" aria-hidden />
+        <h2 className="po-intake-success-title">تم استلام أمر العمل بنجاح</h2>
+        <p className="po-intake-success-lead">
+          سجّل النظام{" "}
+          <strong>{record.properties.length}</strong>{" "}
+          {record.properties.length === 1 ? "عقاراً" : "عقارات"} تحت{" "}
+          <strong dir="ltr">{record.poNumber}</strong>. يمكنك متابعة تسجيل
+          العقارات والإسناد من الشاشة التالية.
+        </p>
       </div>
-      <div className="reg-success-btns">
+
+      <div className="po-intake-success-details">
+        <p className="po-intake-success-details-title">ملخص أمر العمل</p>
+        <SummaryGrid rows={summaryRows} />
+      </div>
+
+      <div className="po-intake-success-actions">
         <button
           type="button"
           className="btn btn-primary"

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   emptyProperty,
+  formatPoDisplay,
   type PoIntakeRecord,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
@@ -142,7 +143,7 @@ export function PoPropertyCreate({
 
   return (
     <PoEditShell
-      title={`إضافة عقار — PO ${poNumber}`}
+      title={`إضافة عقار — ${formatPoDisplay(poNumber)}`}
       subtitle="أخصائي دراسة الحالة"
       saving={saving}
       onBack={onBackAction}

@@ -30,7 +30,8 @@ internal static class WorkOrderValidator
 
         if (RequiresAssignmentDecree(assignmentType) &&
             string.IsNullOrWhiteSpace(dto.AssignmentDocFileName))
-            errors["assignmentDocFileName"] = "مرفق قرار الإسناد مطلوب لمسار التنفيذ";
+            errors["assignmentDocFileName"] =
+                "ارفع قرار الإسناد الخاص بهذا العقار (مطلوب لمسار التنفيذ)";
 
         PropertyIdentifierTypeLabels.TryParseApiValue(dto.IdentifierType, out var idType);
         if (idType == PropertyIdentifierType.RealEstateRegistration &&
@@ -38,8 +39,23 @@ internal static class WorkOrderValidator
             errors["realEstateRegFileName"] =
                 "ارفع السجل العقاري كمرفق (يُطلب من أطراف التنفيذ)";
 
-        var hasContact = dto.Contacts.Any(c =>
-            !string.IsNullOrWhiteSpace(c.Name) && !string.IsNullOrWhiteSpace(c.Phone));
+        var hasContact = false;
+        for (var i = 0; i < dto.Contacts.Count; i++)
+        {
+            var c = dto.Contacts[i];
+            var name = c.Name.Trim();
+            var phone = c.Phone.Trim();
+            if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(phone))
+                continue;
+            if (string.IsNullOrEmpty(name))
+                errors[$"contact_name_{i}"] = "الاسم مطلوب";
+            if (string.IsNullOrEmpty(phone))
+                errors[$"contact_phone_{i}"] = "رقم الجوال مطلوب";
+            else if (CountPhoneDigits(phone) < 10)
+                errors[$"contact_phone_{i}"] = "رقم الجوال يجب أن يكون 10 أرقام على الأقل";
+            if (!string.IsNullOrEmpty(name) && CountPhoneDigits(phone) >= 10)
+                hasContact = true;
+        }
         if (!hasContact)
             errors["_contacts"] = "أضف ضابط اتصال واحداً على الأقل";
 
@@ -49,6 +65,9 @@ internal static class WorkOrderValidator
 
         return errors;
     }
+
+    private static int CountPhoneDigits(string phone) =>
+        phone.Count(char.IsDigit);
 
     public static Dictionary<string, string> ValidateHeader(CreateWorkOrderRequest request)
     {

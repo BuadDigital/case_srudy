@@ -1,6 +1,6 @@
 namespace RealEstateEval.Api.Services;
 
-/// <summary>§6 — 4 business days (Sun–Thu), 08:00–17:00 receipt rules.</summary>
+/// <summary>4 business days (Sun–Thu), 08:00–17:00 receipt rules.</summary>
 public static class BusinessDueDateCalculator
 {
     private const int WorkdayStartHour = 8;
@@ -11,7 +11,7 @@ public static class BusinessDueDateCalculator
     {
         var received = ParseReceived(receivedDate, receivedTime);
         var effective = GetEffectiveStartDate(received);
-        return AddBusinessDaysInclusive(effective, BusinessDaysRequired);
+        return AddBusinessDaysAfterReceipt(effective, BusinessDaysRequired);
     }
 
     private static DateTime ParseReceived(DateOnly receivedDate, string? receivedTime)
@@ -42,16 +42,16 @@ public static class BusinessDueDateCalculator
         return cursor.Date;
     }
 
-    private static DateOnly AddBusinessDaysInclusive(DateTime start, int count)
+    /// <summary>Due date = 4 business days (Sun–Thu) after receipt day; receipt day is not counted.</summary>
+    private static DateOnly AddBusinessDaysAfterReceipt(DateTime start, int count)
     {
         var d = start.Date;
         var added = 0;
         while (added < count)
         {
+            d = d.AddDays(1);
             if (IsBusinessDay(d))
                 added++;
-            if (added < count)
-                d = d.AddDays(1);
         }
         return DateOnly.FromDateTime(d);
     }

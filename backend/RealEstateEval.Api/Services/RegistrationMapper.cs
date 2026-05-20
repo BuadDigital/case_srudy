@@ -61,6 +61,10 @@ public static class RegistrationMapper
             "Supervisor" => "مشرف",
             "Editor" => "محرر",
             "Reader" => "قارئ",
+            OrgRoles.Cdo => "مسؤول التحول الرقمي (CDO)",
+            OrgRoles.HrAdmin => "مدير الموارد البشرية",
+            OrgRoles.ProcAdmin => "مدير العقود والمشتريات",
+            OrgRoles.CrmAdmin => "مدير علاقات العملاء",
             _ => roleName,
         };
 

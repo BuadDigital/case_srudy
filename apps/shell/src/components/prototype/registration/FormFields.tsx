@@ -35,6 +35,7 @@ export function RegField({
   required,
   type = "text",
   placeholder,
+  inputMode,
   value,
   onChange,
   className,
@@ -46,6 +47,7 @@ export function RegField({
   required?: boolean;
   type?: string;
   placeholder?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   value: string;
   onChange: (value: string) => void;
   className?: string;
@@ -59,6 +61,7 @@ export function RegField({
         className={`reg-fi${error ? " reg-fi--error" : ""}`}
         type={type}
         placeholder={placeholder}
+        inputMode={inputMode}
         value={value}
         dir={dir}
         onChange={(e) => onChange(e.target.value)}
@@ -79,6 +82,8 @@ export function RegSelect({
   onChange,
   className,
   error,
+  disabled,
+  placeholder,
 }: {
   id: string;
   label: string;
@@ -88,17 +93,20 @@ export function RegSelect({
   onChange: (value: string) => void;
   className?: string;
   error?: string;
+  disabled?: boolean;
+  placeholder?: string;
 }) {
   return (
     <FieldWrap label={label} required={required} className={className} error={error}>
       <select
         id={id}
-        className={`reg-fi${error ? " reg-fi--error" : ""}`}
+        className={`reg-fi${error ? " reg-fi--error" : ""}${disabled ? " reg-fi--disabled" : ""}`}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
       >
-        <option value="">اختر...</option>
+        <option value="">{placeholder ?? "اختر..."}</option>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}

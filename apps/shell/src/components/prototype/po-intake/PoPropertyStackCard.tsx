@@ -1,20 +1,27 @@
 "use client";
 
-import type { PoPropertyIntake } from "@/lib/prototype/po-intake-data";
+import {
+  requiresAssignmentDecree,
+  type AssignmentType,
+  type PoPropertyIntake,
+} from "@/lib/prototype/po-intake-data";
+import { isValidPhone } from "./po-property-validation";
 
 export function PoPropertyStackCard({
   index,
   property,
+  assignmentType,
   onEdit,
   onRemove,
 }: {
   index: number;
   property: PoPropertyIntake;
+  assignmentType: AssignmentType;
   onEdit: () => void;
   onRemove: () => void;
 }) {
   const contactCount = property.contacts.filter(
-    (c) => c.name.trim() && c.phone.trim(),
+    (c) => c.name.trim() && isValidPhone(c.phone),
   ).length;
   const location = [property.city, property.district].filter(Boolean).join(" · ");
   const typeLabel = property.propertyType || property.classification || "—";
@@ -50,6 +57,21 @@ export function PoPropertyStackCard({
             {contactCount}{" "}
             {contactCount === 1 ? "ضابط اتصال" : "ضباط اتصال"}
           </span>
+          {requiresAssignmentDecree(assignmentType) ? (
+            <>
+              <span aria-hidden>·</span>
+              <span
+                className={
+                  property.assignmentDocFileName.trim()
+                    ? "po-stack-decree-ok"
+                    : "po-stack-decree-missing"
+                }
+              >
+                قرار الإسناد:{" "}
+                {property.assignmentDocFileName.trim() || "غير مرفق"}
+              </span>
+            </>
+          ) : null}
         </p>
       </div>
     </article>

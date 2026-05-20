@@ -16,6 +16,7 @@ export type PageId =
   | "courts";
 
 export type RoleId =
+  | "cdo"
   | "general-manager"
   | "section-supervisor"
   | "operations-coordinator"
@@ -42,6 +43,24 @@ export type RoleDef = {
   bg: string;
   tc: string;
   pages: PageId[];
+};
+
+export function isRoleId(value: string): value is RoleId {
+  return value in ROLE_ID_SET;
+}
+
+const ROLE_ID_SET: Record<RoleId, true> = {
+  cdo: true,
+  "general-manager": true,
+  "section-supervisor": true,
+  "operations-coordinator": true,
+  "case-specialist": true,
+  "report-preparer": true,
+  "court-delegate": true,
+  "valuation-coordinator": true,
+  "real-estate-appraiser": true,
+  "field-inspector": true,
+  "financial-officer": true,
 };
 
 export function isPageId(value: string): value is PageId {

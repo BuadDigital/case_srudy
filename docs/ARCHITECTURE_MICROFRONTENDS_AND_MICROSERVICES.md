@@ -206,7 +206,7 @@ For **each** remote MFE:
 4. **Survey assigned** → Survey service updates job status → Case Study reads status via API or event
 5. **Failure approved** → Case Study updates property status; may block valuation
 
-Define these as **async integration events** (see §4.6).
+Define these as **async integration events** (see section 4.6).
 
 ### 4.5 Per-service technical checklist (.NET)
 
@@ -294,7 +294,7 @@ Map prototype roles to **permissions** (implement in Identity service):
 
 - [ ] **Correlation ID** end-to-end (shell → gateway → services)
 - [ ] **OpenTelemetry** traces + metrics in each service
-- [ ] **Centralized logs** (see §6.1 — Fluentd + Elasticsearch + Kibana, or Seq for local dev)
+- [ ] **Centralized logs** (see section 6.1 — Fluentd + Elasticsearch + Kibana, or Seq for local dev)
 - [ ] CI: build + test each service and MFE independently
 - [ ] CD: deploy shell + remotes + gateway with compatible versions
 - [ ] Feature flags for gradual MFE rollout (optional)

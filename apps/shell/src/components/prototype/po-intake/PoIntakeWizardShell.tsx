@@ -52,7 +52,9 @@ export function PoIntakeWizardShell({
       className={`reg-root ${meta.flowClass}${inWizard ? " reg-root--compact" : ""}`}
     >
       <div className="reg-layout">
-        <div className={`reg-main${inWizard ? " reg-main--wizard" : ""}`}>
+        <div
+          className={`reg-main${inWizard ? " reg-main--wizard" : ""}${success ? " reg-main--success" : ""}`}
+        >
           {!inWizard ? (
             <header className="reg-topbar">
               <div className="reg-topbar-main">

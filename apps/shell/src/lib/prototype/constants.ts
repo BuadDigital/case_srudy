@@ -6,6 +6,29 @@ export type { NavItem, PageId, RoleDef, RoleId };
 export const STORAGE_ROLE_KEY = "evalPrototypeRole";
 
 export const ROLES: Record<RoleId, RoleDef> = {
+  cdo: {
+    name: "سليمان",
+    dept: "مسؤول التحول الرقمي (CDO)",
+    init: "سل",
+    bg: "var(--purple-bg)",
+    tc: "var(--purple)",
+    pages: [
+      "dashboard",
+      "po",
+      "properties",
+      "assignment",
+      "survey",
+      "keys",
+      "failures",
+      "valuation-requests",
+      "field-form",
+      "messages",
+      "financial",
+      "kpi",
+      "users",
+      "courts",
+    ],
+  },
   "general-manager": {
     name: "سالم الغريب",
     dept: "مدير الإدارة العام",
@@ -392,6 +415,7 @@ export const MOCK_MESSAGES: MessagePreview[] = [
 export const VALID_PAGE_IDS = new Set<PageId>(NAV.map((n) => n.id));
 
 export const ROLE_OPTIONS: { group: string; value: RoleId; label: string }[] = [
+  { group: "الإدارة", value: "cdo", label: "سليمان — مسؤول التحول الرقمي (CDO)" },
   { group: "الإدارة", value: "general-manager", label: "سالم الغريب — مدير الإدارة" },
   { group: "الإدارة", value: "section-supervisor", label: "عبدالرحمن النفيعي — مشرف دراسة الحالة" },
   { group: "قسم دراسة الحالة", value: "operations-coordinator", label: "منسق العمليات" },

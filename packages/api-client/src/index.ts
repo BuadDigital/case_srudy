@@ -23,9 +23,11 @@ export {
   createCrmUser,
   createHrUser,
   createProcUser,
+  fetchOrganizationOverview,
   listUsers,
   type CreateUserResult,
   type ListUsersResult,
+  type OrganizationOverviewResult,
   type UsersApiConfig,
 } from "./users";
 

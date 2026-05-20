@@ -426,7 +426,7 @@ Base URL (dev): `http://localhost:5160`
 | Operations | `/api/operations/v1` | Planned |
 | Financial / reporting | `/api/financial/v1`, `/api/reporting/v1` | Planned |
 
-See [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) §8.
+See [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) section 8.
 
 ---
 

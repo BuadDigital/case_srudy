@@ -2,6 +2,10 @@
 
 import type { PoContact } from "@/lib/prototype/po-intake-data";
 import { RegField } from "@/components/prototype/registration/FormFields";
+import {
+  normalizePhoneInput,
+  PHONE_MIN_DIGITS,
+} from "./po-property-validation";
 
 export function PoContactEditor({
   contacts,
@@ -58,9 +62,11 @@ export function PoContactEditor({
               required
               type="tel"
               dir="ltr"
+              inputMode="numeric"
+              placeholder={`${PHONE_MIN_DIGITS} أرقام على الأقل`}
               value={c.phone}
               error={errors[`contact_phone_${i}`]}
-              onChange={(v) => patch(i, "phone", v)}
+              onChange={(v) => patch(i, "phone", normalizePhoneInput(v))}
             />
           </div>
         </div>

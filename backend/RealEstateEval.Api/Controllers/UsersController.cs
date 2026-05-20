@@ -25,6 +25,14 @@ public class UsersController : ControllerBase
         return Ok(list);
     }
 
+    [HttpGet("organization")]
+    public async Task<ActionResult<OrganizationOverviewDto>> Organization(
+        CancellationToken cancellationToken)
+    {
+        var overview = await _users.GetOrganizationOverviewAsync(cancellationToken);
+        return Ok(overview);
+    }
+
     [HttpPost("hr")]
     public async Task<ActionResult<CreateUserResponseDto>> CreateHr(
         [FromBody] RegistrationPayloadDto data,
@@ -47,6 +55,14 @@ public class UsersController : ControllerBase
         CancellationToken cancellationToken)
     {
         return await Create(data, _users.CreateCrmAsync, cancellationToken);
+    }
+
+    [HttpDelete("registered")]
+    public async Task<ActionResult<DeleteRegisteredUsersResponseDto>> DeleteAllRegistered(
+        CancellationToken cancellationToken)
+    {
+        var deleted = await _users.DeleteAllRegisteredAsync(cancellationToken);
+        return Ok(new DeleteRegisteredUsersResponseDto { DeletedCount = deleted });
     }
 
     private static async Task<ActionResult<CreateUserResponseDto>> Create(

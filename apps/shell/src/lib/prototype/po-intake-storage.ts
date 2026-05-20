@@ -29,6 +29,7 @@ import {
 import {
   apiErrorMessage,
   notifyWorkOrdersChanged,
+  resolveApiError,
   workOrdersApiConfig,
 } from "@/lib/work-orders-api-config";
 
@@ -191,10 +192,7 @@ export async function savePoRecord(
   if (!result.ok) {
     return {
       ok: false,
-      error:
-        result.errors?._ ??
-        result.errors?.poNumber ??
-        apiErrorMessage(result.kind),
+      error: resolveApiError(result.kind, result.errors),
       errors: result.errors,
     };
   }
@@ -361,9 +359,7 @@ export async function updatePoRecord(
   if (!result.ok) {
     return {
       ok: false,
-      error:
-        result.errors?.assignmentType ??
-        apiErrorMessage(result.kind, "تعذّر حفظ التعديلات"),
+      error: resolveApiError(result.kind, result.errors, "تعذّر حفظ التعديلات"),
       errors: result.errors,
     };
   }
@@ -411,10 +407,7 @@ export async function addPropertyToPo(
   if (!result.ok) {
     return {
       ok: false,
-      error:
-        result.errors?.deedNumber ??
-        result.errors?._contacts ??
-        apiErrorMessage(result.kind),
+      error: resolveApiError(result.kind, result.errors),
       errors: result.errors,
     };
   }
@@ -458,10 +451,7 @@ export async function updatePropertyInPo(
   if (!result.ok) {
     return {
       ok: false,
-      error:
-        result.errors?.deedNumber ??
-        result.errors?._contacts ??
-        apiErrorMessage(result.kind),
+      error: resolveApiError(result.kind, result.errors),
       errors: result.errors,
     };
   }

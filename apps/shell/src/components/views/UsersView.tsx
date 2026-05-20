@@ -1,11 +1,15 @@
 ﻿"use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RegistrationPortal } from "@/components/prototype/registration/RegistrationPortal";
 import { RegisterUserFlow } from "@/components/prototype/registration/RegisterUserFlow";
 import type { StaffUser, StaffUserDetail } from "@/lib/prototype/constants";
 import type { RegistrationSource } from "@/lib/prototype/registration-data";
-import { fetchStaffUsers, submitRegistration } from "@/lib/users-api";
+import { submitRegistration } from "@/lib/users-api";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
+import { UsersOrganizationView } from "@/components/views/users/UsersOrganizationView";
+import { useStaffUsersQuery } from "@/lib/query/prototype-queries";
 import { usePrototype } from "@/contexts/PrototypeContext";
 
 function staffContractLabel(t: "internal" | "freelance" | "external") {
@@ -146,30 +150,39 @@ function UsersToast({ message }: { message: string | null }) {
 }
 
 export function UsersView() {
+  const queryClient = useQueryClient();
   const { role } = usePrototype();
+  const isCdo = role === "cdo";
+
+  if (isCdo) {
+    return <UsersOrganizationView />;
+  }
+
+  return <UsersStaffListView role={role} queryClient={queryClient} />;
+}
+
+function UsersStaffListView({
+  role,
+  queryClient,
+}: {
+  role: ReturnType<typeof usePrototype>["role"];
+  queryClient: ReturnType<typeof useQueryClient>;
+}) {
   const viewOnly = role === "general-manager";
 
-  const [staff, setStaff] = useState<StaffUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const { data: staffResult } = useStaffUsersQuery();
+  const staff = staffResult?.users ?? [];
+  const loadError = staffResult?.loadError ?? null;
+  const dataReady = staffResult !== undefined;
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [mode, setMode] = useState<UsersMode>("list");
   const [registerSource, setRegisterSource] =
     useState<RegistrationSource | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  const refreshList = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    const { users, loadError: err } = await fetchStaffUsers();
-    setStaff(users);
-    setLoadError(err);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    void refreshList();
-  }, [refreshList]);
+  const refreshList = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: prototypeKeys.staffUsers() });
+  }, [queryClient]);
 
   const existingEmails = useMemo(
     () => new Set(staff.map((u) => u.email.toLowerCase())),
@@ -238,7 +251,8 @@ export function UsersView() {
       <div className="card">
         <div className="card-header">
           <span className="card-title">
-            جميع المستخدمين ({loading ? "…" : staff.length})
+            جميع المستخدمين
+            {dataReady ? ` (${staff.length})` : null}
           </span>
           {!viewOnly ? (
             <button
@@ -257,7 +271,7 @@ export function UsersView() {
             {loadError}
           </div>
         ) : null}
-        <table className="tbl users-tbl">
+        <table className="tbl users-tbl" data-pending={!dataReady}>
           <thead>
             <tr>
               <th>الاسم</th>
@@ -269,19 +283,13 @@ export function UsersView() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr className="tbl-empty">
-                <td colSpan={6} style={{ textAlign: "center", color: "var(--text3)" }}>
-                  جاري التحميل…
-                </td>
-              </tr>
-            ) : loadError ? (
+            {dataReady && loadError ? (
               <tr className="tbl-empty">
                 <td colSpan={6} style={{ textAlign: "center", color: "var(--text3)" }}>
                   —
                 </td>
               </tr>
-            ) : staff.length === 0 ? (
+            ) : dataReady && staff.length === 0 ? (
               <tr className="tbl-empty">
                 <td
                   colSpan={6}
@@ -290,7 +298,7 @@ export function UsersView() {
                   لا يوجد مستخدمون — أضف مستخدماً جديداً.
                 </td>
               </tr>
-            ) : (
+            ) : dataReady ? (
               staff.flatMap((u) => {
                 const isOpen = expandedId === u.id;
                 const rows = [
@@ -361,7 +369,7 @@ export function UsersView() {
 
                 return rows;
               })
-            )}
+            ) : null}
           </tbody>
         </table>
       </div>

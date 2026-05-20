@@ -39,3 +39,8 @@ public class FieldErrorsResponseDto
 {
     public required Dictionary<string, string> Errors { get; init; }
 }
+
+public class DeleteRegisteredUsersResponseDto
+{
+    public int DeletedCount { get; init; }
+}

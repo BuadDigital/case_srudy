@@ -14,6 +14,7 @@ export function PoEditShell({
   onSave,
   saveLabel = "حفظ التعديلات",
   footerExtra,
+  variant = "edit",
   children,
 }: {
   title: string;
@@ -24,6 +25,7 @@ export function PoEditShell({
   onSave: () => void;
   saveLabel?: string;
   footerExtra?: ReactNode;
+  variant?: "edit" | "detail";
   children: ReactNode;
 }) {
   function handleBack() {
@@ -34,38 +36,36 @@ export function PoEditShell({
   return (
     <div className={`reg-root ${PO_INTAKE_FLOW.flowClass}`}>
       <div className="reg-layout">
-        <div className="reg-main">
-          <header className="reg-topbar">
+        <div
+          className={`reg-main reg-main--detail${variant === "detail" ? " reg-main--detail-view" : ""}`}
+        >
+          <header className="reg-topbar po-edit-topbar">
             <div className="reg-topbar-main">
               <button type="button" className="btn btn-sm" onClick={handleBack}>
                 {REG_BACK}
               </button>
-              <div>
-                <h1 className="reg-title">{title}</h1>
-                {subtitle ? (
-                  <p className="reg-subtitle">{subtitle}</p>
-                ) : null}
+              <div className="po-edit-topbar-titles">
+                <h1 className="po-edit-title">{title}</h1>
+                {subtitle ? <p className="po-edit-subtitle">{subtitle}</p> : null}
               </div>
             </div>
           </header>
-          {children}
-          <div
-            className="reg-footer"
-            style={{
-              marginTop: 16,
-              justifyContent: footerExtra ? "space-between" : "flex-end",
-            }}
-          >
-            {footerExtra ?? <span />}
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={saving}
-              onClick={onSave}
-            >
-              {saving ? "جاري الحفظ…" : saveLabel}
-            </button>
-          </div>
+          <div className="po-edit-body">{children}</div>
+          {variant !== "detail" ? (
+            <footer className="reg-foot po-edit-foot">
+              <div className="po-edit-foot-actions">
+                {footerExtra}
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={saving}
+                  onClick={onSave}
+                >
+                  {saving ? "جاري الحفظ…" : saveLabel}
+                </button>
+              </div>
+            </footer>
+          ) : null}
         </div>
       </div>
     </div>

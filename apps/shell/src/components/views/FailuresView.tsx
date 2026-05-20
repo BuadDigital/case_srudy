@@ -12,7 +12,7 @@ import {
   submitFailureForReview,
   type FailureRecord,
 } from "@/lib/prototype/failures-storage";
-import { formatDateAr } from "@/lib/prototype/po-intake-data";
+import { formatDateAr, formatPoDisplay } from "@/lib/prototype/po-intake-data";
 
 function isCaseEditor(role: string) {
   return role === "case-specialist" || role === "report-preparer";
@@ -123,7 +123,7 @@ export function FailuresView() {
               <span style={{ fontSize: 13, fontWeight: 500 }}>
                 {f.deedNumber || f.title}{" "}
                 <span style={{ fontSize: 11, color: "var(--text3)" }}>
-                  · PO {f.poNumber}
+                  · {formatPoDisplay(f.poNumber)}
                 </span>
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

@@ -157,7 +157,7 @@ export function CourtsView() {
 
       <div className="card">
         <div className="card-header">
-          <span className="card-title">قائمة المحاكم والدوائر (§2)</span>
+          <span className="card-title">قائمة المحاكم والدوائر</span>
         </div>
         {grouped.length === 0 ? (
           <p style={{ padding: 16, color: "var(--text3)", fontSize: 12 }}>

@@ -1,20 +1,20 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { StatValue } from "@/components/ui/StatValue";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
-import type { PoRow } from "@/lib/prototype/constants";
-import type { PoIntakeRecord } from "@/lib/prototype/po-intake-data";
 import {
   assignmentTypeBadgeClass,
   formatDateAr,
   isPastDue,
 } from "@/lib/prototype/po-intake-data";
+import { deletePoRecord } from "@/lib/prototype/po-intake-storage";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
 import {
-  deletePoRecord,
-  getPoRecord,
-  loadPoListRows,
-} from "@/lib/prototype/po-intake-storage";
-import { WORK_ORDERS_CHANGED_EVENT } from "@/lib/work-orders-api-config";
+  usePoListRowsQuery,
+  usePoRecordQuery,
+} from "@/lib/query/prototype-queries";
 import {
   canDeletePo,
   canEditPoHeader,
@@ -28,6 +28,7 @@ import { PoDetailView } from "@/components/prototype/po-intake/PoDetailView";
 type PoMode = "list" | "intake" | "edit" | "view";
 
 export function PoListView() {
+  const queryClient = useQueryClient();
   const { role } = usePrototype();
   const viewOnly = isPoViewOnly(role);
   const showIntake = canReceivePo(role);
@@ -35,18 +36,31 @@ export function PoListView() {
   const showDelete = canDeletePo(role);
   const [mode, setMode] = useState<PoMode>("list");
   const [activePoNumber, setActivePoNumber] = useState<string | null>(null);
-  const [rows, setRows] = useState<PoRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [detailRecord, setDetailRecord] = useState<PoIntakeRecord | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    const list = await loadPoListRows();
-    setRows(list);
-    setLoading(false);
-  }, []);
+  const { data: rows } = usePoListRowsQuery();
+  const detailPo =
+    (mode === "view" || mode === "edit") && activePoNumber ? activePoNumber : null;
+  const { data: detailRecord, isPending: detailPending } =
+    usePoRecordQuery(detailPo);
+
+  const list = rows ?? [];
+  const statsReady = rows !== undefined;
+
+  const stats = useMemo(() => {
+    if (!statsReady) return undefined;
+    const active = list.filter((p) => p.status === "progress");
+    const doneMonth = list.filter((p) => p.status === "done").length;
+    const propertyCount = list.reduce((n, p) => n + p.count, 0);
+    const avgPerPo =
+      list.length > 0 ? (propertyCount / list.length).toFixed(1) : "0";
+    return {
+      active: active.length,
+      doneMonth,
+      propertyCount,
+      avgPerPo,
+    };
+  }, [list, statsReady]);
 
   async function handleDeletePo(poNumber: string) {
     if (
@@ -61,38 +75,9 @@ export function PoListView() {
       setToast(result.error);
       return;
     }
-    await refresh();
+    await queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
     setToast(`تم حذف أمر العمل «${poNumber}» وعقاراته.`);
   }
-
-  useEffect(() => {
-    void refresh();
-    const onChanged = () => void refresh();
-    window.addEventListener(WORK_ORDERS_CHANGED_EVENT, onChanged);
-    const onFocus = () => void refresh();
-    window.addEventListener("focus", onFocus);
-    return () => {
-      window.removeEventListener(WORK_ORDERS_CHANGED_EVENT, onChanged);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [refresh]);
-
-  useEffect(() => {
-    if ((mode !== "view" && mode !== "edit") || !activePoNumber) {
-      setDetailRecord(null);
-      return;
-    }
-    let cancelled = false;
-    setDetailLoading(true);
-    void getPoRecord(activePoNumber).then((record) => {
-      if (cancelled) return;
-      setDetailRecord(record);
-      setDetailLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [mode, activePoNumber]);
 
   useEffect(() => {
     if (!toast) return;
@@ -104,7 +89,7 @@ export function PoListView() {
     return (
       <PoIntakeFlow
         onCompleteAction={(record) => {
-          void refresh();
+          void queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
           setToast(
             `تم استلام أمر العمل «${record.poNumber}» — ${record.properties.length} عقار.`,
           );
@@ -114,13 +99,9 @@ export function PoListView() {
     );
   }
 
-  if ((mode === "view" || mode === "edit") && activePoNumber) {
-    if (detailLoading) {
-      return (
-        <div className="note note-info" style={{ margin: 16 }}>
-          جاري تحميل أمر العمل…
-        </div>
-      );
+  if (detailPo) {
+    if (detailPending && !detailRecord) {
+      return null;
     }
     if (detailRecord) {
       if (mode === "view") {
@@ -150,7 +131,7 @@ export function PoListView() {
             setActivePoNumber(null);
           }}
           onSavedAction={() => {
-            void refresh();
+            void queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
             setToast(`تم تحديث أمر العمل «${activePoNumber}».`);
             setMode("list");
             setActivePoNumber(null);
@@ -165,12 +146,6 @@ export function PoListView() {
     );
   }
 
-  const active = rows.filter((p) => p.status === "progress");
-  const doneMonth = rows.filter((p) => p.status === "done").length;
-  const propertyCount = rows.reduce((n, p) => n + p.count, 0);
-  const avgPerPo =
-    rows.length > 0 ? (propertyCount / rows.length).toFixed(1) : "0";
-
   return (
     <>
       {toast ? (
@@ -182,19 +157,19 @@ export function PoListView() {
       <div className="stat-grid">
         <div className="stat-card blue">
           <div className="stat-label">PO نشطة</div>
-          <div className="stat-value">{active.length}</div>
+          <StatValue value={stats?.active} />
         </div>
         <div className="stat-card green">
           <div className="stat-label">مكتملة هذا الشهر</div>
-          <div className="stat-value">{doneMonth}</div>
+          <StatValue value={stats?.doneMonth} />
         </div>
         <div className="stat-card warn">
           <div className="stat-label">عقارات نشطة</div>
-          <div className="stat-value">{propertyCount}</div>
+          <StatValue value={stats?.propertyCount} />
         </div>
         <div className="stat-card">
           <div className="stat-label">متوسط العقارات/PO</div>
-          <div className="stat-value">{avgPerPo}</div>
+          <StatValue value={stats?.avgPerPo} />
         </div>
       </div>
 
@@ -211,7 +186,7 @@ export function PoListView() {
             </button>
           ) : null}
         </div>
-        <table className="tbl">
+        <table className="tbl" data-pending={!statsReady}>
           <thead>
             <tr>
               <th>رقم PO</th>
@@ -227,16 +202,7 @@ export function PoListView() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr className="tbl-empty">
-                <td
-                  colSpan={10}
-                  style={{ textAlign: "center", color: "var(--text3)" }}
-                >
-                  جاري التحميل…
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
+            {statsReady && list.length === 0 ? (
               <tr className="tbl-empty">
                 <td
                   colSpan={10}
@@ -247,8 +213,8 @@ export function PoListView() {
                     : "لا توجد أوامر عمل — استلم أمر عمل جديداً من إنفاذ."}
                 </td>
               </tr>
-            ) : (
-              rows.map((p) => (
+            ) : statsReady ? (
+              list.map((p) => (
                 <tr key={p.id}>
                   <td className="id-cell">{p.id}</td>
                   <td>
@@ -329,7 +295,7 @@ export function PoListView() {
                   </td>
                 </tr>
               ))
-            )}
+            ) : null}
           </tbody>
         </table>
       </div>

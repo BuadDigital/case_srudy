@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using RealEstateEval.Api.Data;
 using RealEstateEval.Api.Models;
 using RealEstateEval.Api.Services;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services

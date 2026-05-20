@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, startTransition } from "react";
 import { NavIcon } from "@/components/views/NavIcon";
 import { usePrototype } from "@/contexts/PrototypeContext";
+import { prefetchPrototypePage } from "@/lib/query/prototype-queries";
 import { clearAuthSession, getAuthDisplayName } from "@platform/auth-client";
 import type { PageId, RoleId } from "@platform/types";
 import {
@@ -44,10 +46,12 @@ function NavRow({
   item,
   allowed,
   active,
+  onPrefetch,
 }: {
   item: (typeof NAV)[number];
   allowed: boolean;
   active: boolean;
+  onPrefetch: (page: PageId) => void;
 }) {
   const cls = `nav-item${active ? " active" : ""}${!allowed ? " locked" : ""}`;
   const badge =
@@ -63,7 +67,13 @@ function NavRow({
   );
   if (allowed) {
     return (
-      <Link href={`/${item.id}`} className={cls}>
+      <Link
+        href={`/${item.id}`}
+        className={cls}
+        prefetch
+        onMouseEnter={() => onPrefetch(item.id)}
+        onFocus={() => onPrefetch(item.id)}
+      >
         {inner}
       </Link>
     );
@@ -74,10 +84,16 @@ function NavRow({
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { role, setRole, rolePages } = usePrototype();
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
 
   const navRuns = useMemo(() => buildNavRuns(), []);
+
+  const prefetchPage = useMemo(
+    () => (page: PageId) => prefetchPrototypePage(queryClient, page),
+    [queryClient],
+  );
 
   useEffect(() => {
     startTransition(() => setAuthDisplayName(getAuthDisplayName()));
@@ -156,6 +172,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   item={item}
                   allowed={rolePages.includes(item.id)}
                   active={currentPage === item.id}
+                  onPrefetch={prefetchPage}
                 />
               ))}
             </div>

@@ -44,11 +44,91 @@ public class UserRegistrationService : IUserRegistrationService
             .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(x => x.RoleName).ToList());
 
         return rows
+            .Where(p =>
+            {
+                var roles = rolesByUser.GetValueOrDefault(p.UserId, []);
+                return !roles.Any(OrgRoles.IsOrgRole);
+            })
             .Select(p => RegistrationMapper.ToListItem(
                 p.User,
                 p,
                 rolesByUser.GetValueOrDefault(p.UserId, [])))
             .ToList();
+    }
+
+    public async Task<OrganizationOverviewDto> GetOrganizationOverviewAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _db.UserProfiles
+            .AsNoTracking()
+            .Include(p => p.User)
+            .ToListAsync(cancellationToken);
+
+        var userIds = rows.Select(p => p.UserId).ToList();
+        var roleRows = await (
+            from ur in _db.UserRoles.AsNoTracking()
+            join r in _db.Roles.AsNoTracking() on ur.RoleId equals r.Id
+            where userIds.Contains(ur.UserId)
+            select new { ur.UserId, RoleName = r.Name }
+        ).ToListAsync(cancellationToken);
+
+        var rolesByUser = roleRows
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).ToList());
+
+        OrgPersonDto? ToPerson(UserProfile p)
+        {
+            var roles = rolesByUser.GetValueOrDefault(p.UserId, []);
+            var orgRole = roles.FirstOrDefault(OrgRoles.IsOrgRole);
+            if (orgRole is null)
+                return null;
+
+            return new OrgPersonDto
+            {
+                Id = p.UserId,
+                DisplayName = p.User.DisplayName,
+                Email = p.User.Email ?? string.Empty,
+                JobTitle = p.JobTitle,
+                SystemRole = orgRole,
+            };
+        }
+
+        var byRole = rows
+            .Select(p => (Profile: p, Person: ToPerson(p)))
+            .Where(x => x.Person is not null)
+            .ToDictionary(x => x.Person!.SystemRole, x => x.Person!);
+
+        return new OrganizationOverviewDto
+        {
+            Cdo = byRole.GetValueOrDefault(OrgRoles.Cdo),
+            Departments =
+            [
+                new OrgDepartmentDto
+                {
+                    Code = "HR",
+                    Title = "الموارد البشرية",
+                    Description = "موظفون — كل أنواع التوظيف",
+                    IsActive = true,
+                    Admin = byRole.GetValueOrDefault(OrgRoles.HrAdmin),
+                },
+                new OrgDepartmentDto
+                {
+                    Code = "PROCUREMENT",
+                    Title = "العقود والمشتريات",
+                    Description = "مقدمو خدمة — أفراد ومؤسسات",
+                    IsActive = true,
+                    Admin = byRole.GetValueOrDefault(OrgRoles.ProcAdmin),
+                },
+                new OrgDepartmentDto
+                {
+                    Code = "CRM",
+                    Title = "علاقات العملاء",
+                    Description = "عملاء محتملون وفعليون",
+                    IsActive = false,
+                    Admin = byRole.GetValueOrDefault(OrgRoles.CrmAdmin),
+                },
+            ],
+        };
     }
 
     public Task<(CreateUserResponseDto? Result, Dictionary<string, string>? Errors)> CreateHrAsync(
@@ -159,6 +239,44 @@ public class UserRegistrationService : IUserRegistrationService
         {
             User = RegistrationMapper.ToListItem(user, profile, createdRoles),
         }, null);
+    }
+
+    public async Task<int> DeleteAllRegisteredAsync(
+        CancellationToken cancellationToken = default)
+    {
+        const string protectedEmail = "admin@local.dev";
+
+        var userIds = await _db.UserProfiles
+            .Select(p => p.UserId)
+            .ToListAsync(cancellationToken);
+
+        var deleted = 0;
+        foreach (var userId in userIds)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null)
+                continue;
+
+            var email = (user.Email ?? "").Trim().ToLowerInvariant();
+            if (email == protectedEmail)
+                continue;
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Any(OrgRoles.IsOrgRole))
+                continue;
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    "Failed to delete user " + userId + ": "
+                    + string.Join("; ", result.Errors.Select(e => e.Description)));
+            }
+
+            deleted++;
+        }
+
+        return deleted;
     }
 
     private static string Get(RegistrationPayloadDto data, string key) =>

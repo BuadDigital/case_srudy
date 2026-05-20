@@ -3,6 +3,7 @@
 import { AppAuthGate } from "@platform/auth-client";
 import { AppShell } from "@/components/views/AppShell";
 import { PrototypeProvider } from "@/contexts/PrototypeContext";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 export default function AppSectionLayout({
   children,
@@ -11,9 +12,11 @@ export default function AppSectionLayout({
 }) {
   return (
     <AppAuthGate>
-      <PrototypeProvider>
-        <AppShell>{children}</AppShell>
-      </PrototypeProvider>
+      <QueryProvider>
+        <PrototypeProvider>
+          <AppShell>{children}</AppShell>
+        </PrototypeProvider>
+      </QueryProvider>
     </AppAuthGate>
   );
 }

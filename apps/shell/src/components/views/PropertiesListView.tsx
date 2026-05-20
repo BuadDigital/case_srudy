@@ -1,15 +1,17 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { StatValue } from "@/components/ui/StatValue";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge, WorkflowStageBadge } from "@platform/design-system";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
 import {
-  loadPoRecords,
-  loadPropertyListItems,
-  type PropertyListItem,
-} from "@/lib/prototype/po-intake-storage";
-import { WORK_ORDERS_CHANGED_EVENT } from "@/lib/work-orders-api-config";
+  usePoRecordsQuery,
+  usePropertyListItemsQuery,
+} from "@/lib/query/prototype-queries";
 import { ROLES } from "@/lib/prototype/constants";
 import { getPropertyFailure } from "@/lib/prototype/failures-storage";
+import { formatPoDisplay } from "@/lib/prototype/po-intake-data";
 import { canEditProperty } from "@/lib/prototype/po-roles";
 import { PoPropertyEdit } from "@/components/prototype/po-intake/PoPropertyEdit";
 import { PoPropertyCreate } from "@/components/prototype/po-intake/PoPropertyCreate";
@@ -35,7 +37,11 @@ const STATUS_FILTER_OPTIONS = [
   { value: "fail", label: "متعذر" },
 ] as const;
 
+/** Show properties from every PO in the list. */
+const ALL_PO_FILTER = "";
+
 export function PropertiesListView() {
+  const queryClient = useQueryClient();
   const { role } = usePrototype();
   const showEdit = canEditProperty(role);
   const [mode, setMode] = useState<PropertiesMode>("list");
@@ -48,43 +54,24 @@ export function PropertiesListView() {
     propertyId: string;
     deedNumber: string;
   } | null>(null);
-  const [addPoNumber, setAddPoNumber] = useState<string>("");
-  const [items, setItems] = useState<PropertyListItem[]>([]);
-  const [poOptions, setPoOptions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [poFilter, setPoFilter] = useState<string>(ALL_PO_FILTER);
   const [toast, setToast] = useState<string | null>(null);
   const [areaFilter, setAreaFilter] =
     useState<(typeof AREA_FILTER_OPTIONS)[number]>("جميع المناطق");
   const [statusFilter, setStatusFilter] =
     useState<(typeof STATUS_FILTER_OPTIONS)[number]["value"]>("all");
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    const [list, records] = await Promise.all([
-      loadPropertyListItems(),
-      loadPoRecords(),
-    ]);
-    setItems(list);
-    setPoOptions(records.map((r) => r.poNumber));
-    setLoading(false);
-  }, []);
+  const { data: items } = usePropertyListItemsQuery();
+  const { data: poRecords } = usePoRecordsQuery();
+  const list = items ?? [];
+  const poOptions = useMemo(
+    () => (poRecords ?? []).map((r) => r.poNumber),
+    [poRecords],
+  );
+  const dataReady = items !== undefined;
 
-  useEffect(() => {
-    void refresh();
-    const onChanged = () => void refresh();
-    window.addEventListener(WORK_ORDERS_CHANGED_EVENT, onChanged);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "evalFailureRecords") void refresh();
-    };
-    const onFocus = () => void refresh();
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("focus", onFocus);
-    return () => {
-      window.removeEventListener(WORK_ORDERS_CHANGED_EVENT, onChanged);
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [refresh]);
+  const invalidate = () =>
+    void queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
 
   useEffect(() => {
     if (!toast) return;
@@ -92,13 +79,12 @@ export function PropertiesListView() {
     return () => window.clearTimeout(t);
   }, [toast]);
 
-  useEffect(() => {
-    if (addPoNumber || poOptions.length === 0) return;
-    setAddPoNumber(poOptions[0]);
-  }, [addPoNumber, poOptions]);
-
   const filtered = useMemo(() => {
-    return items.filter(({ row: p }) => {
+    return list.filter((item) => {
+      const p = item.row;
+      if (poFilter && item.poNumber !== poFilter) {
+        return false;
+      }
       if (areaFilter !== "جميع المناطق" && !p.area.includes(areaFilter)) {
         return false;
       }
@@ -107,7 +93,17 @@ export function PropertiesListView() {
       }
       return true;
     });
-  }, [items, areaFilter, statusFilter]);
+  }, [list, poFilter, areaFilter, statusFilter]);
+
+  const stats = useMemo(() => {
+    if (!dataReady) return undefined;
+    return {
+      total: list.length,
+      done: list.filter((x) => x.row.status === "done").length,
+      progress: list.filter((x) => x.row.status === "progress").length,
+      fail: list.filter((x) => x.row.status === "fail").length,
+    };
+  }, [list, dataReady]);
 
   if (mode === "failure" && failureTarget) {
     return (
@@ -117,7 +113,7 @@ export function PropertiesListView() {
         deedNumber={failureTarget.deedNumber}
         specialist={ROLES[role]?.name ?? "أخصائي"}
         onDone={() => {
-          void refresh();
+          invalidate();
           setToast("تم تسجيل التعذر (مسودة داخلية).");
           setMode("list");
           setFailureTarget(null);
@@ -131,7 +127,7 @@ export function PropertiesListView() {
   }
 
   if (mode === "add") {
-    const po = addPoNumber || poOptions[0];
+    const po = poFilter || poOptions[0];
     if (!po) {
       return (
         <div className="note note-warn" style={{ margin: 16 }}>
@@ -144,8 +140,8 @@ export function PropertiesListView() {
         poNumber={po}
         onBackAction={() => setMode("list")}
         onSavedAction={() => {
-          void refresh();
-          setToast(`تمت إضافة عقار إلى PO «${po}».`);
+          invalidate();
+          setToast(`تمت إضافة عقار إلى «${formatPoDisplay(po)}».`);
           setMode("list");
         }}
       />
@@ -162,13 +158,13 @@ export function PropertiesListView() {
           setEditTarget(null);
         }}
         onSavedAction={() => {
-          void refresh();
+          invalidate();
           setToast("تم تحديث بيانات العقار.");
           setMode("list");
           setEditTarget(null);
         }}
         onDeletedAction={() => {
-          void refresh();
+          invalidate();
           setToast("تم حذف العقار من أمر العمل.");
           setMode("list");
           setEditTarget(null);
@@ -176,11 +172,6 @@ export function PropertiesListView() {
       />
     );
   }
-
-  const total = items.length;
-  const done = items.filter((x) => x.row.status === "done").length;
-  const progress = items.filter((x) => x.row.status === "progress").length;
-  const fail = items.filter((x) => x.row.status === "fail").length;
 
   return (
     <>
@@ -192,19 +183,19 @@ export function PropertiesListView() {
       <div className="stat-grid">
         <div className="stat-card blue">
           <div className="stat-label">إجمالي العقارات</div>
-          <div className="stat-value">{total}</div>
+          <StatValue value={stats?.total} />
         </div>
         <div className="stat-card green">
           <div className="stat-label">مكتملة</div>
-          <div className="stat-value">{done}</div>
+          <StatValue value={stats?.done} />
         </div>
         <div className="stat-card warn">
           <div className="stat-label">قيد التنفيذ</div>
-          <div className="stat-value">{progress}</div>
+          <StatValue value={stats?.progress} />
         </div>
         <div className="stat-card red">
           <div className="stat-label">متعذرة</div>
-          <div className="stat-value">{fail}</div>
+          <StatValue value={stats?.fail} />
         </div>
       </div>
 
@@ -217,22 +208,28 @@ export function PropertiesListView() {
                 <select
                   className="form-control"
                   style={{ width: "auto", fontSize: 11 }}
-                  aria-label="أمر العمل لإضافة عقار"
-                  value={addPoNumber}
-                  onChange={(e) => setAddPoNumber(e.target.value)}
+                  aria-label="تصفية حسب أمر العمل"
+                  value={poFilter}
+                  onChange={(e) => setPoFilter(e.target.value)}
                 >
+                  <option value={ALL_PO_FILTER}>All</option>
                   {poOptions.map((po) => (
                     <option key={po} value={po}>
-                      PO {po}
+                      {formatPoDisplay(po)}
                     </option>
                   ))}
                 </select>
                 <button
                   type="button"
                   className="btn btn-sm btn-primary"
+                  disabled={!poFilter}
+                  title={
+                    poFilter
+                      ? undefined
+                      : "اختر أمر عمل محدداً (ليس All) لإضافة عقار"
+                  }
                   onClick={() => {
-                    const po = addPoNumber || poOptions[0];
-                    if (po) setAddPoNumber(po);
+                    if (!poFilter) return;
                     setMode("add");
                   }}
                 >
@@ -274,7 +271,7 @@ export function PropertiesListView() {
             </select>
           </div>
         </div>
-        <table className="tbl">
+        <table className="tbl" data-pending={!dataReady}>
           <thead>
             <tr>
               <th>رقم العقار / الصك</th>
@@ -291,27 +288,18 @@ export function PropertiesListView() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {dataReady && filtered.length === 0 ? (
               <tr className="tbl-empty">
                 <td
                   colSpan={showEdit ? 11 : 10}
                   style={{ textAlign: "center", color: "var(--text3)" }}
                 >
-                  جاري التحميل…
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr className="tbl-empty">
-                <td
-                  colSpan={showEdit ? 11 : 10}
-                  style={{ textAlign: "center", color: "var(--text3)" }}
-                >
-                  {total === 0
+                  {list.length === 0
                     ? "لا توجد عقارات — سجّل عقارات عبر استلام أمر عمل جديد."
                     : "لا توجد عقارات تطابق التصفية."}
                 </td>
               </tr>
-            ) : (
+            ) : dataReady ? (
               filtered.map((item) => {
                 const p = item.row;
                 return (
@@ -376,7 +364,7 @@ export function PropertiesListView() {
                   </tr>
                 );
               })
-            )}
+            ) : null}
           </tbody>
         </table>
       </div>

@@ -2,21 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
+import { StatValue } from "@/components/ui/StatValue";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
 import {
   DASHBOARD_TEAM_ROWS,
   MOCK_VR,
-  type PoRow,
   type TeamKind,
 } from "@/lib/prototype/constants";
 import { assignmentTypeBadgeClass } from "@/lib/prototype/po-intake-data";
 import {
-  loadPoListRows,
-  loadPropertyListItems,
-} from "@/lib/prototype/po-intake-storage";
-import { WORK_ORDERS_CHANGED_EVENT } from "@/lib/work-orders-api-config";
+  usePoListRowsQuery,
+  usePropertyListItemsQuery,
+} from "@/lib/query/prototype-queries";
 
 const MGR_ROLES = new Set([
   "general-manager",
@@ -34,71 +33,51 @@ export function DashboardView() {
   const router = useRouter();
   const { role } = usePrototype();
   const mgr = MGR_ROLES.has(role);
-  const [poRows, setPoRows] = useState<PoRow[]>([]);
-  const [propertyTotal, setPropertyTotal] = useState(0);
-  const [propertyProgress, setPropertyProgress] = useState(0);
-  const [propertyDone, setPropertyDone] = useState(0);
-  const [propertyFail, setPropertyFail] = useState(0);
+  const { data: poRows } = usePoListRowsQuery();
+  const { data: propertyItems } = usePropertyListItemsQuery();
 
-  const refresh = useCallback(async () => {
-    const [poList, propertyItems] = await Promise.all([
-      loadPoListRows(),
-      loadPropertyListItems(),
-    ]);
-    setPoRows(poList);
+  const propertyStats = useMemo(() => {
+    if (!propertyItems) return undefined;
     const rows = propertyItems.map((item) => item.row);
-    setPropertyTotal(rows.length);
-    setPropertyProgress(rows.filter((r) => r.status === "progress").length);
-    setPropertyDone(rows.filter((r) => r.status === "done").length);
-    setPropertyFail(rows.filter((r) => r.status === "fail").length);
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-    const onChanged = () => void refresh();
-    window.addEventListener(WORK_ORDERS_CHANGED_EVENT, onChanged);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "evalFailureRecords") void refresh();
+    const total = rows.length;
+    const done = rows.filter((r) => r.status === "done").length;
+    return {
+      total,
+      progress: rows.filter((r) => r.status === "progress").length,
+      done,
+      fail: rows.filter((r) => r.status === "fail").length,
+      donePct: total > 0 ? `${Math.round((done / total) * 100)}% من الإجمالي` : "—",
     };
-    const onFocus = () => void refresh();
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("focus", onFocus);
-    return () => {
-      window.removeEventListener(WORK_ORDERS_CHANGED_EVENT, onChanged);
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [refresh]);
+  }, [propertyItems]);
 
-  const poActive = poRows.filter((p) => p.status === "progress");
+  const poActive = (poRows ?? []).filter((p) => p.status === "progress");
+  const poReady = poRows !== undefined;
 
   return (
     <>
       <div className="stat-grid">
         <div className="stat-card blue">
           <div className="stat-label">عقارات مسجّلة</div>
-          <div className="stat-value">{propertyTotal}</div>
+          <StatValue value={propertyStats?.total} />
           <div className="stat-sub">من استلام أوامر العمل</div>
         </div>
         <div className="stat-card warn">
           <div className="stat-label">قيد التنفيذ</div>
-          <div className="stat-value">{propertyProgress}</div>
+          <StatValue value={propertyStats?.progress} />
           <div className="stat-sub">بما فيها قيد التحقق</div>
         </div>
         <div className="stat-card green">
           <div className="stat-label">مكتملة</div>
-          <div className="stat-value">{propertyDone}</div>
-          <div className="stat-sub">
-            {propertyTotal > 0
-              ? `${Math.round((propertyDone / propertyTotal) * 100)}% من الإجمالي`
-              : "—"}
-          </div>
+          <StatValue value={propertyStats?.done} />
+          <div className="stat-sub">{propertyStats?.donePct ?? "—"}</div>
         </div>
         <div className="stat-card red">
           <div className="stat-label">تعذرات</div>
-          <div className="stat-value">{propertyFail}</div>
+          <StatValue value={propertyStats?.fail} />
           <div className="stat-sub">
-            {propertyFail > 0 ? "تحتاج مراجعة" : "لا تعذرات مسجّلة"}
+            {propertyStats && propertyStats.fail > 0
+              ? "تحتاج مراجعة"
+              : "لا تعذرات مسجّلة"}
           </div>
         </div>
       </div>
@@ -112,7 +91,7 @@ export function DashboardView() {
                 عرض الكل
               </Link>
             </div>
-            <table className="tbl">
+            <table className="tbl" data-pending={!poReady}>
               <thead>
                 <tr>
                   <th>PO</th>
@@ -122,7 +101,7 @@ export function DashboardView() {
                 </tr>
               </thead>
               <tbody>
-                {poActive.length === 0 ? (
+                {poReady && poActive.length === 0 ? (
                   <tr className="tbl-empty">
                     <td
                       colSpan={4}
@@ -132,8 +111,9 @@ export function DashboardView() {
                     </td>
                   </tr>
                 ) : null}
-                {poActive.map((p) => (
-                  <tr key={p.id} onClick={() => router.push("/po")}>
+                {poReady
+                  ? poActive.map((p) => (
+                      <tr key={p.id} onClick={() => router.push("/po")}>
                     <td className="id-cell">{p.id}</td>
                     <td>
                       <span
@@ -164,8 +144,9 @@ export function DashboardView() {
                     <td>
                       <StatusBadge status={p.status} />
                     </td>
-                  </tr>
-                ))}
+                      </tr>
+                    ))
+                  : null}
               </tbody>
             </table>
           </div>

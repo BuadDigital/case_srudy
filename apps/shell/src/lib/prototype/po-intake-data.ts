@@ -6,6 +6,14 @@ export const PO_INTAKE_FLOW = {
   title: "استلام أمر عمل جديد",
 } as const;
 
+/** PO label without duplicating prefix (e.g. PO-2025-0001, not PO PO-2025-0001). */
+export function formatPoDisplay(poNumber: string): string {
+  const n = poNumber.trim();
+  if (!n) return "";
+  if (/^PO[-\s]/i.test(n)) return n;
+  return `PO-${n}`;
+}
+
 export const PO_INTAKE_STEPS = [
   "بيانات أمر العمل",
   "تسجيل العقارات",
@@ -28,11 +36,7 @@ export function requiresAssignmentDecree(type: AssignmentType): boolean {
   return type === "تنفيذ";
 }
 
-export const DEED_STATUS_OPTIONS = [
-  "فعال",
-  "قيد التحقق",
-  "موقوف",
-] as const;
+export const DEED_STATUS_OPTIONS = ["فعال", "موقوف"] as const;
 
 /** محاكاة محاكم ودوائر — تُستبدل بقائمة يديرها المشرف. */
 export const COURTS_BY_CITY: Record<
@@ -66,7 +70,7 @@ export const COURTS_BY_CITY: Record<
   ],
 };
 
-/** 5 تصنيفات — 47 نوع (§4 المتطلبات). */
+/** 5 تصنيفات — 47 نوع (المتطلبات). */
 export const PROPERTY_CLASSIFICATIONS: Record<string, string[]> = {
   أرض: ["سكنية", "تجارية", "صناعية", "زراعية", "مختلطة"],
   "مبنى مفرد": [
@@ -140,7 +144,7 @@ export const BOUNDARIES_MATCH_OPTIONS = [
   "غير متوفر",
 ] as const;
 
-/** §4 — الرفع المساحي غير مطلوب لوحدة داخل مبنى. */
+/** الرفع المساحي غير مطلوب لوحدة داخل مبنى. */
 export function classificationRequiresSurvey(classification: string): boolean {
   return classification.trim() !== "وحدة داخل مبنى";
 }
@@ -172,7 +176,7 @@ export type PoIntakeRecord = {
   poNumber: string;
   assignmentType: AssignmentType;
   receivedFromEnfathAt: string;
-  /** وقت الاستلام (HH:mm) — اختياري؛ يُستخدم في §6 */
+  /** وقت الاستلام (HH:mm) — اختياري؛ يُستخدم في حساب تاريخ الاستحقاق */
   receivedFromEnfathTime: string;
   internalAssignmentAt: string;
   assignmentSpecialist: string;
@@ -228,12 +232,23 @@ function isWithinBusinessHours(d: Date): boolean {
 
 function parseReceivedDateTime(receivedIso: string, time?: string): Date | null {
   if (!receivedIso) return null;
+  const parts = receivedIso.split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+  const [y, m, day] = parts;
   const t = time?.trim() || "10:00";
-  const d = new Date(`${receivedIso}T${t}:00`);
+  const [hh, mm] = t.split(":").map(Number);
+  const d = new Date(y, m - 1, day, hh || 10, mm || 0, 0);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** §6 — نقطة البداية: استلام خارج الدوام/عطلة → أول يوم عمل؛ داخل الدوام → يُحسب اليوم. */
+function formatLocalIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** نقطة البداية: استلام خارج الدوام/عطلة → أول يوم عمل (لاحقاً). */
 export function getEffectiveStartDate(received: Date): Date {
   if (isBusinessDay(received) && isWithinBusinessHours(received)) {
     const start = new Date(received);
@@ -251,12 +266,13 @@ export function getEffectiveStartDate(received: Date): Date {
   return cursor;
 }
 
-function addBusinessDaysInclusive(start: Date, count: number): Date {
+/** 4 أيام عمل (أحد–خميس) بعد يوم الاستلام — يوم الاستلام لا يُحسب ضمن الأربعة. */
+function addBusinessDaysAfterReceipt(start: Date, count: number): Date {
   const d = new Date(start);
   let added = 0;
   while (added < count) {
+    d.setDate(d.getDate() + 1);
     if (isBusinessDay(d)) added += 1;
-    if (added < count) d.setDate(d.getDate() + 1);
   }
   return d;
 }
@@ -269,8 +285,8 @@ export function computeBusinessDueDate(
   const received = parseReceivedDateTime(receivedIso, receivedTime);
   if (!received) return "";
   const effective = getEffectiveStartDate(received);
-  const due = addBusinessDaysInclusive(effective, BUSINESS_DAYS_REQUIRED);
-  return due.toISOString().slice(0, 10);
+  const due = addBusinessDaysAfterReceipt(effective, BUSINESS_DAYS_REQUIRED);
+  return formatLocalIsoDate(due);
 }
 
 export function isPastDue(dueIso: string): boolean {

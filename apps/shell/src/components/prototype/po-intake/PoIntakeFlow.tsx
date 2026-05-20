@@ -8,7 +8,6 @@ import {
   formatDateAr,
   PO_INTAKE_HINTS,
   PO_INTAKE_STEPS,
-  requiresAssignmentDecree,
   type AssignmentType,
   type PoIntakeRecord,
   type PoPropertyIntake,
@@ -33,6 +32,12 @@ import { PoIntakeSuccess } from "./PoIntakeSuccess";
 import { PoIntakeWizardShell } from "./PoIntakeWizardShell";
 import { PoPropertyForm } from "./PoPropertyForm";
 import { PoPropertyStackCard } from "./PoPropertyStackCard";
+import {
+  findInvalidPropertyIndex,
+  firstPropertyValidationMessage,
+  isValidPhone,
+  mergePropertyValidation,
+} from "./po-property-validation";
 
 const LAST_STEP = PO_INTAKE_STEPS.length;
 
@@ -62,16 +67,25 @@ export function PoIntakeFlow({
   const activePropertyRef = useRef<HTMLDivElement>(null);
 
   const propertyOrdinal = properties.length + 1;
-  const totalPropertiesPreview =
-    step >= 2 ? properties.length + 1 : properties.length;
+
+  const hasCurrentPropertyDraft = useMemo(
+    () =>
+      !!currentProperty.deedNumber.trim() ||
+      !!currentProperty.city.trim() ||
+      !!currentProperty.district.trim(),
+    [
+      currentProperty.deedNumber,
+      currentProperty.city,
+      currentProperty.district,
+    ],
+  );
+
+  const enteredPropertyCount =
+    properties.length + (hasCurrentPropertyDraft ? 1 : 0);
 
   const dueDateAt = useMemo(
     () => computeBusinessDueDate(receivedFromEnfathAt, receivedFromEnfathTime),
     [receivedFromEnfathAt, receivedFromEnfathTime],
-  );
-
-  const showAssignmentDecree = requiresAssignmentDecree(
-    assignmentType as AssignmentType,
   );
 
   const isSuccess = step > LAST_STEP;
@@ -195,74 +209,23 @@ export function PoIntakeFlow({
     return true;
   }
 
-  function validateProperty(p: PoPropertyIntake): FieldErrors {
-    const errors = mergeFieldErrors(
-      collectRequiredErrors(
-        {
-          deedNumber: p.deedNumber,
-          city: p.city,
-          district: p.district,
-          classification: p.classification,
-          propertyType: p.propertyType,
-        },
-        ["deedNumber", "city", "district", "classification", "propertyType"],
-      ),
-    );
-
-    if (showAssignmentDecree && !p.assignmentDocFileName.trim()) {
-      errors.assignmentDocFileName = "مرفق قرار الإسناد مطلوب لمسار التنفيذ";
-    }
-
-    if (
-      p.identifierType === "real_estate_reg" &&
-      !p.realEstateRegFileName.trim()
-    ) {
-      errors.realEstateRegFileName =
-        "ارفع السجل العقاري كمرفق (يُطلب من أطراف التنفيذ)";
-    }
-
-    return errors;
-  }
-
-  function validateContacts(p: PoPropertyIntake): FieldErrors {
-    const errors: FieldErrors = {};
-    let hasValid = false;
-    p.contacts.forEach((c, i) => {
-      if (!c.name.trim()) {
-        errors[`contact_name_${i}`] = "الاسم مطلوب";
-      }
-      if (!c.phone.trim()) {
-        errors[`contact_phone_${i}`] = "رقم الجوال مطلوب";
-      }
-      if (c.name.trim() && c.phone.trim()) hasValid = true;
-    });
-    if (!hasValid) {
-      errors._contacts = "أضف ضابط اتصال واحداً على الأقل";
-    }
-    return errors;
-  }
-
   function commitCurrentProperty(): PoPropertyIntake {
     return {
       ...currentProperty,
       contacts: currentProperty.contacts.filter(
-        (c) => c.name.trim() || c.phone.trim(),
+        (c) => c.name.trim() && isValidPhone(c.phone),
       ),
     };
   }
 
   function validateCurrentPropertyStep(): boolean {
-    const propErrors = validateProperty(currentProperty);
-    const contactErrors = validateContacts(currentProperty);
-    const errors = mergeFieldErrors(propErrors, contactErrors);
+    const errors = mergePropertyValidation(
+      currentProperty,
+      assignmentType as AssignmentType,
+    );
     if (hasFieldErrors(errors)) {
       setFieldErrors(errors);
-      setFormError(
-        errors._contacts ??
-          errors.assignmentDocFileName ??
-          errors.realEstateRegFileName ??
-          "أكمل بيانات هذا العقار",
-      );
+      setFormError(firstPropertyValidationMessage(errors));
       return false;
     }
     return true;
@@ -321,6 +284,15 @@ export function PoIntakeFlow({
   }
 
   async function handleSave() {
+    const assignment = assignmentType as AssignmentType;
+    const stackedIssue = findInvalidPropertyIndex(properties, assignment);
+    if (stackedIssue) {
+      setFieldErrors({});
+      setFormError(
+        `عقار ${stackedIssue.index + 1} في المكدس: ${firstPropertyValidationMessage(stackedIssue.errors)} — اضغط «تعديل» لإكماله`,
+      );
+      return;
+    }
     if (!validateCurrentPropertyStep()) return;
 
     const allProperties = [...properties, commitCurrentProperty()];
@@ -452,14 +424,6 @@ export function PoIntakeFlow({
               onChange={setReceivedFromEnfathAt}
             />
             <RegField
-              id="po_received_time"
-              label="وقت الاستلام (اختياري — §6)"
-              type="time"
-              dir="ltr"
-              value={receivedFromEnfathTime}
-              onChange={setReceivedFromEnfathTime}
-            />
-            <RegField
               id="po_internal"
               label="تاريخ التكليف الداخلي"
               required
@@ -470,7 +434,7 @@ export function PoIntakeFlow({
             />
             <RegField
               id="po_specialist"
-              label="أخصائي الإسناد (إنفاذ)"
+              label="اسم أخصائي الإسناد (إنفاذ)"
               required
               value={assignmentSpecialist}
               error={fieldErrors.assignmentSpecialist}
@@ -485,38 +449,40 @@ export function PoIntakeFlow({
                 </div>
               </div>
             ) : null}
-            <div className="reg-sp2 po-count-field">
-              <label className="reg-fl" htmlFor="po_count_display">
-                عدد العقارات
-              </label>
-              <div
-                id="po_count_display"
-                className="po-count-box"
-                aria-live="polite"
-                aria-label={`عدد العقارات: ${totalPropertiesPreview}`}
-              >
-                <span
-                  className={`po-count-box-value${totalPropertiesPreview === 0 ? " is-zero" : ""}`}
-                >
-                  {totalPropertiesPreview}
-                </span>
-                <span className="po-count-box-unit">
-                  {totalPropertiesPreview === 1 ? "عقار" : "عقارات"}
-                </span>
-                <span className="po-count-box-tag">يُحدَّث في الخطوة التالية</span>
-              </div>
-            </div>
           </div>
         </RegistrationFormCard>
       ) : null}
 
       {!isSuccess && step === 2 ? (
         <div className="po-property-stack">
+          <div className="reg-sp2 po-count-field po-property-count-summary">
+            <label className="reg-fl" htmlFor="po_count_display">
+              عدد العقارات
+            </label>
+            <div
+              id="po_count_display"
+              className="po-count-box"
+              aria-live="polite"
+              aria-label={`عدد العقارات: ${enteredPropertyCount}`}
+            >
+              <span
+                className={`po-count-box-value${enteredPropertyCount === 0 ? " is-zero" : ""}`}
+              >
+                {enteredPropertyCount}
+              </span>
+              <span className="po-count-box-unit">
+                {enteredPropertyCount === 1 ? "عقار" : "عقارات"}
+              </span>
+              <span className="po-count-box-tag">يتغيّر أثناء التسجيل</span>
+            </div>
+          </div>
+
           {properties.map((prop, index) => (
             <PoPropertyStackCard
               key={prop.id}
               index={index + 1}
               property={prop}
+              assignmentType={assignmentType as AssignmentType}
               onEdit={() => editStackedProperty(index)}
               onRemove={() => removeStackedProperty(index)}
             />
@@ -526,16 +492,10 @@ export function PoIntakeFlow({
             <RegistrationFormCard
               title={`تسجيل العقار ${propertyOrdinal}`}
               subtitle="بيانات الصك وضابط الاتصال — يُستعلم عن بورصة العقارات خارج النظام ثم تُدخل النتائج هنا"
-              headerRight={
-                properties.length > 0 ? (
-                  <span className="badge b-prog">
-                    {properties.length} عقار في المكدس
-                  </span>
-                ) : null
-              }
             >
               <PoPropertyForm
                 property={currentProperty}
+                propertyOrdinal={propertyOrdinal}
                 assignmentType={assignmentType as AssignmentType}
                 fieldErrors={fieldErrors}
                 onPatch={patchProperty}

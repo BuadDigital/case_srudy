@@ -1,6 +1,7 @@
 import type {
   CreateUserResponse,
   FieldErrorsResponse,
+  OrganizationOverview,
   RegistrationPayload,
   UserListItem,
 } from "@platform/types";
@@ -83,4 +84,24 @@ export function createCrmUser(
   payload: RegistrationPayload,
 ) {
   return createUser(config, "crm", payload);
+}
+
+export type OrganizationOverviewResult =
+  | { ok: true; overview: OrganizationOverview }
+  | { ok: false; kind: "network" | "server" };
+
+export async function fetchOrganizationOverview(
+  config: UsersApiConfig,
+): Promise<OrganizationOverviewResult> {
+  const base = config.baseUrl ?? apiBase;
+  try {
+    const res = await fetch(`${base}/api/users/organization`, {
+      headers: headers(config.token),
+    });
+    if (!res.ok) return { ok: false, kind: "server" };
+    const overview = (await res.json()) as OrganizationOverview;
+    return { ok: true, overview };
+  } catch {
+    return { ok: false, kind: "network" };
+  }
 }

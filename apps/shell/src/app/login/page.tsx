@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { apiBase } from "@platform/api-client";
 import { setAuthSession, type AuthSession } from "@platform/auth-client";
+import { applyPrototypeRoleForEmail } from "@/lib/auth-role-map";
 
 type LoginResponse = {
   token: string;
@@ -52,6 +53,7 @@ export default function LoginPage() {
         user: data.user,
         expiresAtUtc: data.expiresAtUtc,
       } satisfies AuthSession);
+      applyPrototypeRoleForEmail(data.user.email);
       router.push("/dashboard");
     } catch {
       setError("تعذر الاتصال بالخادم. تأكد أن واجهة الـ API تعمل.");
@@ -117,8 +119,13 @@ export default function LoginPage() {
         </form>
 
         <p className="login-hint">
-          مستخدم تجريبي محلي بعد تهيئة قاعدة البيانات:{" "}
-          <strong style={{ color: "var(--text2)" }}>admin@local.dev</strong> /{" "}
+          CDO: <strong style={{ color: "var(--text2)" }}>s.salhy@gmail.com</strong> /{" "}
+          <strong style={{ color: "var(--text2)" }}>sliman123</strong>
+          <br />
+          مديرو الإدارات: علي (HR) · أحمد (PROC) · جمال (CRM) — كلمات المرور كما في
+          الإعداد.
+          <br />
+          تجريبي قديم: <strong style={{ color: "var(--text2)" }}>admin@local.dev</strong> /{" "}
           <strong style={{ color: "var(--text2)" }}>Admin123!</strong>
         </p>
       </div>

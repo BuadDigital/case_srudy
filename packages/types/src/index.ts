@@ -4,7 +4,12 @@ export type {
   RoleDef,
   RoleId,
 } from "./navigation";
-export { isPageId } from "./navigation";
+export { isPageId, isRoleId } from "./navigation";
+export type {
+  OrgDepartment,
+  OrgPerson,
+  OrganizationOverview,
+} from "./organization";
 export type {
   ContractType,
   CreateUserResponse,

@@ -14,4 +14,10 @@ public interface IUserRegistrationService
     Task<(CreateUserResponseDto? Result, Dictionary<string, string>? Errors)> CreateCrmAsync(
         RegistrationPayloadDto data,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes all users created via registration (have a profile). Keeps seeded admin.</summary>
+    Task<int> DeleteAllRegisteredAsync(CancellationToken cancellationToken = default);
+
+    Task<OrganizationOverviewDto> GetOrganizationOverviewAsync(
+        CancellationToken cancellationToken = default);
 }

@@ -22,24 +22,31 @@ import {
 import { findPriorDeedRegistration } from "@/lib/prototype/po-intake-storage";
 import { RegField, RegSelect } from "@/components/prototype/registration/FormFields";
 import type { FieldErrors } from "@/components/prototype/registration/registration-utils";
+import { cacheAssignmentDoc } from "@/lib/prototype/assignment-doc-attachments";
+import { AssignmentDocAttachment } from "./AssignmentDocAttachment";
 import { PoContactEditor } from "./PoContactEditor";
 
 export function PoPropertyForm({
   property,
+  propertyOrdinal,
   assignmentType,
   fieldErrors,
   onPatch,
+  poNumber,
   excludePoNumber,
 }: {
   property: PoPropertyIntake;
+  propertyOrdinal?: number;
   assignmentType: AssignmentType;
   fieldErrors: FieldErrors;
   onPatch: <K extends keyof PoPropertyIntake>(
     key: K,
     value: PoPropertyIntake[K],
   ) => void;
+  poNumber?: string;
   excludePoNumber?: string;
 }) {
+  const attachPo = poNumber?.trim() || excludePoNumber?.trim() || "";
   const [courts, setCourts] = useState<CourtCatalogEntry[]>([]);
   const [priorDeed, setPriorDeed] = useState<{ poNumber: string } | null>(null);
 
@@ -133,13 +140,13 @@ export function PoPropertyForm({
       {priorDeed ? (
         <div className="note note-success" style={{ marginBottom: 12 }}>
           هذا الصك مسجّل سابقاً في أمر العمل «{priorDeed.poNumber}» — الرفع
-          المساحي غير مطلوب إن سبق إنجازه (§4).
+          المساحي غير مطلوب إن سبق إنجازه.
         </div>
       ) : null}
 
       {property.classification && !surveyRequired ? (
         <div className="note note-info" style={{ marginBottom: 12 }}>
-          تصنيف «وحدة داخل مبنى» — الرفع المساحي غير مطلوب (§4).
+          تصنيف «وحدة داخل مبنى» — الرفع المساحي غير مطلوب.
         </div>
       ) : null}
 
@@ -200,6 +207,30 @@ export function PoPropertyForm({
           onChange={(v) => onPatch("district", v)}
         />
         <RegSelect
+          id="classification"
+          label="التصنيف"
+          required
+          options={CLASSIFICATION_OPTIONS}
+          value={property.classification}
+          error={fieldErrors.classification}
+          onChange={(v) => onPatch("classification", v)}
+        />
+        <RegSelect
+          id="property_type"
+          label="نوع العقار"
+          required
+          options={propertyTypes}
+          value={property.classification ? property.propertyType : ""}
+          error={fieldErrors.propertyType}
+          disabled={!property.classification}
+          placeholder={
+            property.classification
+              ? "اختر نوع العقار..."
+              : "اختر التصنيف أولاً"
+          }
+          onChange={(v) => onPatch("propertyType", v)}
+        />
+        <RegSelect
           id="deed_status"
           label="حالة الصك"
           options={[...DEED_STATUS_OPTIONS]}
@@ -217,24 +248,6 @@ export function PoPropertyForm({
           label="الحدود"
           value={property.boundaries}
           onChange={(v) => onPatch("boundaries", v)}
-        />
-        <RegSelect
-          id="classification"
-          label="التصنيف"
-          required
-          options={CLASSIFICATION_OPTIONS}
-          value={property.classification}
-          error={fieldErrors.classification}
-          onChange={(v) => onPatch("classification", v)}
-        />
-        <RegSelect
-          id="property_type"
-          label="نوع العقار"
-          required
-          options={propertyTypes}
-          value={property.propertyType}
-          error={fieldErrors.propertyType}
-          onChange={(v) => onPatch("propertyType", v)}
         />
         {property.city && courtNames.length > 0 ? (
           <>
@@ -279,29 +292,43 @@ export function PoPropertyForm({
 
       {showAssignmentDecree ? (
         <div className="reg-fg-full" style={{ marginTop: 8 }}>
-          <label className="reg-fl" htmlFor="assignment_doc">
-            قرار الإسناد (مرفق) *
+          <label className="reg-fl" htmlFor={`assignment_doc_${property.id}`}>
+            قرار الإسناد لهذا العقار{propertyOrdinal ? ` (${propertyOrdinal})` : ""}{" "}
+            *
           </label>
           <input
-            id="assignment_doc"
+            key={`assignment_doc_${property.id}`}
+            id={`assignment_doc_${property.id}`}
             type="file"
             className="reg-fi"
             accept=".pdf,.jpg,.jpeg,.png"
             onChange={(e) => {
               const file = e.target.files?.[0];
               onPatch("assignmentDocFileName", file?.name ?? "");
+              if (file && attachPo) {
+                void cacheAssignmentDoc(attachPo, property.id, file);
+              }
             }}
           />
-          {property.assignmentDocFileName ? (
+          {property.assignmentDocFileName && attachPo ? (
+            <AssignmentDocAttachment
+              poNumber={attachPo}
+              propertyId={property.id}
+              fileName={property.assignmentDocFileName}
+              variant="inline"
+            />
+          ) : property.assignmentDocFileName ? (
             <p className="reg-field-hint">
-              الملف المحدد: {property.assignmentDocFileName}
+              مرفق هذا العقار: {property.assignmentDocFileName}
             </p>
           ) : fieldErrors.assignmentDocFileName ? (
             <p className="reg-field-error" role="alert">
               {fieldErrors.assignmentDocFileName}
             </p>
           ) : (
-            <p className="reg-field-hint">مطلوب لمسار التنفيذ — metadata فقط</p>
+            <p className="reg-field-hint">
+              كل عقار يحتاج قرار إسناد مستقل — تظهر معاينة الصورة بعد الرفع
+            </p>
           )}
         </div>
       ) : null}

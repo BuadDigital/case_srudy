@@ -184,7 +184,7 @@ export function PoHeaderEdit({
           />
           <RegField
             id="po_specialist_edit"
-            label="أخصائي الإسناد (إنفاذ)"
+            label="اسم أخصائي الإسناد (إنفاذ)"
             required
             value={assignmentSpecialist}
             error={fieldErrors.assignmentSpecialist}

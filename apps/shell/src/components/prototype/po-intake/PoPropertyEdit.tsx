@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { PoIntakeRecord, PoPropertyIntake } from "@/lib/prototype/po-intake-data";
+import {
+  formatPoDisplay,
+  type PoIntakeRecord,
+  type PoPropertyIntake,
+} from "@/lib/prototype/po-intake-data";
 import {
   deedExistsInPo,
   findPropertyInRecord,
@@ -177,7 +181,7 @@ export function PoPropertyEdit({
   return (
     <PoEditShell
       title={`تعديل عقار — ${property.deedNumber || poNumber}`}
-      subtitle={`أخصائي دراسة الحالة · PO ${poNumber}`}
+      subtitle={`أخصائي دراسة الحالة · ${formatPoDisplay(poNumber)}`}
       saving={saving}
       onBack={onBackAction}
       onSave={() => void handleSave()}
