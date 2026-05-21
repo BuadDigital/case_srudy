@@ -34,6 +34,13 @@ public class WorkOrdersController : ControllerBase
         return Ok(await _workOrders.ExistsAsync(poNumber, cancellationToken));
     }
 
+    [HttpGet("properties/pending-bourse")]
+    public async Task<ActionResult<IReadOnlyList<PendingBoursePropertyDto>>> ListPendingBourse(
+        CancellationToken cancellationToken)
+    {
+        return Ok(await _workOrders.ListPendingBourseAsync(cancellationToken));
+    }
+
     [HttpGet("deeds/prior")]
     public async Task<ActionResult<PriorDeedRegistrationDto>> FindPriorDeed(
         [FromQuery] string deedNumber,
@@ -102,6 +109,24 @@ public class WorkOrdersController : ControllerBase
         var (result, errors) = await _workOrders.AddPropertyAsync(
             poNumber,
             property,
+            cancellationToken);
+        if (errors is { Count: > 0 })
+            return BadRequest(new FieldErrorsResponseDto { Errors = errors });
+        if (result is null) return NotFound();
+        return Ok(result);
+    }
+
+    [HttpPut("{poNumber}/properties/{propertyId:guid}/bourse")]
+    public async Task<ActionResult<WorkOrderPropertyDto>> CompleteBourseData(
+        string poNumber,
+        Guid propertyId,
+        [FromBody] UpdatePropertyBourseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var (result, errors) = await _workOrders.CompleteBourseDataAsync(
+            poNumber,
+            propertyId,
+            request,
             cancellationToken);
         if (errors is { Count: > 0 })
             return BadRequest(new FieldErrorsResponseDto { Errors = errors });

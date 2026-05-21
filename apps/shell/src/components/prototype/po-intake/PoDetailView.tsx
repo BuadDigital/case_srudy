@@ -6,12 +6,10 @@ import {
   isPastDue,
   requiresAssignmentDecree,
   type PoIntakeRecord,
-  type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
-import { isValidPhone } from "./po-property-validation";
 import { SummaryGrid } from "@/components/prototype/registration/SummaryGrid";
 import { PoEditShell } from "./PoEditShell";
-import { AssignmentDocAttachment } from "./AssignmentDocAttachment";
+import { PoDetailPropertyCard } from "./PoDetailPropertyCard";
 
 export function PoDetailView({
   record,
@@ -69,13 +67,12 @@ export function PoDetailView({
                 { l: "رقم PO (التعميد)", v: record.poNumber },
                 { l: "نوع الإسناد", v: record.assignmentType },
                 {
-                  l: "تاريخ الاستلام من إنفاذ",
-                  v: formatDateAr(record.receivedFromEnfathAt),
+                  l: "تاريخ التعميد",
+                  v: formatDateAr(record.promulgationDate || record.receivedFromEnfathAt),
                 },
-                { l: "وقت الاستلام", v: record.receivedFromEnfathTime || "—" },
                 {
-                  l: "تاريخ التكليف الداخلي",
-                  v: formatDateAr(record.internalAssignmentAt),
+                  l: "تاريخ الاستلام الفعلي",
+                  v: formatDateAr(record.receivedFromEnfathAt),
                 },
                 {
                   l: "تاريخ الاستحقاق (4 أيام عمل)",
@@ -83,7 +80,15 @@ export function PoDetailView({
                 },
                 { l: "أخصائي الإسناد", v: record.assignmentSpecialist },
                 {
-                  l: "عدد العقارات",
+                  l: "إيميل الأخصائي",
+                  v: record.assignmentSpecialistEmail || "—",
+                },
+                {
+                  l: "عدد العقارات (من إنفاذ)",
+                  v: String(record.expectedPropertyCount ?? 1),
+                },
+                {
+                  l: "عقارات مسجّلة",
                   v: String(record.properties.length),
                 },
               ]}
@@ -125,6 +130,7 @@ export function PoDetailView({
                   index={index + 1}
                   property={prop}
                   poNumber={record.poNumber}
+                  assignmentType={record.assignmentType}
                   showDecree={showDecree}
                 />
               ))}
@@ -132,87 +138,11 @@ export function PoDetailView({
           )}
 
           <p className="po-detail-footnote">
-            لتعديل عقار أو إضافة عقار جديد، استخدم شاشة «العقارات».
+            لتعديل عقار أو إضافة عقار جديد، افتح أمر العمل من القائمة واضغط أيقونة
+            العين للانتقال إلى صفحة العقارات.
           </p>
         </section>
       </div>
     </PoEditShell>
-  );
-}
-
-function PoDetailPropertyCard({
-  index,
-  property,
-  poNumber,
-  showDecree,
-}: {
-  index: number;
-  property: PoPropertyIntake;
-  poNumber: string;
-  showDecree: boolean;
-}) {
-  const contactCount = property.contacts.filter(
-    (c) => c.name.trim() && isValidPhone(c.phone),
-  ).length;
-  const typeLabel =
-    property.propertyType || property.classification || "—";
-  const location = [property.city, property.district].filter(Boolean).join(" · ");
-
-  return (
-    <article className="po-detail-property-card">
-      <header className="po-detail-property-hd">
-        <div className="po-detail-property-hd-main">
-          <span className="po-detail-property-num">عقار {index}</span>
-          <span className="po-detail-property-deed" dir="ltr">
-            {property.deedNumber || "—"}
-          </span>
-        </div>
-        {property.deedStatus ? (
-          <span className="badge b-prog">{property.deedStatus}</span>
-        ) : null}
-      </header>
-
-      <div className="po-detail-property-meta">
-        <div className="po-detail-meta-item">
-          <span className="po-detail-meta-lbl">الموقع</span>
-          <span className="po-detail-meta-val">{location || "—"}</span>
-        </div>
-        <div className="po-detail-meta-item">
-          <span className="po-detail-meta-lbl">التصنيف / النوع</span>
-          <span className="po-detail-meta-val">
-            {property.classification
-              ? `${property.classification} · ${typeLabel}`
-              : typeLabel}
-          </span>
-        </div>
-        <div className="po-detail-meta-item">
-          <span className="po-detail-meta-lbl">ضباط اتصال</span>
-          <span className="po-detail-meta-val">
-            {contactCount}{" "}
-            {contactCount === 1 ? "ضابط" : "ضباط"}
-          </span>
-        </div>
-        {(property.court || property.circuit) && (
-          <div className="po-detail-meta-item">
-            <span className="po-detail-meta-lbl">المحكمة / الدائرة</span>
-            <span className="po-detail-meta-val">
-              {[property.court, property.circuit].filter(Boolean).join(" · ")}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {showDecree ? (
-        <div className="po-detail-property-attach">
-          <span className="po-detail-meta-lbl">مرفق قرار الإسناد</span>
-          <AssignmentDocAttachment
-            poNumber={poNumber}
-            propertyId={property.id}
-            fileName={property.assignmentDocFileName}
-            variant="card"
-          />
-        </div>
-      ) : null}
-    </article>
   );
 }

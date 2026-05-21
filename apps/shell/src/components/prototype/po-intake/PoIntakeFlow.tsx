@@ -1,16 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ASSIGNMENT_TYPE_OPTIONS,
-  computeBusinessDueDate,
-  emptyProperty,
-  formatDateAr,
   PO_INTAKE_HINTS,
   PO_INTAKE_STEPS,
   type AssignmentType,
   type PoIntakeRecord,
-  type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
 import {
   buildPoRecord,
@@ -30,16 +26,9 @@ import {
 } from "@/components/prototype/registration/registration-utils";
 import { PoIntakeSuccess } from "./PoIntakeSuccess";
 import { PoIntakeWizardShell } from "./PoIntakeWizardShell";
-import { PoPropertyForm } from "./PoPropertyForm";
-import { PoPropertyStackCard } from "./PoPropertyStackCard";
-import {
-  findInvalidPropertyIndex,
-  firstPropertyValidationMessage,
-  isValidPhone,
-  mergePropertyValidation,
-} from "./po-property-validation";
 
 const LAST_STEP = PO_INTAKE_STEPS.length;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function PoIntakeFlow({
   onCompleteAction,
@@ -55,75 +44,48 @@ export function PoIntakeFlow({
   const [formError, setFormError] = useState<string | null>(null);
 
   const [poNumber, setPoNumber] = useState("");
+  const [promulgationDate, setPromulgationDate] = useState("");
   const [assignmentType, setAssignmentType] = useState<AssignmentType | "">("");
-  const [receivedFromEnfathAt, setReceivedFromEnfathAt] = useState("");
-  const [receivedFromEnfathTime, setReceivedFromEnfathTime] = useState("10:00");
-  const [internalAssignmentAt, setInternalAssignmentAt] = useState("");
   const [assignmentSpecialist, setAssignmentSpecialist] = useState("");
-  const [properties, setProperties] = useState<PoPropertyIntake[]>([]);
-  const [currentProperty, setCurrentProperty] = useState<PoPropertyIntake>(
-    emptyProperty,
-  );
-  const activePropertyRef = useRef<HTMLDivElement>(null);
-
-  const propertyOrdinal = properties.length + 1;
-
-  const hasCurrentPropertyDraft = useMemo(
-    () =>
-      !!currentProperty.deedNumber.trim() ||
-      !!currentProperty.city.trim() ||
-      !!currentProperty.district.trim(),
-    [
-      currentProperty.deedNumber,
-      currentProperty.city,
-      currentProperty.district,
-    ],
-  );
-
-  const enteredPropertyCount =
-    properties.length + (hasCurrentPropertyDraft ? 1 : 0);
-
-  const dueDateAt = useMemo(
-    () => computeBusinessDueDate(receivedFromEnfathAt, receivedFromEnfathTime),
-    [receivedFromEnfathAt, receivedFromEnfathTime],
-  );
+  const [assignmentSpecialistEmail, setAssignmentSpecialistEmail] =
+    useState("");
+  const [expectedPropertyCount, setExpectedPropertyCount] = useState("1");
 
   const isSuccess = step > LAST_STEP;
-  const hint =
-    PO_INTAKE_HINTS[Math.min(step - 1, PO_INTAKE_HINTS.length - 1)] ?? "";
+  const hint = PO_INTAKE_HINTS[0] ?? "";
 
-  const isDirty = useMemo(() => {
-    return (
+  const isDirty = useMemo(
+    () =>
       !!poNumber.trim() ||
+      !!promulgationDate ||
       !!assignmentType ||
-      !!receivedFromEnfathAt ||
-      !!internalAssignmentAt ||
       !!assignmentSpecialist.trim() ||
-      properties.length > 0 ||
-      !!currentProperty.deedNumber.trim()
-    );
-  }, [
-    poNumber,
-    assignmentType,
-    receivedFromEnfathAt,
-    internalAssignmentAt,
-    assignmentSpecialist,
-    properties,
-    currentProperty.deedNumber,
-  ]);
+      !!assignmentSpecialistEmail.trim() ||
+      expectedPropertyCount !== "1",
+    [
+      poNumber,
+      promulgationDate,
+      assignmentType,
+      assignmentSpecialist,
+      assignmentSpecialistEmail,
+      expectedPropertyCount,
+    ],
+  );
 
   useEffect(() => {
     const draft = loadPoDraft();
     if (!draft) return;
     setStep(draft.step);
     setPoNumber(draft.poNumber);
+    setPromulgationDate(draft.promulgationDate);
     setAssignmentType(draft.assignmentType || "");
-    setReceivedFromEnfathAt(draft.receivedFromEnfathAt);
-    setReceivedFromEnfathTime(draft.receivedFromEnfathTime || "10:00");
-    setInternalAssignmentAt(draft.internalAssignmentAt);
     setAssignmentSpecialist(draft.assignmentSpecialist);
-    setProperties(draft.properties);
-    setCurrentProperty(draft.currentProperty);
+    setAssignmentSpecialistEmail(draft.assignmentSpecialistEmail);
+    setExpectedPropertyCount(
+      draft.expectedPropertyCount > 0
+        ? String(draft.expectedPropertyCount)
+        : "1",
+    );
   }, []);
 
   useEffect(() => {
@@ -131,71 +93,61 @@ export function PoIntakeFlow({
     savePoDraft({
       step,
       poNumber,
+      promulgationDate,
       assignmentType,
-      receivedFromEnfathAt,
-      receivedFromEnfathTime,
-      internalAssignmentAt,
       assignmentSpecialist,
-      properties,
-      currentProperty,
+      assignmentSpecialistEmail,
+      expectedPropertyCount: Math.max(
+        1,
+        parseInt(expectedPropertyCount, 10) || 1,
+      ),
     });
   }, [
     step,
     poNumber,
+    promulgationDate,
     assignmentType,
-    receivedFromEnfathAt,
-    receivedFromEnfathTime,
-    internalAssignmentAt,
     assignmentSpecialist,
-    properties,
-    currentProperty,
+    assignmentSpecialistEmail,
+    expectedPropertyCount,
     isSuccess,
   ]);
-
-  const patchProperty = useCallback(
-    <K extends keyof PoPropertyIntake>(key: K, value: PoPropertyIntake[K]) => {
-      setCurrentProperty((p) => {
-        const next = { ...p, [key]: value };
-        if (key === "classification") {
-          next.propertyType = "";
-        }
-        return next;
-      });
-      setFieldErrors((e) => {
-        if (!e[String(key)]) return e;
-        const next = { ...e };
-        delete next[String(key)];
-        return next;
-      });
-    },
-    [],
-  );
 
   function clearErrors() {
     setFieldErrors({});
     setFormError(null);
   }
 
-  async function validateStep1(): Promise<boolean> {
+  async function validateHeader(): Promise<boolean> {
     clearErrors();
     const errors = mergeFieldErrors(
       collectRequiredErrors(
         {
           poNumber,
+          promulgationDate,
           assignmentType,
-          receivedFromEnfathAt,
-          internalAssignmentAt,
           assignmentSpecialist,
+          assignmentSpecialistEmail,
         },
         [
           "poNumber",
+          "promulgationDate",
           "assignmentType",
-          "receivedFromEnfathAt",
-          "internalAssignmentAt",
           "assignmentSpecialist",
+          "assignmentSpecialistEmail",
         ],
       ),
     );
+    if (
+      assignmentSpecialistEmail.trim() &&
+      !EMAIL_RE.test(assignmentSpecialistEmail.trim())
+    ) {
+      errors.assignmentSpecialistEmail = "صيغة الإيميل غير صالحة";
+    }
+    const count = parseInt(expectedPropertyCount, 10);
+    if (!Number.isFinite(count) || count < 1) {
+      errors.expectedPropertyCount = "عدد العقارات يجب أن يكون 1 على الأقل";
+    }
     if (hasFieldErrors(errors)) {
       setFieldErrors(errors);
       setFormError("يرجى تعبئة بيانات أمر العمل");
@@ -203,104 +155,13 @@ export function PoIntakeFlow({
     }
     if (await poRecordExists(poNumber)) {
       setFieldErrors({ poNumber: "رقم PO مسجّل مسبقاً في النظام" });
-      setFormError(null);
       return false;
     }
     return true;
-  }
-
-  function commitCurrentProperty(): PoPropertyIntake {
-    return {
-      ...currentProperty,
-      contacts: currentProperty.contacts.filter(
-        (c) => c.name.trim() && isValidPhone(c.phone),
-      ),
-    };
-  }
-
-  function validateCurrentPropertyStep(): boolean {
-    const errors = mergePropertyValidation(
-      currentProperty,
-      assignmentType as AssignmentType,
-    );
-    if (hasFieldErrors(errors)) {
-      setFieldErrors(errors);
-      setFormError(firstPropertyValidationMessage(errors));
-      return false;
-    }
-    return true;
-  }
-
-  function scrollToActiveProperty() {
-    requestAnimationFrame(() => {
-      activePropertyRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-  }
-
-  function startAnotherProperty() {
-    if (!validateCurrentPropertyStep()) return;
-    setProperties((prev) => [...prev, commitCurrentProperty()]);
-    setCurrentProperty(emptyProperty());
-    setFieldErrors({});
-    setFormError(null);
-    scrollToActiveProperty();
-  }
-
-  function editStackedProperty(index: number) {
-    const target = properties[index];
-    const hasCurrentDraft =
-      !!currentProperty.deedNumber.trim() ||
-      !!currentProperty.city.trim() ||
-      !!currentProperty.district.trim();
-
-    setProperties((prev) => {
-      let next = prev.filter((_, i) => i !== index);
-      if (hasCurrentDraft) {
-        next = [...next, commitCurrentProperty()];
-      }
-      return next;
-    });
-    setCurrentProperty(target);
-    clearErrors();
-    scrollToActiveProperty();
-  }
-
-  function removeStackedProperty(index: number) {
-    setProperties((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  async function handleNext() {
-    if (step === 1) {
-      if (!(await validateStep1())) return;
-      setStep(2);
-      return;
-    }
-    if (step === 2) {
-      await handleSave();
-    }
   }
 
   async function handleSave() {
-    const assignment = assignmentType as AssignmentType;
-    const stackedIssue = findInvalidPropertyIndex(properties, assignment);
-    if (stackedIssue) {
-      setFieldErrors({});
-      setFormError(
-        `عقار ${stackedIssue.index + 1} في المكدس: ${firstPropertyValidationMessage(stackedIssue.errors)} — اضغط «تعديل» لإكماله`,
-      );
-      return;
-    }
-    if (!validateCurrentPropertyStep()) return;
-
-    const allProperties = [...properties, commitCurrentProperty()];
-
-    if (allProperties.length === 0) {
-      setFormError("يجب تسجيل عقار واحد على الأقل");
-      return;
-    }
+    if (!(await validateHeader())) return;
 
     setSaving(true);
     clearErrors();
@@ -308,11 +169,11 @@ export function PoIntakeFlow({
     const record = buildPoRecord({
       poNumber: poNumber.trim(),
       assignmentType: assignmentType as AssignmentType,
-      receivedFromEnfathAt,
-      receivedFromEnfathTime,
-      internalAssignmentAt,
+      promulgationDate,
       assignmentSpecialist: assignmentSpecialist.trim(),
-      properties: allProperties,
+      assignmentSpecialistEmail: assignmentSpecialistEmail.trim(),
+      expectedPropertyCount: Math.max(1, parseInt(expectedPropertyCount, 10) || 1),
+      properties: [],
     });
 
     const result = await savePoRecord(record);
@@ -330,32 +191,18 @@ export function PoIntakeFlow({
     onCompleteAction(result.data);
   }
 
-  function handlePrev() {
-    clearErrors();
-    if (step === 2 && properties.length > 0) {
-      const last = properties[properties.length - 1];
-      setProperties((p) => p.slice(0, -1));
-      setCurrentProperty(last);
-    }
-    setStep((s) => Math.max(1, s - 1));
-  }
-
   function resetForAnother() {
     setStep(1);
     setPoNumber("");
+    setPromulgationDate("");
     setAssignmentType("");
-    setReceivedFromEnfathAt("");
-    setReceivedFromEnfathTime("10:00");
-    setInternalAssignmentAt("");
     setAssignmentSpecialist("");
-    setProperties([]);
-    setCurrentProperty(emptyProperty());
+    setAssignmentSpecialistEmail("");
+    setExpectedPropertyCount("1");
     setSavedRecord(null);
     clearPoDraft();
     clearErrors();
   }
-
-  const nextLabel = step === 2 ? "حفظ أمر العمل" : "متابعة لتسجيل العقارات";
 
   return (
     <PoIntakeWizardShell
@@ -364,12 +211,12 @@ export function PoIntakeFlow({
       hint={hint}
       saving={saving}
       success={isSuccess}
-      showPrev={step > 1 && !isSuccess}
-      nextLabel={nextLabel}
+      showPrev={false}
+      nextLabel="حفظ أمر العمل"
       isDirty={isDirty}
       onBack={onBackAction}
-      onPrev={handlePrev}
-      onNext={() => void handleNext()}
+      onPrev={() => {}}
+      onNext={() => void handleSave()}
     >
       {formError ? (
         <div className="note note-warn" style={{ marginBottom: 12 }}>
@@ -385,25 +232,53 @@ export function PoIntakeFlow({
         />
       ) : null}
 
-      {!isSuccess && step === 1 ? (
+      {!isSuccess ? (
         <RegistrationFormCard
           title="بيانات أمر العمل (PO)"
-          subtitle="يُنسخ رقم التعميد من منصة إنفاذ — المرجع الأساسي للفوترة والمتابعة"
+          subtitle="يُنسخ رقم التعميد وتاريخ التعميد من منصة إنفاذ — تُسجَّل العقارات لاحقاً داخل أمر العمل"
         >
           <div className="note note-info" style={{ marginBottom: 14 }}>
-            رقم PO = رقم التعميد. تاريخ الاستلام من إنفاذ هو نقطة بداية حساب
-            مدة الإنجاز (4 أيام عمل: الأحد–الخميس).
+            بعد الحفظ يُحسب تاريخ الاستلام الفعلي وتاريخ الاستحقاق (4 أيام عمل)
+            تلقائياً من تاريخ التعميد. أضف العقارات من قائمة العقارات داخل أمر
+            العمل، ثم أكمل بيانات البورصة من «استعلام البورصة».
           </div>
           <div className="reg-fg2">
             <RegField
               id="po_number"
-              label="رقم PO (التعميد)"
+              label="رقم التعميد (PO)"
               required
               dir="ltr"
               value={poNumber}
               error={fieldErrors.poNumber}
               placeholder="مثال: PO-2025-001"
               onChange={setPoNumber}
+            />
+            <RegField
+              id="promulgation_date"
+              label="تاريخ التعميد"
+              required
+              type="date"
+              value={promulgationDate}
+              error={fieldErrors.promulgationDate}
+              onChange={setPromulgationDate}
+            />
+            <RegField
+              id="po_specialist"
+              label="اسم أخصائي الإسناد"
+              required
+              value={assignmentSpecialist}
+              error={fieldErrors.assignmentSpecialist}
+              onChange={setAssignmentSpecialist}
+            />
+            <RegField
+              id="po_specialist_email"
+              label="إيميل أخصائي الإسناد"
+              required
+              type="email"
+              dir="ltr"
+              value={assignmentSpecialistEmail}
+              error={fieldErrors.assignmentSpecialistEmail}
+              onChange={setAssignmentSpecialistEmail}
             />
             <RegSelect
               id="assignment_type"
@@ -415,105 +290,21 @@ export function PoIntakeFlow({
               onChange={(v) => setAssignmentType(v as AssignmentType)}
             />
             <RegField
-              id="po_received"
-              label="تاريخ الاستلام من إنفاذ"
+              id="expected_property_count"
+              label="عدد العقارات"
               required
-              type="date"
-              value={receivedFromEnfathAt}
-              error={fieldErrors.receivedFromEnfathAt}
-              onChange={setReceivedFromEnfathAt}
+              type="number"
+              dir="ltr"
+              value={expectedPropertyCount}
+              error={fieldErrors.expectedPropertyCount}
+              placeholder="1"
+              onChange={(v) => {
+                const digits = v.replace(/\D/g, "").slice(0, 3);
+                setExpectedPropertyCount(digits || "");
+              }}
             />
-            <RegField
-              id="po_internal"
-              label="تاريخ التكليف الداخلي"
-              required
-              type="date"
-              value={internalAssignmentAt}
-              error={fieldErrors.internalAssignmentAt}
-              onChange={setInternalAssignmentAt}
-            />
-            <RegField
-              id="po_specialist"
-              label="اسم أخصائي الإسناد (إنفاذ)"
-              required
-              value={assignmentSpecialist}
-              error={fieldErrors.assignmentSpecialist}
-              onChange={setAssignmentSpecialist}
-            />
-            {dueDateAt ? (
-              <div className="reg-sp2 po-due-date-field">
-                <span className="reg-fl">تاريخ الاستحقاق (4 أيام عمل)</span>
-                <div className="po-count-box" aria-live="polite">
-                  <span className="po-count-box-value">{formatDateAr(dueDateAt)}</span>
-                  <span className="po-count-box-tag">محسوب تلقائياً</span>
-                </div>
-              </div>
-            ) : null}
           </div>
         </RegistrationFormCard>
-      ) : null}
-
-      {!isSuccess && step === 2 ? (
-        <div className="po-property-stack">
-          <div className="reg-sp2 po-count-field po-property-count-summary">
-            <label className="reg-fl" htmlFor="po_count_display">
-              عدد العقارات
-            </label>
-            <div
-              id="po_count_display"
-              className="po-count-box"
-              aria-live="polite"
-              aria-label={`عدد العقارات: ${enteredPropertyCount}`}
-            >
-              <span
-                className={`po-count-box-value${enteredPropertyCount === 0 ? " is-zero" : ""}`}
-              >
-                {enteredPropertyCount}
-              </span>
-              <span className="po-count-box-unit">
-                {enteredPropertyCount === 1 ? "عقار" : "عقارات"}
-              </span>
-              <span className="po-count-box-tag">يتغيّر أثناء التسجيل</span>
-            </div>
-          </div>
-
-          {properties.map((prop, index) => (
-            <PoPropertyStackCard
-              key={prop.id}
-              index={index + 1}
-              property={prop}
-              assignmentType={assignmentType as AssignmentType}
-              onEdit={() => editStackedProperty(index)}
-              onRemove={() => removeStackedProperty(index)}
-            />
-          ))}
-
-          <div ref={activePropertyRef} className="po-property-stack-active">
-            <RegistrationFormCard
-              title={`تسجيل العقار ${propertyOrdinal}`}
-              subtitle="بيانات الصك وضابط الاتصال — يُستعلم عن بورصة العقارات خارج النظام ثم تُدخل النتائج هنا"
-            >
-              <PoPropertyForm
-                property={currentProperty}
-                propertyOrdinal={propertyOrdinal}
-                assignmentType={assignmentType as AssignmentType}
-                fieldErrors={fieldErrors}
-                onPatch={patchProperty}
-                excludePoNumber={poNumber.trim() || undefined}
-              />
-            </RegistrationFormCard>
-          </div>
-
-          <div className="po-intake-add-property">
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={startAnotherProperty}
-            >
-              + إضافة عقار آخر
-            </button>
-          </div>
-        </div>
       ) : null}
     </PoIntakeWizardShell>
   );

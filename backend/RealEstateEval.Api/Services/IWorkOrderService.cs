@@ -11,6 +11,8 @@ public interface IWorkOrderService
         string deedNumber,
         string? excludePoNumber,
         CancellationToken cancellationToken);
+    Task<IReadOnlyList<PendingBoursePropertyDto>> ListPendingBourseAsync(
+        CancellationToken cancellationToken);
     Task<(WorkOrderDto? Result, Dictionary<string, string>? Errors)> CreateAsync(
         CreateWorkOrderRequest request,
         string? userId,
@@ -28,6 +30,11 @@ public interface IWorkOrderService
         string poNumber,
         Guid propertyId,
         WorkOrderPropertyDto property,
+        CancellationToken cancellationToken);
+    Task<(WorkOrderPropertyDto? Result, Dictionary<string, string>? Errors)> CompleteBourseDataAsync(
+        string poNumber,
+        Guid propertyId,
+        UpdatePropertyBourseRequest request,
         CancellationToken cancellationToken);
     Task<(bool Ok, string? Error)> DeletePropertyAsync(
         string poNumber,

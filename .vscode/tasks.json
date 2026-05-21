@@ -33,9 +33,18 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/backend/RealEstateEval.Api/RealEstateEval.Api.csproj"
+                "${workspaceFolder}/backend/RealEstateEval.Api/RealEstateEval.Api.csproj",
+                "--launch-profile",
+                "http",
+                "--non-interactive"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "group": "api"
+            }
         }
     ]
 }

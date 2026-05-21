@@ -7,9 +7,11 @@ const STATUS_MAP: Record<
   progress: ["قيد التنفيذ", "b-prog"],
   done: ["مكتمل", "b-done"],
   fail: ["متعذر", "b-fail"],
+  incomplete: ["ناقص", "b-prog"],
   review: ["قيد المراجعة", "b-prog"],
   approved: ["معتمد", "b-done"],
   pending: ["معلّق", "b-new"],
+  under_study: ["قيد الدراسة", "b-prog"],
 };
 
 export function StatusBadge({ status }: { status: string }) {

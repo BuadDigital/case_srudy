@@ -22,6 +22,8 @@ export function PoIntakeWizardShell({
   onPrev,
   onNext,
   footerExtra,
+  flowTitle,
+  flowDept,
   children,
 }: {
   steps: readonly string[];
@@ -36,9 +38,14 @@ export function PoIntakeWizardShell({
   onPrev: () => void;
   onNext: () => void;
   footerExtra?: ReactNode;
+  /** Override default PO intake title (e.g. property registration). */
+  flowTitle?: string;
+  flowDept?: string;
   children: ReactNode;
 }) {
   const meta = PO_INTAKE_FLOW;
+  const title = flowTitle ?? meta.title;
+  const dept = flowDept ?? meta.dept;
   const inWizard = !success && step <= steps.length;
   const displayStep = Math.min(step, steps.length);
 
@@ -62,7 +69,7 @@ export function PoIntakeWizardShell({
                   {REG_BACK}
                 </button>
                 <div className="reg-topbar-titles">
-                  <div className="reg-tb-flow">{meta.title}</div>
+                  <div className="reg-tb-flow">{title}</div>
                 </div>
               </div>
               {success ? (
@@ -80,8 +87,8 @@ export function PoIntakeWizardShell({
                       {REG_BACK}
                     </button>
                     <div className="reg-topbar-titles">
-                      <div className="reg-tb-flow">{meta.dept}</div>
-                      <div className="reg-tb-title">{meta.title}</div>
+                      <div className="reg-tb-flow">{dept}</div>
+                      <div className="reg-tb-title">{title}</div>
                     </div>
                   </div>
                   <span className="reg-step-badge">

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { PoIntakeRecord } from "@/lib/prototype/po-intake-data";
 import { formatDateAr } from "@/lib/prototype/po-intake-data";
+import { poPropertiesPath } from "@/lib/po-routes";
 import { SummaryGrid } from "@/components/prototype/registration/SummaryGrid";
 
 export function PoIntakeSuccess({
@@ -19,15 +20,17 @@ export function PoIntakeSuccess({
   const summaryRows = [
     { l: "رقم PO", v: record.poNumber },
     { l: "نوع الإسناد", v: record.assignmentType },
+    { l: "تاريخ التعميد", v: formatDateAr(record.promulgationDate) },
     {
-      l: "تاريخ الاستلام من إنفاذ",
+      l: "تاريخ الاستلام الفعلي",
       v: formatDateAr(record.receivedFromEnfathAt),
     },
     { l: "تاريخ الاستحقاق", v: formatDateAr(record.dueDateAt) },
     { l: "أخصائي الإسناد", v: record.assignmentSpecialist },
+    { l: "إيميل الأخصائي", v: record.assignmentSpecialistEmail },
     {
-      l: "عدد العقارات",
-      v: String(record.properties.length),
+      l: "عدد العقارات (من إنفاذ)",
+      v: String(record.expectedPropertyCount ?? 1),
     },
   ];
 
@@ -37,11 +40,10 @@ export function PoIntakeSuccess({
         <div className="reg-success-ico" aria-hidden />
         <h2 className="po-intake-success-title">تم استلام أمر العمل بنجاح</h2>
         <p className="po-intake-success-lead">
-          سجّل النظام{" "}
-          <strong>{record.properties.length}</strong>{" "}
-          {record.properties.length === 1 ? "عقاراً" : "عقارات"} تحت{" "}
-          <strong dir="ltr">{record.poNumber}</strong>. يمكنك متابعة تسجيل
-          العقارات والإسناد من الشاشة التالية.
+          سجّل النظام أمر العمل{" "}
+          <strong dir="ltr">{record.poNumber}</strong> بدون عقارات. أضف الصكوك
+          من قائمة العقارات داخل أمر العمل، ثم أكمل بيانات البورصة من «استعلام
+          البورصة».
         </p>
       </div>
 
@@ -54,9 +56,9 @@ export function PoIntakeSuccess({
         <button
           type="button"
           className="btn btn-primary"
-          onClick={() => router.push("/properties")}
+          onClick={() => router.push(poPropertiesPath(record.poNumber))}
         >
-          متابعة تسجيل العقارات
+          إضافة العقارات
         </button>
         <button type="button" className="btn" onClick={onBackToList}>
           العودة لقائمة أوامر العمل

@@ -408,6 +408,11 @@ namespace RealEstateEval.Api.Data.Migrations
                     b.Property<Guid>("PropertyId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
 
@@ -464,6 +469,11 @@ namespace RealEstateEval.Api.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("AssignmentSpecialistEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<int>("AssignmentType")
                         .HasColumnType("integer");
 
@@ -473,13 +483,19 @@ namespace RealEstateEval.Api.Data.Migrations
                     b.Property<DateOnly>("DueDateAt")
                         .HasColumnType("date");
 
-                    b.Property<DateOnly>("InternalAssignmentAt")
+                    b.Property<int>("ExpectedPropertyCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("InternalAssignmentAt")
                         .HasColumnType("date");
 
                     b.Property<string>("PoNumber")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<DateOnly>("PromulgationDate")
+                        .HasColumnType("date");
 
                     b.Property<DateOnly>("ReceivedFromEnfathAt")
                         .HasColumnType("date");
@@ -516,8 +532,19 @@ namespace RealEstateEval.Api.Data.Migrations
                     b.Property<string>("Boundaries")
                         .HasColumnType("text");
 
+                    b.Property<string>("BoundariesAvailability")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("BoundariesExternalDocName")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<string>("BoundariesMatch")
                         .HasColumnType("text");
+
+                    b.Property<bool>("BourseDataCompleted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Circuit")
                         .HasColumnType("text");
@@ -546,6 +573,10 @@ namespace RealEstateEval.Api.Data.Migrations
                     b.Property<string>("DeedStatus")
                         .HasColumnType("text");
 
+                    b.Property<string>("DelegationLetterFileName")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<string>("District")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -553,6 +584,10 @@ namespace RealEstateEval.Api.Data.Migrations
 
                     b.Property<int>("IdentifierType")
                         .HasColumnType("integer");
+
+                    b.Property<string>("OtherDocumentFileNames")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<string>("OwnerName")
                         .HasColumnType("text");
@@ -567,6 +602,14 @@ namespace RealEstateEval.Api.Data.Migrations
 
                     b.Property<string>("Restrictions")
                         .HasColumnType("text");
+
+                    b.Property<string>("RestrictionsPresent")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("TaskNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<Guid>("WorkOrderId")
                         .HasColumnType("uuid");

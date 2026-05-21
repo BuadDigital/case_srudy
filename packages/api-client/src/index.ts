@@ -1,9 +1,20 @@
 /**
- * API base URL for the future gateway / services.
- * Domain clients (case-study, valuation, …) will live here once backend contracts are agreed.
+ * API base URL. In the browser, uses the same host as the page (LAN-friendly).
+ * Override with NEXT_PUBLIC_API_URL when needed.
  */
-export const apiBase =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5160";
+export function getApiBase(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  // Browser: same origin — Next.js rewrites /api/* to the backend (works on LAN).
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  const port = process.env.NEXT_PUBLIC_API_PORT ?? "5160";
+  return `http://127.0.0.1:${port}`;
+}
+
+/** @deprecated Prefer getApiBase() — resolved once at import (SSR uses localhost). */
+export const apiBase = getApiBase();
 
 export type ApiClientConfig = {
   baseUrl?: string;
@@ -12,7 +23,7 @@ export type ApiClientConfig = {
 
 /** Placeholder — extend when wiring real HTTP calls. */
 export function createApiClient(config: ApiClientConfig = {}) {
-  const baseUrl = config.baseUrl ?? apiBase;
+  const baseUrl = config.baseUrl ?? getApiBase();
   return {
     baseUrl,
     getToken: config.getToken ?? (() => null),
@@ -33,11 +44,13 @@ export {
 
 export {
   addWorkOrderProperty,
+  completePropertyBourseData,
   createWorkOrder,
   deleteWorkOrder,
   deleteWorkOrderProperty,
   findPriorDeed,
   getWorkOrder,
+  listPendingBourseProperties,
   listWorkOrders,
   updateWorkOrderHeader,
   updateWorkOrderProperty,
@@ -45,7 +58,10 @@ export {
   type ApiErr,
   type ApiOk,
   type CreateWorkOrderRequest,
+  type PendingBoursePropertyDto,
+  type PriorDeedRegistrationDto,
   type PropertyContactDto,
+  type UpdatePropertyBourseRequest,
   type UpdateWorkOrderHeaderRequest,
   type WorkOrderDto,
   type WorkOrderListItemDto,

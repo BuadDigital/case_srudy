@@ -2,6 +2,7 @@
 export type PageId =
   | "dashboard"
   | "po"
+  | "bourse-inquiry"
   | "properties"
   | "assignment"
   | "survey"
@@ -67,6 +68,7 @@ export function isPageId(value: string): value is PageId {
   return (
     value === "dashboard" ||
     value === "po" ||
+    value === "bourse-inquiry" ||
     value === "properties" ||
     value === "assignment" ||
     value === "survey" ||

@@ -5,7 +5,7 @@ import type {
   RegistrationPayload,
   UserListItem,
 } from "@platform/types";
-import { apiBase } from "./index";
+import { getApiBase } from "./index";
 
 export type UsersApiConfig = {
   baseUrl?: string;
@@ -26,7 +26,7 @@ export type ListUsersResult =
 export async function listUsers(
   config: UsersApiConfig,
 ): Promise<ListUsersResult> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(`${base}/api/users`, {
       headers: headers(config.token),
@@ -50,7 +50,7 @@ async function createUser(
   path: "hr" | "proc" | "crm",
   payload: RegistrationPayload,
 ): Promise<CreateUserResult> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   const res = await fetch(`${base}/api/users/${path}`, {
     method: "POST",
     headers: headers(config.token),
@@ -93,7 +93,7 @@ export type OrganizationOverviewResult =
 export async function fetchOrganizationOverview(
   config: UsersApiConfig,
 ): Promise<OrganizationOverviewResult> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(`${base}/api/users/organization`, {
       headers: headers(config.token),

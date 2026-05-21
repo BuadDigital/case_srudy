@@ -1,6 +1,12 @@
-/** Browser cache for assignment-decree uploads (prototype — filename also saved on API). */
+/** Browser cache for property document uploads (prototype — filename also saved on API). */
 
-const STORAGE_PREFIX = "evalAssignmentDoc:";
+export type PropertyDocKind = "decree" | "delegation" | "other";
+
+const STORAGE_PREFIX: Record<PropertyDocKind, string> = {
+  decree: "evalAssignmentDoc:",
+  delegation: "evalDelegationDoc:",
+  other: "evalOtherDoc:",
+};
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export type CachedAssignmentDoc = {
@@ -9,8 +15,12 @@ export type CachedAssignmentDoc = {
   dataUrl?: string;
 };
 
-function storageKey(poNumber: string, propertyId: string): string {
-  return `${STORAGE_PREFIX}${poNumber.trim()}:${propertyId}`;
+function storageKey(
+  kind: PropertyDocKind,
+  poNumber: string,
+  propertyId: string,
+): string {
+  return `${STORAGE_PREFIX[kind]}${poNumber.trim()}:${propertyId}`;
 }
 
 function readAsDataUrl(file: File): Promise<string> {
@@ -22,7 +32,8 @@ function readAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export async function cacheAssignmentDoc(
+async function writeCachedDoc(
+  kind: PropertyDocKind,
   poNumber: string,
   propertyId: string,
   file: File,
@@ -42,24 +53,49 @@ export async function cacheAssignmentDoc(
     }
   }
 
+  const key = storageKey(kind, poNumber, propertyId);
   try {
-    localStorage.setItem(storageKey(poNumber, propertyId), JSON.stringify(payload));
+    localStorage.setItem(key, JSON.stringify(payload));
   } catch {
-    /* quota — metadata only */
     localStorage.setItem(
-      storageKey(poNumber, propertyId),
+      key,
       JSON.stringify({ fileName: file.name, mimeType: payload.mimeType }),
     );
   }
 }
 
-export function getCachedAssignmentDoc(
+export async function cacheAssignmentDoc(
+  poNumber: string,
+  propertyId: string,
+  file: File,
+): Promise<void> {
+  return writeCachedDoc("decree", poNumber, propertyId, file);
+}
+
+export async function cacheDelegationDoc(
+  poNumber: string,
+  propertyId: string,
+  file: File,
+): Promise<void> {
+  return writeCachedDoc("delegation", poNumber, propertyId, file);
+}
+
+export async function cacheOtherDoc(
+  poNumber: string,
+  propertyId: string,
+  file: File,
+): Promise<void> {
+  return writeCachedDoc("other", poNumber, propertyId, file);
+}
+
+function readCachedDoc(
+  kind: PropertyDocKind,
   poNumber: string,
   propertyId: string,
 ): CachedAssignmentDoc | null {
   if (typeof window === "undefined" || !poNumber.trim() || !propertyId) return null;
   try {
-    const raw = localStorage.getItem(storageKey(poNumber, propertyId));
+    const raw = localStorage.getItem(storageKey(kind, poNumber, propertyId));
     if (!raw) return null;
     return JSON.parse(raw) as CachedAssignmentDoc;
   } catch {
@@ -67,12 +103,33 @@ export function getCachedAssignmentDoc(
   }
 }
 
+export function getCachedAssignmentDoc(
+  poNumber: string,
+  propertyId: string,
+): CachedAssignmentDoc | null {
+  return readCachedDoc("decree", poNumber, propertyId);
+}
+
+export function getCachedDelegationDoc(
+  poNumber: string,
+  propertyId: string,
+): CachedAssignmentDoc | null {
+  return readCachedDoc("delegation", poNumber, propertyId);
+}
+
+export function getCachedOtherDoc(
+  poNumber: string,
+  propertyId: string,
+): CachedAssignmentDoc | null {
+  return readCachedDoc("other", poNumber, propertyId);
+}
+
 export function removeCachedAssignmentDoc(
   poNumber: string,
   propertyId: string,
 ): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(storageKey(poNumber, propertyId));
+  localStorage.removeItem(storageKey("decree", poNumber, propertyId));
 }
 
 export function isImageMime(mimeType: string): boolean {

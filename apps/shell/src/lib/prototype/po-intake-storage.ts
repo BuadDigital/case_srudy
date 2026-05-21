@@ -7,20 +7,27 @@ import {
   classificationRequiresSurvey,
   computeBusinessDueDate,
   emptyProperty,
+  parsePropertyIdentifierType,
+  poListStatusForAssignmentType,
 } from "@/lib/prototype/po-intake-data";
+import { propertyHasIncompleteContact } from "@/components/prototype/po-intake/po-property-validation";
 import { getPropertyFailure } from "@/lib/prototype/failures-storage";
 import type { PoRow, PropertyRow } from "@/lib/prototype/constants";
 import type {
+  PendingBoursePropertyDto,
+  UpdatePropertyBourseRequest,
   WorkOrderDto,
   WorkOrderPropertyDto,
 } from "@platform/api-client";
 import {
   addWorkOrderProperty,
+  completePropertyBourseData,
   createWorkOrder,
   deleteWorkOrder,
   deleteWorkOrderProperty,
   findPriorDeed,
   getWorkOrder,
+  listPendingBourseProperties,
   listWorkOrders,
   updateWorkOrderHeader,
   updateWorkOrderProperty,
@@ -50,7 +57,13 @@ function normalizeProperty(prop: PoPropertyIntake): PoPropertyIntake {
     ...PROPERTY_DEFAULTS,
     ...prop,
     id: String(prop.id),
-    contacts: prop.contacts?.length ? prop.contacts : [{ name: "", phone: "" }],
+    contacts: prop.contacts?.length
+      ? prop.contacts.map((c) => ({
+          name: c.name ?? "",
+          role: c.role ?? "",
+          phone: c.phone ?? "",
+        }))
+      : [{ name: "", role: "", phone: "" }],
   };
 }
 
@@ -70,25 +83,35 @@ function normalizePoRecord(record: PoIntakeRecord): PoIntakeRecord {
 function dtoToProperty(dto: WorkOrderPropertyDto): PoPropertyIntake {
   return normalizeProperty({
     id: String(dto.id ?? ""),
-    identifierType:
-      dto.identifierType === "real_estate_reg" ? "real_estate_reg" : "deed",
+    identifierType: parsePropertyIdentifierType(dto.identifierType),
     deedNumber: dto.deedNumber,
+    taskNumber: dto.taskNumber ?? "",
     deedDate: dto.deedDate ?? "",
     ownerName: dto.ownerName ?? "",
+    restrictionsPresent: dto.restrictionsPresent ?? "",
     restrictions: dto.restrictions ?? "",
     boundariesMatch: dto.boundariesMatch ?? "",
-    city: dto.city,
-    district: dto.district,
+    boundariesAvailability: dto.boundariesAvailability ?? "",
+    boundariesExternalDocName: dto.boundariesExternalDocName ?? "",
+    city: dto.city ?? "",
+    district: dto.district ?? "",
     deedStatus: dto.deedStatus ?? "",
     area: dto.area ?? "",
     boundaries: dto.boundaries ?? "",
     court: dto.court ?? "",
     circuit: dto.circuit ?? "",
-    classification: dto.classification,
-    propertyType: dto.propertyType,
+    classification: dto.classification ?? "",
+    propertyType: dto.propertyType ?? "",
     assignmentDocFileName: dto.assignmentDocFileName ?? "",
+    delegationLetterFileName: dto.delegationLetterFileName ?? "",
+    otherDocumentFileNames: dto.otherDocumentFileNames ?? [],
     realEstateRegFileName: dto.realEstateRegFileName ?? "",
-    contacts: dto.contacts ?? [],
+    bourseDataCompleted: dto.bourseDataCompleted ?? false,
+    contacts: (dto.contacts ?? []).map((c) => ({
+      name: c.name ?? "",
+      role: c.role ?? "",
+      phone: c.phone ?? "",
+    })),
   });
 }
 
@@ -97,39 +120,82 @@ function dtoToRecord(dto: WorkOrderDto): PoIntakeRecord {
     id: String(dto.id),
     poNumber: dto.poNumber,
     assignmentType: dto.assignmentType as AssignmentType,
+    promulgationDate: dto.promulgationDate,
     receivedFromEnfathAt: dto.receivedFromEnfathAt,
     receivedFromEnfathTime: dto.receivedFromEnfathTime ?? "",
     internalAssignmentAt: dto.internalAssignmentAt,
     assignmentSpecialist: dto.assignmentSpecialist,
+    assignmentSpecialistEmail: dto.assignmentSpecialistEmail,
+    expectedPropertyCount: dto.expectedPropertyCount ?? 1,
     dueDateAt: dto.dueDateAt,
     createdAtUtc: dto.createdAtUtc,
     properties: dto.properties.map(dtoToProperty),
   });
 }
 
-export function propertyToDto(prop: PoPropertyIntake): WorkOrderPropertyDto {
+export function propertyToEnfathDto(prop: PoPropertyIntake): WorkOrderPropertyDto {
   return {
     id: prop.id || undefined,
-    identifierType: prop.identifierType,
+    identifierType: "deed",
     deedNumber: prop.deedNumber.trim(),
+    taskNumber: prop.taskNumber.trim() || undefined,
     deedDate: prop.deedDate || undefined,
     ownerName: prop.ownerName || undefined,
+    city: prop.city.trim() || undefined,
+    district: prop.district.trim() || undefined,
+    classification: prop.classification.trim() || undefined,
+    propertyType: prop.propertyType.trim() || undefined,
+    court: prop.court || undefined,
+    circuit: prop.circuit || undefined,
+    assignmentDocFileName: prop.assignmentDocFileName || undefined,
+    delegationLetterFileName: prop.delegationLetterFileName || undefined,
+    otherDocumentFileNames:
+      prop.otherDocumentFileNames.length > 0
+        ? prop.otherDocumentFileNames
+        : undefined,
+    realEstateRegFileName: prop.realEstateRegFileName || undefined,
+    bourseDataCompleted: prop.bourseDataCompleted,
+    contacts: prop.contacts
+      .filter((c) => c.phone.trim() && c.role.trim())
+      .map((c) => ({
+        name: c.name.trim(),
+        role: c.role.trim(),
+        phone: c.phone.trim(),
+      })),
+  };
+}
+
+export function propertyToDto(prop: PoPropertyIntake): WorkOrderPropertyDto {
+  return {
+    ...propertyToEnfathDto(prop),
+    restrictionsPresent: prop.restrictionsPresent || undefined,
     restrictions: prop.restrictions || undefined,
     boundariesMatch: prop.boundariesMatch || undefined,
-    city: prop.city.trim(),
-    district: prop.district.trim(),
+    boundariesAvailability: prop.boundariesAvailability || undefined,
+    boundariesExternalDocName: prop.boundariesExternalDocName || undefined,
     deedStatus: prop.deedStatus || undefined,
     area: prop.area || undefined,
     boundaries: prop.boundaries || undefined,
-    court: prop.court || undefined,
-    circuit: prop.circuit || undefined,
+    city: prop.city.trim(),
+    district: prop.district.trim(),
     classification: prop.classification.trim(),
     propertyType: prop.propertyType.trim(),
-    assignmentDocFileName: prop.assignmentDocFileName || undefined,
-    realEstateRegFileName: prop.realEstateRegFileName || undefined,
-    contacts: prop.contacts
-      .filter((c) => c.name.trim() || c.phone.trim())
-      .map((c) => ({ name: c.name.trim(), phone: c.phone.trim() })),
+  };
+}
+
+export function propertyToBourseRequest(
+  prop: PoPropertyIntake,
+): UpdatePropertyBourseRequest {
+  return {
+    city: prop.city.trim(),
+    district: prop.district.trim(),
+    classification: prop.classification.trim(),
+    propertyType: prop.propertyType.trim(),
+    area: prop.area || undefined,
+    deedStatus: prop.deedStatus || undefined,
+    restrictionsPresent: prop.restrictionsPresent || undefined,
+    boundariesAvailability: prop.boundariesAvailability || undefined,
+    boundariesExternalDocName: prop.boundariesExternalDocName || undefined,
   };
 }
 
@@ -137,6 +203,7 @@ function listItemToPoRow(item: {
   poNumber: string;
   assignmentType: string;
   propertyCount: number;
+  expectedPropertyCount: number;
   completedCount: number;
   status: string;
   receivedFromEnfathAt: string;
@@ -146,9 +213,12 @@ function listItemToPoRow(item: {
   return {
     id: item.poNumber,
     type: item.assignmentType || "—",
-    count: item.propertyCount,
+    count: item.expectedPropertyCount || item.propertyCount || 0,
     done: item.completedCount,
-    status: item.status === "done" ? "done" : "progress",
+    status: poListStatusForAssignmentType(
+      item.assignmentType,
+      item.status === "done" ? "done" : "progress",
+    ),
     date: item.receivedFromEnfathAt,
     dueDate: item.dueDateAt,
     specialist: item.assignmentSpecialist,
@@ -182,11 +252,12 @@ export async function savePoRecord(
   const result = await createWorkOrder(config, {
     poNumber: record.poNumber.trim(),
     assignmentType: record.assignmentType,
-    receivedFromEnfathAt: record.receivedFromEnfathAt,
+    promulgationDate: record.promulgationDate,
     receivedFromEnfathTime: record.receivedFromEnfathTime || undefined,
-    internalAssignmentAt: record.internalAssignmentAt,
     assignmentSpecialist: record.assignmentSpecialist.trim(),
-    properties: record.properties.map(propertyToDto),
+    assignmentSpecialistEmail: record.assignmentSpecialistEmail.trim(),
+    expectedPropertyCount: record.expectedPropertyCount,
+    properties: record.properties.map(propertyToEnfathDto),
   });
 
   if (!result.ok) {
@@ -212,9 +283,9 @@ export function poRecordToListRow(record: PoIntakeRecord): PoRow {
   return {
     id: record.poNumber,
     type: record.assignmentType ?? "—",
-    count: record.properties.length,
-    done: 0,
-    status: "progress",
+    count: record.expectedPropertyCount ?? record.properties.length,
+    done: record.properties.filter((p) => p.bourseDataCompleted).length,
+    status: poListStatusForAssignmentType(record.assignmentType, "progress"),
     date: record.receivedFromEnfathAt,
     dueDate: record.dueDateAt,
     specialist: record.assignmentSpecialist,
@@ -235,6 +306,14 @@ export async function findPriorDeedRegistration(
   deedNumber: string,
   excludePo?: string,
 ): Promise<{ poNumber: string } | null> {
+  const hit = await findPriorDeedFull(deedNumber, excludePo);
+  return hit ? { poNumber: hit.poNumber } : null;
+}
+
+export async function findPriorDeedFull(
+  deedNumber: string,
+  excludePo?: string,
+): Promise<import("@platform/api-client").PriorDeedRegistrationDto | null> {
   const config = workOrdersApiConfig();
   if (!config) return null;
   const result = await findPriorDeed(config, deedNumber, excludePo);
@@ -262,26 +341,83 @@ export function poPropertyToPropertyRow(
   priorByDeed: Map<string, string>,
 ): PropertyRow {
   const failure = getPropertyFailure(record.poNumber, prop.id);
+  const boursePending = !prop.bourseDataCompleted;
   const underVerification = prop.deedStatus === "قيد التحقق";
   const isFailed =
     failure?.status === "approved" || prop.deedStatus === "موقوف";
-  const area = prop.district
-    ? `${prop.city} · ${prop.district}`
-    : prop.city || "—";
+  const incomplete = propertyHasIncompleteContact(prop);
+  const area = boursePending
+    ? "بانتظار البورصة"
+    : prop.district
+      ? `${prop.city} · ${prop.district}`
+      : prop.city || "—";
 
   return {
     id: propertyRowId(record.poNumber, prop),
     po: record.poNumber,
     area,
-    type: prop.propertyType || prop.classification || "—",
+    type: boursePending
+      ? "—"
+      : prop.propertyType || prop.classification || "—",
     key: false,
-    survey: priorSurveyWaived(prop, priorByDeed) ? "done" : "new",
+    survey: boursePending
+      ? "new"
+      : priorSurveyWaived(prop, priorByDeed)
+        ? "done"
+        : "new",
     val: "new",
-    study: underVerification ? "progress" : "new",
-    status: isFailed ? "fail" : underVerification ? "progress" : "new",
+    study: boursePending
+      ? "progress"
+      : underVerification
+        ? "progress"
+        : "new",
+    status: boursePending
+      ? "progress"
+      : isFailed
+        ? "fail"
+        : incomplete
+          ? "incomplete"
+          : underVerification
+            ? "progress"
+            : "new",
     specialist: record.assignmentSpecialist,
     preparer: "—",
   };
+}
+
+export async function loadPendingBourseItems(): Promise<
+  PendingBoursePropertyDto[]
+> {
+  const config = workOrdersApiConfig();
+  if (!config) return [];
+  const result = await listPendingBourseProperties(config);
+  return result.ok ? result.data : [];
+}
+
+export async function completePropertyBourse(
+  poNumber: string,
+  propertyId: string,
+  property: PoPropertyIntake,
+): Promise<StorageOk<PoPropertyIntake> | StorageError> {
+  const config = workOrdersApiConfig();
+  if (!config) return { ok: false, error: apiErrorMessage("auth") };
+
+  const result = await completePropertyBourseData(
+    config,
+    poNumber,
+    propertyId,
+    propertyToBourseRequest(property),
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      error: resolveApiError(result.kind, result.errors),
+      errors: result.errors,
+    };
+  }
+
+  notifyWorkOrdersChanged();
+  return { ok: true, data: dtoToProperty(result.data) };
 }
 
 export async function loadPropertyRows(): Promise<PropertyRow[]> {
@@ -350,10 +486,11 @@ export async function updatePoRecord(
 
   const result = await updateWorkOrderHeader(config, record.poNumber, {
     assignmentType: record.assignmentType,
-    receivedFromEnfathAt: record.receivedFromEnfathAt,
+    promulgationDate: record.promulgationDate,
     receivedFromEnfathTime: record.receivedFromEnfathTime || undefined,
-    internalAssignmentAt: record.internalAssignmentAt,
     assignmentSpecialist: record.assignmentSpecialist.trim(),
+    assignmentSpecialistEmail: record.assignmentSpecialistEmail.trim(),
+    expectedPropertyCount: record.expectedPropertyCount,
   });
 
   if (!result.ok) {
@@ -402,7 +539,7 @@ export async function addPropertyToPo(
   const result = await addWorkOrderProperty(
     config,
     poNumber,
-    propertyToDto(property),
+    propertyToEnfathDto(property),
   );
   if (!result.ok) {
     return {
@@ -464,12 +601,10 @@ export type PoIntakeDraftPayload = {
   step: number;
   poNumber: string;
   assignmentType: PoIntakeRecord["assignmentType"] | "";
-  receivedFromEnfathAt: string;
-  receivedFromEnfathTime: string;
-  internalAssignmentAt: string;
+  promulgationDate: string;
   assignmentSpecialist: string;
-  properties: PoIntakeRecord["properties"];
-  currentProperty: PoIntakeRecord["properties"][number];
+  assignmentSpecialistEmail: string;
+  expectedPropertyCount: number;
 };
 
 export function loadPoDraft(): PoIntakeDraftPayload | null {
@@ -492,10 +627,21 @@ export function clearPoDraft(): void {
 }
 
 export function buildPoRecord(
-  fields: Omit<PoIntakeRecord, "id" | "dueDateAt" | "createdAtUtc"> & {
+  fields: Omit<
+    PoIntakeRecord,
+    | "id"
+    | "dueDateAt"
+    | "receivedFromEnfathAt"
+    | "receivedFromEnfathTime"
+    | "createdAtUtc"
+  > & {
     id?: string;
+    receivedFromEnfathAt?: string;
+    receivedFromEnfathTime?: string;
   },
 ): PoIntakeRecord {
+  const received =
+    fields.receivedFromEnfathAt?.trim() || fields.promulgationDate;
   return {
     id:
       fields.id ??
@@ -503,8 +649,10 @@ export function buildPoRecord(
         ? crypto.randomUUID()
         : `po-${Date.now()}`),
     ...fields,
+    properties: fields.properties ?? [],
+    receivedFromEnfathAt: received,
     dueDateAt: computeBusinessDueDate(
-      fields.receivedFromEnfathAt,
+      received,
       fields.receivedFromEnfathTime ?? "",
     ),
     receivedFromEnfathTime: fields.receivedFromEnfathTime ?? "",

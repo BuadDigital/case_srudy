@@ -40,15 +40,9 @@ export function prefetchPrototypePage(
         ...opts,
       });
       break;
-    case "properties":
     case "assignment":
     case "failures":
     case "keys":
-      void queryClient.prefetchQuery({
-        queryKey: prototypeKeys.propertyListItems(),
-        queryFn: loadPropertyListItems,
-        ...opts,
-      });
       void queryClient.prefetchQuery({
         queryKey: prototypeKeys.poRecords(),
         queryFn: loadPoRecords,

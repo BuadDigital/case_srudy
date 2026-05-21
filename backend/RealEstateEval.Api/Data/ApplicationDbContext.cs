@@ -81,7 +81,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasIndex(x => x.PoNumber).IsUnique();
             e.Property(x => x.PoNumber).HasMaxLength(64);
             e.Property(x => x.AssignmentSpecialist).HasMaxLength(256);
+            e.Property(x => x.AssignmentSpecialistEmail).HasMaxLength(256);
             e.Property(x => x.ReceivedFromEnfathTime).HasMaxLength(8);
+            e.Property(x => x.InternalAssignmentAt).IsRequired(false);
             e.HasOne(x => x.RegisteredBy)
                 .WithMany()
                 .HasForeignKey(x => x.RegisteredByUserId)
@@ -96,6 +98,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             e.ToTable("WorkOrderProperties");
             e.Property(x => x.DeedNumber).HasMaxLength(128);
+            e.Property(x => x.TaskNumber).HasMaxLength(64);
+            e.Property(x => x.DelegationLetterFileName).HasMaxLength(512);
+            e.Property(x => x.OtherDocumentFileNames).HasMaxLength(2000);
+            e.Property(x => x.BoundariesAvailability).HasMaxLength(32);
+            e.Property(x => x.BoundariesExternalDocName).HasMaxLength(512);
+            e.Property(x => x.RestrictionsPresent).HasMaxLength(8);
             e.Property(x => x.City).HasMaxLength(128);
             e.Property(x => x.District).HasMaxLength(128);
             e.Property(x => x.Classification).HasMaxLength(128);
@@ -111,6 +119,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             e.ToTable("PropertyContacts");
             e.Property(x => x.Name).HasMaxLength(256);
+            e.Property(x => x.Role).HasMaxLength(128);
             e.Property(x => x.Phone).HasMaxLength(32);
         });
 

@@ -1,4 +1,4 @@
-import { apiBase } from "./index";
+import { getApiBase } from "./index";
 
 export type WorkOrdersApiConfig = {
   baseUrl?: string;
@@ -14,6 +14,7 @@ function headers(token: string): HeadersInit {
 
 export type PropertyContactDto = {
   name: string;
+  role: string;
   phone: string;
 };
 
@@ -21,21 +22,28 @@ export type WorkOrderPropertyDto = {
   id?: string;
   identifierType: string;
   deedNumber: string;
+  taskNumber?: string;
   deedDate?: string;
   ownerName?: string;
+  restrictionsPresent?: string;
   restrictions?: string;
   boundariesMatch?: string;
-  city: string;
-  district: string;
+  boundariesAvailability?: string;
+  boundariesExternalDocName?: string;
+  city?: string;
+  district?: string;
   deedStatus?: string;
   area?: string;
   boundaries?: string;
   court?: string;
   circuit?: string;
-  classification: string;
-  propertyType: string;
+  classification?: string;
+  propertyType?: string;
   assignmentDocFileName?: string;
+  delegationLetterFileName?: string;
+  otherDocumentFileNames?: string[];
   realEstateRegFileName?: string;
+  bourseDataCompleted?: boolean;
   contacts: PropertyContactDto[];
 };
 
@@ -43,10 +51,13 @@ export type WorkOrderDto = {
   id: string;
   poNumber: string;
   assignmentType: string;
+  promulgationDate: string;
   receivedFromEnfathAt: string;
   receivedFromEnfathTime?: string;
-  internalAssignmentAt: string;
+  internalAssignmentAt?: string;
   assignmentSpecialist: string;
+  assignmentSpecialistEmail: string;
+  expectedPropertyCount: number;
   dueDateAt: string;
   createdAtUtc: string;
   properties: WorkOrderPropertyDto[];
@@ -56,8 +67,10 @@ export type WorkOrderListItemDto = {
   poNumber: string;
   assignmentType: string;
   propertyCount: number;
+  expectedPropertyCount: number;
   completedCount: number;
   status: string;
+  promulgationDate: string;
   receivedFromEnfathAt: string;
   dueDateAt: string;
   assignmentSpecialist: string;
@@ -66,19 +79,60 @@ export type WorkOrderListItemDto = {
 export type CreateWorkOrderRequest = {
   poNumber: string;
   assignmentType: string;
-  receivedFromEnfathAt: string;
+  promulgationDate: string;
   receivedFromEnfathTime?: string;
-  internalAssignmentAt: string;
   assignmentSpecialist: string;
-  properties: WorkOrderPropertyDto[];
+  assignmentSpecialistEmail: string;
+  expectedPropertyCount: number;
+  properties?: WorkOrderPropertyDto[];
 };
 
 export type UpdateWorkOrderHeaderRequest = {
   assignmentType: string;
-  receivedFromEnfathAt: string;
+  promulgationDate: string;
   receivedFromEnfathTime?: string;
-  internalAssignmentAt: string;
   assignmentSpecialist: string;
+  assignmentSpecialistEmail: string;
+  expectedPropertyCount: number;
+};
+
+export type UpdatePropertyBourseRequest = {
+  city: string;
+  district: string;
+  classification: string;
+  propertyType: string;
+  area?: string;
+  deedStatus?: string;
+  restrictionsPresent?: string;
+  boundariesAvailability?: string;
+  boundariesExternalDocName?: string;
+};
+
+export type PriorDeedRegistrationDto = {
+  poNumber: string;
+  deedDate?: string;
+  ownerName?: string;
+  contacts?: PropertyContactDto[];
+  city?: string;
+  district?: string;
+  classification?: string;
+  propertyType?: string;
+  area?: string;
+  deedStatus?: string;
+  restrictionsPresent?: string;
+  boundariesAvailability?: string;
+  boundariesExternalDocName?: string;
+};
+
+export type PendingBoursePropertyDto = {
+  poNumber: string;
+  propertyId: string;
+  deedNumber: string;
+  ownerName?: string;
+  taskNumber?: string;
+  assignmentType: string;
+  receivedFromEnfathAt: string;
+  dueDateAt: string;
 };
 
 type FieldErrorsBody = { errors?: Record<string, string> };
@@ -103,7 +157,7 @@ async function parseFieldErrors(res: Response): Promise<Record<string, string>> 
 export async function listWorkOrders(
   config: WorkOrdersApiConfig,
 ): Promise<ApiOk<WorkOrderListItemDto[]> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(`${base}/api/work-orders`, {
       headers: headers(config.token),
@@ -117,11 +171,28 @@ export async function listWorkOrders(
   }
 }
 
+export async function listPendingBourseProperties(
+  config: WorkOrdersApiConfig,
+): Promise<ApiOk<PendingBoursePropertyDto[]> | ApiErr> {
+  const base = config.baseUrl ?? getApiBase();
+  try {
+    const res = await fetch(`${base}/api/work-orders/properties/pending-bourse`, {
+      headers: headers(config.token),
+    });
+    if (res.status === 401) return { ok: false, kind: "auth" };
+    if (!res.ok) return { ok: false, kind: "server" };
+    const data = (await res.json()) as PendingBoursePropertyDto[];
+    return { ok: true, data: Array.isArray(data) ? data : [] };
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+}
+
 export async function getWorkOrder(
   config: WorkOrdersApiConfig,
   poNumber: string,
 ): Promise<ApiOk<WorkOrderDto> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   const encoded = encodeURIComponent(poNumber.trim());
   try {
     const res = await fetch(`${base}/api/work-orders/${encoded}`, {
@@ -140,7 +211,7 @@ export async function workOrderExists(
   config: WorkOrdersApiConfig,
   poNumber: string,
 ): Promise<ApiOk<boolean> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(
       `${base}/api/work-orders/exists?poNumber=${encodeURIComponent(poNumber.trim())}`,
@@ -158,8 +229,8 @@ export async function findPriorDeed(
   config: WorkOrdersApiConfig,
   deedNumber: string,
   excludePo?: string,
-): Promise<ApiOk<{ poNumber: string } | null> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+): Promise<ApiOk<PriorDeedRegistrationDto | null> | ApiErr> {
+  const base = config.baseUrl ?? getApiBase();
   const params = new URLSearchParams({ deedNumber: deedNumber.trim() });
   if (excludePo?.trim()) params.set("excludePo", excludePo.trim());
   try {
@@ -169,7 +240,7 @@ export async function findPriorDeed(
     if (res.status === 401) return { ok: false, kind: "auth" };
     if (res.status === 404) return { ok: true, data: null };
     if (!res.ok) return { ok: false, kind: "server" };
-    return { ok: true, data: (await res.json()) as { poNumber: string } };
+    return { ok: true, data: (await res.json()) as PriorDeedRegistrationDto };
   } catch {
     return { ok: false, kind: "network" };
   }
@@ -179,7 +250,7 @@ export async function createWorkOrder(
   config: WorkOrdersApiConfig,
   body: CreateWorkOrderRequest,
 ): Promise<ApiOk<WorkOrderDto> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(`${base}/api/work-orders`, {
       method: "POST",
@@ -206,7 +277,7 @@ export async function updateWorkOrderHeader(
   poNumber: string,
   body: UpdateWorkOrderHeaderRequest,
 ): Promise<ApiOk<WorkOrderDto> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(
       `${base}/api/work-orders/${encodeURIComponent(poNumber.trim())}`,
@@ -236,7 +307,7 @@ export async function deleteWorkOrder(
   config: WorkOrdersApiConfig,
   poNumber: string,
 ): Promise<ApiOk<void> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(
       `${base}/api/work-orders/${encodeURIComponent(poNumber.trim())}`,
@@ -261,7 +332,7 @@ export async function addWorkOrderProperty(
   poNumber: string,
   property: WorkOrderPropertyDto,
 ): Promise<ApiOk<WorkOrderPropertyDto> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(
       `${base}/api/work-orders/${encodeURIComponent(poNumber.trim())}/properties`,
@@ -293,7 +364,7 @@ export async function updateWorkOrderProperty(
   propertyId: string,
   property: WorkOrderPropertyDto,
 ): Promise<ApiOk<WorkOrderPropertyDto> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(
       `${base}/api/work-orders/${encodeURIComponent(poNumber.trim())}/properties/${propertyId}`,
@@ -319,12 +390,44 @@ export async function updateWorkOrderProperty(
   }
 }
 
+export async function completePropertyBourseData(
+  config: WorkOrdersApiConfig,
+  poNumber: string,
+  propertyId: string,
+  body: UpdatePropertyBourseRequest,
+): Promise<ApiOk<WorkOrderPropertyDto> | ApiErr> {
+  const base = config.baseUrl ?? getApiBase();
+  try {
+    const res = await fetch(
+      `${base}/api/work-orders/${encodeURIComponent(poNumber.trim())}/properties/${propertyId}/bourse`,
+      {
+        method: "PUT",
+        headers: headers(config.token),
+        body: JSON.stringify(body),
+      },
+    );
+    if (res.status === 401) return { ok: false, kind: "auth" };
+    if (res.status === 400) {
+      return {
+        ok: false,
+        kind: "validation",
+        errors: await parseFieldErrors(res),
+      };
+    }
+    if (res.status === 404) return { ok: false, kind: "not_found" };
+    if (!res.ok) return { ok: false, kind: "server" };
+    return { ok: true, data: (await res.json()) as WorkOrderPropertyDto };
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+}
+
 export async function deleteWorkOrderProperty(
   config: WorkOrdersApiConfig,
   poNumber: string,
   propertyId: string,
 ): Promise<ApiOk<void> | ApiErr> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(
       `${base}/api/work-orders/${encodeURIComponent(poNumber.trim())}/properties/${propertyId}`,

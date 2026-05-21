@@ -15,7 +15,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     pages: [
       "dashboard",
       "po",
-      "properties",
+      "bourse-inquiry",
       "assignment",
       "survey",
       "keys",
@@ -38,7 +38,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     pages: [
       "dashboard",
       "po",
-      "properties",
+      "bourse-inquiry",
       "assignment",
       "survey",
       "keys",
@@ -61,7 +61,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     pages: [
       "dashboard",
       "po",
-      "properties",
+      "bourse-inquiry",
       "assignment",
       "survey",
       "keys",
@@ -80,7 +80,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "من",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
-    pages: ["dashboard", "po", "properties", "assignment", "survey", "messages"],
+    pages: ["dashboard", "po", "bourse-inquiry", "assignment", "survey", "messages"],
   },
   "case-specialist": {
     name: "أسامة الصالحي",
@@ -88,7 +88,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "أص",
     bg: "var(--success-bg)",
     tc: "var(--success)",
-    pages: ["dashboard", "po", "properties", "failures", "messages"],
+    pages: ["dashboard", "po", "bourse-inquiry", "failures", "messages"],
   },
   "report-preparer": {
     name: "صالح الحبشي",
@@ -96,7 +96,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "صح",
     bg: "var(--success-bg)",
     tc: "var(--success)",
-    pages: ["dashboard", "properties", "messages"],
+    pages: ["dashboard", "po", "messages"],
   },
   "court-delegate": {
     name: "فراس كمرين",
@@ -148,7 +148,12 @@ export const NAV: NavItem[] = [
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
     grp: "قسم دراسة الحالة",
   },
-  { id: "properties", label: "العقارات", icon: "M3 3h18v18H3z", grp: null },
+  {
+    id: "bourse-inquiry",
+    label: "استعلام البورصة",
+    icon: "M3 3h18v18H3zM7 7h10v4H7zM7 13h6v4H7z",
+    grp: "قسم دراسة الحالة",
+  },
   {
     id: "assignment",
     label: "الإسناد والتوزيع",
@@ -212,6 +217,7 @@ export const NAV: NavItem[] = [
 export const PAGE_TITLES: Record<PageId, string> = {
   dashboard: "لوحة التحكم",
   po: "أوامر العمل",
+  "bourse-inquiry": "استعلام البورصة",
   properties: "العقارات",
   assignment: "الإسناد والتوزيع",
   survey: "الرفع المساحي",
@@ -229,6 +235,7 @@ export const PAGE_TITLES: Record<PageId, string> = {
 export const PAGE_BREADCRUMB: Record<PageId, string> = {
   dashboard: "الرئيسية",
   po: "دراسة الحالة",
+  "bourse-inquiry": "دراسة الحالة",
   properties: "دراسة الحالة",
   assignment: "دراسة الحالة",
   survey: "دراسة الحالة",
@@ -249,7 +256,7 @@ export type PoRow = {
   type: string;
   count: number;
   done: number;
-  status: "progress" | "done";
+  status: "progress" | "done" | "under_study";
   date: string;
   dueDate: string;
   specialist: string;
@@ -265,7 +272,12 @@ export type VrRow = {
   date: string;
 };
 
-export type PropertyWorkflowStage = "new" | "progress" | "done" | "fail";
+export type PropertyWorkflowStage =
+  | "new"
+  | "progress"
+  | "done"
+  | "fail"
+  | "incomplete";
 
 export type PropertyRow = {
   id: string;

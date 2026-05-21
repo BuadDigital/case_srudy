@@ -16,7 +16,7 @@ export function AssignmentDocAttachment({
   poNumber: string;
   propertyId: string;
   fileName?: string;
-  variant?: "inline" | "detail" | "thumb" | "card";
+  variant?: "inline" | "detail" | "thumb" | "card" | "panel";
 }) {
   const cached = useMemo(
     () => getCachedAssignmentDoc(poNumber, propertyId),
@@ -36,7 +36,7 @@ export function AssignmentDocAttachment({
 
   return (
     <div
-      className={`po-attach${variant === "thumb" ? " po-attach--thumb" : ""}${variant === "detail" ? " po-attach--detail" : ""}${variant === "card" ? " po-attach--card" : ""}`}
+      className={`po-attach${variant === "thumb" ? " po-attach--thumb" : ""}${variant === "detail" ? " po-attach--detail" : ""}${variant === "card" ? " po-attach--card" : ""}${variant === "panel" ? " po-attach--panel" : ""}`}
     >
       <AttachmentPreview doc={doc} variant={variant} />
       <div className="po-attach-meta">
@@ -66,7 +66,7 @@ function AttachmentPreview({
   variant,
 }: {
   doc: CachedAssignmentDoc;
-  variant: "inline" | "detail" | "thumb" | "card";
+  variant: "inline" | "detail" | "thumb" | "card" | "panel";
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -76,7 +76,9 @@ function AttachmentPreview({
         ? "po-attach-img po-attach-img--thumb"
         : variant === "card"
           ? "po-attach-img po-attach-img--card"
-          : "po-attach-img";
+          : variant === "panel"
+            ? "po-attach-img po-attach-img--panel"
+            : "po-attach-img";
 
     return (
       <>

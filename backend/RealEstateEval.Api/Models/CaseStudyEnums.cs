@@ -11,6 +11,7 @@ public enum PropertyIdentifierType
 {
     Deed = 0,
     RealEstateRegistration = 1,
+    BourseInquiry = 2,
 }
 
 public static class AssignmentTypeLabels
@@ -42,18 +43,29 @@ public static class PropertyIdentifierTypeLabels
 {
     public const string Deed = "deed";
     public const string RealEstateReg = "real_estate_reg";
+    public const string BourseInquiry = "bourse_inquiry";
 
-    public static string ToApiValue(PropertyIdentifierType type) =>
-        type == PropertyIdentifierType.RealEstateRegistration ? RealEstateReg : Deed;
+    public static string ToApiValue(PropertyIdentifierType type) => type switch
+    {
+        PropertyIdentifierType.RealEstateRegistration => RealEstateReg,
+        PropertyIdentifierType.BourseInquiry => BourseInquiry,
+        _ => Deed,
+    };
 
     public static bool TryParseApiValue(string? value, out PropertyIdentifierType type)
     {
-        if (value == RealEstateReg)
+        var n = value?.Trim() ?? "";
+        if (n == RealEstateReg)
         {
             type = PropertyIdentifierType.RealEstateRegistration;
             return true;
         }
+        if (n == BourseInquiry)
+        {
+            type = PropertyIdentifierType.BourseInquiry;
+            return true;
+        }
         type = PropertyIdentifierType.Deed;
-        return value == Deed || string.IsNullOrWhiteSpace(value);
+        return n == Deed || string.IsNullOrEmpty(n);
     }
 }

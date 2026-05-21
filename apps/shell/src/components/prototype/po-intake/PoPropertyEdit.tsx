@@ -7,6 +7,7 @@ import {
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
 import {
+  completePropertyBourse,
   deedExistsInPo,
   findPropertyInRecord,
   removePropertyFromPo,
@@ -19,11 +20,17 @@ import {
   type FieldErrors,
 } from "@/components/prototype/registration/registration-utils";
 import { PoEditShell } from "./PoEditShell";
-import { PoPropertyForm } from "./PoPropertyForm";
+import { PoPropertyBourseForm } from "./PoPropertyBourseForm";
+import { PoPropertyEnfathForm } from "./PoPropertyEnfathForm";
 import {
-  validatePropertyContacts,
-  validatePropertyFields,
-} from "./po-property-validation";
+  firstBourseValidationMessage,
+  validatePropertyBourseFields,
+} from "./po-property-bourse-validation";
+import {
+  firstEnfathValidationMessage,
+  isValidContactEntry,
+  mergePropertyEnfathValidation,
+} from "./po-property-enfath-validation";
 
 export function PoPropertyEdit({
   poNumber,
@@ -108,17 +115,17 @@ export function PoPropertyEdit({
     );
   }
 
-  const canDelete = initialRecord.properties.length > 1;
-
   async function handleSave() {
     if (!initialRecord || !property) return;
 
-    const propErrors = validatePropertyFields(
+    const enfathErrors = mergePropertyEnfathValidation(
       property,
       initialRecord.assignmentType,
     );
-    const contactErrors = validatePropertyContacts(property);
-    const errors = mergeFieldErrors(propErrors, contactErrors);
+    const bourseErrors = property.bourseDataCompleted
+      ? validatePropertyBourseFields(property)
+      : {};
+    const errors = mergeFieldErrors(enfathErrors, bourseErrors);
 
     if (await deedExistsInPo(poNumber, property.deedNumber, propertyId)) {
       errors.deedNumber = "رقم الصك مسجّل مسبقاً في هذا أمر العمل";
@@ -127,11 +134,8 @@ export function PoPropertyEdit({
     if (hasFieldErrors(errors)) {
       setFieldErrors(errors);
       setFormError(
-        errors._contacts ??
-          errors.deedNumber ??
-          errors.assignmentDocFileName ??
-          errors.realEstateRegFileName ??
-          "يرجى تصحيح بيانات العقار",
+        firstEnfathValidationMessage(errors) ||
+          firstBourseValidationMessage(errors),
       );
       return;
     }
@@ -141,25 +145,38 @@ export function PoPropertyEdit({
 
     const committed: PoPropertyIntake = {
       ...property,
-      contacts: property.contacts.filter(
-        (c) => c.name.trim() || c.phone.trim(),
-      ),
+      identifierType: "deed",
+      contacts: property.contacts.filter((c) => isValidContactEntry(c)),
     };
 
     const result = await updatePropertyInPo(poNumber, propertyId, committed);
-    setSaving(false);
-
     if (!result.ok) {
+      setSaving(false);
       setFormError(result.error);
       if (result.errors) setFieldErrors(result.errors);
       return;
+    }
+
+    if (property.bourseDataCompleted) {
+      const bourseResult = await completePropertyBourse(
+        poNumber,
+        propertyId,
+        committed,
+      );
+      setSaving(false);
+      if (!bourseResult.ok) {
+        setFormError(bourseResult.error);
+        if (bourseResult.errors) setFieldErrors(bourseResult.errors);
+        return;
+      }
+    } else {
+      setSaving(false);
     }
 
     onSavedAction();
   }
 
   async function handleDelete() {
-    if (!canDelete) return;
     if (
       !window.confirm(
         "حذف هذا العقار من أمر العمل؟ لا يمكن التراجع عن الحذف.",
@@ -186,20 +203,14 @@ export function PoPropertyEdit({
       onBack={onBackAction}
       onSave={() => void handleSave()}
       footerExtra={
-        canDelete ? (
-          <button
-            type="button"
-            className="btn btn-danger-outline"
-            disabled={saving}
-            onClick={() => void handleDelete()}
-          >
-            حذف العقار
-          </button>
-        ) : (
-          <span className="reg-field-hint" style={{ alignSelf: "center" }}>
-            لا يمكن حذف العقار الوحيد
-          </span>
-        )
+        <button
+          type="button"
+          className="btn btn-danger-outline"
+          disabled={saving}
+          onClick={() => void handleDelete()}
+        >
+          حذف العقار
+        </button>
       }
     >
       {formError ? (
@@ -208,15 +219,33 @@ export function PoPropertyEdit({
         </div>
       ) : null}
 
-      <RegistrationFormCard title="بيانات الصك وضابط الاتصال">
-        <PoPropertyForm
+      <RegistrationFormCard title="بيانات إنفاذ (الصك)">
+        <PoPropertyEnfathForm
           property={property}
           assignmentType={initialRecord.assignmentType}
           fieldErrors={fieldErrors}
           onPatch={patchProperty}
-          excludePoNumber={poNumber}
+          poNumber={poNumber}
         />
       </RegistrationFormCard>
+
+      {property.bourseDataCompleted ? (
+        <RegistrationFormCard
+          title="بيانات البورصة"
+          subtitle="يمكن تعديلها هنا أو من استعلام البورصة"
+        >
+          <PoPropertyBourseForm
+            property={property}
+            fieldErrors={fieldErrors}
+            onPatch={patchProperty}
+          />
+        </RegistrationFormCard>
+      ) : (
+        <div className="note note-info" style={{ marginTop: 12 }}>
+          بيانات البورصة غير مكتملة — أكملها من «استعلام البورصة» في القائمة
+          الجانبية.
+        </div>
+      )}
     </PoEditShell>
   );
 }

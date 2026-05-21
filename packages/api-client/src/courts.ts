@@ -1,4 +1,4 @@
-import { apiBase } from "./index";
+import { getApiBase } from "./index";
 
 export type CourtsApiConfig = {
   baseUrl?: string;
@@ -26,7 +26,7 @@ export type CourtsListResult =
 export async function listCourts(
   config: CourtsApiConfig,
 ): Promise<CourtsListResult> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(`${base}/api/courts`, {
       headers: headers(config.token),
@@ -44,7 +44,7 @@ export async function replaceCourtsCatalog(
   config: CourtsApiConfig,
   entries: CourtCatalogEntryDto[],
 ): Promise<CourtsListResult> {
-  const base = config.baseUrl ?? apiBase;
+  const base = config.baseUrl ?? getApiBase();
   try {
     const res = await fetch(`${base}/api/courts`, {
       method: "PUT",

@@ -6,10 +6,16 @@ public class WorkOrderProperty
     public Guid WorkOrderId { get; set; }
     public PropertyIdentifierType IdentifierType { get; set; }
     public string DeedNumber { get; set; } = "";
+    public string? TaskNumber { get; set; }
     public string? DeedDate { get; set; }
     public string? OwnerName { get; set; }
+    /// <summary>yes / no — القيود على العقار (مرحلة البورصة).</summary>
+    public string? RestrictionsPresent { get; set; }
     public string? Restrictions { get; set; }
     public string? BoundariesMatch { get; set; }
+    /// <summary>deed / bourse / doc / no</summary>
+    public string? BoundariesAvailability { get; set; }
+    public string? BoundariesExternalDocName { get; set; }
     public string City { get; set; } = "";
     public string District { get; set; } = "";
     public string? DeedStatus { get; set; }
@@ -20,7 +26,11 @@ public class WorkOrderProperty
     public string Classification { get; set; } = "";
     public string PropertyType { get; set; } = "";
     public string? AssignmentDocFileName { get; set; }
+    public string? DelegationLetterFileName { get; set; }
+    /// <summary>JSON array of filenames.</summary>
+    public string? OtherDocumentFileNames { get; set; }
     public string? RealEstateRegFileName { get; set; }
+    public bool BourseDataCompleted { get; set; }
 
     public WorkOrder? WorkOrder { get; set; }
     public ICollection<PropertyContact> Contacts { get; set; } = [];

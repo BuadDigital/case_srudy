@@ -1,7 +1,11 @@
 "use client";
+
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { StatValue } from "@/components/ui/StatValue";
+import { EyeIconButton } from "@/components/ui/EyeIconButton";
+import { PoNumber } from "@/components/ui/PoNumber";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
 import {
@@ -10,40 +14,31 @@ import {
   isPastDue,
 } from "@/lib/prototype/po-intake-data";
 import { deletePoRecord } from "@/lib/prototype/po-intake-storage";
-import { prototypeKeys } from "@/lib/query/prototype-keys";
 import {
-  usePoListRowsQuery,
-  usePoRecordQuery,
-} from "@/lib/query/prototype-queries";
+  poHeaderEditPath,
+  poIntakePath,
+  poPropertiesPath,
+} from "@/lib/po-routes";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
+import { usePoListRowsQuery } from "@/lib/query/prototype-queries";
 import {
   canDeletePo,
   canEditPoHeader,
   canReceivePo,
   isPoViewOnly,
 } from "@/lib/prototype/po-roles";
-import { PoIntakeFlow } from "@/components/prototype/po-intake/PoIntakeFlow";
-import { PoHeaderEdit } from "@/components/prototype/po-intake/PoHeaderEdit";
-import { PoDetailView } from "@/components/prototype/po-intake/PoDetailView";
-
-type PoMode = "list" | "intake" | "edit" | "view";
 
 export function PoListView() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { role } = usePrototype();
   const viewOnly = isPoViewOnly(role);
   const showIntake = canReceivePo(role);
   const showEdit = canEditPoHeader(role);
   const showDelete = canDeletePo(role);
-  const [mode, setMode] = useState<PoMode>("list");
-  const [activePoNumber, setActivePoNumber] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const { data: rows } = usePoListRowsQuery();
-  const detailPo =
-    (mode === "view" || mode === "edit") && activePoNumber ? activePoNumber : null;
-  const { data: detailRecord, isPending: detailPending } =
-    usePoRecordQuery(detailPo);
-
   const list = rows ?? [];
   const statsReady = rows !== undefined;
 
@@ -85,67 +80,6 @@ export function PoListView() {
     return () => window.clearTimeout(t);
   }, [toast]);
 
-  if (mode === "intake") {
-    return (
-      <PoIntakeFlow
-        onCompleteAction={(record) => {
-          void queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
-          setToast(
-            `تم استلام أمر العمل «${record.poNumber}» — ${record.properties.length} عقار.`,
-          );
-        }}
-        onBackAction={() => setMode("list")}
-      />
-    );
-  }
-
-  if (detailPo) {
-    if (detailPending && !detailRecord) {
-      return null;
-    }
-    if (detailRecord) {
-      if (mode === "view") {
-        return (
-          <PoDetailView
-            record={detailRecord}
-            showEditHeader={showEdit}
-            onEditHeaderAction={
-              showEdit
-                ? () => {
-                    setMode("edit");
-                  }
-                : undefined
-            }
-            onBackAction={() => {
-              setMode("list");
-              setActivePoNumber(null);
-            }}
-          />
-        );
-      }
-      return (
-        <PoHeaderEdit
-          record={detailRecord}
-          onBackAction={() => {
-            setMode("list");
-            setActivePoNumber(null);
-          }}
-          onSavedAction={() => {
-            void queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
-            setToast(`تم تحديث أمر العمل «${activePoNumber}».`);
-            setMode("list");
-            setActivePoNumber(null);
-          }}
-        />
-      );
-    }
-    return (
-      <div className="note note-warn" style={{ margin: 16 }}>
-        لم يُعثر على أمر العمل.
-      </div>
-    );
-  }
-
   return (
     <>
       {toast ? (
@@ -180,13 +114,13 @@ export function PoListView() {
             <button
               type="button"
               className="btn btn-sm btn-primary"
-              onClick={() => setMode("intake")}
+              onClick={() => router.push(poIntakePath())}
             >
               + استلام PO جديد
             </button>
           ) : null}
         </div>
-        <table className="tbl" data-pending={!statsReady}>
+        <table className="tbl tbl-po-list" data-pending={!statsReady}>
           <thead>
             <tr>
               <th>رقم PO</th>
@@ -198,6 +132,7 @@ export function PoListView() {
               <th>تاريخ الاستلام</th>
               <th>تاريخ الاستحقاق</th>
               <th>الأخصائي</th>
+              <th aria-label="عرض العقارات" />
               <th />
             </tr>
           </thead>
@@ -205,7 +140,7 @@ export function PoListView() {
             {statsReady && list.length === 0 ? (
               <tr className="tbl-empty">
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   style={{ textAlign: "center", color: "var(--text3)" }}
                 >
                   {viewOnly
@@ -216,7 +151,9 @@ export function PoListView() {
             ) : statsReady ? (
               list.map((p) => (
                 <tr key={p.id}>
-                  <td className="id-cell">{p.id}</td>
+                  <td className="id-cell">
+                    <PoNumber value={p.id} />
+                  </td>
                   <td>
                     <span
                       className={`badge ${assignmentTypeBadgeClass(p.type)}`}
@@ -259,25 +196,22 @@ export function PoListView() {
                   </td>
                   <td style={{ fontSize: 11 }}>{p.specialist}</td>
                   <td>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      <button
-                        type="button"
-                        className="btn btn-sm"
-                        onClick={() => {
-                          setActivePoNumber(p.id);
-                          setMode("view");
-                        }}
-                      >
-                        عرض
-                      </button>
+                    <EyeIconButton
+                      href={poPropertiesPath(p.id)}
+                      label={`عرض عقارات ${p.id}`}
+                    />
+                  </td>
+                  <td>
+                    <div
+                      style={{ display: "flex", gap: 4, flexWrap: "wrap" }}
+                    >
                       {showEdit ? (
                         <button
                           type="button"
                           className="btn btn-sm"
-                          onClick={() => {
-                            setActivePoNumber(p.id);
-                            setMode("edit");
-                          }}
+                          onClick={() =>
+                            router.push(poHeaderEditPath(p.id))
+                          }
                         >
                           تعديل
                         </button>

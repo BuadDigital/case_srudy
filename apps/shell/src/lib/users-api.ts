@@ -2,6 +2,7 @@ import {
   createCrmUser,
   createHrUser,
   createProcUser,
+  getApiBase,
   listUsers,
   type CreateUserResult,
   type UsersApiConfig,
@@ -14,7 +15,7 @@ import type { RegistrationSource } from "@/lib/prototype/registration-data";
 function apiConfig(): UsersApiConfig | null {
   const session = getAuthSession();
   if (!session?.token) return null;
-  return { token: session.token };
+  return { token: session.token, baseUrl: getApiBase() };
 }
 
 export function contractTypeToStaffType(

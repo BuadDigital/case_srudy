@@ -3,9 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   ASSIGNMENT_TYPE_OPTIONS,
-  computeBusinessDueDate,
   formatDateAr,
-  requiresAssignmentDecree,
   type AssignmentType,
   type PoIntakeRecord,
 } from "@/lib/prototype/po-intake-data";
@@ -20,6 +18,8 @@ import {
 } from "@/components/prototype/registration/registration-utils";
 import { PoEditShell } from "./PoEditShell";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function PoHeaderEdit({
   record,
   onBackAction,
@@ -30,51 +30,66 @@ export function PoHeaderEdit({
   onSavedAction: () => void;
 }) {
   const [assignmentType, setAssignmentType] = useState(record.assignmentType);
-  const [receivedFromEnfathAt, setReceivedFromEnfathAt] = useState(
-    record.receivedFromEnfathAt,
-  );
-  const [receivedFromEnfathTime, setReceivedFromEnfathTime] = useState(
-    record.receivedFromEnfathTime || "10:00",
-  );
-  const [internalAssignmentAt, setInternalAssignmentAt] = useState(
-    record.internalAssignmentAt,
+  const [promulgationDate, setPromulgationDate] = useState(
+    record.promulgationDate || record.receivedFromEnfathAt,
   );
   const [assignmentSpecialist, setAssignmentSpecialist] = useState(
     record.assignmentSpecialist,
+  );
+  const [assignmentSpecialistEmail, setAssignmentSpecialistEmail] = useState(
+    record.assignmentSpecialistEmail,
+  );
+  const [expectedPropertyCount, setExpectedPropertyCount] = useState(
+    String(record.expectedPropertyCount ?? 1),
   );
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const dueDateAt = useMemo(
-    () => computeBusinessDueDate(receivedFromEnfathAt, receivedFromEnfathTime),
-    [receivedFromEnfathAt, receivedFromEnfathTime],
+  const receivedDisplay = useMemo(
+    () => formatDateAr(record.receivedFromEnfathAt),
+    [record.receivedFromEnfathAt],
+  );
+  const dueDisplay = useMemo(
+    () => formatDateAr(record.dueDateAt),
+    [record.dueDateAt],
   );
 
   const isDirty =
     assignmentType !== record.assignmentType ||
-    receivedFromEnfathAt !== record.receivedFromEnfathAt ||
-    receivedFromEnfathTime !== (record.receivedFromEnfathTime || "10:00") ||
-    internalAssignmentAt !== record.internalAssignmentAt ||
-    assignmentSpecialist.trim() !== record.assignmentSpecialist;
+    promulgationDate !== (record.promulgationDate || record.receivedFromEnfathAt) ||
+    assignmentSpecialist.trim() !== record.assignmentSpecialist ||
+    assignmentSpecialistEmail.trim() !== record.assignmentSpecialistEmail ||
+    Math.max(1, parseInt(expectedPropertyCount, 10) || 1) !==
+      (record.expectedPropertyCount ?? 1);
 
   async function handleSave() {
     const errors = mergeFieldErrors(
       collectRequiredErrors(
         {
           assignmentType,
-          receivedFromEnfathAt,
-          internalAssignmentAt,
+          promulgationDate,
           assignmentSpecialist,
+          assignmentSpecialistEmail,
         },
         [
           "assignmentType",
-          "receivedFromEnfathAt",
-          "internalAssignmentAt",
+          "promulgationDate",
           "assignmentSpecialist",
+          "assignmentSpecialistEmail",
         ],
       ),
     );
+    if (
+      assignmentSpecialistEmail.trim() &&
+      !EMAIL_RE.test(assignmentSpecialistEmail.trim())
+    ) {
+      errors.assignmentSpecialistEmail = "صيغة الإيميل غير صالحة";
+    }
+    const count = parseInt(expectedPropertyCount, 10);
+    if (!Number.isFinite(count) || count < 1) {
+      errors.expectedPropertyCount = "عدد العقارات يجب أن يكون 1 على الأقل";
+    }
     if (hasFieldErrors(errors)) {
       setFieldErrors(errors);
       setFormError("يرجى تعبئة الحقول المطلوبة");
@@ -88,28 +103,11 @@ export function PoHeaderEdit({
     const next: PoIntakeRecord = {
       ...record,
       assignmentType: assignmentType as AssignmentType,
-      receivedFromEnfathAt,
-      receivedFromEnfathTime,
-      internalAssignmentAt,
+      promulgationDate,
       assignmentSpecialist: assignmentSpecialist.trim(),
-      dueDateAt: computeBusinessDueDate(
-        receivedFromEnfathAt,
-        receivedFromEnfathTime,
-      ),
+      assignmentSpecialistEmail: assignmentSpecialistEmail.trim(),
+      expectedPropertyCount: Math.max(1, count || 1),
     };
-
-    if (requiresAssignmentDecree(next.assignmentType)) {
-      const missingDecree = next.properties.some(
-        (p) => !p.assignmentDocFileName.trim(),
-      );
-      if (missingDecree) {
-        setFormError(
-          "مسار التنفيذ يتطلب قرار إسناد لكل عقار — راجع العقارات مع الأخصائي",
-        );
-        setSaving(false);
-        return;
-      }
-    }
 
     const result = await updatePoRecord(next);
     setSaving(false);
@@ -147,6 +145,15 @@ export function PoHeaderEdit({
             dir="ltr"
             onChange={() => {}}
           />
+          <RegField
+            id="promulgation_edit"
+            label="تاريخ التعميد"
+            required
+            type="date"
+            value={promulgationDate}
+            error={fieldErrors.promulgationDate}
+            onChange={setPromulgationDate}
+          />
           <RegSelect
             id="assignment_type_edit"
             label="نوع الإسناد"
@@ -157,54 +164,56 @@ export function PoHeaderEdit({
             onChange={(v) => setAssignmentType(v as AssignmentType)}
           />
           <RegField
-            id="po_received_edit"
-            label="تاريخ الاستلام من إنفاذ"
-            required
-            type="date"
-            value={receivedFromEnfathAt}
-            error={fieldErrors.receivedFromEnfathAt}
-            onChange={setReceivedFromEnfathAt}
-          />
-          <RegField
-            id="po_received_time_edit"
-            label="وقت الاستلام"
-            type="time"
-            dir="ltr"
-            value={receivedFromEnfathTime}
-            onChange={setReceivedFromEnfathTime}
-          />
-          <RegField
-            id="po_internal_edit"
-            label="تاريخ التكليف الداخلي"
-            required
-            type="date"
-            value={internalAssignmentAt}
-            error={fieldErrors.internalAssignmentAt}
-            onChange={setInternalAssignmentAt}
-          />
-          <RegField
             id="po_specialist_edit"
-            label="اسم أخصائي الإسناد (إنفاذ)"
+            label="اسم أخصائي الإسناد"
             required
             value={assignmentSpecialist}
             error={fieldErrors.assignmentSpecialist}
             onChange={setAssignmentSpecialist}
           />
-          {dueDateAt ? (
-            <div className="reg-sp2 po-due-date-field">
-              <span className="reg-fl">تاريخ الاستحقاق (4 أيام عمل)</span>
-              <div className="po-count-box" aria-live="polite">
-                <span className="po-count-box-value">
-                  {formatDateAr(dueDateAt)}
-                </span>
-                <span className="po-count-box-tag">محسوب تلقائياً</span>
-              </div>
+          <RegField
+            id="po_specialist_email_edit"
+            label="إيميل أخصائي الإسناد"
+            required
+            type="email"
+            dir="ltr"
+            value={assignmentSpecialistEmail}
+            error={fieldErrors.assignmentSpecialistEmail}
+            onChange={setAssignmentSpecialistEmail}
+          />
+          <RegField
+            id="expected_property_count_edit"
+            label="عدد العقارات"
+            required
+            type="number"
+            dir="ltr"
+            value={expectedPropertyCount}
+            error={fieldErrors.expectedPropertyCount}
+            onChange={(v) => {
+              const digits = v.replace(/\D/g, "").slice(0, 3);
+              setExpectedPropertyCount(digits || "");
+            }}
+          />
+          <div className="reg-sp2 po-due-date-field">
+            <span className="reg-fl">تاريخ الاستلام الفعلي</span>
+            <div className="po-count-box">
+              <span className="po-count-box-value">{receivedDisplay}</span>
+              <span className="po-count-box-tag">بعد الحفظ</span>
             </div>
-          ) : null}
+          </div>
+          <div className="reg-sp2 po-due-date-field">
+            <span className="reg-fl">تاريخ الاستحقاق</span>
+            <div className="po-count-box">
+              <span className="po-count-box-value">{dueDisplay}</span>
+              <span className="po-count-box-tag">محسوب</span>
+            </div>
+          </div>
           <div className="reg-sp2 po-count-field">
             <span className="reg-fl">عدد العقارات</span>
             <div className="po-count-box">
-              <span className="po-count-box-value">{record.properties.length}</span>
+              <span className="po-count-box-value">
+                {record.properties.length}
+              </span>
               <span className="po-count-box-unit">عقارات</span>
             </div>
           </div>

@@ -14,14 +14,10 @@ export function formatPoDisplay(poNumber: string): string {
   return `PO-${n}`;
 }
 
-export const PO_INTAKE_STEPS = [
-  "بيانات أمر العمل",
-  "تسجيل العقارات",
-] as const;
+export const PO_INTAKE_STEPS = ["بيانات أمر العمل"] as const;
 
 export const PO_INTAKE_HINTS = [
-  "انسخ رقم التعميد والتواريخ من منصة إنفاذ واختر نوع الإسناد",
-  "سجّل كل عقار: بيانات الصك وضابط الاتصال في نفس الخطوة",
+  "انسخ رقم التعميد وتاريخ التعميد من منصة إنفاذ، وأدخل بيانات أخصائي الإسناد ونوع الإسناد",
 ] as const;
 
 export const ASSIGNMENT_TYPE_OPTIONS = [
@@ -36,7 +32,30 @@ export function requiresAssignmentDecree(type: AssignmentType): boolean {
   return type === "تنفيذ";
 }
 
-export const DEED_STATUS_OPTIONS = ["فعال", "موقوف"] as const;
+/** مسار التنفيذ فقط — محكمة ودائرة. */
+export function showsCourtFields(type: AssignmentType): boolean {
+  return type === "تنفيذ";
+}
+
+export const BOUNDARIES_OPTIONS = [
+  "موضحة",
+  "غير موضحة",
+  "موضحة جزئيا",
+] as const;
+
+export const DEED_STATUS_OPTIONS = ["فعال", "موقوف", "قيد التحقق"] as const;
+
+export const RESTRICTIONS_PRESENT_OPTIONS = [
+  { value: "yes", label: "توجد قيود" },
+  { value: "no", label: "لا توجد قيود" },
+] as const;
+
+export const BOUNDARIES_AVAILABILITY_OPTIONS = [
+  { value: "deed", label: "موضحة في الصك" },
+  { value: "bourse", label: "موضحة في البورصة" },
+  { value: "doc", label: "مستند خارجي" },
+  { value: "no", label: "غير متوفرة" },
+] as const;
 
 /** محاكاة محاكم ودوائر — تُستبدل بقائمة يديرها المشرف. */
 export const COURTS_BY_CITY: Record<
@@ -131,8 +150,24 @@ export const CITY_OPTIONS = [
   "أخرى",
 ] as const;
 
+/** رقم تجريبي — يعرض حالة «ناقص» في قائمة العقارات. */
+export const INCOMPLETE_CONTACT_MARKER_PHONE = "0500000000";
+
+export const CONTACT_ROLE_OPTIONS = [
+  "مالك",
+  "وكيل",
+  "ممثل قانوني",
+  "مورث",
+  "ولي",
+  "وصي",
+  "شاهد",
+  "أخرى",
+] as const;
+
 export type PoContact = {
   name: string;
+  /** صفة الضابط — مطلوب */
+  role: string;
   phone: string;
 };
 
@@ -149,14 +184,36 @@ export function classificationRequiresSurvey(classification: string): boolean {
   return classification.trim() !== "وحدة داخل مبنى";
 }
 
+export type PropertyIdentifierType = "deed" | "real_estate_reg" | "bourse_inquiry";
+
+export const BOURSE_INQUIRY_IDENTIFIER_STATUS = "قيد الدراسة";
+
+export function isBourseInquiryIdentifier(
+  type: PropertyIdentifierType,
+): boolean {
+  return type === "bourse_inquiry";
+}
+
+export function parsePropertyIdentifierType(
+  value: string | undefined,
+): PropertyIdentifierType {
+  if (value === "real_estate_reg") return "real_estate_reg";
+  if (value === "bourse_inquiry") return "bourse_inquiry";
+  return "deed";
+}
+
 export type PoPropertyIntake = {
   id: string;
-  identifierType: "deed" | "real_estate_reg";
+  identifierType: PropertyIdentifierType;
   deedNumber: string;
+  taskNumber: string;
   deedDate: string;
   ownerName: string;
+  restrictionsPresent: string;
   restrictions: string;
   boundariesMatch: string;
+  boundariesAvailability: string;
+  boundariesExternalDocName: string;
   city: string;
   district: string;
   deedStatus: string;
@@ -167,7 +224,10 @@ export type PoPropertyIntake = {
   classification: string;
   propertyType: string;
   assignmentDocFileName: string;
+  delegationLetterFileName: string;
+  otherDocumentFileNames: string[];
   realEstateRegFileName: string;
+  bourseDataCompleted: boolean;
   contacts: PoContact[];
 };
 
@@ -175,11 +235,14 @@ export type PoIntakeRecord = {
   id: string;
   poNumber: string;
   assignmentType: AssignmentType;
+  promulgationDate: string;
   receivedFromEnfathAt: string;
   /** وقت الاستلام (HH:mm) — اختياري؛ يُستخدم في حساب تاريخ الاستحقاق */
   receivedFromEnfathTime: string;
-  internalAssignmentAt: string;
+  internalAssignmentAt?: string;
   assignmentSpecialist: string;
+  assignmentSpecialistEmail: string;
+  expectedPropertyCount: number;
   dueDateAt: string;
   properties: PoPropertyIntake[];
   createdAtUtc: string;
@@ -197,10 +260,14 @@ export function emptyProperty(): PoPropertyIntake {
     id: newPropertyId(),
     identifierType: "deed",
     deedNumber: "",
+    taskNumber: "",
     deedDate: "",
     ownerName: "",
+    restrictionsPresent: "",
     restrictions: "",
     boundariesMatch: "",
+    boundariesAvailability: "",
+    boundariesExternalDocName: "",
     city: "",
     district: "",
     deedStatus: "",
@@ -211,8 +278,11 @@ export function emptyProperty(): PoPropertyIntake {
     classification: "",
     propertyType: "",
     assignmentDocFileName: "",
+    delegationLetterFileName: "",
+    otherDocumentFileNames: [],
     realEstateRegFileName: "",
-    contacts: [{ name: "", phone: "" }],
+    bourseDataCompleted: false,
+    contacts: [{ name: "", role: "", phone: "" }],
   };
 }
 
@@ -314,4 +384,11 @@ export function assignmentTypeBadgeClass(type: string): string {
   if (type === "تركات") return "b-prog";
   if (type === "قطاع خاص") return "b-key";
   return "b-cancel";
+}
+
+export function poListStatusForAssignmentType(
+  _assignmentType: string,
+  workflowStatus: "progress" | "done",
+): "progress" | "done" {
+  return workflowStatus;
 }

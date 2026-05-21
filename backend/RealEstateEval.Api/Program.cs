@@ -88,16 +88,34 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        if (builder.Environment.IsDevelopment())
+        {
+            // Same Wi‑Fi demos: any host on the Next dev port (e.g. http://192.168.x.x:3000).
+            policy
+                .SetIsOriginAllowed(origin =>
+                {
+                    if (string.IsNullOrEmpty(origin) ||
+                        !Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                        return false;
+                    return uri.Port is 3000 or 3001;
+                })
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            policy.WithOrigins("http://localhost:3000")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
     });
 });
 
 var app = builder.Build();
 
 app.UseResponseCompression();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

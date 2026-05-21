@@ -13,10 +13,13 @@ internal static class WorkOrderMapper
             Id = entity.Id,
             PoNumber = entity.PoNumber,
             AssignmentType = AssignmentTypeLabels.ToLabel(entity.AssignmentType),
+            PromulgationDate = entity.PromulgationDate.ToString("yyyy-MM-dd"),
             ReceivedFromEnfathAt = entity.ReceivedFromEnfathAt.ToString("yyyy-MM-dd"),
             ReceivedFromEnfathTime = entity.ReceivedFromEnfathTime,
-            InternalAssignmentAt = entity.InternalAssignmentAt.ToString("yyyy-MM-dd"),
+            InternalAssignmentAt = entity.InternalAssignmentAt?.ToString("yyyy-MM-dd"),
             AssignmentSpecialist = entity.AssignmentSpecialist,
+            AssignmentSpecialistEmail = entity.AssignmentSpecialistEmail,
+            ExpectedPropertyCount = entity.ExpectedPropertyCount,
             DueDateAt = entity.DueDateAt.ToString("yyyy-MM-dd"),
             CreatedAtUtc = entity.CreatedAtUtc.ToString("o"),
             Properties = entity.Properties
@@ -28,15 +31,32 @@ internal static class WorkOrderMapper
 
     public static WorkOrderPropertyDto ToPropertyDto(WorkOrderProperty p)
     {
+        List<string> otherDocs = [];
+        if (!string.IsNullOrWhiteSpace(p.OtherDocumentFileNames))
+        {
+            try
+            {
+                otherDocs = JsonSerializer.Deserialize<List<string>>(p.OtherDocumentFileNames) ?? [];
+            }
+            catch
+            {
+                otherDocs = [];
+            }
+        }
+
         return new WorkOrderPropertyDto
         {
             Id = p.Id,
             IdentifierType = PropertyIdentifierTypeLabels.ToApiValue(p.IdentifierType),
             DeedNumber = p.DeedNumber,
+            TaskNumber = p.TaskNumber,
             DeedDate = p.DeedDate,
             OwnerName = p.OwnerName,
+            RestrictionsPresent = p.RestrictionsPresent,
             Restrictions = p.Restrictions,
             BoundariesMatch = p.BoundariesMatch,
+            BoundariesAvailability = p.BoundariesAvailability,
+            BoundariesExternalDocName = p.BoundariesExternalDocName,
             City = p.City,
             District = p.District,
             DeedStatus = p.DeedStatus,
@@ -47,26 +67,80 @@ internal static class WorkOrderMapper
             Classification = p.Classification,
             PropertyType = p.PropertyType,
             AssignmentDocFileName = p.AssignmentDocFileName,
+            DelegationLetterFileName = p.DelegationLetterFileName,
+            OtherDocumentFileNames = otherDocs,
             RealEstateRegFileName = p.RealEstateRegFileName,
+            BourseDataCompleted = p.BourseDataCompleted,
             Contacts = p.Contacts
                 .OrderBy(c => c.SortOrder)
-                .Select(c => new PropertyContactDto { Name = c.Name, Phone = c.Phone })
+                .Select(c => new PropertyContactDto
+                {
+                    Name = c.Name,
+                    Role = c.Role,
+                    Phone = c.Phone,
+                })
                 .ToList(),
         };
     }
 
     public static WorkOrderListItemDto ToListItem(WorkOrder entity)
     {
+        var bourseDone = entity.Properties.Count(p => p.BourseDataCompleted);
         return new WorkOrderListItemDto
         {
             PoNumber = entity.PoNumber,
             AssignmentType = AssignmentTypeLabels.ToLabel(entity.AssignmentType),
             PropertyCount = entity.Properties.Count,
-            CompletedCount = 0,
+            ExpectedPropertyCount = entity.ExpectedPropertyCount,
+            CompletedCount = bourseDone,
             Status = "progress",
+            PromulgationDate = entity.PromulgationDate.ToString("yyyy-MM-dd"),
             ReceivedFromEnfathAt = entity.ReceivedFromEnfathAt.ToString("yyyy-MM-dd"),
             DueDateAt = entity.DueDateAt.ToString("yyyy-MM-dd"),
             AssignmentSpecialist = entity.AssignmentSpecialist,
+        };
+    }
+
+    public static PendingBoursePropertyDto ToPendingBourse(WorkOrderProperty p)
+    {
+        return new PendingBoursePropertyDto
+        {
+            PoNumber = p.WorkOrder!.PoNumber,
+            PropertyId = p.Id,
+            DeedNumber = p.DeedNumber,
+            OwnerName = p.OwnerName,
+            TaskNumber = p.TaskNumber,
+            AssignmentType = AssignmentTypeLabels.ToLabel(p.WorkOrder.AssignmentType),
+            ReceivedFromEnfathAt = p.WorkOrder.ReceivedFromEnfathAt.ToString("yyyy-MM-dd"),
+            DueDateAt = p.WorkOrder.DueDateAt.ToString("yyyy-MM-dd"),
+        };
+    }
+
+    public static PriorDeedRegistrationDto ToPriorDeedDto(WorkOrderProperty p, string poNumber)
+    {
+        return new PriorDeedRegistrationDto
+        {
+            PoNumber = poNumber,
+            DeedDate = p.DeedDate,
+            OwnerName = p.OwnerName,
+            Contacts = p.Contacts
+                .OrderBy(c => c.SortOrder)
+                .Select(c => new PropertyContactDto
+                {
+                    Name = c.Name,
+                    Role = c.Role,
+                    Phone = c.Phone,
+                })
+                .ToList(),
+            City = p.City,
+            District = p.District,
+            Classification = p.Classification,
+            PropertyType = p.PropertyType,
+            Area = p.Area,
+            DeedStatus = p.DeedStatus,
+            RestrictionsPresent = p.RestrictionsPresent,
+            BoundariesAvailability = p.BoundariesAvailability,
+            BoundariesExternalDocName = p.BoundariesExternalDocName,
         };
     }
 

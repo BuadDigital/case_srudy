@@ -5,7 +5,7 @@ import {
   type AssignmentType,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
-import { isValidPhone } from "./po-property-validation";
+import { isValidContactEntry } from "./po-property-validation";
 
 export function PoPropertyStackCard({
   index,
@@ -20,11 +20,15 @@ export function PoPropertyStackCard({
   onEdit: () => void;
   onRemove: () => void;
 }) {
-  const contactCount = property.contacts.filter(
-    (c) => c.name.trim() && isValidPhone(c.phone),
+  const contactCount = property.contacts.filter((c) =>
+    isValidContactEntry(c),
   ).length;
-  const location = [property.city, property.district].filter(Boolean).join(" · ");
-  const typeLabel = property.propertyType || property.classification || "—";
+  const location = property.bourseDataCompleted
+    ? [property.city, property.district].filter(Boolean).join(" · ")
+    : "بانتظار البورصة";
+  const typeLabel =
+    property.propertyType || property.classification || "—";
+  const deedLabel = property.deedNumber || "—";
 
   return (
     <article className="po-property-stack-card" aria-label={`عقار ${index}`}>
@@ -32,8 +36,13 @@ export function PoPropertyStackCard({
         <div className="po-property-stack-card-title">
           <span className="po-property-stack-card-num">عقار {index}</span>
           <span className="po-property-stack-card-deed" dir="ltr">
-            {property.deedNumber || "—"}
+            {deedLabel}
           </span>
+          {property.taskNumber ? (
+            <span className="po-property-stack-card-meta">
+              مهمة: {property.taskNumber}
+            </span>
+          ) : null}
         </div>
         <div className="po-property-stack-card-actions">
           <button type="button" className="btn btn-sm" onClick={onEdit}>

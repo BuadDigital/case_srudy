@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AssignmentView } from "@/components/views/AssignmentView";
+import { BourseInquiryView } from "@/components/views/BourseInquiryView";
 import { CourtsView } from "@/components/views/CourtsView";
 import { DashboardView } from "@/components/views/DashboardView";
 import { FailuresView } from "@/components/views/FailuresView";
@@ -9,8 +10,6 @@ import { FinancialView } from "@/components/views/FinancialView";
 import { KeysView } from "@/components/views/KeysView";
 import { KpiView } from "@/components/views/KpiView";
 import { MessagesView } from "@/components/views/MessagesView";
-import { PoListView } from "@/components/views/PoListView";
-import { PropertiesListView } from "@/components/views/PropertiesListView";
 import { SurveyView } from "@/components/views/SurveyView";
 import { UsersView } from "@/components/views/UsersView";
 import { ValuationRequestsView } from "@/components/views/ValuationRequestsView";
@@ -19,8 +18,7 @@ import type { PageId } from "@platform/types";
 
 const VIEWS: Partial<Record<PageId, ReactNode>> = {
   dashboard: <DashboardView />,
-  po: <PoListView />,
-  properties: <PropertiesListView />,
+  "bourse-inquiry": <BourseInquiryView />,
   assignment: <AssignmentView />,
   survey: <SurveyView />,
   keys: <KeysView />,
@@ -40,6 +38,7 @@ export default async function PrototypePage({
   params: Promise<{ page: string }>;
 }) {
   const { page: raw } = await params;
+  if (raw === "properties" || raw === "po") redirect("/po");
   if (!VALID_PAGE_IDS.has(raw as PageId)) notFound();
   const page = raw as PageId;
   const node = VIEWS[page];

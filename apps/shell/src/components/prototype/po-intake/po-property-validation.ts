@@ -1,6 +1,9 @@
 import {
+  INCOMPLETE_CONTACT_MARKER_PHONE,
+  isBourseInquiryIdentifier,
   requiresAssignmentDecree,
   type AssignmentType,
+  type PoContact,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
 import {
@@ -25,10 +28,43 @@ export function normalizePhoneInput(value: string): string {
   return value.replace(/\D/g, "").slice(0, 15);
 }
 
+export function normalizePhoneDigits(phone: string): string {
+  return phone.replace(/\D/g, "");
+}
+
+/** يطابق 0500000000 (مع أو بدون أصفار/رموز إضافية). */
+export function isIncompleteMarkerPhone(phone: string): boolean {
+  const digits = normalizePhoneDigits(phone);
+  return (
+    digits === INCOMPLETE_CONTACT_MARKER_PHONE ||
+    digits === INCOMPLETE_CONTACT_MARKER_PHONE.replace(/^0/, "")
+  );
+}
+
+export function propertyHasIncompleteContact(prop: PoPropertyIntake): boolean {
+  return prop.contacts.some((c) => isIncompleteMarkerPhone(c.phone));
+}
+
+export function isValidContactEntry(c: PoContact): boolean {
+  return isValidPhone(c.phone) && c.role.trim().length > 0;
+}
+
 export function validatePropertyFields(
   p: PoPropertyIntake,
   assignmentType: AssignmentType,
 ): FieldErrors {
+  const bourseId = isBourseInquiryIdentifier(p.identifierType);
+
+  const requiredKeys = bourseId
+    ? (["district", "classification", "propertyType"] as const)
+    : ([
+        "deedNumber",
+        "city",
+        "district",
+        "classification",
+        "propertyType",
+      ] as const);
+
   const errors = mergeFieldErrors(
     collectRequiredErrors(
       {
@@ -38,7 +74,7 @@ export function validatePropertyFields(
         classification: p.classification,
         propertyType: p.propertyType,
       },
-      ["deedNumber", "city", "district", "classification", "propertyType"],
+      [...requiredKeys],
     ),
   );
 
@@ -59,18 +95,18 @@ export function validatePropertyContacts(p: PoPropertyIntake): FieldErrors {
   const errors: FieldErrors = {};
   let hasValid = false;
   p.contacts.forEach((c, i) => {
-    const name = c.name.trim();
     const phone = c.phone.trim();
-    if (!name) errors[`contact_name_${i}`] = "الاسم مطلوب";
+    const role = c.role.trim();
     if (!phone) {
       errors[`contact_phone_${i}`] = "رقم الجوال مطلوب";
     } else if (!isValidPhone(phone)) {
       errors[`contact_phone_${i}`] =
         `رقم الجوال يجب أن يكون ${PHONE_MIN_DIGITS} أرقام على الأقل`;
     }
-    if (name && isValidPhone(phone)) hasValid = true;
+    if (!role) errors[`contact_role_${i}`] = "صفة الضابط مطلوبة";
+    if (isValidContactEntry(c)) hasValid = true;
   });
-  if (!hasValid) errors._contacts = "أضف ضابط اتصال واحداً على الأقل";
+  if (!hasValid) errors._contacts = "أضف ضابط اتصال واحداً على الأقل (جوال + صفة)";
   return errors;
 }
 

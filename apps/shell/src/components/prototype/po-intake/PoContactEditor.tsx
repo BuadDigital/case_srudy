@@ -1,7 +1,10 @@
 "use client";
 
-import type { PoContact } from "@/lib/prototype/po-intake-data";
-import { RegField } from "@/components/prototype/registration/FormFields";
+import {
+  CONTACT_ROLE_OPTIONS,
+  type PoContact,
+} from "@/lib/prototype/po-intake-data";
+import { RegField, RegSelect } from "@/components/prototype/registration/FormFields";
 import {
   normalizePhoneInput,
   PHONE_MIN_DIGITS,
@@ -23,7 +26,7 @@ export function PoContactEditor({
   }
 
   function addContact() {
-    onChange([...contacts, { name: "", phone: "" }]);
+    onChange([...contacts, { name: "", role: "", phone: "" }]);
   }
 
   function removeContact(index: number) {
@@ -51,10 +54,19 @@ export function PoContactEditor({
             <RegField
               id={`po_contact_name_${i}`}
               label="الاسم"
-              required
               value={c.name}
               error={errors[`contact_name_${i}`]}
               onChange={(v) => patch(i, "name", v)}
+            />
+            <RegSelect
+              id={`po_contact_role_${i}`}
+              label="صفة الضابط"
+              required
+              options={[...CONTACT_ROLE_OPTIONS]}
+              value={c.role}
+              error={errors[`contact_role_${i}`]}
+              placeholder="اختر الصفة..."
+              onChange={(v) => patch(i, "role", v)}
             />
             <RegField
               id={`po_contact_phone_${i}`}

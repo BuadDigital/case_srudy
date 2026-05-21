@@ -40,7 +40,7 @@ Content-Type: application/json
       "classification": "أرض",
       "propertyType": "سكنية",
       "assignmentDocFileName": "decree.pdf",
-      "contacts": [{ "name": "أحمد", "phone": "0500000000" }]
+      "contacts": [{ "name": "أحمد", "role": "مالك", "phone": "0500000000" }]
     }
   ]
 }

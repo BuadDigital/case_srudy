@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { apiBase } from "@platform/api-client";
+import { getApiBase } from "@platform/api-client";
 import { setAuthSession, type AuthSession } from "@platform/auth-client";
 import { applyPrototypeRoleForEmail } from "@/lib/auth-role-map";
 
@@ -24,7 +24,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/auth/login`, {
+      const res = await fetch(`${getApiBase()}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -55,8 +55,11 @@ export default function LoginPage() {
       } satisfies AuthSession);
       applyPrototypeRoleForEmail(data.user.email);
       router.push("/dashboard");
-    } catch {
-      setError("تعذر الاتصال بالخادم. تأكد أن واجهة الـ API تعمل.");
+    } catch (err) {
+      console.error("login failed", err);
+      setError(
+        "تعذر الاتصال بالخادم. تأكد أن dotnet run يعمل على هذا الجهاز (المنفذ 5160).",
+      );
     } finally {
       setLoading(false);
     }
@@ -83,7 +86,7 @@ export default function LoginPage() {
 
         {error ? <div className="login-error">{error}</div> : null}
 
-        <form onSubmit={onSubmit}>
+        <form method="post" action="#" onSubmit={onSubmit}>
           <div className="login-field-group">
             <label className="login-field-label" htmlFor="email">
               البريد الإلكتروني

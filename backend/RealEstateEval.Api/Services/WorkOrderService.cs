@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using RealEstateEval.Api.Contracts;
 using RealEstateEval.Api.Data;
@@ -52,14 +53,31 @@ public class WorkOrderService : IWorkOrderService
         var hit = await _db.WorkOrderProperties
             .AsNoTracking()
             .Include(p => p.WorkOrder)
+            .Include(p => p.Contacts)
             .Where(p =>
                 p.IdentifierType == PropertyIdentifierType.Deed &&
                 p.DeedNumber == n &&
                 (exclude == null || p.WorkOrder!.PoNumber != exclude))
-            .Select(p => p.WorkOrder!.PoNumber)
+            .OrderByDescending(p => p.WorkOrder!.CreatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 
-        return hit is null ? null : new PriorDeedRegistrationDto { PoNumber = hit };
+        return hit is null || hit.WorkOrder is null
+            ? null
+            : WorkOrderMapper.ToPriorDeedDto(hit, hit.WorkOrder.PoNumber);
+    }
+
+    public async Task<IReadOnlyList<PendingBoursePropertyDto>> ListPendingBourseAsync(
+        CancellationToken cancellationToken)
+    {
+        var list = await _db.WorkOrderProperties
+            .AsNoTracking()
+            .Include(p => p.WorkOrder)
+            .Where(p => !p.BourseDataCompleted && p.WorkOrder != null)
+            .OrderBy(p => p.WorkOrder!.DueDateAt)
+            .ThenBy(p => p.DeedNumber)
+            .ToListAsync(cancellationToken);
+
+        return list.Select(WorkOrderMapper.ToPendingBourse).ToList();
     }
 
     public async Task<(WorkOrderDto? Result, Dictionary<string, string>? Errors)> CreateAsync(
@@ -77,13 +95,13 @@ public class WorkOrderService : IWorkOrderService
         if (!AssignmentTypeLabels.TryParseLabel(request.AssignmentType, out var assignmentType))
             return (null, new Dictionary<string, string> { ["assignmentType"] = "نوع الإسناد غير صالح" });
 
-        var received = DateOnly.Parse(request.ReceivedFromEnfathAt);
-        var internalAt = DateOnly.Parse(request.InternalAssignmentAt);
+        var promulgation = DateOnly.Parse(request.PromulgationDate);
 
         var seenDeeds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var prop in request.Properties)
         {
             var deed = prop.DeedNumber.Trim();
+            if (string.IsNullOrEmpty(deed)) continue;
             if (!seenDeeds.Add(deed))
             {
                 return (null, new Dictionary<string, string>
@@ -92,7 +110,7 @@ public class WorkOrderService : IWorkOrderService
                 });
             }
 
-            var propErrors = WorkOrderValidator.ValidateProperty(
+            var propErrors = WorkOrderValidator.ValidatePropertyEnfath(
                 prop,
                 assignmentType,
                 po,
@@ -106,17 +124,20 @@ public class WorkOrderService : IWorkOrderService
             Id = Guid.NewGuid(),
             PoNumber = po,
             AssignmentType = assignmentType,
-            ReceivedFromEnfathAt = received,
+            PromulgationDate = promulgation,
+            ReceivedFromEnfathAt = promulgation,
             ReceivedFromEnfathTime = request.ReceivedFromEnfathTime?.Trim(),
-            InternalAssignmentAt = internalAt,
+            InternalAssignmentAt = null,
             AssignmentSpecialist = request.AssignmentSpecialist.Trim(),
-            DueDateAt = BusinessDueDateCalculator.Compute(received, request.ReceivedFromEnfathTime),
+            AssignmentSpecialistEmail = request.AssignmentSpecialistEmail.Trim(),
+            ExpectedPropertyCount = request.ExpectedPropertyCount,
+            DueDateAt = BusinessDueDateCalculator.Compute(promulgation, request.ReceivedFromEnfathTime),
             CreatedAtUtc = DateTime.UtcNow,
             RegisteredByUserId = userId,
         };
 
         foreach (var propDto in request.Properties)
-            workOrder.Properties.Add(MapProperty(propDto, workOrder.Id));
+            workOrder.Properties.Add(MapPropertyEnfath(propDto, workOrder.Id));
 
         _db.WorkOrders.Add(workOrder);
         await _db.SaveChangesAsync(cancellationToken);
@@ -133,6 +154,9 @@ public class WorkOrderService : IWorkOrderService
         var entity = await LoadWorkOrderTrackedAsync(poNumber, cancellationToken);
         if (entity is null) return (null, new Dictionary<string, string> { ["_"] = "أمر العمل غير موجود" });
 
+        var errors = WorkOrderValidator.ValidateUpdateHeader(request);
+        if (errors.Count > 0) return (null, errors);
+
         if (!AssignmentTypeLabels.TryParseLabel(request.AssignmentType, out var assignmentType))
             return (null, new Dictionary<string, string> { ["assignmentType"] = "نوع الإسناد غير صالح" });
 
@@ -147,17 +171,16 @@ public class WorkOrderService : IWorkOrderService
                 });
         }
 
-        if (!DateOnly.TryParse(request.ReceivedFromEnfathAt, out var received))
-            return (null, new Dictionary<string, string> { ["receivedFromEnfathAt"] = "تاريخ غير صالح" });
-        if (!DateOnly.TryParse(request.InternalAssignmentAt, out var internalAt))
-            return (null, new Dictionary<string, string> { ["internalAssignmentAt"] = "تاريخ غير صالح" });
+        var promulgation = DateOnly.Parse(request.PromulgationDate);
 
         entity.AssignmentType = assignmentType;
-        entity.ReceivedFromEnfathAt = received;
+        entity.PromulgationDate = promulgation;
+        entity.ReceivedFromEnfathAt = promulgation;
         entity.ReceivedFromEnfathTime = request.ReceivedFromEnfathTime?.Trim();
-        entity.InternalAssignmentAt = internalAt;
         entity.AssignmentSpecialist = request.AssignmentSpecialist.Trim();
-        entity.DueDateAt = BusinessDueDateCalculator.Compute(received, request.ReceivedFromEnfathTime);
+        entity.AssignmentSpecialistEmail = request.AssignmentSpecialistEmail.Trim();
+        entity.ExpectedPropertyCount = request.ExpectedPropertyCount;
+        entity.DueDateAt = BusinessDueDateCalculator.Compute(promulgation, request.ReceivedFromEnfathTime);
 
         await _db.SaveChangesAsync(cancellationToken);
         return (WorkOrderMapper.ToDto(entity), null);
@@ -182,7 +205,7 @@ public class WorkOrderService : IWorkOrderService
         var entity = await LoadWorkOrderTrackedAsync(poNumber, cancellationToken);
         if (entity is null) return (null, new Dictionary<string, string> { ["_"] = "أمر العمل غير موجود" });
 
-        var errors = WorkOrderValidator.ValidateProperty(
+        var errors = WorkOrderValidator.ValidatePropertyEnfath(
             property,
             entity.AssignmentType,
             entity.PoNumber,
@@ -190,7 +213,7 @@ public class WorkOrderService : IWorkOrderService
             (deed, _) => entity.Properties.Any(p => p.DeedNumber.Trim() == deed.Trim()));
         if (errors.Count > 0) return (null, errors);
 
-        var mapped = MapProperty(property, entity.Id);
+        var mapped = MapPropertyEnfath(property, entity.Id);
         entity.Properties.Add(mapped);
         await _db.SaveChangesAsync(cancellationToken);
         return (WorkOrderMapper.ToPropertyDto(mapped), null);
@@ -208,17 +231,80 @@ public class WorkOrderService : IWorkOrderService
         var existing = entity.Properties.FirstOrDefault(p => p.Id == propertyId);
         if (existing is null) return (null, new Dictionary<string, string> { ["_"] = "العقار غير موجود" });
 
-        var errors = WorkOrderValidator.ValidateProperty(
-            property,
-            entity.AssignmentType,
-            entity.PoNumber,
-            propertyId,
-            (deed, excludeId) =>
-                entity.Properties.Any(p =>
-                    p.DeedNumber.Trim() == deed.Trim() && p.Id != excludeId));
+        if (property.BourseDataCompleted)
+        {
+            var enfathErrors = WorkOrderValidator.ValidatePropertyEnfath(
+                property,
+                entity.AssignmentType,
+                entity.PoNumber,
+                propertyId,
+                (deed, excludeId) =>
+                    entity.Properties.Any(p =>
+                        p.DeedNumber.Trim() == deed.Trim() && p.Id != excludeId));
+            var bourseErrors = WorkOrderValidator.ValidatePropertyBourse(new UpdatePropertyBourseRequest
+            {
+                City = property.City,
+                District = property.District,
+                Classification = property.Classification,
+                PropertyType = property.PropertyType,
+                Area = property.Area,
+                DeedStatus = property.DeedStatus,
+                RestrictionsPresent = property.RestrictionsPresent,
+                BoundariesAvailability = property.BoundariesAvailability,
+                BoundariesExternalDocName = property.BoundariesExternalDocName,
+            });
+            var errors = enfathErrors.Concat(bourseErrors)
+                .GroupBy(kv => kv.Key)
+                .ToDictionary(g => g.Key, g => g.First().Value);
+            if (errors.Count > 0) return (null, errors);
+            ApplyPropertyEnfath(existing, property);
+            ApplyPropertyBourse(existing, property);
+            existing.BourseDataCompleted = true;
+        }
+        else
+        {
+            var errors = WorkOrderValidator.ValidatePropertyEnfath(
+                property,
+                entity.AssignmentType,
+                entity.PoNumber,
+                propertyId,
+                (deed, excludeId) =>
+                    entity.Properties.Any(p =>
+                        p.DeedNumber.Trim() == deed.Trim() && p.Id != excludeId));
+            if (errors.Count > 0) return (null, errors);
+            ApplyPropertyEnfath(existing, property);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return (WorkOrderMapper.ToPropertyDto(existing), null);
+    }
+
+    public async Task<(WorkOrderPropertyDto? Result, Dictionary<string, string>? Errors)> CompleteBourseDataAsync(
+        string poNumber,
+        Guid propertyId,
+        UpdatePropertyBourseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var entity = await LoadWorkOrderTrackedAsync(poNumber, cancellationToken);
+        if (entity is null) return (null, new Dictionary<string, string> { ["_"] = "أمر العمل غير موجود" });
+
+        var existing = entity.Properties.FirstOrDefault(p => p.Id == propertyId);
+        if (existing is null) return (null, new Dictionary<string, string> { ["_"] = "العقار غير موجود" });
+
+        var errors = WorkOrderValidator.ValidatePropertyBourse(request);
         if (errors.Count > 0) return (null, errors);
 
-        ApplyProperty(existing, property);
+        existing.City = request.City.Trim();
+        existing.District = request.District.Trim();
+        existing.Classification = request.Classification.Trim();
+        existing.PropertyType = request.PropertyType.Trim();
+        existing.Area = request.Area?.Trim();
+        existing.DeedStatus = request.DeedStatus?.Trim();
+        existing.RestrictionsPresent = request.RestrictionsPresent?.Trim();
+        existing.BoundariesAvailability = request.BoundariesAvailability?.Trim();
+        existing.BoundariesExternalDocName = request.BoundariesExternalDocName?.Trim();
+        existing.BourseDataCompleted = true;
+
         await _db.SaveChangesAsync(cancellationToken);
         return (WorkOrderMapper.ToPropertyDto(existing), null);
     }
@@ -230,8 +316,6 @@ public class WorkOrderService : IWorkOrderService
     {
         var entity = await LoadWorkOrderTrackedAsync(poNumber, cancellationToken);
         if (entity is null) return (false, "أمر العمل غير موجود");
-        if (entity.Properties.Count <= 1)
-            return (false, "يجب الإبقاء على عقار واحد على الأقل");
 
         var prop = entity.Properties.FirstOrDefault(p => p.Id == propertyId);
         if (prop is null) return (false, "العقار غير موجود");
@@ -258,53 +342,62 @@ public class WorkOrderService : IWorkOrderService
 
     private static string NormalizePo(string poNumber) => poNumber.Trim();
 
-    private static WorkOrderProperty MapProperty(WorkOrderPropertyDto dto, Guid workOrderId)
+    private static WorkOrderProperty MapPropertyEnfath(WorkOrderPropertyDto dto, Guid workOrderId)
     {
-        PropertyIdentifierTypeLabels.TryParseApiValue(dto.IdentifierType, out var idType);
         var entity = new WorkOrderProperty
         {
             Id = dto.Id ?? Guid.NewGuid(),
             WorkOrderId = workOrderId,
+            IdentifierType = PropertyIdentifierType.Deed,
+            BourseDataCompleted = false,
         };
-        ApplyProperty(entity, dto);
-        entity.IdentifierType = idType;
+        ApplyPropertyEnfath(entity, dto);
         return entity;
     }
 
-    private static void ApplyProperty(WorkOrderProperty entity, WorkOrderPropertyDto dto)
+    private static void ApplyPropertyEnfath(WorkOrderProperty entity, WorkOrderPropertyDto dto)
     {
-        PropertyIdentifierTypeLabels.TryParseApiValue(dto.IdentifierType, out var idType);
-        entity.IdentifierType = idType;
+        entity.IdentifierType = PropertyIdentifierType.Deed;
         entity.DeedNumber = dto.DeedNumber.Trim();
+        entity.TaskNumber = dto.TaskNumber?.Trim();
         entity.DeedDate = dto.DeedDate?.Trim();
         entity.OwnerName = dto.OwnerName?.Trim();
-        entity.Restrictions = dto.Restrictions?.Trim();
-        entity.BoundariesMatch = dto.BoundariesMatch?.Trim();
-        entity.City = dto.City.Trim();
-        entity.District = dto.District.Trim();
-        entity.DeedStatus = dto.DeedStatus?.Trim();
-        entity.Area = dto.Area?.Trim();
-        entity.Boundaries = dto.Boundaries?.Trim();
+        entity.AssignmentDocFileName = dto.AssignmentDocFileName?.Trim();
+        entity.DelegationLetterFileName = dto.DelegationLetterFileName?.Trim();
+        entity.OtherDocumentFileNames = dto.OtherDocumentFileNames.Count > 0
+            ? JsonSerializer.Serialize(dto.OtherDocumentFileNames)
+            : null;
+        entity.RealEstateRegFileName = dto.RealEstateRegFileName?.Trim();
         entity.Court = dto.Court?.Trim();
         entity.Circuit = dto.Circuit?.Trim();
-        entity.Classification = dto.Classification.Trim();
-        entity.PropertyType = dto.PropertyType.Trim();
-        entity.AssignmentDocFileName = dto.AssignmentDocFileName?.Trim();
-        entity.RealEstateRegFileName = dto.RealEstateRegFileName?.Trim();
 
         entity.Contacts.Clear();
         var order = 0;
         foreach (var c in dto.Contacts.Where(c =>
-                     !string.IsNullOrWhiteSpace(c.Name) || !string.IsNullOrWhiteSpace(c.Phone)))
+                     !string.IsNullOrWhiteSpace(c.Phone) || !string.IsNullOrWhiteSpace(c.Role)))
         {
             entity.Contacts.Add(new PropertyContact
             {
                 Id = Guid.NewGuid(),
                 PropertyId = entity.Id,
                 Name = c.Name.Trim(),
+                Role = c.Role.Trim(),
                 Phone = c.Phone.Trim(),
                 SortOrder = order++,
             });
         }
+    }
+
+    private static void ApplyPropertyBourse(WorkOrderProperty entity, WorkOrderPropertyDto dto)
+    {
+        entity.City = dto.City.Trim();
+        entity.District = dto.District.Trim();
+        entity.Classification = dto.Classification.Trim();
+        entity.PropertyType = dto.PropertyType.Trim();
+        entity.Area = dto.Area?.Trim();
+        entity.DeedStatus = dto.DeedStatus?.Trim();
+        entity.RestrictionsPresent = dto.RestrictionsPresent?.Trim();
+        entity.BoundariesAvailability = dto.BoundariesAvailability?.Trim();
+        entity.BoundariesExternalDocName = dto.BoundariesExternalDocName?.Trim();
     }
 }

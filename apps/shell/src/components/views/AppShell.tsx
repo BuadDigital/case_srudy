@@ -15,6 +15,8 @@ import {
   ROLE_OPTIONS,
   ROLES,
 } from "@/lib/prototype/constants";
+import { resolvePoChrome } from "@/lib/po-chrome";
+import { PoNumber } from "@/components/ui/PoNumber";
 
 const GROUP_ORDER = ["الإدارة", "قسم دراسة الحالة", "قسم التقييم العقاري", "المالية"];
 
@@ -104,6 +106,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (seg ?? "dashboard") as PageId;
   }, [pathname]);
 
+  const poChrome = useMemo(
+    () => (pathname ? resolvePoChrome(pathname) : null),
+    [pathname],
+  );
+  const inPoSection = pathname?.startsWith("/po") ?? false;
+
   const def = ROLES[role];
   const chipName = authDisplayName ?? def.name;
 
@@ -171,7 +179,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.id}
                   item={item}
                   allowed={rolePages.includes(item.id)}
-                  active={currentPage === item.id}
+                  active={
+                    currentPage === item.id ||
+                    (item.id === "po" && inPoSection)
+                  }
                   onPrefetch={prefetchPage}
                 />
               ))}
@@ -183,10 +194,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div id="topbar">
           <div className="tb-left">
             <div className="tb-breadcrumb" id="tb-bc">
-              {PAGE_BREADCRUMB[currentPage] ?? ""}
+              {poChrome?.breadcrumb ?? PAGE_BREADCRUMB[currentPage] ?? ""}
             </div>
             <div className="tb-title" id="page-title">
-              {PAGE_TITLES[currentPage] ?? currentPage}
+              {poChrome?.titlePo ? (
+                <span className="po-heading-with-num">
+                  <span className="po-heading-ar">{poChrome.title}</span>
+                  <PoNumber value={poChrome.titlePo} />
+                </span>
+              ) : (
+                (poChrome?.title ?? PAGE_TITLES[currentPage] ?? currentPage)
+              )}
             </div>
           </div>
           <div className="tb-right">
@@ -206,9 +224,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {def.dept}
                 </div>
               </div>
-            </div>
-            <div className="role-pill b-new" id="rpill">
-              {def.dept}
             </div>
             <button
               type="button"

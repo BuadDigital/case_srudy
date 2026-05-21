@@ -32,6 +32,7 @@ const AREA_FILTER_OPTIONS = [
 const STATUS_FILTER_OPTIONS = [
   { value: "all", label: "جميع الحالات" },
   { value: "new", label: "جديد" },
+  { value: "incomplete", label: "ناقص" },
   { value: "progress", label: "قيد التنفيذ" },
   { value: "done", label: "مكتمل" },
   { value: "fail", label: "متعذر" },
@@ -102,6 +103,7 @@ export function PropertiesListView() {
       done: list.filter((x) => x.row.status === "done").length,
       progress: list.filter((x) => x.row.status === "progress").length,
       fail: list.filter((x) => x.row.status === "fail").length,
+      incomplete: list.filter((x) => x.row.status === "incomplete").length,
     };
   }, [list, dataReady]);
 
