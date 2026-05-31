@@ -37,12 +37,6 @@ export function showsCourtFields(type: AssignmentType): boolean {
   return type === "تنفيذ";
 }
 
-export const BOUNDARIES_OPTIONS = [
-  "موضحة",
-  "غير موضحة",
-  "موضحة جزئيا",
-] as const;
-
 export const DEED_STATUS_OPTIONS = ["فعال", "موقوف", "قيد التحقق"] as const;
 
 export const RESTRICTIONS_PRESENT_OPTIONS = [
@@ -171,14 +165,6 @@ export type PoContact = {
   phone: string;
 };
 
-export const RESTRICTIONS_OPTIONS = ["غير موقوف", "موقوف"] as const;
-
-export const BOUNDARIES_MATCH_OPTIONS = [
-  "مطابقة",
-  "غير مطابقة",
-  "غير متوفر",
-] as const;
-
 /** الرفع المساحي غير مطلوب لوحدة داخل مبنى. */
 export function classificationRequiresSurvey(classification: string): boolean {
   return classification.trim() !== "وحدة داخل مبنى";
@@ -205,7 +191,7 @@ export function parsePropertyIdentifierType(
 export function identifierTypeLabel(type: PropertyIdentifierType): string {
   if (type === "real_estate_reg") return "تسجيل عيني";
   if (type === "bourse_inquiry") return "استعلام بورصة";
-  return "رقم صك";
+  return "صك ملكية";
 }
 
 /** Display label for deed column — hides internal INQ- placeholders. */

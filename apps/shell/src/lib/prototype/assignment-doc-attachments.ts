@@ -80,14 +80,6 @@ export async function cacheDelegationDoc(
   return writeCachedDoc("delegation", poNumber, propertyId, file);
 }
 
-export async function cacheOtherDoc(
-  poNumber: string,
-  propertyId: string,
-  file: File,
-): Promise<void> {
-  return writeCachedDoc("other", poNumber, propertyId, file);
-}
-
 function readCachedDoc(
   kind: PropertyDocKind,
   poNumber: string,
@@ -108,28 +100,6 @@ export function getCachedAssignmentDoc(
   propertyId: string,
 ): CachedAssignmentDoc | null {
   return readCachedDoc("decree", poNumber, propertyId);
-}
-
-export function getCachedDelegationDoc(
-  poNumber: string,
-  propertyId: string,
-): CachedAssignmentDoc | null {
-  return readCachedDoc("delegation", poNumber, propertyId);
-}
-
-export function getCachedOtherDoc(
-  poNumber: string,
-  propertyId: string,
-): CachedAssignmentDoc | null {
-  return readCachedDoc("other", poNumber, propertyId);
-}
-
-export function removeCachedAssignmentDoc(
-  poNumber: string,
-  propertyId: string,
-): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(storageKey("decree", poNumber, propertyId));
 }
 
 export function isImageMime(mimeType: string): boolean {

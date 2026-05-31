@@ -1,42 +1,18 @@
 "use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  emptyProperty,
-  formatPoDisplay,
-  isBourseInquiryIdentifier,
-  type PoIntakeRecord,
-  type PoPropertyIntake,
-} from "@/lib/prototype/po-intake-data";
-import {
-  addPropertyToPo,
-  deedExistsInPo,
-  getPoRecord,
-} from "@/lib/prototype/po-intake-storage";
+import { emptyProperty,formatPoDisplay,isBourseInquiryIdentifier,type PoIntakeRecord,type PoPropertyIntake,}from "@/lib/prototype/po-intake-data";
+import { addPropertyToPo,deedExistsInPo,getPoRecord,} from "@/lib/prototype/po-intake-storage";
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
-import {
-  hasFieldErrors,
-  type FieldErrors,
-} from "@/components/prototype/registration/registration-utils";
+import { hasFieldErrors,type FieldErrors,} from "@/components/prototype/registration/registration-utils";
 import { PoIntakeWizardShell } from "./PoIntakeWizardShell";
 import { PoPropertyEnfathForm } from "./PoPropertyEnfathForm";
 import { PoPropertyStackCard } from "./PoPropertyStackCard";
-import {
-  findInvalidEnfathPropertyIndex,
-  firstEnfathValidationMessage,
-  mergePropertyEnfathValidation,
-} from "./po-property-enfath-validation";
+import { findInvalidEnfathPropertyIndex,firstEnfathValidationMessage,mergePropertyEnfathValidation,} from "./po-property-enfath-validation";
 import { contactsForApi } from "./po-property-validation";
-
 const PROPERTY_STEPS = ["تسجيل العقارات"] as const;
-const PROPERTY_HINT =
-  "أدخل بيانات كل عقار من المعلومات الواردة في منصة إنفاذ والمستندات المرفقة.";
+const PROPERTY_HINT = "أدخل بيانات كل عقار من المعلومات الواردة في منصة إنفاذ والمستندات المرفقة.";
 
-export function PoPropertyCreate({
-  poNumber,
-  onBackAction,
-  onSavedAction,
-}: {
+export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
   poNumber: string;
   onBackAction: () => void;
   onSavedAction: () => void;
@@ -71,8 +47,9 @@ export function PoPropertyCreate({
   const hasCurrentDraft = useMemo(
     () =>
       isBourseInquiryIdentifier(currentProperty.identifierType)
-        ? !!currentProperty.district.trim() ||
-          !!currentProperty.classification.trim()
+        ? !!currentProperty.deedNumber.trim() ||
+          !!currentProperty.taskNumber.trim() ||
+          !!currentProperty.ownerName.trim()
         : !!currentProperty.deedNumber.trim() ||
           !!currentProperty.taskNumber.trim() ||
           !!currentProperty.ownerName.trim(),

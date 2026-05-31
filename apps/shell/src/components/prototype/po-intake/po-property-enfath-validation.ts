@@ -19,11 +19,21 @@ export function validatePropertyEnfathFields(
     const errors = mergeFieldErrors(
       collectRequiredErrors(
         {
-          district: p.district,
-          classification: p.classification,
-          propertyType: p.propertyType,
+          deedNumber: p.deedNumber,
+          taskNumber: p.taskNumber,
+          deedDate: p.deedDate,
+          ownerName: p.ownerName,
+          court: p.court,
+          circuit: p.circuit,
         },
-        ["district", "classification", "propertyType"],
+        [
+          "deedNumber",
+          "taskNumber",
+          "deedDate",
+          "ownerName",
+          "court",
+          "circuit",
+        ],
       ),
     );
     if (
@@ -88,6 +98,12 @@ export function firstEnfathValidationMessage(errors: FieldErrors): string {
   return (
     errors._contacts ??
     errors._ ??
+    errors.deedNumber ??
+    errors.taskNumber ??
+    errors.deedDate ??
+    errors.ownerName ??
+    errors.court ??
+    errors.circuit ??
     errors.district ??
     errors.classification ??
     errors.propertyType ??

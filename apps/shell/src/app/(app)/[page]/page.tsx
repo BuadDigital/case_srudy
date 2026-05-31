@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
+import { MyTasksView } from "@/components/views/MyTasksView";
 import { AssignmentView } from "@/components/views/AssignmentView";
 import { BourseInquiryView } from "@/components/views/BourseInquiryView";
 import { CourtsView } from "@/components/views/CourtsView";
@@ -18,6 +19,7 @@ import type { PageId } from "@platform/types";
 
 const VIEWS: Partial<Record<PageId, ReactNode>> = {
   dashboard: <DashboardView />,
+  "my-tasks": <MyTasksView />,
   "bourse-inquiry": <BourseInquiryView />,
   assignment: <AssignmentView />,
   survey: <SurveyView />,

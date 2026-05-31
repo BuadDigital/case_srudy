@@ -116,7 +116,7 @@ export function PoListView() {
               className="btn btn-sm btn-primary"
               onClick={() => router.push(poIntakePath())}
             >
-              + استلام PO جديد
+              + تسجيل امر عمل (PO) جديد
             </button>
           ) : null}
         </div>
@@ -145,14 +145,16 @@ export function PoListView() {
                 >
                   {viewOnly
                     ? "لا توجد أوامر عمل."
-                    : "لا توجد أوامر عمل — استلم أمر عمل جديداً من إنفاذ."}
+                    : showIntake
+                      ? "لا توجد أوامر عمل — استلم أمر عمل جديداً من إنفاذ."
+                      : "لا توجد أوامر عمل."}
                 </td>
               </tr>
             ) : statsReady ? (
               list.map((p) => (
                 <tr key={p.id}>
                   <td className="id-cell">
-                    <PoNumber value={p.id} />
+                    <PoNumber value={p.id} link />
                   </td>
                   <td>
                     <span

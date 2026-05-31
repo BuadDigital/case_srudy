@@ -1,28 +1,37 @@
+import Link from "next/link";
 import { formatPoDisplay } from "@/lib/prototype/po-intake-data";
+import { poPropertiesPath } from "@/lib/po-routes";
 
 /** PO number isolated for correct display in RTL (Arabic label + LTR code). */
 export function PoNumber({
   value,
   className = "",
+  link = false,
 }: {
   value: string;
   className?: string;
+  /** Open PO properties page when clicked */
+  link?: boolean;
 }) {
-  return (
-    <span
-      dir="ltr"
-      className={`po-num-ltr${className ? ` ${className}` : ""}`}
-    >
-      {formatPoDisplay(value)}
-    </span>
-  );
-}
+  const display = formatPoDisplay(value);
+  const cls = `po-num-ltr${link ? " po-num-link" : ""}${className ? ` ${className}` : ""}`;
 
-export function PoPropertiesHeading({ poNumber }: { poNumber: string }) {
+  if (link && value.trim()) {
+    return (
+      <Link
+        href={poPropertiesPath(value)}
+        dir="ltr"
+        className={cls}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {display}
+      </Link>
+    );
+  }
+
   return (
-    <h2 className="po-subpage-title po-heading-with-num">
-      <span className="po-heading-ar">عقارات</span>
-      <PoNumber value={poNumber} />
-    </h2>
+    <span dir="ltr" className={cls}>
+      {display}
+    </span>
   );
 }

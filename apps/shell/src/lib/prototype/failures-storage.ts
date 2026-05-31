@@ -2,6 +2,7 @@ import {
   findPropertyInRecord,
   updatePropertyInPo,
 } from "@/lib/prototype/po-intake-storage";
+import { escalateTaskForObstruction } from "@/lib/prototype/tasks-storage";
 
 const FAILURES_KEY = "evalFailureRecords";
 
@@ -84,6 +85,11 @@ export function createFailure(input: {
   const list = loadFailures();
   saveFailures([record, ...list]);
   patchPropertyDeedStatus(input.poNumber, input.propertyId, "قيد التحقق");
+  escalateTaskForObstruction(
+    input.poNumber,
+    input.propertyId,
+    input.title.trim() || input.internalNote.trim(),
+  );
   return record;
 }
 

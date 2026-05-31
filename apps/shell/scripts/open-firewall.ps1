@@ -1,28 +1,61 @@
-# Run once as Administrator so colleagues on the same Wi‑Fi can open the demo.
-# Right-click PowerShell → Run as administrator, then:
-#   cd path\to\project1_case_study\apps\shell\scripts
+# Run once as Administrator so colleagues on the same Wi-Fi can open the demo.
+# Right-click PowerShell -> Run as administrator, then:
+#   cd c:\workspace\property_study\apps\shell\scripts
 #   .\open-firewall.ps1
 
 $ErrorActionPreference = "Stop"
 
-$ruleName = "Ejada Next.js Dev 3000"
-
-$existing = netsh advfirewall firewall show rule name="$ruleName" 2>$null
-if ($LASTEXITCODE -eq 0) {
-  Write-Host "Firewall rule already exists: $ruleName"
-  exit 0
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+  [Security.Principal.WindowsBuiltInRole]::Administrator
+)
+if (-not $isAdmin) {
+  Write-Host ""
+  Write-Host "ERROR: Run PowerShell as Administrator, then run this script again." -ForegroundColor Red
+  Write-Host ""
+  Write-Host "  1. Press Win, type PowerShell"
+  Write-Host "  2. Right-click -> Run as administrator"
+  Write-Host "  3. cd c:\workspace\property_study\apps\shell\scripts"
+  Write-Host "  4. .\open-firewall.ps1"
+  Write-Host ""
+  exit 1
 }
 
-netsh advfirewall firewall add rule `
-  name="$ruleName" `
-  dir=in `
-  action=allow `
-  protocol=TCP `
-  localport=3000 `
-  profile=private `
-  description="Allow LAN access to Ejada shell (npm run dev)"
+$rules = @(
+  @{ Name = "Ejada Next.js Dev 3000"; Port = 3000; Description = "Allow LAN access to Ejada shell (npm run dev)" }
+)
+
+foreach ($rule in $rules) {
+  $existing = netsh advfirewall firewall show rule name="$($rule.Name)" 2>$null
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "Firewall rule already exists: $($rule.Name)"
+    continue
+  }
+
+  netsh advfirewall firewall add rule `
+    name="$($rule.Name)" `
+    dir=in `
+    action=allow `
+    protocol=TCP `
+    localport=$($rule.Port) `
+    profile=any `
+    description="$($rule.Description)"
+
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "Failed to add firewall rule: $($rule.Name)" -ForegroundColor Red
+    exit 1
+  }
+
+  Write-Host "Added firewall rule: $($rule.Name) (TCP $($rule.Port), all profiles)"
+}
 
 Write-Host ""
-Write-Host "Done. Port 3000 is open on Private networks (home/office Wi‑Fi)."
-Write-Host "Share the URL printed when you run: npm run dev"
+Write-Host "Done. Port 3000 is open for LAN access."
+Write-Host ""
+Write-Host "Share the URL from npm run dev, for example:"
+Write-Host "  http://192.168.1.15:3000/login"
+Write-Host ""
+Write-Host "Requirements for teammates:"
+Write-Host "  - Same Wi-Fi network"
+Write-Host "  - Backend running on this PC: dotnet run (port 5160, proxied via Next.js)"
+Write-Host "  - Do NOT use http://0.0.0.0:3000 — use your LAN IP above"
 Write-Host ""

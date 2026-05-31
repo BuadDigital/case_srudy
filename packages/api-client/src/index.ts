@@ -13,23 +13,6 @@ export function getApiBase(): string {
   return `http://127.0.0.1:${port}`;
 }
 
-/** @deprecated Prefer getApiBase() — resolved once at import (SSR uses localhost). */
-export const apiBase = getApiBase();
-
-export type ApiClientConfig = {
-  baseUrl?: string;
-  getToken?: () => string | null;
-};
-
-/** Placeholder — extend when wiring real HTTP calls. */
-export function createApiClient(config: ApiClientConfig = {}) {
-  const baseUrl = config.baseUrl ?? getApiBase();
-  return {
-    baseUrl,
-    getToken: config.getToken ?? (() => null),
-  };
-}
-
 export {
   createCrmUser,
   createHrUser,

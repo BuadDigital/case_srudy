@@ -7,8 +7,8 @@ POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@example.com",
-  "password": "your-password"
+  "email": "admin@local.dev",
+  "password": "Admin123!"
 }
 
 ### List work orders
@@ -27,10 +27,11 @@ Content-Type: application/json
 {
   "poNumber": "PO-2025-001",
   "assignmentType": "تنفيذ",
-  "receivedFromEnfathAt": "2025-04-10",
+  "promulgationDate": "2025-04-10",
   "receivedFromEnfathTime": "10:00",
-  "internalAssignmentAt": "2025-04-10",
   "assignmentSpecialist": "أسامة الصالحي",
+  "assignmentSpecialistEmail": "admin@local.dev",
+  "expectedPropertyCount": 1,
   "properties": [
     {
       "identifierType": "deed",

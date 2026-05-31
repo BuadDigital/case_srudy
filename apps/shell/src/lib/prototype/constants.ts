@@ -14,6 +14,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     tc: "var(--purple)",
     pages: [
       "dashboard",
+      "my-tasks",
       "po",
       "bourse-inquiry",
       "assignment",
@@ -37,6 +38,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     tc: "var(--info)",
     pages: [
       "dashboard",
+      "my-tasks",
       "po",
       "bourse-inquiry",
       "assignment",
@@ -60,6 +62,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     tc: "var(--warning)",
     pages: [
       "dashboard",
+      "my-tasks",
       "po",
       "bourse-inquiry",
       "assignment",
@@ -80,7 +83,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "من",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
-    pages: ["dashboard", "po", "bourse-inquiry", "assignment", "survey", "messages"],
+    pages: ["dashboard", "my-tasks", "po", "bourse-inquiry", "assignment", "survey", "messages"],
   },
   "case-specialist": {
     name: "أسامة الصالحي",
@@ -88,7 +91,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "أص",
     bg: "var(--success-bg)",
     tc: "var(--success)",
-    pages: ["dashboard", "po", "bourse-inquiry", "failures", "messages"],
+    pages: ["dashboard", "my-tasks", "po", "bourse-inquiry", "failures", "messages"],
   },
   "report-preparer": {
     name: "صالح الحبشي",
@@ -128,7 +131,23 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "أس",
     bg: "var(--info-bg)",
     tc: "var(--info)",
-    pages: ["dashboard", "field-form", "messages"],
+    pages: ["dashboard", "my-tasks", "field-form", "messages"],
+  },
+  "government-reviewer": {
+    name: "خالد المرشدي",
+    dept: "مراجع حكومي",
+    init: "خم",
+    bg: "var(--orange-bg)",
+    tc: "var(--orange)",
+    pages: ["dashboard", "my-tasks", "messages"],
+  },
+  "engineering-office": {
+    name: "مكتب الرياض الهندسي",
+    dept: "مكتب هندسي — رفع مساحي",
+    init: "ره",
+    bg: "var(--purple-bg)",
+    tc: "var(--purple)",
+    pages: ["dashboard", "my-tasks", "survey", "messages"],
   },
   "financial-officer": {
     name: "إيمان النهدي",
@@ -142,6 +161,12 @@ export const ROLES: Record<RoleId, RoleDef> = {
 
 export const NAV: NavItem[] = [
   { id: "dashboard", label: "لوحة التحكم", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", grp: null },
+  {
+    id: "my-tasks",
+    label: "مهامي",
+    icon: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
+    grp: "قسم دراسة الحالة",
+  },
   {
     id: "po",
     label: "أوامر العمل (PO)",
@@ -216,6 +241,7 @@ export const NAV: NavItem[] = [
 
 export const PAGE_TITLES: Record<PageId, string> = {
   dashboard: "لوحة التحكم",
+  "my-tasks": "مهامي",
   po: "أوامر العمل",
   "bourse-inquiry": "استعلام البورصة",
   properties: "العقارات",
@@ -234,6 +260,7 @@ export const PAGE_TITLES: Record<PageId, string> = {
 
 export const PAGE_BREADCRUMB: Record<PageId, string> = {
   dashboard: "الرئيسية",
+  "my-tasks": "دراسة الحالة",
   po: "دراسة الحالة",
   "bourse-inquiry": "دراسة الحالة",
   properties: "دراسة الحالة",
@@ -293,13 +320,6 @@ export type PropertyRow = {
   preparer: string;
 };
 
-export const MOCK_PO: PoRow[] = [
-  { id: "PO-2024-018", type: "قضائي", count: 12, done: 8, status: "progress", date: "2025-01-14", dueDate: "2025-01-20", specialist: "أسامة الصالحي" },
-  { id: "PO-2024-017", type: "خاص", count: 3, done: 3, status: "done", date: "2025-01-13", dueDate: "2025-01-19", specialist: "عمر الحمراني" },
-  { id: "PO-2024-016", type: "قضائي", count: 27, done: 14, status: "progress", date: "2025-01-12", dueDate: "2025-01-18", specialist: "أيمن مجرشي" },
-  { id: "PO-2024-015", type: "خاص", count: 1, done: 1, status: "done", date: "2025-01-11", dueDate: "2025-01-17", specialist: "وليد باشماخ" },
-];
-
 export const MOCK_VR: VrRow[] = [
   { id: "VR-441", propId: "E-4401", area: "مكة المكرمة", type: "أرض", appraiser: "عبدالله الكثيري", status: "done", date: "2025-01-13" },
   { id: "VR-442", propId: "E-4402", area: "مكة المكرمة", type: "شقة", appraiser: "محمد العساف", status: "progress", date: "2025-01-14" },
@@ -352,46 +372,6 @@ export type StaffUser = {
   registration?: Record<string, string>;
 };
 
-export type FailureItem = {
-  id: string;
-  po: string;
-  title: string;
-  status: "review" | "pending" | "approved";
-  body: string;
-  specialist: string;
-  date: string;
-};
-
-export const MOCK_FAILURES: FailureItem[] = [
-  {
-    id: "E-4407",
-    po: "PO-2024-016",
-    title: "تعارض في بيانات الصك والمخطط",
-    status: "review",
-    body: "تعارض بين مساحة الصك (800م²) والمخطط الهندسي (650م²). يحتاج مراجعة من المكتب الهندسي.",
-    specialist: "أيمن مجرشي",
-    date: "2025-01-14",
-  },
-  {
-    id: "E-3901",
-    po: "PO-2024-011",
-    title: "عدم استجابة العميل لتسليم الوثائق",
-    status: "pending",
-    body: "طُلب تقديم وثيقة السكن منذ 5 أيام دون استجابة. ثلاث محاولات تواصل فاشلة.",
-    specialist: "أسامة الصالحي",
-    date: "2025-01-12",
-  },
-  {
-    id: "E-3756",
-    po: "PO-2024-009",
-    title: "ندرة البيانات السوقية في المنطقة",
-    status: "approved",
-    body: "لا توجد معاملات عقارية في المنطقة خلال 24 شهراً مما يتعذر معه التقييم السوقي.",
-    specialist: "وليد باشماخ",
-    date: "2025-01-10",
-  },
-];
-
 export type SurveyOfficeRow = {
   name: string;
   active: number;
@@ -436,6 +416,8 @@ export const ROLE_OPTIONS: { group: string; value: RoleId; label: string }[] = [
   { group: "قسم دراسة الحالة", value: "court-delegate", label: "مندوب المحكمة" },
   { group: "قسم التقييم العقاري", value: "valuation-coordinator", label: "منسق عمليات التقييم" },
   { group: "قسم التقييم العقاري", value: "real-estate-appraiser", label: "مقيم عقاري" },
-  { group: "قسم التقييم العقاري", value: "field-inspector", label: "معاين ميداني" },
+  { group: "قسم التقييم العقاري", value: "field-inspector", label: "أحمد سعيد — معاين ميداني" },
+  { group: "قسم التقييم العقاري", value: "government-reviewer", label: "خالد المرشدي — مراجع حكومي" },
+  { group: "الرفع المساحي", value: "engineering-office", label: "مكتب الرياض الهندسي — مكتب هندسي" },
   { group: "المالية", value: "financial-officer", label: "إيمان النهدي — موظف مالي" },
 ];

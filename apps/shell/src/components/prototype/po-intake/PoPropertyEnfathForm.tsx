@@ -33,6 +33,8 @@ type Props = {
   poNumber?: string;
   excludePoNumber?: string;
   showStageNote?: boolean;
+  /** When set, only render identifier type selector (for bourse-inquiry fast path). */
+  fieldsMode?: "all" | "identifier-only" | "bourse-inquiry-primary";
 };
 
 function selectIdentifierType(
@@ -41,11 +43,8 @@ function selectIdentifierType(
 ) {
   onPatch("identifierType", type);
   if (type === "bourse_inquiry") {
-    onPatch("deedNumber", "");
-    onPatch("deedDate", "");
-    onPatch("ownerName", "");
-    onPatch("taskNumber", "");
     onPatch("delegationLetterFileName", "");
+  } else if (type === "deed" || type === "real_estate_reg") {
     onPatch("city", "");
   }
 }
@@ -59,6 +58,7 @@ export function PoPropertyEnfathForm({
   poNumber,
   excludePoNumber,
   showStageNote = true,
+  fieldsMode = "all",
 }: Props) {
   const attachPo = poNumber?.trim() || excludePoNumber?.trim() || "";
   const [priorPo, setPriorPo] = useState<string | null>(null);
@@ -71,7 +71,6 @@ export function PoPropertyEnfathForm({
   }, [property.classification]);
 
   useEffect(() => {
-    if (isBourseId) return;
     const deed = property.deedNumber.trim();
     if (!deed) return;
     let cancelled = false;
@@ -107,13 +106,18 @@ export function PoPropertyEnfathForm({
   ]);
 
   const priorPoNotice = property.deedNumber.trim() ? priorPo : null;
+  const isIdentifierOnly = fieldsMode === "identifier-only";
+  const isPrimaryOnly = fieldsMode === "bourse-inquiry-primary";
+  const showExtended = fieldsMode === "all" || isPrimaryOnly;
+  const showBoursePrimary = isBourseId && showExtended;
+  const showDeedFields = !isBourseId && fieldsMode === "all";
 
   return (
     <>
       {showStageNote ? (
         <div className="note note-info" style={{ marginBottom: 12 }}>
           {isBourseId
-            ? "مسار استعلام البورصة — أدخل بيانات العقار المتاحة؛ تُكمّل المدينة وباقي بيانات البورصة لاحقاً."
+            ? "مسار استعلام البورصة — أدخل البيانات الأولية وبيانات البورصة معاً."
             : "بيانات مرحلة إنفاذ — تُكمّل بيانات البورصة (المدينة، التصنيف، الحدود) لاحقاً من «استعلام البورصة»."}
         </div>
       ) : null}
@@ -126,7 +130,7 @@ export function PoPropertyEnfathForm({
             className={`reg-type-pill${property.identifierType === "deed" ? " sel" : ""}`}
             onClick={() => selectIdentifierType(onPatch, "deed")}
           >
-            رقم صك
+            صك ملكية
           </button>
           <button
             type="button"
@@ -163,6 +167,8 @@ export function PoPropertyEnfathForm({
         </div>
       ) : null}
 
+      {isIdentifierOnly ? null : (
+      <>
       {!isBourseId && priorPoNotice ? (
         <div className="note note-success" style={{ marginBottom: 12 }}>
           هذا الصك مسجّل سابقاً في أمر العمل «{priorPoNotice}» — يمكن استخدام بيانات
@@ -170,45 +176,67 @@ export function PoPropertyEnfathForm({
         </div>
       ) : null}
 
-      {isBourseId ? (
+      {isBourseId && priorPoNotice ? (
+        <div className="note note-success" style={{ marginBottom: 12 }}>
+          هذا الصك مسجّل سابقاً في أمر العمل «{priorPoNotice}».
+        </div>
+      ) : null}
+
+      {showBoursePrimary ? (
         <div className="reg-fg2">
           <RegField
-            id="district"
-            label="الحي"
+            id="deed_number_bourse"
+            label="رقم الصك"
             required
-            value={property.district}
-            error={fieldErrors.district}
-            onChange={(v) => onPatch("district", v)}
+            dir="ltr"
+            value={property.deedNumber}
+            error={fieldErrors.deedNumber}
+            onChange={(v) => onPatch("deedNumber", v)}
           />
-          <RegSelect
-            id="classification"
-            label="التصنيف"
+          <RegField
+            id="task_number_bourse"
+            label="رقم المهمة"
             required
-            options={CLASSIFICATION_OPTIONS}
-            value={property.classification}
-            error={fieldErrors.classification}
-            onChange={(v) => {
-              onPatch("classification", v);
-              onPatch("propertyType", "");
-            }}
+            dir="ltr"
+            value={property.taskNumber}
+            error={fieldErrors.taskNumber}
+            onChange={(v) => onPatch("taskNumber", v)}
           />
-          <RegSelect
-            id="property_type"
-            label="نوع العقار"
+          <RegField
+            id="deed_date_bourse"
+            label="تاريخ الصك"
             required
-            options={propertyTypes}
-            value={property.classification ? property.propertyType : ""}
-            error={fieldErrors.propertyType}
-            disabled={!property.classification}
-            placeholder={
-              property.classification
-                ? "اختر نوع العقار..."
-                : "اختر التصنيف أولاً"
-            }
-            onChange={(v) => onPatch("propertyType", v)}
+            type="date"
+            value={property.deedDate}
+            error={fieldErrors.deedDate}
+            onChange={(v) => onPatch("deedDate", v)}
+          />
+          <RegField
+            id="owner_name_bourse"
+            label="اسم المالك"
+            required
+            value={property.ownerName}
+            error={fieldErrors.ownerName}
+            onChange={(v) => onPatch("ownerName", v)}
+          />
+          <RegField
+            id="court_bourse"
+            label="المحكمة"
+            required
+            value={property.court}
+            error={fieldErrors.court}
+            onChange={(v) => onPatch("court", v)}
+          />
+          <RegField
+            id="circuit_bourse"
+            label="الدائرة"
+            required
+            value={property.circuit}
+            error={fieldErrors.circuit}
+            onChange={(v) => onPatch("circuit", v)}
           />
         </div>
-      ) : (
+      ) : showDeedFields ? (
       <div className="reg-fg2">
         <RegField
           id="deed_number"
@@ -266,9 +294,9 @@ export function PoPropertyEnfathForm({
           </>
         ) : null}
       </div>
-      )}
+      ) : null}
 
-      {!isBourseId ? (
+      {!isBourseId && fieldsMode === "all" ? (
       <div className="reg-fg-full" style={{ marginTop: 8 }}>
         <label className="reg-fl" htmlFor={`delegation_${property.id}`}>
           خطاب التفويض *
@@ -296,7 +324,7 @@ export function PoPropertyEnfathForm({
       </div>
       ) : null}
 
-      {property.identifierType === "real_estate_reg" ? (
+      {property.identifierType === "real_estate_reg" && fieldsMode === "all" ? (
         <div className="reg-fg-full" style={{ marginTop: 8 }}>
           <label className="reg-fl" htmlFor={`real_estate_reg_${property.id}`}>
             السجل العقاري (مرفق) *
@@ -321,7 +349,7 @@ export function PoPropertyEnfathForm({
         </div>
       ) : null}
 
-      {showAssignmentDecree ? (
+      {showAssignmentDecree && showExtended ? (
         <div className="reg-fg-full" style={{ marginTop: 8 }}>
           <label className="reg-fl" htmlFor={`assignment_doc_${property.id}`}>
             قرار الإسناد
@@ -355,6 +383,7 @@ export function PoPropertyEnfathForm({
         </div>
       ) : null}
 
+      {fieldsMode === "all" ? (
       <div className="reg-fg-full" style={{ marginTop: 8 }}>
         <label className="reg-fl" htmlFor={`other_docs_${property.id}`}>
           مستندات أخرى (اختياري)
@@ -376,7 +405,9 @@ export function PoPropertyEnfathForm({
           </p>
         ) : null}
       </div>
+      ) : null}
 
+      {showExtended ? (
       <div style={{ marginTop: 20 }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
           ضباط الاتصال
@@ -392,6 +423,9 @@ export function PoPropertyEnfathForm({
           onChange={(contacts) => onPatch("contacts", contacts)}
         />
       </div>
+      ) : null}
+      </>
+      )}
     </>
   );
 }

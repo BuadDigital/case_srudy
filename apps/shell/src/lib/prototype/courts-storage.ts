@@ -69,20 +69,3 @@ export async function saveCourtsCatalog(
   );
   return result.ok;
 }
-
-export function courtsForCity(
-  entries: CourtCatalogEntry[],
-  city: string,
-): CourtCatalogEntry[] {
-  if (!city.trim()) return [];
-  return entries.filter((e) => e.city === city);
-}
-
-export function circuitsForCourt(
-  entries: CourtCatalogEntry[],
-  city: string,
-  court: string,
-): string[] {
-  const row = entries.find((e) => e.city === city && e.court === court);
-  return row?.circuits ?? [];
-}

@@ -22,8 +22,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${arabic.variable} h-full`}>
-      <body className="min-h-full font-sans antialiased">{children}</body>
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`${arabic.variable} h-full`}
+      suppressHydrationWarning
+    >
+      <body
+        className="min-h-full font-sans antialiased"
+        suppressHydrationWarning
+      >
+        {children}
+      </body>
     </html>
   );
 }

@@ -11,7 +11,14 @@ import {
   poListStatusForAssignmentType,
 } from "@/lib/prototype/po-intake-data";
 import { propertyHasIncompleteContact, contactsForApi } from "@/components/prototype/po-intake/po-property-validation";
-import { getPropertyFailure } from "@/lib/prototype/failures-storage";
+import { getPropertyFailure, deleteFailuresForPo } from "@/lib/prototype/failures-storage";
+import {
+  advanceTaskAfterEnfath,
+  deleteTasksForPo,
+  deleteTasksForProperty,
+  linkNewPropertyToTaskSlot,
+  syncTaskSlotsForPo,
+} from "@/lib/prototype/tasks-storage";
 import type { PoRow, PropertyRow } from "@/lib/prototype/constants";
 import type {
   PendingBoursePropertyDto,
@@ -268,7 +275,9 @@ export async function savePoRecord(
   }
 
   notifyWorkOrdersChanged();
-  return { ok: true, data: dtoToRecord(result.data) };
+  const saved = dtoToRecord(result.data);
+  syncTaskSlotsForPo(saved);
+  return { ok: true, data: saved };
 }
 
 export async function poRecordExists(poNumber: string): Promise<boolean> {
@@ -299,14 +308,6 @@ function priorSurveyWaived(
   const n = prop.deedNumber.trim();
   if (!n) return false;
   return priorByDeed.has(n);
-}
-
-export async function findPriorDeedRegistration(
-  deedNumber: string,
-  excludePo?: string,
-): Promise<{ poNumber: string } | null> {
-  const hit = await findPriorDeedFull(deedNumber, excludePo);
-  return hit ? { poNumber: hit.poNumber } : null;
 }
 
 export async function findPriorDeedFull(
@@ -473,6 +474,8 @@ export async function deletePoRecord(
       error: result.message ?? apiErrorMessage(result.kind),
     };
   }
+  deleteTasksForPo(poNumber);
+  deleteFailuresForPo(poNumber);
   notifyWorkOrdersChanged();
   return { ok: true };
 }
@@ -501,7 +504,21 @@ export async function updatePoRecord(
   }
 
   notifyWorkOrdersChanged();
-  return { ok: true, data: dtoToRecord(result.data) };
+  const saved = dtoToRecord(result.data);
+  const full = await getPoRecord(record.poNumber);
+  if (full) {
+    syncTaskSlotsForPo({
+      ...full,
+      expectedPropertyCount: saved.expectedPropertyCount,
+      assignmentType: saved.assignmentType,
+      promulgationDate: saved.promulgationDate,
+      assignmentSpecialist: saved.assignmentSpecialist,
+      assignmentSpecialistEmail: saved.assignmentSpecialistEmail,
+    });
+  } else {
+    syncTaskSlotsForPo({ ...record, ...saved, properties: record.properties });
+  }
+  return { ok: true, data: saved };
 }
 
 export async function findPropertyInRecord(
@@ -531,6 +548,7 @@ export async function deedExistsInPo(
 export async function addPropertyToPo(
   poNumber: string,
   property: PoPropertyIntake,
+  options?: { assignToTaskId?: string },
 ): Promise<StorageOk<PoPropertyIntake> | StorageError> {
   const config = workOrdersApiConfig();
   if (!config) return { ok: false, error: apiErrorMessage("auth") };
@@ -549,7 +567,14 @@ export async function addPropertyToPo(
   }
 
   notifyWorkOrdersChanged();
-  return { ok: true, data: dtoToProperty(result.data) };
+  const prop = dtoToProperty(result.data);
+  const record = await getPoRecord(poNumber);
+  if (options?.assignToTaskId) {
+    advanceTaskAfterEnfath(options.assignToTaskId, prop);
+  } else if (record) {
+    linkNewPropertyToTaskSlot(record, prop);
+  }
+  return { ok: true, data: prop };
 }
 
 export async function removePropertyFromPo(
@@ -566,6 +591,12 @@ export async function removePropertyFromPo(
       error: result.message ?? apiErrorMessage(result.kind),
     };
   }
+  const record = await getPoRecord(poNumber);
+  deleteTasksForProperty(
+    poNumber,
+    propertyId,
+    record?.expectedPropertyCount ?? 1,
+  );
   notifyWorkOrdersChanged();
   return { ok: true };
 }

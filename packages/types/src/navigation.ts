@@ -1,6 +1,7 @@
 /** Shell navigation contract — shared when splitting MFE remotes later. */
 export type PageId =
   | "dashboard"
+  | "my-tasks"
   | "po"
   | "bourse-inquiry"
   | "properties"
@@ -27,6 +28,8 @@ export type RoleId =
   | "valuation-coordinator"
   | "real-estate-appraiser"
   | "field-inspector"
+  | "government-reviewer"
+  | "engineering-office"
   | "financial-officer";
 
 export type NavItem = {
@@ -61,12 +64,15 @@ const ROLE_ID_SET: Record<RoleId, true> = {
   "valuation-coordinator": true,
   "real-estate-appraiser": true,
   "field-inspector": true,
+  "government-reviewer": true,
+  "engineering-office": true,
   "financial-officer": true,
 };
 
 export function isPageId(value: string): value is PageId {
   return (
     value === "dashboard" ||
+    value === "my-tasks" ||
     value === "po" ||
     value === "bourse-inquiry" ||
     value === "properties" ||

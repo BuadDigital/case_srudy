@@ -1,7 +1,7 @@
 import type { RoleId } from "@platform/types";
 
 export function canReceivePo(role: RoleId): boolean {
-  return role === "case-specialist";
+  return role === "section-supervisor";
 }
 
 export function canEditPoHeader(role: RoleId): boolean {

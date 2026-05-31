@@ -44,43 +44,42 @@ function buildNavRuns(): NavRun[] {
   return runs;
 }
 
+/** Show only pages allowed for the current role — no locked / greyed rows. */
+function navRunsForRole(rolePages: PageId[]): NavRun[] {
+  return buildNavRuns()
+    .map((run) => ({
+      ...run,
+      items: run.items.filter((item) => rolePages.includes(item.id)),
+    }))
+    .filter((run) => run.items.length > 0);
+}
+
 function NavRow({
   item,
-  allowed,
   active,
   onPrefetch,
 }: {
   item: (typeof NAV)[number];
-  allowed: boolean;
   active: boolean;
   onPrefetch: (page: PageId) => void;
 }) {
-  const cls = `nav-item${active ? " active" : ""}${!allowed ? " locked" : ""}`;
-  const badge =
-    item.badge && allowed ? (
-      <span className="nav-badge">{item.badge}</span>
-    ) : null;
-  const inner = (
-    <>
+  const cls = `nav-item${active ? " active" : ""}`;
+  const badge = item.badge ? (
+    <span className="nav-badge">{item.badge}</span>
+  ) : null;
+  return (
+    <Link
+      href={`/${item.id}`}
+      className={cls}
+      prefetch
+      onMouseEnter={() => onPrefetch(item.id)}
+      onFocus={() => onPrefetch(item.id)}
+    >
       <NavIcon d={item.icon} size={13} />
       <span>{item.label}</span>
       {badge}
-    </>
+    </Link>
   );
-  if (allowed) {
-    return (
-      <Link
-        href={`/${item.id}`}
-        className={cls}
-        prefetch
-        onMouseEnter={() => onPrefetch(item.id)}
-        onFocus={() => onPrefetch(item.id)}
-      >
-        {inner}
-      </Link>
-    );
-  }
-  return <div className={cls}>{inner}</div>;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -90,7 +89,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { role, setRole, rolePages } = usePrototype();
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
 
-  const navRuns = useMemo(() => buildNavRuns(), []);
+  const navRuns = useMemo(
+    () => navRunsForRole(rolePages),
+    [rolePages],
+  );
 
   const prefetchPage = useMemo(
     () => (page: PageId) => prefetchPrototypePage(queryClient, page),
@@ -178,7 +180,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <NavRow
                   key={item.id}
                   item={item}
-                  allowed={rolePages.includes(item.id)}
                   active={
                     currentPage === item.id ||
                     (item.id === "po" && inPoSection)

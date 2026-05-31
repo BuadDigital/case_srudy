@@ -4,6 +4,7 @@ import { STORAGE_ROLE_KEY } from "@/lib/prototype/constants";
 /** Maps seeded org login emails to prototype navigation role. */
 const EMAIL_TO_ROLE: Record<string, RoleId> = {
   "s.salhy@gmail.com": "cdo",
+  "abdulrahman@ejadah.dev": "section-supervisor",
 };
 
 export function prototypeRoleForEmail(email: string): RoleId | null {

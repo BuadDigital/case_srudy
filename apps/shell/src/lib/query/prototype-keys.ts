@@ -5,6 +5,7 @@ export const prototypeKeys = {
   propertyListItems: () => [...prototypeKeys.all, "property-list-items"] as const,
   poRecord: (poNumber: string) =>
     [...prototypeKeys.all, "po-record", poNumber] as const,
+  workflowTasks: () => [...prototypeKeys.all, "workflow-tasks"] as const,
   staffUsers: () => [...prototypeKeys.all, "staff-users"] as const,
   organization: () => [...prototypeKeys.all, "organization"] as const,
 };

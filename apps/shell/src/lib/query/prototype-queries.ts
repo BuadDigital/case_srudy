@@ -12,6 +12,11 @@ import {
   loadPoRecords,
   loadPropertyListItems,
 } from "@/lib/prototype/po-intake-storage";
+import {
+  loadWorkflowTasks,
+  TASKS_CHANGED_EVENT,
+  TASKS_STORAGE_KEY,
+} from "@/lib/prototype/tasks-storage";
 import { fetchOrganization } from "@/lib/users-org-api";
 import { fetchStaffUsers } from "@/lib/users-api";
 import { WORK_ORDERS_CHANGED_EVENT } from "@/lib/work-orders-api-config";
@@ -43,11 +48,19 @@ export function prefetchPrototypePage(
     case "assignment":
     case "failures":
     case "keys":
+    case "my-tasks":
       void queryClient.prefetchQuery({
         queryKey: prototypeKeys.poRecords(),
         queryFn: loadPoRecords,
         ...opts,
       });
+      if (page === "my-tasks") {
+        void queryClient.prefetchQuery({
+          queryKey: prototypeKeys.workflowTasks(),
+          queryFn: loadWorkflowTasks,
+          ...opts,
+        });
+      }
       break;
     case "users":
       void queryClient.prefetchQuery({
@@ -94,34 +107,43 @@ export function usePrototypeDataSync(): void {
       });
     };
 
+    const invalidateTasks = () => {
+      void queryClient.invalidateQueries({
+        queryKey: prototypeKeys.workflowTasks(),
+      });
+    };
+
     window.addEventListener(WORK_ORDERS_CHANGED_EVENT, invalidateWorkOrders);
+    window.addEventListener(TASKS_CHANGED_EVENT, invalidateTasks);
     window.addEventListener("focus", onFocus);
     const onStorage = (e: StorageEvent) => {
       if (e.key === "evalFailureRecords") invalidateWorkOrders();
+      if (e.key === TASKS_STORAGE_KEY) invalidateTasks();
     };
     window.addEventListener("storage", onStorage);
 
     return () => {
       window.removeEventListener(WORK_ORDERS_CHANGED_EVENT, invalidateWorkOrders);
+      window.removeEventListener(TASKS_CHANGED_EVENT, invalidateTasks);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
     };
   }, [queryClient]);
 }
 
-export function usePoListRowsQuery() {
+export function useWorkflowTasksQuery() {
   return useQuery({
-    queryKey: prototypeKeys.poListRows(),
-    queryFn: loadPoListRows,
+    queryKey: prototypeKeys.workflowTasks(),
+    queryFn: loadWorkflowTasks,
     staleTime: STALE_MS,
     gcTime: GC_MS,
   });
 }
 
-export function usePoRecordsQuery() {
+export function usePoListRowsQuery() {
   return useQuery({
-    queryKey: prototypeKeys.poRecords(),
-    queryFn: loadPoRecords,
+    queryKey: prototypeKeys.poListRows(),
+    queryFn: loadPoListRows,
     staleTime: STALE_MS,
     gcTime: GC_MS,
   });
