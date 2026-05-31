@@ -56,29 +56,57 @@ internal static class WorkOrderValidator
         Func<string, Guid?, bool> deedExistsInPo)
     {
         var errors = new Dictionary<string, string>();
+        PropertyIdentifierTypeLabels.TryParseApiValue(dto.IdentifierType, out var idType);
 
-        if (string.IsNullOrWhiteSpace(dto.DeedNumber))
-            errors["deedNumber"] = "رقم الصك مطلوب";
-        if (string.IsNullOrWhiteSpace(dto.TaskNumber))
-            errors["taskNumber"] = "رقم المهمة مطلوب";
-        if (string.IsNullOrWhiteSpace(dto.DeedDate))
-            errors["deedDate"] = "تاريخ الصك مطلوب";
-        if (string.IsNullOrWhiteSpace(dto.OwnerName))
-            errors["ownerName"] = "اسم المالك مطلوب";
+        if (idType == PropertyIdentifierType.BourseInquiry)
+        {
+            if (string.IsNullOrWhiteSpace(dto.District))
+                errors["district"] = "الحي مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.Classification))
+                errors["classification"] = "التصنيف مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.PropertyType))
+                errors["propertyType"] = "نوع العقار مطلوب";
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(dto.DeedNumber))
+            {
+                errors["deedNumber"] = idType == PropertyIdentifierType.RealEstateRegistration
+                    ? "رقم التسجيل العيني مطلوب"
+                    : "رقم الصك مطلوب";
+            }
 
-        if (string.IsNullOrWhiteSpace(dto.DelegationLetterFileName))
-            errors["delegationLetterFileName"] = "خطاب التفويض مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.TaskNumber))
+                errors["taskNumber"] = "رقم المهمة مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.DeedDate))
+                errors["deedDate"] = "تاريخ الصك مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.OwnerName))
+                errors["ownerName"] = "اسم المالك مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.DelegationLetterFileName))
+                errors["delegationLetterFileName"] = "خطاب التفويض مطلوب";
+
+            if (idType == PropertyIdentifierType.RealEstateRegistration &&
+                string.IsNullOrWhiteSpace(dto.RealEstateRegFileName))
+            {
+                errors["realEstateRegFileName"] =
+                    "ارفع السجل العقاري كمرفق (يُطلب من أطراف التنفيذ)";
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.DeedNumber) &&
+                deedExistsInPo(dto.DeedNumber.Trim(), excludePropertyId))
+            {
+                errors["deedNumber"] = "رقم الصك مسجّل مسبقاً في هذا أمر العمل";
+            }
+        }
 
         if (RequiresAssignmentDecree(assignmentType) &&
             string.IsNullOrWhiteSpace(dto.AssignmentDocFileName))
+        {
             errors["assignmentDocFileName"] =
                 "ارفع قرار الإسناد الخاص بهذا العقار (مطلوب لمسار التنفيذ)";
+        }
 
         ValidateContacts(dto, errors);
-
-        if (!string.IsNullOrWhiteSpace(dto.DeedNumber) &&
-            deedExistsInPo(dto.DeedNumber.Trim(), excludePropertyId))
-            errors["deedNumber"] = "رقم الصك مسجّل مسبقاً في هذا أمر العمل";
 
         return errors;
     }

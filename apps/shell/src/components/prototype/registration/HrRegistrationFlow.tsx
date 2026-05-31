@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import type { StaffUser } from "@/lib/prototype/constants";
 import { userListItemToStaff } from "@/lib/users-api";
-import type { RegistrationFormData } from "@/lib/prototype/map-registration-to-staff";
 import type { SubmitRegistrationFn } from "./RegisterUserFlow";
 import {
   EMP_TYPES,

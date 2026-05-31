@@ -10,7 +10,7 @@ import {
   parsePropertyIdentifierType,
   poListStatusForAssignmentType,
 } from "@/lib/prototype/po-intake-data";
-import { propertyHasIncompleteContact } from "@/components/prototype/po-intake/po-property-validation";
+import { propertyHasIncompleteContact, contactsForApi } from "@/components/prototype/po-intake/po-property-validation";
 import { getPropertyFailure } from "@/lib/prototype/failures-storage";
 import type { PoRow, PropertyRow } from "@/lib/prototype/constants";
 import type {
@@ -136,7 +136,7 @@ function dtoToRecord(dto: WorkOrderDto): PoIntakeRecord {
 export function propertyToEnfathDto(prop: PoPropertyIntake): WorkOrderPropertyDto {
   return {
     id: prop.id || undefined,
-    identifierType: "deed",
+    identifierType: prop.identifierType,
     deedNumber: prop.deedNumber.trim(),
     taskNumber: prop.taskNumber.trim() || undefined,
     deedDate: prop.deedDate || undefined,
@@ -155,13 +155,7 @@ export function propertyToEnfathDto(prop: PoPropertyIntake): WorkOrderPropertyDt
         : undefined,
     realEstateRegFileName: prop.realEstateRegFileName || undefined,
     bourseDataCompleted: prop.bourseDataCompleted,
-    contacts: prop.contacts
-      .filter((c) => c.phone.trim() && c.role.trim())
-      .map((c) => ({
-        name: c.name.trim(),
-        role: c.role.trim(),
-        phone: c.phone.trim(),
-      })),
+    contacts: contactsForApi(prop.contacts),
   };
 }
 

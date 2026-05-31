@@ -5,6 +5,7 @@ import type {
   RegistrationPayload,
   UserListItem,
 } from "@platform/types";
+import { normalizeFieldErrors } from "./field-errors";
 import { getApiBase } from "./index";
 
 export type UsersApiConfig = {
@@ -57,8 +58,10 @@ async function createUser(
     body: JSON.stringify(payload),
   });
   if (res.status === 400) {
-    const body = (await res.json()) as FieldErrorsResponse;
-    return { ok: false, errors: body.errors ?? {} };
+    const body = (await res.json()) as FieldErrorsResponse & {
+      errors?: Record<string, string | string[]>;
+    };
+    return { ok: false, errors: normalizeFieldErrors(body.errors) };
   }
   if (!res.ok) throw new Error(`createUser/${path} failed: ${res.status}`);
   const body = (await res.json()) as CreateUserResponse;

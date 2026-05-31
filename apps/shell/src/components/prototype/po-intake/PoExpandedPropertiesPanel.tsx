@@ -4,7 +4,6 @@ import { StatusBadge } from "@platform/design-system";
 import { EyeIconButton } from "@/components/ui/EyeIconButton";
 import {
   requiresAssignmentDecree,
-  type PoIntakeRecord,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
 import { getPropertyFailure } from "@/lib/prototype/failures-storage";

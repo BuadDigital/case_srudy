@@ -64,7 +64,7 @@ export function PropertiesListView() {
 
   const { data: items } = usePropertyListItemsQuery();
   const { data: poRecords } = usePoRecordsQuery();
-  const list = items ?? [];
+  const list = useMemo(() => items ?? [], [items]);
   const poOptions = useMemo(
     () => (poRecords ?? []).map((r) => r.poNumber),
     [poRecords],

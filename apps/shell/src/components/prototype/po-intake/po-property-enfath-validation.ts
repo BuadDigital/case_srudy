@@ -1,4 +1,5 @@
 import {
+  isBourseInquiryIdentifier,
   requiresAssignmentDecree,
   type AssignmentType,
   type PoPropertyIntake,
@@ -14,6 +15,27 @@ export function validatePropertyEnfathFields(
   p: PoPropertyIntake,
   assignmentType: AssignmentType,
 ): FieldErrors {
+  if (isBourseInquiryIdentifier(p.identifierType)) {
+    const errors = mergeFieldErrors(
+      collectRequiredErrors(
+        {
+          district: p.district,
+          classification: p.classification,
+          propertyType: p.propertyType,
+        },
+        ["district", "classification", "propertyType"],
+      ),
+    );
+    if (
+      requiresAssignmentDecree(assignmentType) &&
+      !p.assignmentDocFileName.trim()
+    ) {
+      errors.assignmentDocFileName =
+        "ارفع قرار الإسناد الخاص بهذا العقار (مطلوب لمسار التنفيذ)";
+    }
+    return errors;
+  }
+
   const errors = mergeFieldErrors(
     collectRequiredErrors(
       {
@@ -32,6 +54,14 @@ export function validatePropertyEnfathFields(
       ],
     ),
   );
+
+  if (
+    p.identifierType === "real_estate_reg" &&
+    !p.realEstateRegFileName.trim()
+  ) {
+    errors.realEstateRegFileName =
+      "ارفع السجل العقاري كمرفق (يُطلب من أطراف التنفيذ)";
+  }
 
   if (
     requiresAssignmentDecree(assignmentType) &&
@@ -57,11 +87,16 @@ export function mergePropertyEnfathValidation(
 export function firstEnfathValidationMessage(errors: FieldErrors): string {
   return (
     errors._contacts ??
+    errors._ ??
+    errors.district ??
+    errors.classification ??
+    errors.propertyType ??
     errors.deedNumber ??
     errors.taskNumber ??
     errors.deedDate ??
     errors.ownerName ??
     errors.delegationLetterFileName ??
+    errors.realEstateRegFileName ??
     errors.assignmentDocFileName ??
     "يرجى تعبئة بيانات العقار"
   );

@@ -1,3 +1,4 @@
+import { parseFieldErrorsFromResponse } from "./field-errors";
 import { getApiBase } from "./index";
 
 export type WorkOrdersApiConfig = {
@@ -135,8 +136,6 @@ export type PendingBoursePropertyDto = {
   dueDateAt: string;
 };
 
-type FieldErrorsBody = { errors?: Record<string, string> };
-
 export type ApiOk<T> = { ok: true; data: T };
 export type ApiErr = {
   ok: false;
@@ -146,12 +145,7 @@ export type ApiErr = {
 };
 
 async function parseFieldErrors(res: Response): Promise<Record<string, string>> {
-  try {
-    const body = (await res.json()) as FieldErrorsBody;
-    return body.errors ?? {};
-  } catch {
-    return {};
-  }
+  return parseFieldErrorsFromResponse(res);
 }
 
 export async function listWorkOrders(

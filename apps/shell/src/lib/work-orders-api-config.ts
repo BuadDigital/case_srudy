@@ -25,14 +25,31 @@ export function courtsApiConfig(): CourtsApiConfig | null {
   return { token: session.token, baseUrl: getApiBase() };
 }
 
+/** First non-empty message from a field error (string or ASP.NET string[]). */
+function errorMessage(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const msg = errorMessage(item);
+      if (msg) return msg;
+    }
+  }
+  return undefined;
+}
+
 /** First server validation message, if any. */
 export function firstApiFieldError(
-  errors?: Record<string, string>,
+  errors?: Record<string, unknown>,
 ): string | undefined {
   if (!errors) return undefined;
-  if (errors._?.trim()) return errors._;
+  const general = errorMessage(errors._);
+  if (general) return general;
   for (const value of Object.values(errors)) {
-    if (value?.trim()) return value;
+    const msg = errorMessage(value);
+    if (msg) return msg;
   }
   return undefined;
 }
@@ -51,7 +68,7 @@ export function apiErrorMessage(
 
 export function resolveApiError(
   kind: string,
-  errors?: Record<string, string>,
+  errors?: Record<string, unknown>,
   fallback?: string,
 ): string {
   return (

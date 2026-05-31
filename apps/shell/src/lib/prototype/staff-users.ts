@@ -6,7 +6,7 @@ export function loadStaffUsers(): StaffUser[] {
 }
 
 /** @deprecated */
-export function saveStaffUsers(_users: StaffUser[]): void {
+export function saveStaffUsers(): void {
   // no-op — persisted via API
 }
 

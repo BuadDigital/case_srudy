@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePrototype } from "@/contexts/PrototypeContext";
-import { ROLES } from "@/lib/prototype/constants";
 import {
   approveFailure,
   createFailure,
@@ -26,9 +25,10 @@ export function FailuresView() {
   const { role } = usePrototype();
   const ce = isCaseEditor(role);
   const ca = isSupervisor(role);
-  const specialistName = ROLES[role as keyof typeof ROLES]?.name ?? "أخصائي";
 
-  const [items, setItems] = useState<FailureRecord[]>([]);
+  const [items, setItems] = useState<FailureRecord[]>(() =>
+    typeof window !== "undefined" ? loadFailures() : [],
+  );
   const [supervisorNote, setSupervisorNote] = useState<Record<string, string>>({});
 
   const refresh = useCallback(() => {
@@ -36,7 +36,6 @@ export function FailuresView() {
   }, []);
 
   useEffect(() => {
-    refresh();
     const onStorage = (e: StorageEvent) => {
       if (e.key === "evalFailureRecords") refresh();
     };

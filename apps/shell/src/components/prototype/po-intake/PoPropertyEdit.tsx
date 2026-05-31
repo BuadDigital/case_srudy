@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   formatPoDisplay,
+  isBourseInquiryIdentifier,
   type PoIntakeRecord,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
 import {
-  completePropertyBourse,
   deedExistsInPo,
   findPropertyInRecord,
   removePropertyFromPo,
@@ -28,9 +28,9 @@ import {
 } from "./po-property-bourse-validation";
 import {
   firstEnfathValidationMessage,
-  isValidContactEntry,
   mergePropertyEnfathValidation,
 } from "./po-property-enfath-validation";
+import { contactsForApi } from "./po-property-validation";
 
 export function PoPropertyEdit({
   poNumber,
@@ -54,7 +54,6 @@ export function PoPropertyEdit({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     void findPropertyInRecord(poNumber, propertyId).then((found) => {
       if (cancelled) return;
       if (found) {
@@ -127,7 +126,10 @@ export function PoPropertyEdit({
       : {};
     const errors = mergeFieldErrors(enfathErrors, bourseErrors);
 
-    if (await deedExistsInPo(poNumber, property.deedNumber, propertyId)) {
+    if (
+      !isBourseInquiryIdentifier(property.identifierType) &&
+      (await deedExistsInPo(poNumber, property.deedNumber, propertyId))
+    ) {
       errors.deedNumber = "رقم الصك مسجّل مسبقاً في هذا أمر العمل";
     }
 
@@ -145,8 +147,7 @@ export function PoPropertyEdit({
 
     const committed: PoPropertyIntake = {
       ...property,
-      identifierType: "deed",
-      contacts: property.contacts.filter((c) => isValidContactEntry(c)),
+      contacts: contactsForApi(property.contacts),
     };
 
     const result = await updatePropertyInPo(poNumber, propertyId, committed);
@@ -157,22 +158,7 @@ export function PoPropertyEdit({
       return;
     }
 
-    if (property.bourseDataCompleted) {
-      const bourseResult = await completePropertyBourse(
-        poNumber,
-        propertyId,
-        committed,
-      );
-      setSaving(false);
-      if (!bourseResult.ok) {
-        setFormError(bourseResult.error);
-        if (bourseResult.errors) setFieldErrors(bourseResult.errors);
-        return;
-      }
-    } else {
-      setSaving(false);
-    }
-
+    setSaving(false);
     onSavedAction();
   }
 

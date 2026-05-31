@@ -5,6 +5,9 @@ import {
   type FieldErrors,
 } from "@/components/prototype/registration/registration-utils";
 
+const RESTRICTIONS_VALUES = new Set(["yes", "no"]);
+const BOUNDARIES_VALUES = new Set(["deed", "bourse", "doc", "no"]);
+
 export function validatePropertyBourseFields(
   p: PoPropertyIntake,
 ): FieldErrors {
@@ -20,10 +23,17 @@ export function validatePropertyBourseFields(
     ),
   );
 
-  if (
-    p.boundariesAvailability === "doc" &&
-    !p.boundariesExternalDocName.trim()
-  ) {
+  const restrictions = p.restrictionsPresent.trim().toLowerCase();
+  if (restrictions && !RESTRICTIONS_VALUES.has(restrictions)) {
+    errors.restrictionsPresent = "قيمة القيود غير صالحة";
+  }
+
+  const boundaries = p.boundariesAvailability.trim().toLowerCase();
+  if (boundaries && !BOUNDARIES_VALUES.has(boundaries)) {
+    errors.boundariesAvailability = "قيمة توفر الحدود غير صالحة";
+  }
+
+  if (boundaries === "doc" && !p.boundariesExternalDocName.trim()) {
     errors.boundariesExternalDocName = "اسم المستند الخارجي مطلوب";
   }
 
@@ -36,7 +46,10 @@ export function firstBourseValidationMessage(errors: FieldErrors): string {
     errors.district ??
     errors.classification ??
     errors.propertyType ??
+    errors.restrictionsPresent ??
+    errors.boundariesAvailability ??
     errors.boundariesExternalDocName ??
+    errors._ ??
     "يرجى تعبئة بيانات البورصة"
   );
 }

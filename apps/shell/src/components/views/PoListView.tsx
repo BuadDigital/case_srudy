@@ -39,7 +39,7 @@ export function PoListView() {
   const [toast, setToast] = useState<string | null>(null);
 
   const { data: rows } = usePoListRowsQuery();
-  const list = rows ?? [];
+  const list = useMemo(() => rows ?? [], [rows]);
   const statsReady = rows !== undefined;
 
   const stats = useMemo(() => {

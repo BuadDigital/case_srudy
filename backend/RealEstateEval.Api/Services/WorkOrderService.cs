@@ -348,7 +348,6 @@ public class WorkOrderService : IWorkOrderService
         {
             Id = dto.Id ?? Guid.NewGuid(),
             WorkOrderId = workOrderId,
-            IdentifierType = PropertyIdentifierType.Deed,
             BourseDataCompleted = false,
         };
         ApplyPropertyEnfath(entity, dto);
@@ -357,8 +356,19 @@ public class WorkOrderService : IWorkOrderService
 
     private static void ApplyPropertyEnfath(WorkOrderProperty entity, WorkOrderPropertyDto dto)
     {
-        entity.IdentifierType = PropertyIdentifierType.Deed;
-        entity.DeedNumber = dto.DeedNumber.Trim();
+        PropertyIdentifierTypeLabels.TryParseApiValue(dto.IdentifierType, out var idType);
+        entity.IdentifierType = idType;
+
+        if (idType == PropertyIdentifierType.BourseInquiry &&
+            string.IsNullOrWhiteSpace(dto.DeedNumber))
+        {
+            entity.DeedNumber = $"INQ-{entity.Id.ToString("N")[..8].ToUpperInvariant()}";
+        }
+        else
+        {
+            entity.DeedNumber = dto.DeedNumber.Trim();
+        }
+
         entity.TaskNumber = dto.TaskNumber?.Trim();
         entity.DeedDate = dto.DeedDate?.Trim();
         entity.OwnerName = dto.OwnerName?.Trim();
@@ -370,6 +380,11 @@ public class WorkOrderService : IWorkOrderService
         entity.RealEstateRegFileName = dto.RealEstateRegFileName?.Trim();
         entity.Court = dto.Court?.Trim();
         entity.Circuit = dto.Circuit?.Trim();
+        entity.District = dto.District?.Trim() ?? "";
+        entity.Classification = dto.Classification?.Trim() ?? "";
+        entity.PropertyType = dto.PropertyType?.Trim() ?? "";
+        entity.DeedStatus = dto.DeedStatus?.Trim();
+        entity.Area = dto.Area?.Trim();
 
         entity.Contacts.Clear();
         var order = 0;

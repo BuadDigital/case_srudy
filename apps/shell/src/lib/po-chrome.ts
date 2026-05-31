@@ -58,8 +58,6 @@ export function resolvePoChrome(pathname: string): PoChrome | null {
     };
   }
 
-  const propertyId = decodePoParam(parts[3]);
-
   if (parts[4] === "edit") {
     return {
       breadcrumb: `دراسة الحالة / أوامر العمل / ${poNumber} / تعديل عقار`,

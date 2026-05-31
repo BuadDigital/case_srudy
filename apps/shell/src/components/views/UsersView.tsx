@@ -171,7 +171,7 @@ function UsersStaffListView({
   const viewOnly = role === "general-manager";
 
   const { data: staffResult } = useStaffUsersQuery();
-  const staff = staffResult?.users ?? [];
+  const staff = useMemo(() => staffResult?.users ?? [], [staffResult?.users]);
   const loadError = staffResult?.loadError ?? null;
   const dataReady = staffResult !== undefined;
   const [expandedId, setExpandedId] = useState<string | null>(null);

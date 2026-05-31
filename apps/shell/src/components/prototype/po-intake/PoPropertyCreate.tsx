@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   emptyProperty,
   formatPoDisplay,
+  isBourseInquiryIdentifier,
   type PoIntakeRecord,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
@@ -15,7 +16,6 @@ import {
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import {
   hasFieldErrors,
-  mergeFieldErrors,
   type FieldErrors,
 } from "@/components/prototype/registration/registration-utils";
 import { PoIntakeWizardShell } from "./PoIntakeWizardShell";
@@ -24,9 +24,9 @@ import { PoPropertyStackCard } from "./PoPropertyStackCard";
 import {
   findInvalidEnfathPropertyIndex,
   firstEnfathValidationMessage,
-  isValidContactEntry,
   mergePropertyEnfathValidation,
 } from "./po-property-enfath-validation";
+import { contactsForApi } from "./po-property-validation";
 
 const PROPERTY_STEPS = ["تسجيل العقارات"] as const;
 const PROPERTY_HINT =
@@ -54,7 +54,6 @@ export function PoPropertyCreate({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     void getPoRecord(poNumber).then((loaded) => {
       if (cancelled) return;
       setRecord(loaded);
@@ -71,10 +70,16 @@ export function PoPropertyCreate({
 
   const hasCurrentDraft = useMemo(
     () =>
-      !!currentProperty.deedNumber.trim() ||
-      !!currentProperty.taskNumber.trim() ||
-      !!currentProperty.ownerName.trim(),
+      isBourseInquiryIdentifier(currentProperty.identifierType)
+        ? !!currentProperty.district.trim() ||
+          !!currentProperty.classification.trim()
+        : !!currentProperty.deedNumber.trim() ||
+          !!currentProperty.taskNumber.trim() ||
+          !!currentProperty.ownerName.trim(),
     [
+      currentProperty.identifierType,
+      currentProperty.district,
+      currentProperty.classification,
       currentProperty.deedNumber,
       currentProperty.taskNumber,
       currentProperty.ownerName,
@@ -110,8 +115,7 @@ export function PoPropertyCreate({
   function commitCurrentProperty(): PoPropertyIntake {
     return {
       ...currentProperty,
-      identifierType: "deed",
-      contacts: currentProperty.contacts.filter((c) => isValidContactEntry(c)),
+      contacts: contactsForApi(currentProperty.contacts),
     };
   }
 
@@ -164,14 +168,21 @@ export function PoPropertyCreate({
   }
 
   async function persistProperty(prop: PoPropertyIntake): Promise<boolean> {
-    if (await deedExistsInPo(poNumber, prop.deedNumber, prop.id)) {
+    if (
+      !isBourseInquiryIdentifier(prop.identifierType) &&
+      (await deedExistsInPo(poNumber, prop.deedNumber, prop.id))
+    ) {
       setFormError("رقم الصك مسجّل مسبقاً في هذا أمر العمل");
       setFieldErrors({ deedNumber: "رقم الصك مسجّل مسبقاً في هذا أمر العمل" });
       return false;
     }
     const result = await addPropertyToPo(poNumber, prop);
     if (!result.ok) {
-      setFormError(result.error);
+      setFormError(
+        result.errors
+          ? firstEnfathValidationMessage(result.errors)
+          : result.error,
+      );
       if (result.errors) setFieldErrors(result.errors);
       return false;
     }

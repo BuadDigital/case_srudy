@@ -1,18 +1,22 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  BOURSE_INQUIRY_IDENTIFIER_STATUS,
+  CLASSIFICATION_OPTIONS,
+  isBourseInquiryIdentifier,
+  PROPERTY_CLASSIFICATIONS,
   requiresAssignmentDecree,
   showsCourtFields,
   type AssignmentType,
   type PoPropertyIntake,
+  type PropertyIdentifierType,
 } from "@/lib/prototype/po-intake-data";
 import {
   cacheAssignmentDoc,
   cacheDelegationDoc,
 } from "@/lib/prototype/assignment-doc-attachments";
 import { findPriorDeedFull } from "@/lib/prototype/po-intake-storage";
-import { RegField } from "@/components/prototype/registration/FormFields";
+import { RegField, RegSelect } from "@/components/prototype/registration/FormFields";
 import type { FieldErrors } from "@/components/prototype/registration/registration-utils";
 import { AssignmentDocAttachment } from "./AssignmentDocAttachment";
 import { PoContactEditor } from "./PoContactEditor";
@@ -31,6 +35,21 @@ type Props = {
   showStageNote?: boolean;
 };
 
+function selectIdentifierType(
+  onPatch: Props["onPatch"],
+  type: PropertyIdentifierType,
+) {
+  onPatch("identifierType", type);
+  if (type === "bourse_inquiry") {
+    onPatch("deedNumber", "");
+    onPatch("deedDate", "");
+    onPatch("ownerName", "");
+    onPatch("taskNumber", "");
+    onPatch("delegationLetterFileName", "");
+    onPatch("city", "");
+  }
+}
+
 export function PoPropertyEnfathForm({
   property,
   propertyOrdinal,
@@ -45,13 +64,16 @@ export function PoPropertyEnfathForm({
   const [priorPo, setPriorPo] = useState<string | null>(null);
   const showAssignmentDecree = requiresAssignmentDecree(assignmentType);
   const showCourt = showsCourtFields(assignmentType);
+  const isBourseId = isBourseInquiryIdentifier(property.identifierType);
+  const propertyTypes = useMemo(() => {
+    const c = property.classification;
+    return c ? (PROPERTY_CLASSIFICATIONS[c] ?? []) : [];
+  }, [property.classification]);
 
   useEffect(() => {
+    if (isBourseId) return;
     const deed = property.deedNumber.trim();
-    if (!deed) {
-      setPriorPo(null);
-      return;
-    }
+    if (!deed) return;
     let cancelled = false;
     void findPriorDeedFull(deed, excludePoNumber).then((hit) => {
       if (cancelled) return;
@@ -77,32 +99,124 @@ export function PoPropertyEnfathForm({
   }, [
     property.deedNumber,
     excludePoNumber,
+    isBourseId,
     property.deedDate,
     property.ownerName,
     property.contacts,
     onPatch,
   ]);
 
+  const priorPoNotice = property.deedNumber.trim() ? priorPo : null;
+
   return (
     <>
       {showStageNote ? (
         <div className="note note-info" style={{ marginBottom: 12 }}>
-          بيانات مرحلة إنفاذ — تُكمّل بيانات البورصة (المدينة، التصنيف، الحدود)
-          لاحقاً من «استعلام البورصة».
+          {isBourseId
+            ? "مسار استعلام البورصة — أدخل بيانات العقار المتاحة؛ تُكمّل المدينة وباقي بيانات البورصة لاحقاً."
+            : "بيانات مرحلة إنفاذ — تُكمّل بيانات البورصة (المدينة، التصنيف، الحدود) لاحقاً من «استعلام البورصة»."}
         </div>
       ) : null}
 
-      {priorPo ? (
+      <div className="reg-fg-full" style={{ marginBottom: 12 }}>
+        <span className="reg-fl">نوع المعرّف</span>
+        <div className="po-id-type-pills">
+          <button
+            type="button"
+            className={`reg-type-pill${property.identifierType === "deed" ? " sel" : ""}`}
+            onClick={() => selectIdentifierType(onPatch, "deed")}
+          >
+            رقم صك
+          </button>
+          <button
+            type="button"
+            className={`reg-type-pill${property.identifierType === "real_estate_reg" ? " sel" : ""}`}
+            onClick={() => selectIdentifierType(onPatch, "real_estate_reg")}
+          >
+            تسجيل عيني
+          </button>
+          <button
+            type="button"
+            className={`reg-type-pill${property.identifierType === "bourse_inquiry" ? " sel" : ""}`}
+            onClick={() => selectIdentifierType(onPatch, "bourse_inquiry")}
+          >
+            استعلام بورصة
+          </button>
+        </div>
+      </div>
+
+      {isBourseId ? (
+        <div className="po-bourse-id-status card" style={{ marginBottom: 14 }}>
+          <div className="card-body" style={{ padding: "14px 16px" }}>
+            <span className="reg-fl" style={{ display: "block", marginBottom: 8 }}>
+              حالة المسار
+            </span>
+            <span className="badge b-prog" style={{ fontSize: 13 }}>
+              {BOURSE_INQUIRY_IDENTIFIER_STATUS}
+            </span>
+          </div>
+        </div>
+      ) : property.identifierType === "real_estate_reg" ? (
+        <div className="note note-warn" style={{ marginBottom: 12 }}>
+          لا يمكن الاستعلام من بورصة العقارات — يطلب الأخصائي السجل العقاري من
+          أطراف التنفيذ ويرفعه كمرفق.
+        </div>
+      ) : null}
+
+      {!isBourseId && priorPoNotice ? (
         <div className="note note-success" style={{ marginBottom: 12 }}>
-          هذا الصك مسجّل سابقاً في أمر العمل «{priorPo}» — يمكن استخدام بيانات
+          هذا الصك مسجّل سابقاً في أمر العمل «{priorPoNotice}» — يمكن استخدام بيانات
           الاتصال السابقة.
         </div>
       ) : null}
 
+      {isBourseId ? (
+        <div className="reg-fg2">
+          <RegField
+            id="district"
+            label="الحي"
+            required
+            value={property.district}
+            error={fieldErrors.district}
+            onChange={(v) => onPatch("district", v)}
+          />
+          <RegSelect
+            id="classification"
+            label="التصنيف"
+            required
+            options={CLASSIFICATION_OPTIONS}
+            value={property.classification}
+            error={fieldErrors.classification}
+            onChange={(v) => {
+              onPatch("classification", v);
+              onPatch("propertyType", "");
+            }}
+          />
+          <RegSelect
+            id="property_type"
+            label="نوع العقار"
+            required
+            options={propertyTypes}
+            value={property.classification ? property.propertyType : ""}
+            error={fieldErrors.propertyType}
+            disabled={!property.classification}
+            placeholder={
+              property.classification
+                ? "اختر نوع العقار..."
+                : "اختر التصنيف أولاً"
+            }
+            onChange={(v) => onPatch("propertyType", v)}
+          />
+        </div>
+      ) : (
       <div className="reg-fg2">
         <RegField
           id="deed_number"
-          label="رقم الصك"
+          label={
+            property.identifierType === "real_estate_reg"
+              ? "رقم التسجيل العيني"
+              : "رقم الصك"
+          }
           required
           dir="ltr"
           value={property.deedNumber}
@@ -152,7 +266,9 @@ export function PoPropertyEnfathForm({
           </>
         ) : null}
       </div>
+      )}
 
+      {!isBourseId ? (
       <div className="reg-fg-full" style={{ marginTop: 8 }}>
         <label className="reg-fl" htmlFor={`delegation_${property.id}`}>
           خطاب التفويض *
@@ -178,6 +294,32 @@ export function PoPropertyEnfathForm({
           <p className="reg-field-hint">{property.delegationLetterFileName}</p>
         ) : null}
       </div>
+      ) : null}
+
+      {property.identifierType === "real_estate_reg" ? (
+        <div className="reg-fg-full" style={{ marginTop: 8 }}>
+          <label className="reg-fl" htmlFor={`real_estate_reg_${property.id}`}>
+            السجل العقاري (مرفق) *
+          </label>
+          <input
+            id={`real_estate_reg_${property.id}`}
+            type="file"
+            className="reg-fi"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              onPatch("realEstateRegFileName", file?.name ?? "");
+            }}
+          />
+          {fieldErrors.realEstateRegFileName ? (
+            <p className="reg-field-error" role="alert">
+              {fieldErrors.realEstateRegFileName}
+            </p>
+          ) : property.realEstateRegFileName ? (
+            <p className="reg-field-hint">{property.realEstateRegFileName}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       {showAssignmentDecree ? (
         <div className="reg-fg-full" style={{ marginTop: 8 }}>

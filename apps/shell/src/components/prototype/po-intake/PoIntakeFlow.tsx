@@ -37,19 +37,29 @@ export function PoIntakeFlow({
   onCompleteAction: (record: PoIntakeRecord) => void;
   onBackAction: () => void;
 }) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => loadPoDraft()?.step ?? 1);
   const [saving, setSaving] = useState(false);
   const [savedRecord, setSavedRecord] = useState<PoIntakeRecord | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [poNumber, setPoNumber] = useState("");
-  const [promulgationDate, setPromulgationDate] = useState("");
-  const [assignmentType, setAssignmentType] = useState<AssignmentType | "">("");
-  const [assignmentSpecialist, setAssignmentSpecialist] = useState("");
-  const [assignmentSpecialistEmail, setAssignmentSpecialistEmail] =
-    useState("");
-  const [expectedPropertyCount, setExpectedPropertyCount] = useState("1");
+  const [poNumber, setPoNumber] = useState(() => loadPoDraft()?.poNumber ?? "");
+  const [promulgationDate, setPromulgationDate] = useState(
+    () => loadPoDraft()?.promulgationDate ?? "",
+  );
+  const [assignmentType, setAssignmentType] = useState<AssignmentType | "">(
+    () => loadPoDraft()?.assignmentType || "",
+  );
+  const [assignmentSpecialist, setAssignmentSpecialist] = useState(
+    () => loadPoDraft()?.assignmentSpecialist ?? "",
+  );
+  const [assignmentSpecialistEmail, setAssignmentSpecialistEmail] = useState(
+    () => loadPoDraft()?.assignmentSpecialistEmail ?? "",
+  );
+  const [expectedPropertyCount, setExpectedPropertyCount] = useState(() => {
+    const count = loadPoDraft()?.expectedPropertyCount;
+    return count && count > 0 ? String(count) : "1";
+  });
 
   const isSuccess = step > LAST_STEP;
   const hint = PO_INTAKE_HINTS[0] ?? "";
@@ -71,22 +81,6 @@ export function PoIntakeFlow({
       expectedPropertyCount,
     ],
   );
-
-  useEffect(() => {
-    const draft = loadPoDraft();
-    if (!draft) return;
-    setStep(draft.step);
-    setPoNumber(draft.poNumber);
-    setPromulgationDate(draft.promulgationDate);
-    setAssignmentType(draft.assignmentType || "");
-    setAssignmentSpecialist(draft.assignmentSpecialist);
-    setAssignmentSpecialistEmail(draft.assignmentSpecialistEmail);
-    setExpectedPropertyCount(
-      draft.expectedPropertyCount > 0
-        ? String(draft.expectedPropertyCount)
-        : "1",
-    );
-  }, []);
 
   useEffect(() => {
     if (isSuccess) return;

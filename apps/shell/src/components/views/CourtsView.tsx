@@ -33,8 +33,14 @@ export function CourtsView() {
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    void loadCourtsCatalog().then((list) => {
+      if (!cancelled) setEntries(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
