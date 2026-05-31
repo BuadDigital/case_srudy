@@ -137,7 +137,10 @@ public class WorkOrderService : IWorkOrderService
         };
 
         foreach (var propDto in request.Properties)
+        {
+            propDto.Id = null;
             workOrder.Properties.Add(MapPropertyEnfath(propDto, workOrder.Id, forInsert: true));
+        }
 
         _db.WorkOrders.Add(workOrder);
         await _db.SaveChangesAsync(cancellationToken);
@@ -213,8 +216,11 @@ public class WorkOrderService : IWorkOrderService
             (deed, _) => entity.Properties.Any(p => p.DeedNumber.Trim() == deed.Trim()));
         if (errors.Count > 0) return (null, errors);
 
+        // Never trust client ids on insert — draft ids make EF emit UPDATE and fail with 0 rows.
+        property.Id = null;
+
         var mapped = MapPropertyEnfath(property, entity.Id, forInsert: true);
-        entity.Properties.Add(mapped);
+        _db.WorkOrderProperties.Add(mapped);
         await _db.SaveChangesAsync(cancellationToken);
         return (WorkOrderMapper.ToPropertyDto(mapped), null);
     }

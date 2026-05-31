@@ -70,6 +70,13 @@ console.log("");
 if (lan) {
   console.log(`  Share this URL:  http://${lan}:${port}`);
   console.log(`  Login:           http://${lan}:${port}/login`);
+  console.log("");
+  console.log("  Demo login:      admin@local.dev  /  Admin123!");
+  console.log("  (Same Wi‑Fi only — not public internet.)");
+  console.log("");
+  console.log(
+    "  If others cannot connect: run scripts/open-firewall.ps1 as Administrator once.",
+  );
   if (!lan.startsWith("192.168.")) {
     console.log("");
     console.log(

@@ -246,11 +246,15 @@ export async function createWorkOrder(
   body: CreateWorkOrderRequest,
 ): Promise<ApiOk<WorkOrderDto> | ApiErr> {
   const base = config.baseUrl ?? getApiBase();
+  const payload: CreateWorkOrderRequest = {
+    ...body,
+    properties: body.properties?.map(({ id: _draftId, ...prop }) => prop),
+  };
   try {
     const res = await fetch(`${base}/api/work-orders`, {
       method: "POST",
       headers: headers(config.token),
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
     if (res.status === 401) return { ok: false, kind: "auth" };
     if (res.status === 400) {
@@ -328,13 +332,14 @@ export async function addWorkOrderProperty(
   property: WorkOrderPropertyDto,
 ): Promise<ApiOk<WorkOrderPropertyDto> | ApiErr> {
   const base = config.baseUrl ?? getApiBase();
+  const { id: _draftId, ...body } = property;
   try {
     const res = await fetch(
       `${base}/api/work-orders/${encodeURIComponent(poNumber.trim())}/properties`,
       {
         method: "POST",
         headers: headers(config.token),
-        body: JSON.stringify(property),
+        body: JSON.stringify(body),
       },
     );
     if (res.status === 401) return { ok: false, kind: "auth" };

@@ -114,18 +114,20 @@
 # 1. Postgres
 docker compose -f infra/docker-compose.yml up -d postgres
 
-# 2. API (applies migrations)
-cd backend/RealEstateEval.Api
-dotnet run
+# 2. API (applies migrations; auto-reload on save)
+npm run dev:api
+# or: cd backend/RealEstateEval.Api && dotnet run
 
-# 3. Frontend
-npm install   # from repo root, if needed
-npm run dev
+# 3. Frontend (from repo root)
+npm install   # if needed
+npm run dev          # LAN — binds 0.0.0.0, prints Wi‑Fi URL for phone/tablet
+npm run dev:local    # localhost only
+npm run dev:stop     # free ports 3000 + 5160 (or: node apps/shell/scripts/dev-stop.mjs 5160)
 ```
 
 **Login for user management:** `admin@local.dev` / `Admin123!`
 
-After backend changes, **restart the API** so list/details endpoints return the latest fields.
+After backend changes without `dev:api`, **restart the API** so inserts/validation fixes take effect.
 
 ---
 
@@ -172,7 +174,8 @@ After backend changes, **restart the API** so list/details endpoints return the 
 **Enums (stored as int):**
 
 - `AssignmentType`: تنفيذ / تركات / قطاع خاص (API labels in Arabic)
-- `PropertyIdentifierType`: deed vs real-estate registration
+- `PropertyIdentifierType`: deed / real-estate registration / bourse inquiry (`BourseDataCompleted` tracks bourse step)
+- `ExpectedPropertyCount` on `WorkOrders` (header-only intake; properties added afterward)
 
 **Not stored in DB (prototype):**
 
@@ -192,11 +195,13 @@ After backend changes, **restart the API** so list/details endpoints return the 
 | `GET` | `/api/work-orders/exists?poNumber=` | Duplicate PO check on intake |
 | `GET` | `/api/work-orders/deeds/prior?deedNumber=&excludePo=` | Prior deed registration in another PO |
 | `GET` | `/api/work-orders/{poNumber}` | Full PO + properties + contacts |
-| `POST` | `/api/work-orders` | Create PO with ≥1 property |
+| `GET` | `/api/work-orders/properties/pending-bourse` | Properties awaiting bourse completion |
+| `POST` | `/api/work-orders` | Create PO header (`properties` may be empty; `expectedPropertyCount`) |
 | `PUT` | `/api/work-orders/{poNumber}` | Update header only (supervisor) |
 | `DELETE` | `/api/work-orders/{poNumber}` | Delete PO and all properties |
 | `POST` | `/api/work-orders/{poNumber}/properties` | Add property to existing PO |
-| `PUT` | `/api/work-orders/{poNumber}/properties/{propertyId}` | Update property |
+| `PUT` | `/api/work-orders/{poNumber}/properties/{propertyId}/bourse` | Complete bourse data for a property |
+| `PUT` | `/api/work-orders/{poNumber}/properties/{propertyId}` | Update Enfath property (or full property when bourse already done) |
 | `DELETE` | `/api/work-orders/{poNumber}/properties/{propertyId}` | Remove property (blocked if last one) |
 
 **Business rules (server):**
@@ -251,11 +256,18 @@ After backend changes, **restart the API** so list/details endpoints return the 
 
 | Step | Component | Notes |
 |------|-----------|--------|
-| 1 | `PoIntakeFlow.tsx` + `PoIntakeWizardShell.tsx` | PO number (= تعميد), assignment type, Enfath receipt date, internal assignment date, assignment specialist; **removed** optional receipt-time field from UI (defaults `10:00` for due-date math); property count moved to step 2 |
-| 2 | `PoPropertyForm.tsx`, `PoContactEditor.tsx`, `PoPropertyStackCard.tsx` | Multi-property stack (“عقار آخر”); classification → dependent property type; deed status **فعال / موقوف** only in form (قيد التحقق via failures flow); per-property decree upload for **تنفيذ**; prior-deed warning via API |
-| Success | `PoIntakeSuccess.tsx` | Summary card after save |
+| 1 | `PoIntakeFlow.tsx` + `PoIntakeWizardShell.tsx` | Header only: PO number (= تعميد), assignment type, Enfath receipt date, assignment specialist + email, **expected property count**; saves PO with `properties: []` |
+| Success | `PoIntakeSuccess.tsx` | Summary card; user adds properties from PO detail or العقارات list |
 
-**Validation:** `po-property-validation.ts` (mirrors server rules, including phone length).
+**Property intake (separate screens):**
+
+| Action | Component | Notes |
+|--------|-----------|--------|
+| Add / edit Enfath | `PoPropertyCreate.tsx`, `PoPropertyEdit.tsx`, `PoPropertyEnfathForm.tsx` | Identifier type: **رقم صك** / **تسجيل عيني** / **استعلام بورصة**; contacts via `PoContactEditor.tsx`; decree upload for **تنفيذ** |
+| Bourse completion | `BourseInquiryView.tsx` | Queue from `GET …/pending-bourse`; `PUT …/properties/{id}/bourse` |
+| Stack preview | `PoPropertyStackCard.tsx`, `PoDetailPropertyCard.tsx` | Bourse-inquiry rows show status label instead of internal `INQ-…` placeholder |
+
+**Validation:** `po-property-enfath-validation.ts`, `po-property-bourse-validation.ts`, `po-property-validation.ts` (contacts; mirrors server rules).
 
 ---
 
@@ -280,8 +292,9 @@ After backend changes, **restart the API** so list/details endpoints return the 
 | Screen | Component | Notes |
 |--------|-----------|--------|
 | List | `PropertiesListView.tsx` | All properties from API; filters: **All** / specific PO, region, status; add property (requires specific PO); edit / failure actions |
-| Add | `PoPropertyCreate.tsx` | Add property to chosen PO |
-| Edit | `PoPropertyEdit.tsx` | Full property form; delete property (if not last); footer **حذف العقار** + **حفظ التعديلات** grouped on the right (RTL) |
+| Add | `PoPropertyCreate.tsx` | Add property to chosen PO (`POST …/properties`; server assigns property id) |
+| Edit | `PoPropertyEdit.tsx` | Enfath form + optional bourse section; delete property (if not last) |
+| Bourse queue | `BourseInquiryView.tsx` | Complete location/classification for pending properties |
 
 **Attachment preview:** `AssignmentDocAttachment.tsx` — thumbnail + in-page **lightbox** on click (avoids `about:blank` from opening large `data:` URLs in a new tab). Preview only in the browser where the file was uploaded.
 
@@ -328,7 +341,8 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 | PO list / intake entry | `apps/shell/src/components/views/PoListView.tsx` |
 | Properties list | `apps/shell/src/components/views/PropertiesListView.tsx` |
 | Intake wizard | `apps/shell/src/components/prototype/po-intake/PoIntakeFlow.tsx` |
-| Property form | `apps/shell/src/components/prototype/po-intake/PoPropertyForm.tsx` |
+| Enfath property form | `apps/shell/src/components/prototype/po-intake/PoPropertyEnfathForm.tsx` |
+| Bourse screen | `apps/shell/src/components/views/BourseInquiryView.tsx` |
 | Detail / attachments | `PoDetailView.tsx`, `AssignmentDocAttachment.tsx` |
 | Shell storage | `apps/shell/src/lib/prototype/po-intake-storage.ts` |
 | Shared PO data/rules | `apps/shell/src/lib/prototype/po-intake-data.ts` |
@@ -372,6 +386,9 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 8. **Backend:** Full work-order CRUD, validation, business due date, courts catalog API.  
 9. **Frontend:** Two-step PO intake, multi-property stack, PO list/detail/edit, properties list/add/edit.  
 10. **UX fixes:** Due date math, API error messages, decree preview lightbox, PO label formatting, properties PO filter (**All**), footer button alignment.  
+11. **PO workflow refactor:** Header-only intake, `expectedPropertyCount`, split Enfath vs bourse flows, `PoPropertyEnfathForm` replaces monolithic `PoPropertyForm`.  
+12. **Alignment fixes:** Identifier types + bourse validation on client/server; ASP.NET field-error parsing; property insert uses server-generated IDs (avoids concurrency 500).  
+13. **LAN dev:** `dev-lan.mjs`, `dev:stop`, `dev:api`; Wi‑Fi URL for shared testing.  
 
 ---
 
