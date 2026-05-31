@@ -6,6 +6,7 @@ import { StatValue } from "@/components/ui/StatValue";
 import {
   emptyProperty,
   formatDateAr,
+  formatPendingBourseDeedDisplay,
   formatPoDisplay,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
@@ -237,7 +238,7 @@ export function BourseInquiryView() {
                       <td className="id-cell" dir="ltr">
                         {formatPoDisplay(item.poNumber)}
                       </td>
-                      <td dir="ltr">{item.deedNumber}</td>
+                      <td dir="ltr">{formatPendingBourseDeedDisplay(item)}</td>
                       <td>{item.ownerName || "—"}</td>
                       <td>{formatDateAr(item.dueDateAt)}</td>
                       <td>
@@ -263,7 +264,7 @@ export function BourseInquiryView() {
               <span className="card-title">
                 بيانات البورصة
                 <span className="po-bourse-form-deed" dir="ltr">
-                  {selected.deedNumber}
+                  {formatPendingBourseDeedDisplay(selected)}
                 </span>
               </span>
               <button type="button" className="btn btn-sm" onClick={closeForm}>

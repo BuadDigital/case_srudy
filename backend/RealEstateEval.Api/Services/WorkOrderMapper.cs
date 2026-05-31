@@ -107,6 +107,7 @@ internal static class WorkOrderMapper
         {
             PoNumber = p.WorkOrder!.PoNumber,
             PropertyId = p.Id,
+            IdentifierType = PropertyIdentifierTypeLabels.ToApiValue(p.IdentifierType),
             DeedNumber = p.DeedNumber,
             OwnerName = p.OwnerName,
             TaskNumber = p.TaskNumber,

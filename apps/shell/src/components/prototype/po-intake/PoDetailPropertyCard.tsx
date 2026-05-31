@@ -2,17 +2,15 @@
 
 import type { ReactNode } from "react";
 import {
+  formatPropertyDeedDisplay,
+  identifierTypeLabel,
+  isBourseInquiryIdentifier,
   showsCourtFields,
   type PoIntakeRecord,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
 import { isValidContactEntry } from "./po-property-validation";
 import { AssignmentDocAttachment } from "./AssignmentDocAttachment";
-
-function identifierLabel(type: PoPropertyIntake["identifierType"]): string {
-  if (type === "real_estate_reg") return "سجل عقاري";
-  return "صك";
-}
 
 function DetailField({
   label,
@@ -84,6 +82,8 @@ export function PoDetailPropertyCard({
   const validContacts = property.contacts.filter((c) => isValidContactEntry(c));
   const hasRegFile = Boolean(property.realEstateRegFileName?.trim());
   const showAside = showDecree || hasRegFile;
+  const isBourseId = isBourseInquiryIdentifier(property.identifierType);
+  const deedDisplay = formatPropertyDeedDisplay(property);
 
   if (layout === "page") {
     return (
@@ -91,25 +91,27 @@ export function PoDetailPropertyCard({
         className={`po-property-detail-body${showAside ? "" : " po-property-detail-body--solo"}`}
       >
         <div className="po-property-detail-main">
-          <DetailSection title="بيانات الصك والمالك">
+          <DetailSection title={isBourseId ? "مسار الاستعلام" : "بيانات الصك والمالك"}>
             <DetailField
               label="نوع المعرف"
-              value={identifierLabel(property.identifierType)}
+              value={identifierTypeLabel(property.identifierType)}
             />
-            <DetailField
-              label="رقم الصك"
-              value={property.deedNumber}
-              ltr
-            />
-            <DetailField label="رقم المهمة" value={property.taskNumber} ltr />
-            <DetailField label="تاريخ الصك" value={property.deedDate} ltr />
-            <DetailField label="اسم المالك" value={property.ownerName} />
-            <DetailField label="حالة الصك" value={property.deedStatus} />
-            <DetailField label="القيود" value={property.restrictions} />
-            <DetailField
-              label="مطابقة الحدود"
-              value={property.boundariesMatch}
-            />
+            {!isBourseId ? (
+              <>
+                <DetailField label="رقم الصك" value={property.deedNumber} ltr />
+                <DetailField label="رقم المهمة" value={property.taskNumber} ltr />
+                <DetailField label="تاريخ الصك" value={property.deedDate} ltr />
+                <DetailField label="اسم المالك" value={property.ownerName} />
+                <DetailField label="حالة الصك" value={property.deedStatus} />
+                <DetailField label="القيود" value={property.restrictions} />
+                <DetailField
+                  label="مطابقة الحدود"
+                  value={property.boundariesMatch}
+                />
+              </>
+            ) : (
+              <DetailField label="الحالة" value={deedDisplay} />
+            )}
           </DetailSection>
 
           <DetailSection title="الموقع والعقار">
@@ -200,7 +202,7 @@ export function PoDetailPropertyCard({
         <div className="po-detail-property-hd-main">
           <span className="po-detail-property-num">عقار {index}</span>
           <span className="po-detail-property-deed" dir="ltr">
-            {property.deedNumber || "—"}
+            {deedDisplay}
           </span>
           {boursePending ? (
             <span className="badge b-prog">بانتظار البورصة</span>

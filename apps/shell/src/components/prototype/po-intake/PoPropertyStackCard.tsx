@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  formatPropertyDeedDisplay,
   requiresAssignmentDecree,
   type AssignmentType,
   type PoPropertyIntake,
@@ -28,7 +29,7 @@ export function PoPropertyStackCard({
     : "بانتظار البورصة";
   const typeLabel =
     property.propertyType || property.classification || "—";
-  const deedLabel = property.deedNumber || "—";
+  const deedLabel = formatPropertyDeedDisplay(property);
 
   return (
     <article className="po-property-stack-card" aria-label={`عقار ${index}`}>

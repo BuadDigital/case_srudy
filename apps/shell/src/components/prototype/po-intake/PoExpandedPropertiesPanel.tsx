@@ -3,6 +3,7 @@
 import { StatusBadge } from "@platform/design-system";
 import { EyeIconButton } from "@/components/ui/EyeIconButton";
 import {
+  formatPropertyDeedDisplay,
   requiresAssignmentDecree,
   type PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
@@ -11,7 +12,7 @@ import { usePoRecordQuery } from "@/lib/query/prototype-queries";
 import { poPropertyToPropertyRow } from "@/lib/prototype/po-intake-storage";
 
 function deedLabel(property: PoPropertyIntake): string {
-  return property.deedNumber.trim() || "—";
+  return formatPropertyDeedDisplay(property);
 }
 
 export function PoExpandedPropertiesPanel({

@@ -202,6 +202,34 @@ export function parsePropertyIdentifierType(
   return "deed";
 }
 
+export function identifierTypeLabel(type: PropertyIdentifierType): string {
+  if (type === "real_estate_reg") return "تسجيل عيني";
+  if (type === "bourse_inquiry") return "استعلام بورصة";
+  return "رقم صك";
+}
+
+/** Display label for deed column — hides internal INQ- placeholders. */
+export function formatPropertyDeedDisplay(
+  property: Pick<PoPropertyIntake, "identifierType" | "deedNumber">,
+): string {
+  if (isBourseInquiryIdentifier(property.identifierType)) {
+    return BOURSE_INQUIRY_IDENTIFIER_STATUS;
+  }
+  const deed = property.deedNumber.trim();
+  if (deed.startsWith("INQ-")) return BOURSE_INQUIRY_IDENTIFIER_STATUS;
+  return deed || "—";
+}
+
+export function formatPendingBourseDeedDisplay(item: {
+  identifierType?: string;
+  deedNumber: string;
+}): string {
+  return formatPropertyDeedDisplay({
+    identifierType: parsePropertyIdentifierType(item.identifierType),
+    deedNumber: item.deedNumber,
+  });
+}
+
 export type PoPropertyIntake = {
   id: string;
   identifierType: PropertyIdentifierType;

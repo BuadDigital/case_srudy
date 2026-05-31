@@ -137,7 +137,7 @@ public class WorkOrderService : IWorkOrderService
         };
 
         foreach (var propDto in request.Properties)
-            workOrder.Properties.Add(MapPropertyEnfath(propDto, workOrder.Id));
+            workOrder.Properties.Add(MapPropertyEnfath(propDto, workOrder.Id, forInsert: true));
 
         _db.WorkOrders.Add(workOrder);
         await _db.SaveChangesAsync(cancellationToken);
@@ -213,7 +213,7 @@ public class WorkOrderService : IWorkOrderService
             (deed, _) => entity.Properties.Any(p => p.DeedNumber.Trim() == deed.Trim()));
         if (errors.Count > 0) return (null, errors);
 
-        var mapped = MapPropertyEnfath(property, entity.Id);
+        var mapped = MapPropertyEnfath(property, entity.Id, forInsert: true);
         entity.Properties.Add(mapped);
         await _db.SaveChangesAsync(cancellationToken);
         return (WorkOrderMapper.ToPropertyDto(mapped), null);
@@ -257,7 +257,7 @@ public class WorkOrderService : IWorkOrderService
                 .GroupBy(kv => kv.Key)
                 .ToDictionary(g => g.Key, g => g.First().Value);
             if (errors.Count > 0) return (null, errors);
-            ApplyPropertyEnfath(existing, property);
+            ApplyPropertyEnfath(existing, property, forInsert: false);
             ApplyPropertyBourse(existing, property);
             existing.BourseDataCompleted = true;
         }
@@ -272,7 +272,7 @@ public class WorkOrderService : IWorkOrderService
                     entity.Properties.Any(p =>
                         p.DeedNumber.Trim() == deed.Trim() && p.Id != excludeId));
             if (errors.Count > 0) return (null, errors);
-            ApplyPropertyEnfath(existing, property);
+            ApplyPropertyEnfath(existing, property, forInsert: false);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -342,19 +342,25 @@ public class WorkOrderService : IWorkOrderService
 
     private static string NormalizePo(string poNumber) => poNumber.Trim();
 
-    private static WorkOrderProperty MapPropertyEnfath(WorkOrderPropertyDto dto, Guid workOrderId)
+    private static WorkOrderProperty MapPropertyEnfath(
+        WorkOrderPropertyDto dto,
+        Guid workOrderId,
+        bool forInsert)
     {
         var entity = new WorkOrderProperty
         {
-            Id = dto.Id ?? Guid.NewGuid(),
+            Id = forInsert ? Guid.NewGuid() : (dto.Id ?? Guid.NewGuid()),
             WorkOrderId = workOrderId,
             BourseDataCompleted = false,
         };
-        ApplyPropertyEnfath(entity, dto);
+        ApplyPropertyEnfath(entity, dto, forInsert);
         return entity;
     }
 
-    private static void ApplyPropertyEnfath(WorkOrderProperty entity, WorkOrderPropertyDto dto)
+    private static void ApplyPropertyEnfath(
+        WorkOrderProperty entity,
+        WorkOrderPropertyDto dto,
+        bool forInsert)
     {
         PropertyIdentifierTypeLabels.TryParseApiValue(dto.IdentifierType, out var idType);
         entity.IdentifierType = idType;
@@ -386,7 +392,9 @@ public class WorkOrderService : IWorkOrderService
         entity.DeedStatus = dto.DeedStatus?.Trim();
         entity.Area = dto.Area?.Trim();
 
-        entity.Contacts.Clear();
+        if (!forInsert)
+            entity.Contacts.Clear();
+
         var order = 0;
         foreach (var c in dto.Contacts.Where(c =>
                      !string.IsNullOrWhiteSpace(c.Phone) || !string.IsNullOrWhiteSpace(c.Role)))

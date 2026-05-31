@@ -128,6 +128,7 @@ export type PriorDeedRegistrationDto = {
 export type PendingBoursePropertyDto = {
   poNumber: string;
   propertyId: string;
+  identifierType?: string;
   deedNumber: string;
   ownerName?: string;
   taskNumber?: string;

@@ -133,9 +133,12 @@ function dtoToRecord(dto: WorkOrderDto): PoIntakeRecord {
   });
 }
 
-export function propertyToEnfathDto(prop: PoPropertyIntake): WorkOrderPropertyDto {
+export function propertyToEnfathDto(
+  prop: PoPropertyIntake,
+  options?: { forInsert?: boolean },
+): WorkOrderPropertyDto {
   return {
-    id: prop.id || undefined,
+    ...(options?.forInsert ? {} : { id: prop.id || undefined }),
     identifierType: prop.identifierType,
     deedNumber: prop.deedNumber.trim(),
     taskNumber: prop.taskNumber.trim() || undefined,
@@ -251,7 +254,9 @@ export async function savePoRecord(
     assignmentSpecialist: record.assignmentSpecialist.trim(),
     assignmentSpecialistEmail: record.assignmentSpecialistEmail.trim(),
     expectedPropertyCount: record.expectedPropertyCount,
-    properties: record.properties.map(propertyToEnfathDto),
+    properties: record.properties.map((p) =>
+      propertyToEnfathDto(p, { forInsert: true }),
+    ),
   });
 
   if (!result.ok) {
@@ -533,7 +538,7 @@ export async function addPropertyToPo(
   const result = await addWorkOrderProperty(
     config,
     poNumber,
-    propertyToEnfathDto(property),
+    propertyToEnfathDto(property, { forInsert: true }),
   );
   if (!result.ok) {
     return {
