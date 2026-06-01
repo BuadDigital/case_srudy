@@ -1533,6 +1533,9 @@
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
+.po-properties-meta .my-tasks-filter {
+  margin-inline-end: 0;
+}
 .my-tasks-filter:hover {
   border-color: var(--primary-light);
   color: var(--primary);

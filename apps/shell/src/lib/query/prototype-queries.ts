@@ -8,6 +8,7 @@ import {
 import type { PageId } from "@platform/types";
 import {
   getPoRecord,
+  loadPendingBourseItems,
   loadPoListRows,
   loadPoRecords,
   loadPropertyListItems,
@@ -45,22 +46,31 @@ export function prefetchPrototypePage(
         ...opts,
       });
       break;
-    case "assignment":
     case "failures":
     case "keys":
-    case "my-tasks":
+    case "active-primary-data":
       void queryClient.prefetchQuery({
         queryKey: prototypeKeys.poRecords(),
         queryFn: loadPoRecords,
         ...opts,
       });
-      if (page === "my-tasks") {
-        void queryClient.prefetchQuery({
-          queryKey: prototypeKeys.workflowTasks(),
-          queryFn: loadWorkflowTasks,
-          ...opts,
-        });
-      }
+      void queryClient.prefetchQuery({
+        queryKey: prototypeKeys.workflowTasks(),
+        queryFn: loadWorkflowTasks,
+        ...opts,
+      });
+      break;
+    case "bourse-inquiry":
+      void queryClient.prefetchQuery({
+        queryKey: prototypeKeys.poRecords(),
+        queryFn: loadPoRecords,
+        ...opts,
+      });
+      void queryClient.prefetchQuery({
+        queryKey: prototypeKeys.pendingBourseItems(),
+        queryFn: loadPendingBourseItems,
+        ...opts,
+      });
       break;
     case "users":
       void queryClient.prefetchQuery({
@@ -135,6 +145,24 @@ export function useWorkflowTasksQuery() {
   return useQuery({
     queryKey: prototypeKeys.workflowTasks(),
     queryFn: loadWorkflowTasks,
+    staleTime: STALE_MS,
+    gcTime: GC_MS,
+  });
+}
+
+export function usePoRecordsQuery() {
+  return useQuery({
+    queryKey: prototypeKeys.poRecords(),
+    queryFn: loadPoRecords,
+    staleTime: STALE_MS,
+    gcTime: GC_MS,
+  });
+}
+
+export function usePendingBourseItemsQuery() {
+  return useQuery({
+    queryKey: prototypeKeys.pendingBourseItems(),
+    queryFn: loadPendingBourseItems,
     staleTime: STALE_MS,
     gcTime: GC_MS,
   });

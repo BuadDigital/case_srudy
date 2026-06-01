@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { AppAuthGate } from "@platform/auth-client";
 import { AppShell } from "@/components/views/AppShell";
 import { PrototypeProvider } from "@/contexts/PrototypeContext";
@@ -14,7 +15,9 @@ export default function AppSectionLayout({
     <AppAuthGate>
       <QueryProvider>
         <PrototypeProvider>
-          <AppShell>{children}</AppShell>
+          <Suspense fallback={null}>
+            <AppShell>{children}</AppShell>
+          </Suspense>
         </PrototypeProvider>
       </QueryProvider>
     </AppAuthGate>

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, startTransition } from "react";
 import { NavIcon } from "@/components/views/NavIcon";
@@ -15,7 +15,16 @@ import {
   ROLE_OPTIONS,
   ROLES,
 } from "@/lib/prototype/constants";
+import {
+  ACTIVE_TRANSACTIONS_GROUP,
+  ACTIVE_TRANSACTIONS_GROUP_ICON,
+  ACTIVE_TRANSACTIONS_NAV,
+  type ActiveTransactionNavItem,
+  isInActiveTransactionsSection,
+} from "@/lib/prototype/active-transactions";
 import { resolvePoChrome } from "@/lib/po-chrome";
+import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
+import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
 import { PoNumber } from "@/components/ui/PoNumber";
 
 const GROUP_ORDER = ["الإدارة", "قسم دراسة الحالة", "قسم التقييم العقاري", "المالية"];
@@ -33,6 +42,11 @@ function buildNavRuns(): NavRun[] {
       cur = { label: item.grp, items: [] };
       runs.push(cur);
       cur.items.push(item);
+    } else if (!item.grp && lastGrp) {
+      lastGrp = null;
+      cur = { label: null, items: [] };
+      runs.push(cur);
+      cur.items.push(item);
     } else {
       if (!cur) {
         cur = { label: null, items: [] };
@@ -44,7 +58,6 @@ function buildNavRuns(): NavRun[] {
   return runs;
 }
 
-/** Show only pages allowed for the current role — no locked / greyed rows. */
 function navRunsForRole(rolePages: PageId[]): NavRun[] {
   return buildNavRuns()
     .map((run) => ({
@@ -63,7 +76,7 @@ function NavRow({
   active: boolean;
   onPrefetch: (page: PageId) => void;
 }) {
-  const cls = `nav-item${active ? " active" : ""}`;
+  const cls = `nav-item${active ? " active" : ""}${item.placeholder ? " nav-item-dummy" : ""}`;
   const badge = item.badge ? (
     <span className="nav-badge">{item.badge}</span>
   ) : null;
@@ -82,6 +95,137 @@ function NavRow({
   );
 }
 
+function ActiveTransactionNavRow({
+  id,
+  label,
+  icon,
+  available,
+  placeholder,
+  badgeCount,
+  active,
+  onPrefetch,
+}: {
+  id: PageId;
+  label: string;
+  icon: string;
+  available: boolean;
+  placeholder?: boolean;
+  badgeCount?: number;
+  active: boolean;
+  onPrefetch: (page: PageId) => void;
+}) {
+  const cls = `nav-item nav-item-sub${active ? " active" : ""}${!available ? " locked" : ""}${placeholder ? " nav-item-dummy" : ""}`;
+  const inner = (
+    <>
+      <NavIcon d={icon} size={12} />
+      <span>{label}</span>
+      {badgeCount != null && badgeCount > 0 ? (
+        <span className="nav-badge">{badgeCount}</span>
+      ) : !available ? (
+        <span className="nav-badge" style={{ opacity: 0.7 }}>
+          قريباً
+        </span>
+      ) : null}
+    </>
+  );
+  if (!available) {
+    return <div className={cls}>{inner}</div>;
+  }
+  return (
+    <Link
+      href={`/${id}`}
+      className={cls}
+      prefetch
+      onMouseEnter={() => onPrefetch(id)}
+      onFocus={() => onPrefetch(id)}
+    >
+      {inner}
+    </Link>
+  );
+}
+
+function NavDropdownChevron() {
+  return (
+    <svg
+      className="nav-dropdown-chevron"
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function ActiveTransactionsNavDropdown({
+  items,
+  currentPage,
+  onTaskWork,
+  onPrefetch,
+  badges,
+}: {
+  items: ActiveTransactionNavItem[];
+  currentPage: PageId;
+  onTaskWork: boolean;
+  onPrefetch: (page: PageId) => void;
+  badges: Partial<Record<PageId, number>>;
+}) {
+  const inSection = isInActiveTransactionsSection(currentPage, onTaskWork);
+  const [open, setOpen] = useState(inSection);
+
+  useEffect(() => {
+    if (inSection) setOpen(true);
+  }, [inSection]);
+
+  const childActive = (tx: ActiveTransactionNavItem) =>
+    currentPage === tx.id ||
+    (tx.id === "active-primary-data" && onTaskWork);
+
+  return (
+    <div className={`nav-dropdown${open ? " open" : ""}`}>
+      <button
+        type="button"
+        className={`nav-item nav-dropdown-toggle nav-active-tx-group${inSection ? " active" : ""}`}
+        aria-expanded={open}
+        aria-controls="nav-active-transactions"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <NavIcon d={ACTIVE_TRANSACTIONS_GROUP_ICON} size={13} />
+        <span>{ACTIVE_TRANSACTIONS_GROUP}</span>
+        <NavDropdownChevron />
+      </button>
+      {open ? (
+        <div
+          id="nav-active-transactions"
+          className="nav-dropdown-items"
+          role="group"
+          aria-label={ACTIVE_TRANSACTIONS_GROUP}
+        >
+          {items.map((tx) => (
+            <ActiveTransactionNavRow
+              key={tx.id}
+              id={tx.id}
+              label={tx.label}
+              icon={tx.icon}
+              available={tx.available}
+              placeholder={tx.placeholder}
+              badgeCount={badges[tx.id]}
+              active={childActive(tx)}
+              onPrefetch={onPrefetch}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -93,6 +237,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => navRunsForRole(rolePages),
     [rolePages],
   );
+
+  const activeTransactionItems = useMemo(
+    () =>
+      ACTIVE_TRANSACTIONS_NAV.filter((item) => rolePages.includes(item.id)),
+    [rolePages],
+  );
+
+  const showActiveTransactionsGroup = activeTransactionItems.length > 0;
+  const activeTxBadges = useActiveTransactionNavBadges();
 
   const prefetchPage = useMemo(
     () => (page: PageId) => prefetchPrototypePage(queryClient, page),
@@ -108,11 +261,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (seg ?? "dashboard") as PageId;
   }, [pathname]);
 
+  const searchParams = useSearchParams();
+
   const poChrome = useMemo(
     () => (pathname ? resolvePoChrome(pathname) : null),
     [pathname],
   );
+  const myTasksChrome = useMemo(
+    () =>
+      pathname
+        ? resolveMyTasksChrome(
+            pathname,
+            currentPage === "active-primary-data"
+              ? searchParams.get("task")
+              : null,
+          )
+        : null,
+    [pathname, currentPage, searchParams],
+  );
   const inPoSection = pathname?.startsWith("/po") ?? false;
+  const onTaskWork =
+    (pathname?.startsWith("/my-tasks/") ?? false) ||
+    (currentPage === "active-primary-data" && Boolean(searchParams.get("task")));
 
   const def = ROLES[role];
   const chipName = authDisplayName ?? def.name;
@@ -121,7 +291,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const r = e.target.value as RoleId;
     setRole(r);
     const nextPages = ROLES[r].pages;
-    if (!nextPages.includes(currentPage)) {
+    if (!nextPages.includes(currentPage) && currentPage !== "my-tasks") {
       router.push("/dashboard");
     }
   }
@@ -130,6 +300,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     clearAuthSession();
     window.location.assign("/login");
   }
+
+  let activeTransactionsInserted = false;
 
   return (
     <div id="app">
@@ -169,33 +341,70 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </select>
         </div>
         <nav id="nav" aria-label="التنقل الرئيسي">
-          {navRuns.map((run, ri) => (
-            <div key={ri}>
-              {run.label ? (
-                <div className="sb-grp">
-                  <div className="sb-grp-lbl">{run.label}</div>
-                </div>
-              ) : null}
-              {run.items.map((item) => (
-                <NavRow
-                  key={item.id}
-                  item={item}
-                  active={
-                    currentPage === item.id ||
-                    (item.id === "po" && inPoSection)
+          {navRuns.map((run, ri) => {
+            const blocks: React.ReactNode[] = [];
+            blocks.push(
+              <div key={`run-${ri}`}>
+                {run.label ? (
+                  <div className="sb-grp">
+                    <div className="sb-grp-lbl">{run.label}</div>
+                  </div>
+                ) : null}
+                {run.items.map((item) => {
+                  const nodes: React.ReactNode[] = [
+                    <NavRow
+                      key={item.id}
+                      item={item}
+                      active={
+                        currentPage === item.id ||
+                        (item.id === "po" && inPoSection)
+                      }
+                      onPrefetch={prefetchPage}
+                    />,
+                  ];
+                  if (
+                    !activeTransactionsInserted &&
+                    showActiveTransactionsGroup &&
+                    item.id === "po"
+                  ) {
+                    activeTransactionsInserted = true;
+                    nodes.push(
+                      <ActiveTransactionsNavDropdown
+                        key="active-tx-dropdown"
+                        items={activeTransactionItems}
+                        currentPage={currentPage}
+                        onTaskWork={onTaskWork}
+                        onPrefetch={prefetchPage}
+                        badges={activeTxBadges}
+                      />,
+                    );
                   }
-                  onPrefetch={prefetchPage}
-                />
-              ))}
-            </div>
-          ))}
+                  return nodes;
+                })}
+              </div>,
+            );
+            return blocks;
+          })}
+          {!activeTransactionsInserted && showActiveTransactionsGroup ? (
+            <ActiveTransactionsNavDropdown
+              key="active-tx-dropdown-fallback"
+              items={activeTransactionItems}
+              currentPage={currentPage}
+              onTaskWork={onTaskWork}
+              onPrefetch={prefetchPage}
+              badges={activeTxBadges}
+            />
+          ) : null}
         </nav>
       </div>
       <div id="main">
         <div id="topbar">
           <div className="tb-left">
             <div className="tb-breadcrumb" id="tb-bc">
-              {poChrome?.breadcrumb ?? PAGE_BREADCRUMB[currentPage] ?? ""}
+              {poChrome?.breadcrumb ??
+                myTasksChrome?.breadcrumb ??
+                PAGE_BREADCRUMB[currentPage] ??
+                ""}
             </div>
             <div className="tb-title" id="page-title">
               {poChrome?.titlePo ? (
@@ -204,7 +413,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <PoNumber value={poChrome.titlePo} />
                 </span>
               ) : (
-                (poChrome?.title ?? PAGE_TITLES[currentPage] ?? currentPage)
+                (poChrome?.title ??
+                  myTasksChrome?.title ??
+                  PAGE_TITLES[currentPage] ??
+                  currentPage)
               )}
             </div>
           </div>

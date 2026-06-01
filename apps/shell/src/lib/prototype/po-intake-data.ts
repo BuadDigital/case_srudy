@@ -373,6 +373,17 @@ export function computeBusinessDueDate(
   return formatLocalIsoDate(due);
 }
 
+/** SLA deadline on the due business day — end of workday (17:00 local). */
+export function dueDateToDeadline(dueIso: string): Date | null {
+  const trimmed = dueIso.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+  const [y, m, day] = parts;
+  const d = new Date(y, m - 1, day, WORKDAY_END_HOUR, 0, 0, 0);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function isPastDue(dueIso: string): boolean {
   if (!dueIso) return false;
   const today = new Date();

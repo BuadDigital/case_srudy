@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
+import { ActiveTransactionPlaceholderView } from "@/components/views/ActiveTransactionPlaceholderView";
 import { MyTasksView } from "@/components/views/MyTasksView";
-import { AssignmentView } from "@/components/views/AssignmentView";
 import { BourseInquiryView } from "@/components/views/BourseInquiryView";
 import { CourtsView } from "@/components/views/CourtsView";
 import { DashboardView } from "@/components/views/DashboardView";
@@ -19,9 +20,24 @@ import type { PageId } from "@platform/types";
 
 const VIEWS: Partial<Record<PageId, ReactNode>> = {
   dashboard: <DashboardView />,
-  "my-tasks": <MyTasksView />,
+  "active-primary-data": (
+    <Suspense
+      fallback={
+        <div className="po-properties-page">
+          <p className="po-properties-loading">جاري تحميل المعاملات…</p>
+        </div>
+      }
+    >
+      <MyTasksView />
+    </Suspense>
+  ),
   "bourse-inquiry": <BourseInquiryView />,
-  assignment: <AssignmentView />,
+  "active-distribution": (
+    <ActiveTransactionPlaceholderView pageId="active-distribution" />
+  ),
+  "active-case-study": (
+    <ActiveTransactionPlaceholderView pageId="active-case-study" />
+  ),
   survey: <SurveyView />,
   keys: <KeysView />,
   failures: <FailuresView />,
@@ -41,6 +57,8 @@ export default async function PrototypePage({
 }) {
   const { page: raw } = await params;
   if (raw === "properties" || raw === "po") redirect("/po");
+  if (raw === "my-tasks") redirect("/active-primary-data");
+  if (raw === "assignment") redirect("/dashboard");
   if (!VALID_PAGE_IDS.has(raw as PageId)) notFound();
   const page = raw as PageId;
   const node = VIEWS[page];

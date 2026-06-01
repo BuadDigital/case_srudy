@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PoNumber } from "@/components/ui/PoNumber";
 import { StatValue } from "@/components/ui/StatValue";
 import {
   emptyProperty,
@@ -15,7 +16,7 @@ import {
   findPropertyInRecord,
   loadPendingBourseItems,
 } from "@/lib/prototype/po-intake-storage";
-import { poPropertiesPath } from "@/lib/po-routes";
+import { poPropertiesPath, poPropertyPath } from "@/lib/po-routes";
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import {
   hasFieldErrors,
@@ -167,96 +168,109 @@ export function BourseInquiryView() {
       </div>
 
       <div className={layoutClass}>
-        <div className="card po-bourse-queue">
-          <div className="card-header">
-            <span className="card-title">
-              قائمة الانتظار
-              {!loading ? (
-                <span className="badge b-prog">{pendingCount}</span>
-              ) : null}
-            </span>
+        <article className="po-properties-shell po-properties-shell--compact po-bourse-queue-box">
+          <header className="po-properties-hero po-properties-hero--compact po-bourse-queue-hero">
+            <div className="po-properties-hero-main">
+              <h2 className="po-properties-title">
+                <span>قائمة الانتظار</span>
+              </h2>
+              <div className="po-properties-meta">
+                {!loading && pendingCount > 0 ? (
+                  <span className="po-properties-meta-count">
+                    {pendingCount}{" "}
+                    {pendingCount === 1 ? "صك" : "صكوك"} بانتظار إكمال البورصة
+                  </span>
+                ) : null}
+              </div>
+            </div>
             <button
               type="button"
-              className="btn btn-sm"
+              className="btn btn-sm po-properties-add"
               disabled={loading}
               onClick={() => void refresh()}
             >
               تحديث
             </button>
-          </div>
+          </header>
 
           {loading ? (
-            <div className="po-bourse-empty">
-              <div className="po-bourse-empty-icon" aria-hidden>
-                …
-              </div>
-              <p className="po-bourse-empty-title">جاري التحميل</p>
-              <p className="po-bourse-empty-sub">يتم جلب قائمة الصكوك المعلّقة</p>
-            </div>
+            <p className="po-properties-loading">جاري تحميل قائمة الانتظار…</p>
           ) : items.length === 0 ? (
-            <div className="po-bourse-empty">
-              <div className="po-bourse-empty-icon" aria-hidden>
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M9 12l2 2 4-4" />
-                  <circle cx="12" cy="12" r="10" />
-                </svg>
-              </div>
-              <p className="po-bourse-empty-title">لا توجد صكوك بانتظار البورصة</p>
-              <p className="po-bourse-empty-sub">
-                عند تسجيل عقار جديد من إنفاذ دون إكمال بيانات البورصة، يظهر
-                هنا تلقائياً.
+            <div className="po-properties-empty">
+              <p>لا توجد صكوك بانتظار البورصة</p>
+              <p className="po-properties-hint" style={{ marginTop: 8 }}>
+                عند تسجيل عقار جديد من إنفاذ دون إكمال بيانات البورصة، يظهر هنا
+                تلقائياً.
               </p>
             </div>
           ) : (
-            <table className="tbl po-bourse-tbl" data-pending={loading}>
-              <thead>
-                <tr>
-                  <th>أمر العمل</th>
-                  <th>رقم الصك</th>
-                  <th>المالك</th>
-                  <th>الاستحقاق</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => {
-                  const active =
-                    selected?.poNumber === item.poNumber &&
-                    selected?.propertyId === item.propertyId;
-                  return (
-                    <tr
-                      key={`${item.poNumber}-${item.propertyId}`}
-                      className={active ? "po-bourse-row-active" : undefined}
-                    >
-                      <td className="id-cell" dir="ltr">
-                        {formatPoDisplay(item.poNumber)}
-                      </td>
-                      <td dir="ltr">{formatPendingBourseDeedDisplay(item)}</td>
-                      <td>{item.ownerName || "—"}</td>
-                      <td>{formatDateAr(item.dueDateAt)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className={`btn btn-sm${active ? "" : " btn-primary"}`}
+            <>
+              <div className="po-properties-tbl-wrap">
+                <table className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--bourse-queue">
+                  <colgroup>
+                    <col className="po-col-deed" />
+                    <col className="po-col-location" />
+                    <col className="po-col-type" />
+                    <col className="po-col-deed-status" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>رقم الصك</th>
+                      <th>أمر العمل</th>
+                      <th>المالك</th>
+                      <th>الاستحقاق</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, index) => {
+                      const active =
+                        selected?.poNumber === item.poNumber &&
+                        selected?.propertyId === item.propertyId;
+                      const deedLabel = formatPendingBourseDeedDisplay(item);
+
+                      return (
+                        <tr
+                          key={`${item.poNumber}-${item.propertyId}`}
+                          className={`po-properties-row${active ? " po-bourse-row-active" : ""}`}
                           onClick={() => void openItem(item)}
                         >
-                          {active ? "قيد الإكمال" : "إكمال البورصة"}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          <td>
+                            <span className="po-properties-deed">
+                              <span
+                                className="po-properties-row-idx"
+                                aria-hidden
+                              >
+                                {index + 1}
+                              </span>
+                              <span className="id-cell po-num-ltr">
+                                {deedLabel}
+                              </span>
+                            </span>
+                          </td>
+                          <td
+                            className="po-properties-cell-muted"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <PoNumber value={item.poNumber} link />
+                          </td>
+                          <td className="po-properties-cell-muted">
+                            {item.ownerName || "—"}
+                          </td>
+                          <td className="po-properties-cell-muted">
+                            {formatDateAr(item.dueDateAt)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="po-properties-hint">
+                اضغط الصف لفتح نموذج إكمال البورصة.
+              </p>
+            </>
           )}
-        </div>
+        </article>
 
         {selected ? (
           <div className="card po-bourse-form-panel">

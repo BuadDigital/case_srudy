@@ -1,4 +1,5 @@
 import type { NavItem, PageId, RoleDef, RoleId } from "@platform/types";
+import { ACTIVE_TRANSACTIONS_NAV } from "@/lib/prototype/active-transactions";
 
 export type { NavItem, PageId, RoleDef, RoleId };
 
@@ -14,10 +15,11 @@ export const ROLES: Record<RoleId, RoleDef> = {
     tc: "var(--purple)",
     pages: [
       "dashboard",
-      "my-tasks",
       "po",
+      "active-primary-data",
       "bourse-inquiry",
-      "assignment",
+      "active-distribution",
+      "active-case-study",
       "survey",
       "keys",
       "failures",
@@ -38,10 +40,11 @@ export const ROLES: Record<RoleId, RoleDef> = {
     tc: "var(--info)",
     pages: [
       "dashboard",
-      "my-tasks",
       "po",
+      "active-primary-data",
       "bourse-inquiry",
-      "assignment",
+      "active-distribution",
+      "active-case-study",
       "survey",
       "keys",
       "failures",
@@ -62,10 +65,11 @@ export const ROLES: Record<RoleId, RoleDef> = {
     tc: "var(--warning)",
     pages: [
       "dashboard",
-      "my-tasks",
       "po",
+      "active-primary-data",
       "bourse-inquiry",
-      "assignment",
+      "active-distribution",
+      "active-case-study",
       "survey",
       "keys",
       "failures",
@@ -83,7 +87,16 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "من",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
-    pages: ["dashboard", "my-tasks", "po", "bourse-inquiry", "assignment", "survey", "messages"],
+    pages: [
+      "dashboard",
+      "po",
+      "active-primary-data",
+      "bourse-inquiry",
+      "active-distribution",
+      "active-case-study",
+      "survey",
+      "messages",
+    ],
   },
   "case-specialist": {
     name: "أسامة الصالحي",
@@ -91,7 +104,16 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "أص",
     bg: "var(--success-bg)",
     tc: "var(--success)",
-    pages: ["dashboard", "my-tasks", "po", "bourse-inquiry", "failures", "messages"],
+    pages: [
+      "dashboard",
+      "po",
+      "active-primary-data",
+      "bourse-inquiry",
+      "active-distribution",
+      "active-case-study",
+      "failures",
+      "messages",
+    ],
   },
   "report-preparer": {
     name: "صالح الحبشي",
@@ -131,7 +153,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "أس",
     bg: "var(--info-bg)",
     tc: "var(--info)",
-    pages: ["dashboard", "my-tasks", "field-form", "messages"],
+    pages: ["dashboard", "field-form", "messages"],
   },
   "government-reviewer": {
     name: "خالد المرشدي",
@@ -139,7 +161,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "خم",
     bg: "var(--orange-bg)",
     tc: "var(--orange)",
-    pages: ["dashboard", "my-tasks", "messages"],
+    pages: ["dashboard", "messages"],
   },
   "engineering-office": {
     name: "مكتب الرياض الهندسي",
@@ -147,7 +169,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "ره",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
-    pages: ["dashboard", "my-tasks", "survey", "messages"],
+    pages: ["dashboard", "survey", "messages"],
   },
   "financial-officer": {
     name: "إيمان النهدي",
@@ -162,35 +184,24 @@ export const ROLES: Record<RoleId, RoleDef> = {
 export const NAV: NavItem[] = [
   { id: "dashboard", label: "لوحة التحكم", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", grp: null },
   {
-    id: "my-tasks",
-    label: "مهامي",
-    icon: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
-    grp: "قسم دراسة الحالة",
-  },
-  {
     id: "po",
     label: "أوامر العمل (PO)",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
     grp: "قسم دراسة الحالة",
   },
   {
-    id: "bourse-inquiry",
-    label: "استعلام البورصة",
-    icon: "M3 3h18v18H3zM7 7h10v4H7zM7 13h6v4H7z",
-    grp: "قسم دراسة الحالة",
-  },
-  {
-    id: "assignment",
-    label: "الإسناد والتوزيع",
-    icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
+    id: "survey",
+    label: "الرفع المساحي",
+    icon: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z",
     grp: null,
+    placeholder: true,
   },
-  { id: "survey", label: "الرفع المساحي", icon: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z", grp: null },
   {
     id: "keys",
     label: "إدارة المفاتيح",
     icon: "M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4",
     grp: null,
+    placeholder: true,
   },
   {
     id: "failures",
@@ -204,12 +215,14 @@ export const NAV: NavItem[] = [
     label: "طلبات التقييم",
     icon: "M9 11l3 3L22 4",
     grp: "قسم التقييم العقاري",
+    placeholder: true,
   },
   {
     id: "field-form",
     label: "نموذج المعاين",
     icon: "M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 0 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
     grp: null,
+    placeholder: true,
   },
   {
     id: "messages",
@@ -217,14 +230,22 @@ export const NAV: NavItem[] = [
     icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
     grp: "عام",
     badge: "3",
+    placeholder: true,
   },
   {
     id: "financial",
     label: "التقارير المالية",
     icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
     grp: null,
+    placeholder: true,
   },
-  { id: "kpi", label: "مؤشرات الأداء", icon: "M18 20V10M12 20V4M6 20v-6", grp: null },
+  {
+    id: "kpi",
+    label: "مؤشرات الأداء",
+    icon: "M18 20V10M12 20V4M6 20v-6",
+    grp: null,
+    placeholder: true,
+  },
   {
     id: "users",
     label: "إدارة المستخدمين",
@@ -236,16 +257,19 @@ export const NAV: NavItem[] = [
     label: "المحاكم والدوائر",
     icon: "M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6",
     grp: "الإدارة",
+    placeholder: true,
   },
 ];
 
 export const PAGE_TITLES: Record<PageId, string> = {
   dashboard: "لوحة التحكم",
-  "my-tasks": "مهامي",
+  "my-tasks": "تنفيذ المعاملة",
+  "active-primary-data": "البيانات الأولية",
+  "active-distribution": "توزيع المعاملات",
+  "active-case-study": "دراسة حالة العقار",
   po: "أوامر العمل",
-  "bourse-inquiry": "استعلام البورصة",
+  "bourse-inquiry": "استعلام بورصة",
   properties: "العقارات",
-  assignment: "الإسناد والتوزيع",
   survey: "الرفع المساحي",
   keys: "إدارة المفاتيح",
   failures: "إدارة التعذرات",
@@ -260,11 +284,13 @@ export const PAGE_TITLES: Record<PageId, string> = {
 
 export const PAGE_BREADCRUMB: Record<PageId, string> = {
   dashboard: "الرئيسية",
-  "my-tasks": "دراسة الحالة",
+  "my-tasks": "دراسة الحالة / المعاملات النشطة",
+  "active-primary-data": "دراسة الحالة / المعاملات النشطة / البيانات الأولية",
+  "active-distribution": "دراسة الحالة / المعاملات النشطة / توزيع المعاملات",
+  "active-case-study": "دراسة الحالة / المعاملات النشطة / دراسة حالة العقار",
   po: "دراسة الحالة",
-  "bourse-inquiry": "دراسة الحالة",
+  "bourse-inquiry": "دراسة الحالة / المعاملات النشطة / استعلام بورصة",
   properties: "دراسة الحالة",
-  assignment: "دراسة الحالة",
   survey: "دراسة الحالة",
   keys: "دراسة الحالة",
   failures: "دراسة الحالة",
@@ -404,7 +430,11 @@ export const MOCK_MESSAGES: MessagePreview[] = [
   { from: "أحمد سعيد", dept: "التقييم العقاري", preview: "نموذج معاينة E-4402 مكتمل ومرسل", time: "أمس", unread: false },
 ];
 
-export const VALID_PAGE_IDS = new Set<PageId>(NAV.map((n) => n.id));
+export const VALID_PAGE_IDS = new Set<PageId>([
+  ...NAV.map((n) => n.id),
+  ...ACTIVE_TRANSACTIONS_NAV.map((n) => n.id),
+  "my-tasks",
+]);
 
 export const ROLE_OPTIONS: { group: string; value: RoleId; label: string }[] = [
   { group: "الإدارة", value: "cdo", label: "سليمان — مسؤول التحول الرقمي (CDO)" },

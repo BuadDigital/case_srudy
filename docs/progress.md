@@ -1,6 +1,6 @@
 # Project Progress — Ejada Internal (نظام إجادة الداخلي)
 
-**Last updated:** 20 May 2026  
+**Last updated:** 1 June 2026  
 **Purpose:** Working log of what has been implemented in this case-study repo (for handoff and documentation).
 
 ---
@@ -324,13 +324,14 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 | Item | Status |
 |------|--------|
-| Assignment & distribution screen | Mock UI (`AssignmentView.tsx`), not wired to API |
+| **توزيع المعاملات** / **دراسة حالة العقار** | Sidebar placeholders (`placeholder: true`) — red nav text, `ActiveTransactionPlaceholderView.tsx` |
 | Upload decree/reg files to server | Filename only in DB; preview in `localStorage` |
-| Failures (تعذر) | `localStorage` only |
+| Failures (تعذر) | `localStorage` only; no احتمال تعذر vs تعذر approval workflow yet |
 | Property workflow (مسح / تقييم / دراسة) | Mock stages on list rows |
 | Dashboard KPIs for PO | Mix of API + legacy mock constants where not refreshed |
 | Edit PO number after create | Locked in UI |
 | Export PO/properties | Not implemented |
+| Workflow tasks persistence | `tasks-storage.ts` — `localStorage` + sync from PO records; not PostgreSQL |
 
 ---
 
@@ -351,7 +352,165 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 ---
 
-## 9. Suggested next steps (not done yet)
+## 9. Active transactions & البيانات الأولية (June 2026 session)
+
+**Goal:** Replace the old in-page “transaction type” dropdown with a **sidebar group** under أوامر العمل, implement **البيانات الأولية** as a workflow task queue, polish **استعلام بورصة**, and remove the standalone **الإسناد والتوزيع** section.
+
+---
+
+### 9.1 Navigation & routing
+
+| Change | Details |
+|--------|---------|
+| **Sidebar group** | **المعاملات النشطة** — expandable dropdown under **أوامر العمل (PO)** in `AppShell.tsx` |
+| **Sub-routes** | `active-primary-data`, `bourse-inquiry`, `active-distribution`, `active-case-study` |
+| **Redirects** | `/my-tasks` → `/active-primary-data`; old `/assignment` → `/dashboard` |
+| **Task work URL** | Row click opens `/my-tasks/[taskId]` (`MyTaskWorkView.tsx`) — unchanged |
+| **List home** | `myTasksPath()` → `/active-primary-data` (`my-task-routes.ts`) |
+
+**Config files:**
+
+- `apps/shell/src/lib/prototype/active-transactions.ts` — nav items, `filterTasksForPrimaryData`, `taskMatchesBourseInquiry`, placeholder flags
+- `apps/shell/src/lib/prototype/constants.ts` — `PageId`s, roles, breadcrumbs, `PAGE_TITLES`
+- `packages/types/src/navigation.ts` — shared page ids
+- `apps/shell/src/app/(app)/[page]/page.tsx` — view map
+
+**Removed:**
+
+- **الإسناد والتوزيع** nav section and `AssignmentView.tsx`
+- In-page transaction-type dropdown on list views
+
+**Moved:**
+
+- **حمل الفريق الحالي** → dashboard card `TeamCurrentLoadCard.tsx` (manager roles)
+
+---
+
+### 9.2 Sidebar UX (badges & placeholders)
+
+| Feature | Implementation |
+|---------|----------------|
+| **Placeholder routes** | `active-distribution`, `active-case-study` + some legacy NAV mocks use `placeholder: true` → red text via `.nav-item-dummy` (no «تجريبي» badge text) |
+| **Group toggle style** | Parent **المعاملات النشطة** uses grey `.nav-active-tx-group`, not red |
+| **Count badges** | Red badges on **البيانات الأولية** and **استعلام بورصة** via `use-active-transaction-nav-badges.ts` (open primary tasks + pending bourse count) |
+
+---
+
+### 9.3 البيانات الأولية list (`MyTasksView.tsx`)
+
+**Route:** `/active-primary-data`  
+**Data:** `useWorkflowTasksQuery()` + `loadPoRecords()` → `syncTasksFromPoRecords()` → `tasksForRole()` → `filterTasksForPrimaryData()` (phase `enfath`, kind `case-study-property`) → open/blocked only.
+
+**Table columns (RTL — first column = right / start of reading order):**
+
+| # | Column | Source |
+|---|--------|--------|
+| 1 | **رقم العقار** | `formatPropertySlotOnPo` → e.g. `3/12` |
+| 2 | **أمر العمل** | `PoNumber` link |
+| 3 | **نوع الإسناد** | PO `assignmentType` + badge |
+| 4 | **أخصائي الإسناد** | PO `assignmentSpecialist` |
+| 5 | **المدة المتبقية** | Countdown to PO `dueDateAt` end-of-day (`T23:59:59`), format `days.hh.mm.ss`, ticks every 1s |
+
+**Removed from this list (per UX requests):**
+
+- رقم الصك, الموقع, التصنيف/النوع, حالة الصك, الحالة, الأخصائي column, eye/edit actions, مفتوحة/مكتملة filters, أوامر العمل button
+
+**Row actions:** Click row → `myTaskPath(task.id)` → full workflow in `MyTaskWorkView.tsx`.
+
+**Row builder:** `apps/shell/src/lib/prototype/my-task-row.ts` — `buildPrimaryDataTableRow`, `formatRemainingDuration`, `findPropertyForTask`.
+
+---
+
+### 9.4 Table layout — white space & Tailwind
+
+**Problem (root causes):**
+
+1. `prototype.css` **compact** column rules were defined **before** base `.po-properties-tbl .po-col-*` rules → base widths won → table shrank to content (~60% empty area in RTL).
+2. **أخصائي الإسناد** at **32%** with short text looked like a huge gap before **المدة المتبقية**.
+3. `<colgroup>` + class-based `%` widths are fragile when rules conflict.
+
+**Fix (current approach):**
+
+- **البيانات الأولية** table uses **Tailwind** on `th`/`td` directly (`table-fixed w-full`, `w-[12%]` … `w-[28%]` summing to 100%).
+- Constants `primaryTh` / `primaryTd` at top of `MyTasksView.tsx`.
+- Removed `po-properties-tbl--primary-queue` block from `prototype.css` (no longer used for this screen).
+- Shell card still uses `po-properties-shell`, `po-properties-hero--compact`, etc.
+
+**Tailwind in repo:** `apps/shell/src/app/globals.css` has `@import "tailwindcss"`. Most prototype screens still use `prototype.css` + `registration.css`; new layout-heavy UI can use Tailwind (as on this table).
+
+**Column width split (primary queue):** 12% · 18% · 15% · 27% · 28%
+
+---
+
+### 9.5 استعلام بورصة (`BourseInquiryView.tsx`)
+
+- Kept **bourse-specific layout** (stats, note, split form panel).
+- **Queue list** styled like البيانات الأولية (`po-properties-shell--compact`, `po-properties-tbl--compact po-properties-tbl--bourse-queue`).
+- Data: `loadPendingBourseItems()` from API (not workflow task list).
+- Bourse table columns: رقم الصك, أمر العمل, المالك, الاستحقاق.
+
+**Optional follow-up:** Apply same Tailwind column pattern as `MyTasksView` if bourse queue shows layout gaps.
+
+---
+
+### 9.6 Workflow tasks architecture (prototype)
+
+| Piece | Role |
+|-------|------|
+| `tasks-storage.ts` | `WorkflowTask` list in `localStorage`; `syncTasksFromPoRecords` creates/updates tasks per PO property slot |
+| `po-intake-storage.ts` | API-backed PO/property data; modified in this session (see git) |
+| `MyTaskWorkView.tsx` | 3-phase workflow UI (إنفاذ → بورصة → …) for a single task |
+| `failures-storage.ts` | تعذر still immediate/local — not discussed as implemented |
+
+**Primary data filter:** `task.phase === "enfath"` and `task.kind === "case-study-property"` (`active-transactions.ts`).
+
+---
+
+### 9.7 Styles touched (`prototype.css`)
+
+| Class / area | Notes |
+|--------------|--------|
+| `.po-properties-tbl-wrap` | `width: 100%` |
+| `.po-properties-tbl--compact` | Must stay **after** base `.po-properties-tbl` col rules |
+| `.po-properties-hero--compact` | Tighter padding (`10px 16px 8px`) |
+| `.po-properties-tbl--bourse-queue` | 4-column widths for bourse list |
+| ~~`.po-properties-tbl--primary-queue`~~ | **Removed** — primary list uses Tailwind in component |
+
+---
+
+### 9.8 Key file map (active transactions)
+
+| Area | Path |
+|------|------|
+| Primary data list | `apps/shell/src/components/views/MyTasksView.tsx` |
+| Task work screen | `apps/shell/src/components/views/MyTaskWorkView.tsx` |
+| Bourse | `apps/shell/src/components/views/BourseInquiryView.tsx` |
+| Placeholders | `apps/shell/src/components/views/ActiveTransactionPlaceholderView.tsx` |
+| Sidebar | `apps/shell/src/components/views/AppShell.tsx` |
+| Nav config | `apps/shell/src/lib/prototype/active-transactions.ts` |
+| Routes | `apps/shell/src/lib/my-task-routes.ts`, `apps/shell/src/lib/my-tasks-chrome.ts` |
+| Row data | `apps/shell/src/lib/prototype/my-task-row.ts` |
+| Tasks | `apps/shell/src/lib/prototype/tasks-storage.ts` |
+| Nav badges hook | `apps/shell/src/lib/query/use-active-transaction-nav-badges.ts` |
+| Dashboard load card | `apps/shell/src/components/views/TeamCurrentLoadCard.tsx` |
+| Styles | `packages/design-system/src/styles/prototype.css` |
+
+---
+
+### 9.9 Not done / continue later
+
+| Item | Notes |
+|------|--------|
+| **توزيع المعاملات** | Placeholder page only — build real distribution UI |
+| **دراسة حالة العقار** | Placeholder page only |
+| **Bourse queue Tailwind** | Still on `po-properties-tbl--bourse-queue` CSS — migrate if gaps appear |
+| **احتمال تعذر vs تعذر** | Approval workflow discussed, not implemented |
+| **Tasks in PostgreSQL** | Still localStorage sync from PO |
+| **Commit** | Session changes may be uncommitted — run `git status` before PR |
+
+---
+
+## 10. Suggested next steps (not done yet)
 
 **Users (from Phase 1):**
 
@@ -374,7 +533,7 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 ---
 
-## 10. Session changelog (high level)
+## 11. Session changelog (high level)
 
 1. Fixed dev environment (npm, tooling notes).  
 2. Designed and implemented user persistence from HR / Proc / CRM wizards.  
@@ -389,6 +548,11 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 11. **PO workflow refactor:** Header-only intake, `expectedPropertyCount`, split Enfath vs bourse flows, `PoPropertyEnfathForm` replaces monolithic `PoPropertyForm`.  
 12. **Alignment fixes:** Identifier types + bourse validation on client/server; ASP.NET field-error parsing; property insert uses server-generated IDs (avoids concurrency 500).  
 13. **LAN dev:** `dev-lan.mjs`, `dev:stop`, `dev:api`; Wi‑Fi URL for shared testing.  
+14. **Active transactions (Jun 2026):** Sidebar group **المعاملات النشطة** under PO; routes `active-primary-data`, `bourse-inquiry`, placeholders for distribution/case study.  
+15. **Removed** standalone **الإسناد والتوزيع** (`AssignmentView`); **حمل الفريق الحالي** on dashboard.  
+16. **البيانات الأولية:** `MyTasksView` workflow queue; columns رقم العقار, PO, نوع الإسناد, أخصائي, countdown; removed رقم الصك and old filters/actions.  
+17. **Layout:** Fixed table white space (CSS specificity + Tailwind on primary table); compact hero.  
+18. **Sidebar:** Red dummy nav items, badge counts for primary + bourse queues.  
 
 ---
 

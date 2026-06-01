@@ -16,12 +16,15 @@ import {
   usePoListRowsQuery,
   usePropertyListItemsQuery,
 } from "@/lib/query/prototype-queries";
+import { TeamCurrentLoadCard } from "@/components/views/TeamCurrentLoadCard";
 
 const MGR_ROLES = new Set([
   "general-manager",
   "section-supervisor",
   "operations-coordinator",
 ]);
+
+const TEAM_LOAD_ROLES = new Set([...MGR_ROLES, "cdo"]);
 
 function teamTint(t: TeamKind): { bg: string; fg: string } {
   if (t === "internal") return { bg: "var(--info-bg)", fg: "var(--info)" };
@@ -33,6 +36,7 @@ export function DashboardView() {
   const router = useRouter();
   const { role } = usePrototype();
   const mgr = MGR_ROLES.has(role);
+  const showTeamLoad = TEAM_LOAD_ROLES.has(role);
   const { data: poRows } = usePoListRowsQuery();
   const { data: propertyItems } = usePropertyListItemsQuery();
 
@@ -81,6 +85,12 @@ export function DashboardView() {
           </div>
         </div>
       </div>
+
+      {showTeamLoad ? (
+        <div style={{ marginBottom: 16 }}>
+          <TeamCurrentLoadCard />
+        </div>
+      ) : null}
 
       {mgr ? (
         <div className="grid-2" style={{ marginBottom: 16 }}>

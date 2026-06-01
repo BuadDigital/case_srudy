@@ -2,10 +2,12 @@
 export type PageId =
   | "dashboard"
   | "my-tasks"
+  | "active-primary-data"
+  | "active-distribution"
+  | "active-case-study"
   | "po"
   | "bourse-inquiry"
   | "properties"
-  | "assignment"
   | "survey"
   | "keys"
   | "failures"
@@ -38,6 +40,8 @@ export type NavItem = {
   icon: string;
   grp: string | null;
   badge?: string;
+  /** Prototype / not implemented — red in sidebar */
+  placeholder?: boolean;
 };
 
 export type RoleDef = {
@@ -73,10 +77,12 @@ export function isPageId(value: string): value is PageId {
   return (
     value === "dashboard" ||
     value === "my-tasks" ||
+    value === "active-primary-data" ||
+    value === "active-distribution" ||
+    value === "active-case-study" ||
     value === "po" ||
     value === "bourse-inquiry" ||
     value === "properties" ||
-    value === "assignment" ||
     value === "survey" ||
     value === "keys" ||
     value === "failures" ||
