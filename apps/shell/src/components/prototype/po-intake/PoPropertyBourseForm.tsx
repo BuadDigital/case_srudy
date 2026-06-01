@@ -20,9 +20,15 @@ type Props = {
     key: K,
     value: PoPropertyIntake[K],
   ) => void;
+  showIntroNote?: boolean;
 };
 
-export function PoPropertyBourseForm({ property, fieldErrors, onPatch }: Props) {
+export function PoPropertyBourseForm({
+  property,
+  fieldErrors,
+  onPatch,
+  showIntroNote = true,
+}: Props) {
   const propertyTypes = useMemo(() => {
     const c = property.classification;
     return c ? (PROPERTY_CLASSIFICATIONS[c] ?? []) : [];
@@ -30,10 +36,12 @@ export function PoPropertyBourseForm({ property, fieldErrors, onPatch }: Props) 
 
   return (
     <>
-      <div className="note note-info" style={{ marginBottom: 12 }}>
-        بيانات البورصة — التصنيف ونوع العقار من القائمة الهرمية المعتمدة في
-        النظام (5 تصنيفات / 47 نوعاً).
-      </div>
+      {showIntroNote ? (
+        <div className="note note-info" style={{ marginBottom: 12 }}>
+          بيانات البورصة — التصنيف ونوع العقار من القائمة الهرمية المعتمدة في
+          النظام (5 تصنيفات / 47 نوعاً).
+        </div>
+      ) : null}
 
       <div className="reg-fg2">
         <RegSelect

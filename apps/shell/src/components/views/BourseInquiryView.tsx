@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { PoNumber } from "@/components/ui/PoNumber";
 import { StatValue } from "@/components/ui/StatValue";
 import {
@@ -16,7 +15,6 @@ import {
   findPropertyInRecord,
   loadPendingBourseItems,
 } from "@/lib/prototype/po-intake-storage";
-import { poPropertiesPath, poPropertyPath } from "@/lib/po-routes";
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import {
   hasFieldErrors,
@@ -30,7 +28,6 @@ import {
 import type { PendingBoursePropertyDto } from "@platform/api-client";
 
 export function BourseInquiryView() {
-  const router = useRouter();
   const [items, setItems] = useState<PendingBoursePropertyDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PendingBoursePropertyDto | null>(null);
@@ -323,15 +320,6 @@ export function BourseInquiryView() {
                   onClick={() => void handleSubmit()}
                 >
                   {saving ? "جاري الحفظ…" : "حفظ وإكمال البورصة"}
-                </button>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() =>
-                    router.push(poPropertiesPath(selected.poNumber))
-                  }
-                >
-                  عرض أمر العمل
                 </button>
               </div>
             </div>

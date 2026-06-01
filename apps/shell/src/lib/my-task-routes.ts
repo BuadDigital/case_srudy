@@ -2,6 +2,14 @@ export function myTasksPath(): string {
   return "/active-primary-data";
 }
 
+export function activeDistributionPath(): string {
+  return "/active-distribution";
+}
+
+export function distributionTaskPath(taskId: string): string {
+  return `/active-distribution?task=${encodeURIComponent(taskId)}`;
+}
+
 export function primaryDataTaskPath(taskId: string): string {
   return `/active-primary-data?task=${encodeURIComponent(taskId)}`;
 }

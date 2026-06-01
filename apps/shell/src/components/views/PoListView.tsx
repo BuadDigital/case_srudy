@@ -25,6 +25,7 @@ import {
   canDeletePo,
   canEditPoHeader,
   canReceivePo,
+  canViewPoEye,
   isPoViewOnly,
 } from "@/lib/prototype/po-roles";
 
@@ -36,6 +37,7 @@ export function PoListView() {
   const showIntake = canReceivePo(role);
   const showEdit = canEditPoHeader(role);
   const showDelete = canDeletePo(role);
+  const showEye = canViewPoEye(role);
   const [toast, setToast] = useState<string | null>(null);
 
   const { data: rows } = usePoListRowsQuery();
@@ -132,15 +134,15 @@ export function PoListView() {
               <th>تاريخ الاستلام</th>
               <th>تاريخ الاستحقاق</th>
               <th>الأخصائي</th>
-              <th aria-label="عرض العقارات" />
-              <th />
+              {showEye ? <th aria-label="عرض العقارات" /> : null}
+              {showEdit || showDelete ? <th /> : null}
             </tr>
           </thead>
           <tbody>
             {statsReady && list.length === 0 ? (
               <tr className="tbl-empty">
                 <td
-                  colSpan={11}
+                  colSpan={9 + (showEye ? 1 : 0) + (showEdit || showDelete ? 1 : 0)}
                   style={{ textAlign: "center", color: "var(--text3)" }}
                 >
                   {viewOnly
@@ -197,12 +199,15 @@ export function PoListView() {
                     )}
                   </td>
                   <td style={{ fontSize: 11 }}>{p.specialist}</td>
-                  <td>
-                    <EyeIconButton
-                      href={poPropertiesPath(p.id)}
-                      label={`عرض عقارات ${p.id}`}
-                    />
-                  </td>
+                  {showEye ? (
+                    <td>
+                      <EyeIconButton
+                        href={poPropertiesPath(p.id)}
+                        label={`عرض عقارات ${p.id}`}
+                      />
+                    </td>
+                  ) : null}
+                  {showEdit || showDelete ? (
                   <td>
                     <div
                       style={{ display: "flex", gap: 4, flexWrap: "wrap" }}
@@ -229,6 +234,7 @@ export function PoListView() {
                       ) : null}
                     </div>
                   </td>
+                  ) : null}
                 </tr>
               ))
             ) : null}

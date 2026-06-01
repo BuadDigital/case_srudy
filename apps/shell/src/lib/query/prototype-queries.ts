@@ -49,6 +49,7 @@ export function prefetchPrototypePage(
     case "failures":
     case "keys":
     case "active-primary-data":
+    case "active-distribution":
       void queryClient.prefetchQuery({
         queryKey: prototypeKeys.poRecords(),
         queryFn: loadPoRecords,

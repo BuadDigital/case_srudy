@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
+import { ActiveDistributionView } from "@/components/views/ActiveDistributionView";
 import { ActiveTransactionPlaceholderView } from "@/components/views/ActiveTransactionPlaceholderView";
 import { MyTasksView } from "@/components/views/MyTasksView";
 import { BourseInquiryView } from "@/components/views/BourseInquiryView";
@@ -33,7 +34,15 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   ),
   "bourse-inquiry": <BourseInquiryView />,
   "active-distribution": (
-    <ActiveTransactionPlaceholderView pageId="active-distribution" />
+    <Suspense
+      fallback={
+        <div className="po-properties-page">
+          <p className="po-properties-loading">جاري تحميل المعاملات…</p>
+        </div>
+      }
+    >
+      <ActiveDistributionView />
+    </Suspense>
   ),
   "active-case-study": (
     <ActiveTransactionPlaceholderView pageId="active-case-study" />

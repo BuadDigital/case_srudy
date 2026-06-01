@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { DistributionPartiesForm } from "@/components/prototype/distribution/DistributionPartiesForm";
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import { TaskWorkChrome } from "@/components/prototype/primary-data/TaskWorkChrome";
 import { PoEditShell } from "@/components/prototype/po-intake/PoEditShell";
@@ -28,8 +29,10 @@ import {
   formatPoDisplay,
   formatPropertyDeedDisplay,
   isBourseInquiryIdentifier,
+  skipsBourseForIdentifier,
   type AssignmentType,
   type PoPropertyIntake,
+  type PropertyIdentifierType,
 } from "@/lib/prototype/po-intake-data";
 import {
   addPropertyToPo,
@@ -46,8 +49,10 @@ import {
   completeChildTask,
   confirmTaskDistribution,
   defaultDistribution,
+  distributionValidationError,
   engineeringOfficeAvailable,
   loadWorkflowTasks,
+  migrateDistribution,
   patchTaskDistribution,
   resolveTaskObstruction,
   TASKS_CHANGED_EVENT,
@@ -79,11 +84,17 @@ export function CaseStudyTaskWork({
   onRefresh,
   layout = "page",
   onClose,
+  onEnfathSaved,
 }: {
   task: WorkflowTask;
   onRefresh: () => void;
   layout?: "page" | "panel";
   onClose?: () => void;
+  /** After successful إنفاذ save (panel flow): advance or route by identifier type. */
+  onEnfathSaved?: (
+    taskId: string,
+    meta: { identifierType: PropertyIdentifierType },
+  ) => void | Promise<void>;
 }) {
   const router = useRouter();
   const exit = onClose ?? (() => router.push(myTasksPath()));
@@ -96,11 +107,11 @@ export function CaseStudyTaskWork({
   const [hasPriorSurvey, setHasPriorSurvey] = useState(false);
   const [loading, setLoading] = useState(true);
   const [distribution, setDistribution] = useState<TaskDistributionDraft>(
-    () => task.distribution ?? defaultDistribution(),
+    () => migrateDistribution(task.distribution),
   );
 
   useEffect(() => {
-    setDistribution(task.distribution ?? defaultDistribution());
+    setDistribution(migrateDistribution(task.distribution));
   }, [task.id, task.distribution]);
 
   const isSupervisor = role === "section-supervisor";
@@ -149,39 +160,28 @@ export function CaseStudyTaskWork({
     [],
   );
 
-  const showEngineering = engineeringOfficeAvailable(
-    property,
-    hasPriorSurvey,
-    distribution.fieldInspectorRecommendedVisit,
-  );
+  const showEngineering = engineeringOfficeAvailable(property, hasPriorSurvey);
   const requiresSurvey = classificationRequiresSurvey(property.classification);
 
   useEffect(() => {
-    if (loading || task.phase !== "distribution" || requiresSurvey) return;
-    if (
-      distribution.fieldInspectorRecommendedVisit ||
-      distribution.engineeringOffice
-    ) {
-      const next = {
+    if (loading || task.phase !== "distribution" || showEngineering) return;
+    if (distribution.engineeringOffice) {
+      const next = migrateDistribution({
         ...distribution,
-        fieldInspectorRecommendedVisit: false,
         engineeringOffice: false,
-      };
+        engineeringOfficeId: "",
+      });
       setDistribution(next);
       patchTaskDistribution(task.id, next);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync once when classification excludes survey
-  }, [loading, task.phase, task.id, requiresSurvey, property.classification]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when engineering unavailable
+  }, [loading, task.phase, task.id, showEngineering, property.classification]);
 
   function engineeringUnavailableHint(): string | null {
-    if (!requiresSurvey) return null;
-    if (hasPriorSurvey) return "يوجد رفع مساحي سابق لنفس الصك";
-    if (!distribution.fieldInspector) {
-      return "المكتب الهندسي اختياري — اختر المعاين الميداني أولاً إن رغبت بتفعيله";
+    if (!requiresSurvey) {
+      return "المكتب الهندسي غير متاح: تصنيف «وحدة داخل مبنى» لا يتطلب رفعاً مساحياً.";
     }
-    if (!distribution.fieldInspectorRecommendedVisit) {
-      return "المكتب الهندسي اختياري — فعّل توصية المعاين بزيارة ميدانية لتفعيله";
-    }
+    if (hasPriorSurvey) return "يوجد رفع مساحي سابق لنفس الصك — لا حاجة لمكتب هندسي.";
     return null;
   }
 
@@ -205,10 +205,16 @@ export function CaseStudyTaskWork({
       return;
     }
 
+    const persisted = skipsBourseForIdentifier(property.identifierType)
+      ? { ...property, bourseDataCompleted: true }
+      : isBourseInquiryIdentifier(property.identifierType)
+        ? { ...property, bourseDataCompleted: false }
+        : property;
+
     setSaving(true);
     const result = task.propertyId
-      ? await updatePropertyInPo(task.poNumber, task.propertyId, property)
-      : await addPropertyToPo(task.poNumber, property, {
+      ? await updatePropertyInPo(task.poNumber, task.propertyId, persisted)
+      : await addPropertyToPo(task.poNumber, persisted, {
           assignToTaskId: task.id,
         });
     setSaving(false);
@@ -219,10 +225,21 @@ export function CaseStudyTaskWork({
       return;
     }
 
-    if (result.ok && task.propertyId) {
-      advanceTaskAfterEnfath(task.id, result.data);
+    if (result.ok) {
+      const advanced = skipsBourseForIdentifier(property.identifierType)
+        ? { ...result.data, bourseDataCompleted: true }
+        : result.data;
+      if (task.propertyId) {
+        advanceTaskAfterEnfath(task.id, advanced);
+      }
+      if (onEnfathSaved) {
+        await onEnfathSaved(task.id, {
+          identifierType: property.identifierType,
+        });
+      } else {
+        onRefresh();
+      }
     }
-    onRefresh();
   }
 
   async function saveBourse() {
@@ -313,16 +330,12 @@ export function CaseStudyTaskWork({
 
   function confirmDistribution() {
     setFormError(null);
-    const selected =
-      distribution.fieldInspector ||
-      distribution.governmentReviewer ||
-      distribution.engineeringOffice;
-    if (!selected) {
-      setFormError("اختر طرفاً واحداً على الأقل للتوزيع.");
-      return;
-    }
-    if (distribution.engineeringOffice && !showEngineering) {
-      setFormError("المكتب الهندسي غير متاح لهذا العقار وفق الشروط.");
+    const validation = distributionValidationError(
+      distribution,
+      showEngineering,
+    );
+    if (validation) {
+      setFormError(validation);
       return;
     }
 
@@ -335,17 +348,10 @@ export function CaseStudyTaskWork({
   }
 
   function patchDistribution(patch: Partial<TaskDistributionDraft>) {
-    const next = { ...distribution, ...patch };
-    if (!classificationRequiresSurvey(property.classification)) {
-      next.fieldInspectorRecommendedVisit = false;
+    const next = migrateDistribution({ ...distribution, ...patch });
+    if (!showEngineering) {
       next.engineeringOffice = false;
-    }
-    if (!next.fieldInspector) {
-      next.fieldInspectorRecommendedVisit = false;
-      next.engineeringOffice = false;
-    }
-    if (!next.fieldInspectorRecommendedVisit) {
-      next.engineeringOffice = false;
+      next.engineeringOfficeId = "";
     }
     setDistribution(next);
     patchTaskDistribution(task.id, next);
@@ -354,8 +360,13 @@ export function CaseStudyTaskWork({
 
   const bourseInquiryFastPath =
     task.phase === "enfath" && isBourseInquiryIdentifier(property.identifierType);
-  const showEnfathStep = task.phase === "enfath" && !bourseInquiryFastPath;
-  const showBourseStep = task.phase === "bourse" || bourseInquiryFastPath;
+  /** Primary-data panel: استعلام بورصة fields live on «استعلام بورصة» tab only. */
+  const bourseInquiryPanelOnly =
+    layout === "panel" && bourseInquiryFastPath;
+  const showEnfathStep =
+    task.phase === "enfath" && (!bourseInquiryFastPath || bourseInquiryPanelOnly);
+  const showBourseStep =
+    (task.phase === "bourse" || bourseInquiryFastPath) && !bourseInquiryPanelOnly;
   const showDistribution = task.phase === "distribution";
   const showPrimarySave =
     isSpecialist &&
@@ -534,7 +545,11 @@ export function CaseStudyTaskWork({
             fieldErrors={fieldErrors}
             onPatch={patchProperty}
             poNumber={task.poNumber}
+            fieldsMode={
+              bourseInquiryFastPath ? "bourse-inquiry-primary" : "all"
+            }
             showStageNote={layout !== "panel"}
+            hideBoursePathStatus={bourseInquiryPanelOnly}
           />
         </RegistrationFormCard>
       ) : null}
@@ -572,96 +587,19 @@ export function CaseStudyTaskWork({
 
       {showDistribution ? (
         <RegistrationFormCard
-          title="توزيع الأطراف"
-          subtitle="يمكن اختيار أكثر من طرف في آن واحد (مسار متوازٍ)"
+          title={layout === "panel" ? undefined : "توزيع المعاملة على الأطراف"}
+          subtitle={
+            layout === "panel"
+              ? undefined
+              : "فعّل الطرف ثم اختر المسؤول — يمكن الإسناد لأكثر من طرف معاً"
+          }
         >
-          <div className="my-tasks-party-grid">
-            <label className="my-tasks-party-card">
-              <input
-                type="checkbox"
-                checked={distribution.fieldInspector}
-                onChange={(e) =>
-                  patchDistribution({ fieldInspector: e.target.checked })
-                }
-              />
-              <div className="my-tasks-party-body">
-                <p className="my-tasks-party-title">معاين ميداني</p>
-                <p className="my-tasks-party-desc">
-                  قسم التقييم العقاري — زيارة ميدانية
-                </p>
-              </div>
-            </label>
-
-            <label className="my-tasks-party-card">
-              <input
-                type="checkbox"
-                checked={distribution.governmentReviewer}
-                onChange={(e) =>
-                  patchDistribution({ governmentReviewer: e.target.checked })
-                }
-              />
-              <div className="my-tasks-party-body">
-                <p className="my-tasks-party-title">مراجع حكومي</p>
-                <p className="my-tasks-party-desc">
-                  مراجعة الجهة الحكومية المعنية
-                </p>
-              </div>
-            </label>
-
-            {showEngineering ? (
-              <label className="my-tasks-party-card">
-                <input
-                  type="checkbox"
-                  checked={distribution.engineeringOffice}
-                  onChange={(e) =>
-                    patchDistribution({ engineeringOffice: e.target.checked })
-                  }
-                />
-                <div className="my-tasks-party-body">
-                  <p className="my-tasks-party-title">مكتب هندسي</p>
-                  <p className="my-tasks-party-desc">
-                    رفع مساحي — عند توصية المعاين
-                  </p>
-                </div>
-              </label>
-            ) : null}
-          </div>
-
-          <div className="my-tasks-party-foot">
-            {distribution.fieldInspector && requiresSurvey ? (
-              <label className="my-tasks-party-card my-tasks-party-card-nested">
-                <input
-                  type="checkbox"
-                  checked={distribution.fieldInspectorRecommendedVisit}
-                  onChange={(e) =>
-                    patchDistribution({
-                      fieldInspectorRecommendedVisit: e.target.checked,
-                      engineeringOffice: e.target.checked
-                        ? distribution.engineeringOffice
-                        : false,
-                    })
-                  }
-                />
-                <div className="my-tasks-party-body">
-                  <p className="my-tasks-party-title">
-                    يوصي المعاين بزيارة ميدانية
-                  </p>
-                  <p className="my-tasks-party-desc">
-                    اختياري — لتفعيل إرسال العقار للمكتب الهندسي
-                  </p>
-                </div>
-              </label>
-            ) : null}
-
-            {!requiresSurvey ? (
-              <p className="my-tasks-party-hint">
-                المكتب الهندسي غير متاح: تصنيف «وحدة داخل مبنى» لا يتطلب رفعاً
-                مساحياً.
-              </p>
-            ) : !showEngineering && engineeringUnavailableHint() ? (
-              <p className="my-tasks-party-hint">{engineeringUnavailableHint()}</p>
-            ) : null}
-          </div>
+          <DistributionPartiesForm
+            distribution={distribution}
+            onPatch={patchDistribution}
+            showEngineering={showEngineering}
+            engineeringHint={engineeringUnavailableHint()}
+          />
         </RegistrationFormCard>
       ) : null}
     </TaskWorkChrome>

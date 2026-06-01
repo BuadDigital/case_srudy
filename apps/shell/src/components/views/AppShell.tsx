@@ -185,7 +185,8 @@ function ActiveTransactionsNavDropdown({
 
   const childActive = (tx: ActiveTransactionNavItem) =>
     currentPage === tx.id ||
-    (tx.id === "active-primary-data" && onTaskWork);
+    ((tx.id === "active-primary-data" || tx.id === "active-distribution") &&
+      onTaskWork);
 
   return (
     <div className={`nav-dropdown${open ? " open" : ""}`}>
@@ -282,7 +283,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const inPoSection = pathname?.startsWith("/po") ?? false;
   const onTaskWork =
     (pathname?.startsWith("/my-tasks/") ?? false) ||
-    (currentPage === "active-primary-data" && Boolean(searchParams.get("task")));
+    (currentPage === "active-primary-data" && Boolean(searchParams.get("task"))) ||
+    (currentPage === "active-distribution" && Boolean(searchParams.get("task")));
 
   const def = ROLES[role];
   const chipName = authDisplayName ?? def.name;

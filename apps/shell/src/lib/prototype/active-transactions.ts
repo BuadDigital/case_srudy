@@ -34,7 +34,6 @@ export const ACTIVE_TRANSACTIONS_NAV: ActiveTransactionNavItem[] = [
     label: "توزيع المعاملات",
     icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
     available: true,
-    placeholder: true,
   },
   {
     id: "active-case-study",
@@ -75,6 +74,17 @@ export function taskMatchesPrimaryData(task: WorkflowTask): boolean {
   return task.phase === "enfath";
 }
 
+export function taskMatchesDistribution(task: WorkflowTask): boolean {
+  if (task.kind !== "case-study-property") return false;
+  return task.phase === "distribution";
+}
+
+export function filterTasksForDistribution(
+  tasks: WorkflowTask[],
+): WorkflowTask[] {
+  return tasks.filter((t) => taskMatchesDistribution(t));
+}
+
 export function taskMatchesBourseInquiry(
   task: WorkflowTask,
   record: PoIntakeRecord | undefined,
@@ -102,3 +112,4 @@ export function filterTasksForBourseInquiry(
     taskMatchesBourseInquiry(t, poByNumber.get(t.poNumber.trim())),
   );
 }
+

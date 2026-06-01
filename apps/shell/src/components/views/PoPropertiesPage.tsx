@@ -8,6 +8,9 @@ import { PoNumber } from "@/components/ui/PoNumber";
 import {
   assignmentTypeBadgeClass,
   formatDateAr,
+  formatPropertyLocation,
+  formatPropertyTypeLine,
+  hasBourseDetailFields,
   isPastDue,
   requiresAssignmentDecree,
 } from "@/lib/prototype/po-intake-data";
@@ -21,7 +24,7 @@ import {
 } from "@/lib/po-routes";
 import { poPropertyToPropertyRow } from "@/lib/prototype/po-intake-storage";
 import { usePoRecordQuery } from "@/lib/query/prototype-queries";
-import { canEditProperty } from "@/lib/prototype/po-roles";
+import { canEditProperty, canViewPoEye } from "@/lib/prototype/po-roles";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import type { PoPropertyIntake } from "@/lib/prototype/po-intake-data";
 
@@ -51,6 +54,7 @@ export function PoPropertiesPage({ poNumber }: { poNumber: string }) {
   const router = useRouter();
   const { role } = usePrototype();
   const showEdit = canEditProperty(role);
+  const showEye = canViewPoEye(role);
   const { data: record, isPending } = usePoRecordQuery(poNumber);
 
   if (isPending && !record) {
@@ -159,14 +163,16 @@ export function PoPropertiesPage({ poNumber }: { poNumber: string }) {
         ) : (
           <>
             <div className="po-properties-tbl-wrap">
-              <table className="tbl po-properties-tbl">
+              <table
+                className={`tbl po-properties-tbl po-properties-tbl--deed-list${showEye ? " po-properties-tbl--has-view" : ""}`}
+              >
                 <colgroup>
                   <col className="po-col-deed" />
                   <col className="po-col-location" />
                   <col className="po-col-type" />
                   <col className="po-col-deed-status" />
                   <col className="po-col-status" />
-                  <col className="po-col-view" />
+                  {showEye ? <col className="po-col-view" /> : null}
                   {showEdit ? <col className="po-col-actions" /> : null}
                 </colgroup>
                 <thead>
@@ -176,8 +182,14 @@ export function PoPropertiesPage({ poNumber }: { poNumber: string }) {
                     <th>التصنيف / النوع</th>
                     <th>حالة الصك</th>
                     <th>الحالة</th>
-                    <th aria-label="عرض" />
-                    {showEdit ? <th aria-label="إجراءات" /> : null}
+                    {showEye ? (
+                      <th className="po-properties-th-view" aria-label="عرض" />
+                    ) : null}
+                    {showEdit ? (
+                      <th className="po-properties-th-actions" scope="col">
+                        إجراءات
+                      </th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -188,18 +200,19 @@ export function PoPropertiesPage({ poNumber }: { poNumber: string }) {
                       priorByDeed,
                     );
                     const boursePending = !prop.bourseDataCompleted;
-                    const location = boursePending
-                      ? "—"
-                      : prop.district
-                        ? `${prop.city} · ${prop.district}`
-                        : prop.city || "—";
-                    const typeLabel =
-                      prop.propertyType || prop.classification || "—";
-                    const typeDisplay = boursePending
-                      ? "بانتظار البورصة"
-                      : prop.classification
-                        ? `${prop.classification} · ${typeLabel}`
-                        : typeLabel;
+                    const locRaw = formatPropertyLocation(prop);
+                    const location =
+                      locRaw === "بانتظار البورصة" &&
+                      !hasBourseDetailFields(prop)
+                        ? "—"
+                        : locRaw === "بانتظار البورصة"
+                          ? "—"
+                          : locRaw;
+                    const typeLine = formatPropertyTypeLine(prop);
+                    const typeDisplay =
+                      boursePending && !hasBourseDetailFields(prop)
+                        ? "بانتظار البورصة"
+                        : typeLine || "—";
                     const detailHref = poPropertyPath(poNumber, prop.id);
                     const label = deedLabel(prop);
 
@@ -229,15 +242,17 @@ export function PoPropertiesPage({ poNumber }: { poNumber: string }) {
                             <StatusBadge status={row.status} />
                           )}
                         </td>
-                        <td className="po-properties-cell-actions">
-                          <EyeIconButton
-                            href={detailHref}
-                            label={`عرض تفاصيل الصك ${label}`}
-                          />
-                        </td>
+                        {showEye ? (
+                          <td className="po-properties-cell-view">
+                            <EyeIconButton
+                              href={detailHref}
+                              label={`عرض تفاصيل الصك ${label}`}
+                            />
+                          </td>
+                        ) : null}
                         {showEdit ? (
                           <td
-                            className="po-properties-cell-actions"
+                            className="po-properties-cell-actions po-properties-cell-actions--last"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <div className="po-properties-row-actions">
@@ -279,12 +294,14 @@ export function PoPropertiesPage({ poNumber }: { poNumber: string }) {
             </div>
             {showDecree ? (
               <p className="po-properties-hint">
-                مسار التنفيذ — قرار إسناد مستقل لكل صك. اضغط الصف أو العين
-                لمعاينة التفاصيل.
+                مسار التنفيذ — قرار إسناد مستقل لكل صك.
+                {showEye ? " اضغط الصف أو العين لمعاينة التفاصيل." : " اضغط الصف للتفاصيل أو تعديل."}
               </p>
             ) : (
               <p className="po-properties-hint">
-                اضغط الصف أو العين لمعاينة تفاصيل العقار.
+                {showEye
+                  ? "اضغط الصف أو العين لمعاينة تفاصيل العقار."
+                  : "اضغط الصف للتفاصيل أو تعديل."}
               </p>
             )}
           </>

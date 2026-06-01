@@ -31,6 +31,8 @@ import {
   mergePropertyEnfathValidation,
 } from "./po-property-enfath-validation";
 import { contactsForApi } from "./po-property-validation";
+import { usePrototype } from "@/contexts/PrototypeContext";
+import { canDeleteProperty } from "@/lib/prototype/po-roles";
 
 export function PoPropertyEdit({
   poNumber,
@@ -45,6 +47,8 @@ export function PoPropertyEdit({
   onSavedAction: () => void;
   onDeletedAction?: () => void;
 }) {
+  const { role } = usePrototype();
+  const showDeleteProperty = canDeleteProperty(role);
   const [initialRecord, setInitialRecord] = useState<PoIntakeRecord | null>(null);
   const [property, setProperty] = useState<PoPropertyIntake | null>(null);
   const [loading, setLoading] = useState(true);
@@ -189,14 +193,16 @@ export function PoPropertyEdit({
       onBack={onBackAction}
       onSave={() => void handleSave()}
       footerExtra={
-        <button
-          type="button"
-          className="btn btn-danger-outline"
-          disabled={saving}
-          onClick={() => void handleDelete()}
-        >
-          حذف العقار
-        </button>
+        showDeleteProperty ? (
+          <button
+            type="button"
+            className="btn btn-danger-outline"
+            disabled={saving}
+            onClick={() => void handleDelete()}
+          >
+            حذف العقار
+          </button>
+        ) : null
       }
     >
       {formError ? (

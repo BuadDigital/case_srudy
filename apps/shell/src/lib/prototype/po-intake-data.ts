@@ -16,10 +16,6 @@ export function formatPoDisplay(poNumber: string): string {
 
 export const PO_INTAKE_STEPS = ["بيانات أمر العمل"] as const;
 
-export const PO_INTAKE_HINTS = [
-  "انسخ رقم التعميد وتاريخ التعميد من منصة إنفاذ، وأدخل بيانات أخصائي الإسناد ونوع الإسناد",
-] as const;
-
 export const ASSIGNMENT_TYPE_OPTIONS = [
   "تنفيذ",
   "تركات",
@@ -180,6 +176,13 @@ export function isBourseInquiryIdentifier(
   return type === "bourse_inquiry";
 }
 
+/** تسجيل عيني — يتخطى البورصة وينتقل مباشرة لتوزيع المعاملات. */
+export function skipsBourseForIdentifier(
+  type: PropertyIdentifierType,
+): boolean {
+  return type === "real_estate_reg";
+}
+
 export function parsePropertyIdentifierType(
   value: string | undefined,
 ): PropertyIdentifierType {
@@ -190,19 +193,22 @@ export function parsePropertyIdentifierType(
 
 export function identifierTypeLabel(type: PropertyIdentifierType): string {
   if (type === "real_estate_reg") return "تسجيل عيني";
-  if (type === "bourse_inquiry") return "استعلام بورصة";
+  if (type === "bourse_inquiry") return "البورصة العقاريه";
   return "صك ملكية";
 }
 
-/** Display label for deed column — hides internal INQ- placeholders. */
+/** Display label for deed column — real deed when entered; «قيد الدراسة» only for empty/INQ- bourse path. */
 export function formatPropertyDeedDisplay(
   property: Pick<PoPropertyIntake, "identifierType" | "deedNumber">,
 ): string {
-  if (isBourseInquiryIdentifier(property.identifierType)) {
+  const deed = property.deedNumber.trim();
+  if (deed && !deed.startsWith("INQ-")) return deed;
+  if (
+    isBourseInquiryIdentifier(property.identifierType) ||
+    deed.startsWith("INQ-")
+  ) {
     return BOURSE_INQUIRY_IDENTIFIER_STATUS;
   }
-  const deed = property.deedNumber.trim();
-  if (deed.startsWith("INQ-")) return BOURSE_INQUIRY_IDENTIFIER_STATUS;
   return deed || "—";
 }
 
@@ -214,6 +220,75 @@ export function formatPendingBourseDeedDisplay(item: {
     identifierType: parsePropertyIdentifierType(item.identifierType),
     deedNumber: item.deedNumber,
   });
+}
+
+export function restrictionsPresentLabel(value: string): string {
+  const v = value.trim();
+  if (!v) return "";
+  return (
+    RESTRICTIONS_PRESENT_OPTIONS.find((o) => o.value === v)?.label ?? v
+  );
+}
+
+export function boundariesAvailabilityLabel(value: string): string {
+  const v = value.trim();
+  if (!v) return "";
+  return (
+    BOUNDARIES_AVAILABILITY_OPTIONS.find((o) => o.value === v)?.label ?? v
+  );
+}
+
+/** Any field filled on استعلام بورصة (even before حفظ وإكمال). */
+export function hasBourseDetailFields(
+  property: Pick<
+    PoPropertyIntake,
+    | "city"
+    | "district"
+    | "classification"
+    | "propertyType"
+    | "area"
+    | "deedStatus"
+    | "restrictionsPresent"
+    | "boundariesAvailability"
+    | "boundariesExternalDocName"
+    | "boundaries"
+  >,
+): boolean {
+  return Boolean(
+    property.city.trim() ||
+      property.district.trim() ||
+      property.classification.trim() ||
+      property.propertyType.trim() ||
+      property.area.trim() ||
+      property.deedStatus.trim() ||
+      property.restrictionsPresent.trim() ||
+      property.boundariesAvailability.trim() ||
+      property.boundariesExternalDocName.trim() ||
+      property.boundaries.trim(),
+  );
+}
+
+export function formatPropertyLocation(
+  property: Pick<PoPropertyIntake, "city" | "district" | "bourseDataCompleted">,
+): string {
+  const loc = [property.city, property.district]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(" · ");
+  if (loc) return loc;
+  if (!property.bourseDataCompleted) return "بانتظار البورصة";
+  return "";
+}
+
+export function formatPropertyTypeLine(property: Pick<
+  PoPropertyIntake,
+  "classification" | "propertyType"
+>): string {
+  const typeLabel = property.propertyType.trim() || property.classification.trim();
+  if (property.classification.trim() && property.propertyType.trim()) {
+    return `${property.classification.trim()} · ${property.propertyType.trim()}`;
+  }
+  return typeLabel || "";
 }
 
 export type PoPropertyIntake = {
@@ -350,13 +425,13 @@ export function getEffectiveStartDate(received: Date): Date {
   return cursor;
 }
 
-/** 4 أيام عمل (أحد–خميس) بعد يوم الاستلام — يوم الاستلام لا يُحسب ضمن الأربعة. */
-function addBusinessDaysAfterReceipt(start: Date, count: number): Date {
+/** 4 أيام عمل (أحد–خميس) — يوم الاستلام يوم 1 إن كان قبل 17:00؛ بعد 17:00 لا يُحسب. */
+function addBusinessDaysFromEffectiveStart(start: Date, count: number): Date {
   const d = new Date(start);
-  let added = 0;
-  while (added < count) {
-    d.setDate(d.getDate() + 1);
-    if (isBusinessDay(d)) added += 1;
+  let remaining = count;
+  while (remaining > 0) {
+    if (isBusinessDay(d)) remaining -= 1;
+    if (remaining > 0) d.setDate(d.getDate() + 1);
   }
   return d;
 }
@@ -369,7 +444,10 @@ export function computeBusinessDueDate(
   const received = parseReceivedDateTime(receivedIso, receivedTime);
   if (!received) return "";
   const effective = getEffectiveStartDate(received);
-  const due = addBusinessDaysAfterReceipt(effective, BUSINESS_DAYS_REQUIRED);
+  const due = addBusinessDaysFromEffectiveStart(
+    effective,
+    BUSINESS_DAYS_REQUIRED,
+  );
   return formatLocalIsoDate(due);
 }
 

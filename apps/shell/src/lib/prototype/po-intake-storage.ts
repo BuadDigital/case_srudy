@@ -592,11 +592,15 @@ export async function updatePropertyInPo(
   const config = workOrdersApiConfig();
   if (!config) return { ok: false, error: apiErrorMessage("auth") };
 
+  const dto = property.bourseDataCompleted
+    ? propertyToDto({ ...property, id: propertyId })
+    : propertyToEnfathDto({ ...property, id: propertyId });
+
   const result = await updateWorkOrderProperty(
     config,
     poNumber,
     propertyId,
-    propertyToDto({ ...property, id: propertyId }),
+    dto,
   );
   if (!result.ok) {
     return {

@@ -33,6 +33,8 @@ type Props = {
   poNumber?: string;
   excludePoNumber?: string;
   showStageNote?: boolean;
+  /** Hide «حالة المسار / قيد الدراسة» for استعلام بورصة (e.g. primary-data panel). */
+  hideBoursePathStatus?: boolean;
   /** When set, only render identifier type selector (for bourse-inquiry fast path). */
   fieldsMode?: "all" | "identifier-only" | "bourse-inquiry-primary";
 };
@@ -58,6 +60,7 @@ export function PoPropertyEnfathForm({
   poNumber,
   excludePoNumber,
   showStageNote = true,
+  hideBoursePathStatus = false,
   fieldsMode = "all",
 }: Props) {
   const attachPo = poNumber?.trim() || excludePoNumber?.trim() || "";
@@ -122,8 +125,8 @@ export function PoPropertyEnfathForm({
         </div>
       ) : null}
 
-      <div className="reg-fg-full" style={{ marginBottom: 12 }}>
-        <span className="reg-fl">نوع المعرّف</span>
+      <div className="reg-fg-full po-data-source-field" style={{ marginBottom: 12 }}>
+        <span className="reg-fl po-data-source-label">مصدر البيانات</span>
         <div className="po-id-type-pills">
           <button
             type="button"
@@ -144,12 +147,12 @@ export function PoPropertyEnfathForm({
             className={`reg-type-pill${property.identifierType === "bourse_inquiry" ? " sel" : ""}`}
             onClick={() => selectIdentifierType(onPatch, "bourse_inquiry")}
           >
-            استعلام بورصة
+            البورصة العقاريه
           </button>
         </div>
       </div>
 
-      {isBourseId ? (
+      {isBourseId && !hideBoursePathStatus && !showBoursePrimary ? (
         <div className="po-bourse-id-status card" style={{ marginBottom: 14 }}>
           <div className="card-body" style={{ padding: "14px 16px" }}>
             <span className="reg-fl" style={{ display: "block", marginBottom: 8 }}>

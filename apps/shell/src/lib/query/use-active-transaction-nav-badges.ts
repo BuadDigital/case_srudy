@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { PageId } from "@platform/types";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import {
+  filterTasksForDistribution,
   filterTasksForPrimaryData,
 } from "@/lib/prototype/active-transactions";
 import { tasksForRole } from "@/lib/prototype/tasks-storage";
@@ -37,9 +38,14 @@ export function useActiveTransactionNavBadges(): Partial<Record<PageId, number>>
 
     const bourseOpen = pendingBourse?.length ?? 0;
 
+    const distributionOpen = filterTasksForDistribution(mine).filter(
+      (t) => t.status === "open" || t.status === "blocked",
+    ).length;
+
     const badges: Partial<Record<PageId, number>> = {};
     if (primaryOpen > 0) badges["active-primary-data"] = primaryOpen;
     if (bourseOpen > 0) badges["bourse-inquiry"] = bourseOpen;
+    if (distributionOpen > 0) badges["active-distribution"] = distributionOpen;
     return badges;
   }, [role, tasks, poRecords, pendingBourse]);
 }

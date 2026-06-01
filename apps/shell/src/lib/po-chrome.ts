@@ -20,8 +20,8 @@ export function resolvePoChrome(pathname: string): PoChrome | null {
 
   if (parts[1] === "intake") {
     return {
-      breadcrumb: "دراسة الحالة / أوامر العمل / استلام جديد",
-      title: "استلام أمر عمل جديد",
+      breadcrumb: "دراسة الحالة / أوامر العمل",
+      title: "أوامر العمل",
     };
   }
 

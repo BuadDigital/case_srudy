@@ -8,6 +8,14 @@ import {
   classificationRequiresSurvey,
   formatPropertyDeedDisplay,
 } from "@/lib/prototype/po-intake-data";
+import {
+  assigneeLabel,
+  ENGINEERING_OFFICES,
+  FIELD_INSPECTORS,
+  GOVERNMENT_AUDITORS,
+  VALUATION_COORDINATORS,
+  VALUATORS,
+} from "@/lib/prototype/distribution-parties";
 
 export const TASKS_STORAGE_KEY = "evalWorkflowTasks";
 export const TASKS_CHANGED_EVENT = "eval-workflow-tasks-changed";
@@ -24,17 +32,63 @@ export type WorkflowTaskKind =
   | "case-study-property"
   | "field-inspection"
   | "government-review"
-  | "engineering-survey";
+  | "engineering-survey"
+  | "valuation-coordination"
+  | "property-appraisal";
 
 export type WorkflowTaskStatus = "open" | "completed" | "blocked";
 
+/** Party selection on توزيع المعاملات — checkbox gates each dropdown group. */
 export type TaskDistributionDraft = {
-  fieldInspector: boolean;
-  governmentReviewer: boolean;
+  governmentAuditor: boolean;
+  governmentAuditorId: string;
+  valuationDepartment: boolean;
+  operationsCoordinatorId: string;
+  inspectorId: string;
+  valuatorId: string;
   engineeringOffice: boolean;
-  /** Required before engineering office can be selected. */
-  fieldInspectorRecommendedVisit: boolean;
+  engineeringOfficeId: string;
 };
+
+type LegacyDistribution = {
+  fieldInspector?: boolean;
+  governmentReviewer?: boolean;
+  engineeringOffice?: boolean;
+  fieldInspectorRecommendedVisit?: boolean;
+};
+
+export function migrateDistribution(
+  raw: TaskDistributionDraft | LegacyDistribution | undefined,
+): TaskDistributionDraft {
+  const base = defaultDistribution();
+  if (!raw) return base;
+  if ("governmentAuditor" in raw) {
+    return { ...base, ...(raw as TaskDistributionDraft) };
+  }
+  const legacy = raw as LegacyDistribution;
+  return {
+    ...base,
+    governmentAuditor: legacy.governmentReviewer ?? false,
+    governmentAuditorId:
+      legacy.governmentReviewer && GOVERNMENT_AUDITORS[0]
+        ? GOVERNMENT_AUDITORS[0].id
+        : "",
+    valuationDepartment: legacy.fieldInspector ?? false,
+    operationsCoordinatorId:
+      legacy.fieldInspector && VALUATION_COORDINATORS[0]
+        ? VALUATION_COORDINATORS[0].id
+        : "",
+    inspectorId:
+      legacy.fieldInspector && FIELD_INSPECTORS[0] ? FIELD_INSPECTORS[0].id : "",
+    valuatorId:
+      legacy.fieldInspector && VALUATORS[0] ? VALUATORS[0].id : "",
+    engineeringOffice: legacy.engineeringOffice ?? false,
+    engineeringOfficeId:
+      legacy.engineeringOffice && ENGINEERING_OFFICES[0]
+        ? ENGINEERING_OFFICES[0].id
+        : "",
+  };
+}
 
 export type WorkflowTask = {
   id: string;
@@ -76,7 +130,13 @@ export function loadWorkflowTasks(): WorkflowTask[] {
     const raw = localStorage.getItem(TASKS_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as WorkflowTask[];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((t) => ({
+      ...t,
+      distribution: t.distribution
+        ? migrateDistribution(t.distribution)
+        : undefined,
+    }));
   } catch {
     return [];
   }
@@ -98,6 +158,8 @@ export function taskKindLabel(kind: WorkflowTaskKind): string {
   if (kind === "case-study-property") return "دراسة حالة — عقار";
   if (kind === "field-inspection") return "معاينة ميدانية";
   if (kind === "government-review") return "مراجعة حكومية";
+  if (kind === "valuation-coordination") return "منسق التقييم — استلام";
+  if (kind === "property-appraisal") return "تقييم عقاري";
   return "رفع مساحي — مكتب هندسي";
 }
 
@@ -126,20 +188,59 @@ export function taskDisplayPropertyLabel(task: WorkflowTask): string {
 export function engineeringOfficeAvailable(
   property: PoPropertyIntake,
   hasPriorSurvey: boolean,
-  fieldInspectorRecommendedVisit: boolean,
 ): boolean {
   if (!classificationRequiresSurvey(property.classification)) return false;
   if (hasPriorSurvey) return false;
-  return fieldInspectorRecommendedVisit;
+  return true;
 }
 
 export function defaultDistribution(): TaskDistributionDraft {
   return {
-    fieldInspector: false,
-    governmentReviewer: false,
+    governmentAuditor: false,
+    governmentAuditorId: "",
+    valuationDepartment: false,
+    operationsCoordinatorId: "",
+    inspectorId: "",
+    valuatorId: "",
     engineeringOffice: false,
-    fieldInspectorRecommendedVisit: false,
+    engineeringOfficeId: "",
   };
+}
+
+export function distributionValidationError(
+  distribution: TaskDistributionDraft,
+  engineeringAvailable: boolean,
+): string | null {
+  const anyParty =
+    distribution.governmentAuditor ||
+    distribution.valuationDepartment ||
+    distribution.engineeringOffice;
+  if (!anyParty) {
+    return "فعّل طرفاً واحداً على الأقل ثم اختر المسؤول من القائمة.";
+  }
+  if (distribution.governmentAuditor && !distribution.governmentAuditorId.trim()) {
+    return "اختر المدقق الحكومي من القائمة.";
+  }
+  if (distribution.valuationDepartment) {
+    if (!distribution.operationsCoordinatorId.trim()) {
+      return "اختر منسق عمليات التقييم.";
+    }
+    if (!distribution.inspectorId.trim()) {
+      return "اختر المعاين الميداني.";
+    }
+    if (!distribution.valuatorId.trim()) {
+      return "اختر المقيم العقاري.";
+    }
+  }
+  if (distribution.engineeringOffice) {
+    if (!engineeringAvailable) {
+      return "المكتب الهندسي غير متاح لهذا العقار وفق الشروط.";
+    }
+    if (!distribution.engineeringOfficeId.trim()) {
+      return "اختر المكتب الهندسي من القائمة.";
+    }
+  }
+  return null;
 }
 
 export function slotTaskTitle(
@@ -159,6 +260,7 @@ function propertyTaskTitle(property: PoPropertyIntake, poNumber: string): string
 function phaseAfterEnfathRegistration(
   property: PoPropertyIntake,
 ): CaseStudyTaskPhase {
+  if (property.identifierType === "real_estate_reg") return "distribution";
   if (property.bourseDataCompleted) return "distribution";
   return "bourse";
 }
@@ -390,10 +492,15 @@ export function advanceTaskAfterEnfath(
 ): WorkflowTask | null {
   const poNumber =
     loadWorkflowTasks().find((t) => t.id === taskId)?.poNumber ?? "";
+  const phase = phaseAfterEnfathRegistration(property);
+  const title =
+    phase === "distribution"
+      ? `توزيع الأطراف — ${formatPropertyDeedDisplay(property) || poNumber}`
+      : propertyTaskTitle(property, poNumber);
   return updateTask(taskId, {
     propertyId: property.id,
-    phase: "bourse",
-    title: propertyTaskTitle(property, poNumber),
+    phase,
+    title,
   });
 }
 
@@ -417,16 +524,32 @@ function childTaskTitle(
   const ref = deed.trim() || poNumber;
   if (kind === "field-inspection") return `معاينة ميدانية — ${ref}`;
   if (kind === "government-review") return `مراجعة حكومية — ${ref}`;
+  if (kind === "valuation-coordination") return `منسق التقييم — ${ref}`;
+  if (kind === "property-appraisal") return `تقييم عقاري — ${ref}`;
   return `رفع مساحي — ${ref}`;
 }
 
 const CHILD_ASSIGNEE: Record<
   Exclude<WorkflowTaskKind, "case-study-property">,
-  { role: RoleId; name: string }
+  { role: RoleId; defaultName: string }
 > = {
-  "field-inspection": { role: "field-inspector", name: "معاين ميداني" },
-  "government-review": { role: "government-reviewer", name: "مراجع حكومي" },
-  "engineering-survey": { role: "engineering-office", name: "مكتب هندسي" },
+  "field-inspection": { role: "field-inspector", defaultName: "معاين ميداني" },
+  "government-review": {
+    role: "government-reviewer",
+    defaultName: "مراجع حكومي",
+  },
+  "engineering-survey": {
+    role: "engineering-office",
+    defaultName: "مكتب هندسي",
+  },
+  "valuation-coordination": {
+    role: "valuation-coordinator",
+    defaultName: "منسق التقييم",
+  },
+  "property-appraisal": {
+    role: "real-estate-appraiser",
+    defaultName: "مقيم عقاري",
+  },
 };
 
 export function confirmTaskDistribution(
@@ -444,8 +567,13 @@ export function confirmTaskDistribution(
   const children: WorkflowTask[] = [];
   const deed = deedNumber.trim();
 
-  const spawn = (kind: Exclude<WorkflowTaskKind, "case-study-property">) => {
+  const spawn = (
+    kind: Exclude<WorkflowTaskKind, "case-study-property">,
+    assigneeName: string,
+    assigneeRole?: RoleId,
+  ) => {
     const meta = CHILD_ASSIGNEE[kind];
+    const name = assigneeName.trim() || meta.defaultName;
     children.push({
       id: newId(),
       kind,
@@ -454,8 +582,8 @@ export function confirmTaskDistribution(
       propertyOrdinal: parent.propertyOrdinal,
       title: childTaskTitle(kind, parent.poNumber, deed),
       phase: "done",
-      assigneeRole: meta.role,
-      assigneeName: meta.name,
+      assigneeRole: assigneeRole ?? meta.role,
+      assigneeName: name,
       parentTaskId: parent.id,
       status: "open",
       createdAt: now,
@@ -463,9 +591,36 @@ export function confirmTaskDistribution(
     });
   };
 
-  if (distribution.fieldInspector) spawn("field-inspection");
-  if (distribution.governmentReviewer) spawn("government-review");
-  if (distribution.engineeringOffice) spawn("engineering-survey");
+  if (distribution.governmentAuditor) {
+    spawn(
+      "government-review",
+      assigneeLabel(GOVERNMENT_AUDITORS, distribution.governmentAuditorId),
+    );
+  }
+  if (distribution.valuationDepartment) {
+    spawn(
+      "valuation-coordination",
+      assigneeLabel(
+        VALUATION_COORDINATORS,
+        distribution.operationsCoordinatorId,
+      ),
+    );
+    spawn(
+      "field-inspection",
+      assigneeLabel(FIELD_INSPECTORS, distribution.inspectorId),
+    );
+    spawn(
+      "property-appraisal",
+      assigneeLabel(VALUATORS, distribution.valuatorId),
+    );
+  }
+  if (distribution.engineeringOffice) {
+    spawn(
+      "engineering-survey",
+      assigneeLabel(ENGINEERING_OFFICES, distribution.engineeringOfficeId),
+      "engineering-office",
+    );
+  }
 
   const updatedParent: WorkflowTask = {
     ...parent,
@@ -562,13 +717,20 @@ export function patchTaskDistribution(
 ): WorkflowTask | null {
   const task = loadWorkflowTasks().find((t) => t.id === taskId);
   if (!task) return null;
-  const distribution = {
+  const distribution = migrateDistribution({
     ...(task.distribution ?? defaultDistribution()),
     ...patch,
-  };
-  if (!distribution.fieldInspector) {
-    distribution.fieldInspectorRecommendedVisit = false;
-    distribution.engineeringOffice = false;
+  });
+  if (!distribution.governmentAuditor) {
+    distribution.governmentAuditorId = "";
+  }
+  if (!distribution.valuationDepartment) {
+    distribution.operationsCoordinatorId = "";
+    distribution.inspectorId = "";
+    distribution.valuatorId = "";
+  }
+  if (!distribution.engineeringOffice) {
+    distribution.engineeringOfficeId = "";
   }
   return updateTask(taskId, { distribution });
 }

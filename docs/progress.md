@@ -1,6 +1,6 @@
 # Project Progress — Ejada Internal (نظام إجادة الداخلي)
 
-**Last updated:** 1 June 2026  
+**Last updated:** 1 June 2026 (primary-data panel, البورصة العقارية, PO intake chrome)  
 **Purpose:** Working log of what has been implemented in this case-study repo (for handoff and documentation).
 
 ---
@@ -206,7 +206,7 @@ After backend changes without `dev:api`, **restart the API** so inserts/validati
 
 **Business rules (server):**
 
-- `BusinessDueDateCalculator`: **4 business days** after receipt (Sun–Thu; Fri/Sat off); receipt day **not** counted; default time `10:00` if omitted; business hours 08:00–17:00 for effective start
+- `BusinessDueDateCalculator`: **4 business days** (Sun–Thu; Fri/Sat off); **receipt day = day 1** if before **17:00**; after 17:00 or weekend → count from next business day; default time `10:00` if omitted
 - **تنفيذ**: each property must have `AssignmentDocFileName` on create/update
 - Real-estate reg identifier: `RealEstateRegFileName` required
 - Contacts: ≥1 with name + phone (≥10 digits)
@@ -256,14 +256,14 @@ After backend changes without `dev:api`, **restart the API** so inserts/validati
 
 | Step | Component | Notes |
 |------|-----------|--------|
-| 1 | `PoIntakeFlow.tsx` + `PoIntakeWizardShell.tsx` | Header only: PO number (= تعميد), assignment type, Enfath receipt date, assignment specialist + email, **expected property count**; saves PO with `properties: []` |
+| 1 | `PoIntakeFlow.tsx` + `PoIntakeWizardShell.tsx` | Header only: PO number (= تعميد), assignment type, Enfath receipt date, assignment specialist + email, **expected property count**; saves PO with `properties: []`. **`hideWizardChrome`:** no dept/title/step badge/hint; form fields + **حفظ أمر العمل** only (no card title, subtitle, or blue info note). |
 | Success | `PoIntakeSuccess.tsx` | Summary card; user adds properties from PO detail or العقارات list |
 
 **Property intake (separate screens):**
 
 | Action | Component | Notes |
 |--------|-----------|--------|
-| Add / edit Enfath | `PoPropertyCreate.tsx`, `PoPropertyEdit.tsx`, `PoPropertyEnfathForm.tsx` | Identifier type: **رقم صك** / **تسجيل عيني** / **استعلام بورصة**; contacts via `PoContactEditor.tsx`; decree upload for **تنفيذ** |
+| Add / edit Enfath | `PoPropertyCreate.tsx`, `PoPropertyEdit.tsx`, `PoPropertyEnfathForm.tsx` | **مصدر البيانات** pills: **صك ملكية** / **تسجيل عيني** / **البورصة العقارية** (label was «استعلام بورصة»); contacts via `PoContactEditor.tsx`; decree upload for **تنفيذ** |
 | Bourse completion | `BourseInquiryView.tsx` | Queue from `GET …/pending-bourse`; `PUT …/properties/{id}/bourse` |
 | Stack preview | `PoPropertyStackCard.tsx`, `PoDetailPropertyCard.tsx` | Bourse-inquiry rows show status label instead of internal `INQ-…` placeholder |
 
@@ -324,7 +324,8 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 | Item | Status |
 |------|--------|
-| **توزيع المعاملات** / **دراسة حالة العقار** | Sidebar placeholders (`placeholder: true`) — red nav text, `ActiveTransactionPlaceholderView.tsx` |
+| **دراسة حالة العقار** | Sidebar placeholder (`placeholder: true`) — red nav text, `ActiveTransactionPlaceholderView.tsx` |
+| **توزيع المعاملات** | **Implemented** — see §10.3 (restored after brief removal) |
 | Upload decree/reg files to server | Filename only in DB; preview in `localStorage` |
 | Failures (تعذر) | `localStorage` only; no احتمال تعذر vs تعذر approval workflow yet |
 | Property workflow (مسح / تقييم / دراسة) | Mock stages on list rows |
@@ -365,7 +366,7 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 | **Sidebar group** | **المعاملات النشطة** — expandable dropdown under **أوامر العمل (PO)** in `AppShell.tsx` |
 | **Sub-routes** | `active-primary-data`, `bourse-inquiry`, `active-distribution`, `active-case-study` |
 | **Redirects** | `/my-tasks` → `/active-primary-data`; old `/assignment` → `/dashboard` |
-| **Task work URL** | Row click opens `/my-tasks/[taskId]` (`MyTaskWorkView.tsx`) — unchanged |
+| **Task work URL** | `/active-primary-data?task=<id>` (and `/active-distribution?task=<id>`); `/my-tasks/[id]` redirects to query URL |
 | **List home** | `myTasksPath()` → `/active-primary-data` (`my-task-routes.ts`) |
 
 **Config files:**
@@ -390,15 +391,17 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 | Feature | Implementation |
 |---------|----------------|
-| **Placeholder routes** | `active-distribution`, `active-case-study` + some legacy NAV mocks use `placeholder: true` → red text via `.nav-item-dummy` (no «تجريبي» badge text) |
+| **Placeholder routes** | `active-case-study` + some legacy NAV mocks use `placeholder: true` → red text via `.nav-item-dummy` |
 | **Group toggle style** | Parent **المعاملات النشطة** uses grey `.nav-active-tx-group`, not red |
-| **Count badges** | Red badges on **البيانات الأولية** and **استعلام بورصة** via `use-active-transaction-nav-badges.ts` (open primary tasks + pending bourse count) |
+| **Count badges** | Red badges on **البيانات الأولية**, **استعلام بورصة**, and **توزيع المعاملات** via `use-active-transaction-nav-badges.ts` |
 
 ---
 
-### 9.3 البيانات الأولية list (`MyTasksView.tsx`)
+### 9.3 البيانات الأولية list (`MyTasksView.tsx` + `ActiveTransactionQueueView.tsx`)
 
 **Route:** `/active-primary-data`  
+**Layout:** Shared **`ActiveTransactionQueueView`** — table | toggle rail | **sticky side panel** (same pattern as استعلام بورصة). Panel opens on row click; URL `?task=`; no full-page navigation.  
+**Chrome:** `TaskWorkChrome.tsx` — panel mode hides extra titles/hints/مسار banner; save label **حفظ** only.  
 **Data:** `useWorkflowTasksQuery()` + `loadPoRecords()` → `syncTasksFromPoRecords()` → `tasksForRole()` → `filterTasksForPrimaryData()` (phase `enfath`, kind `case-study-property`) → open/blocked only.
 
 **Table columns (RTL — first column = right / start of reading order):**
@@ -415,7 +418,12 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 - رقم الصك, الموقع, التصنيف/النوع, حالة الصك, الحالة, الأخصائي column, eye/edit actions, مفتوحة/مكتملة filters, أوامر العمل button
 
-**Row actions:** Click row → `myTaskPath(task.id)` → full workflow in `MyTaskWorkView.tsx`.
+**Row actions:** Click row → `primaryDataTaskPath(task.id)` → `CaseStudyTaskWork` in panel (`MyTaskWorkView.tsx`, `layout="panel"`).
+
+**After save (إنفاذ):**
+
+- **صك / البورصة العقارية:** auto-open next property in queue (`handleEnfathSaved` + `nextPrimaryDataTaskId` with ordinal fallback when saved task leaves list because phase → `bourse`).
+- **تسجيل عيني:** `router.replace` to **توزيع المعاملات** (`/active-distribution?task=…`).
 
 **Row builder:** `apps/shell/src/lib/prototype/my-task-row.ts` — `buildPrimaryDataTableRow`, `formatRemainingDuration`, `findPropertyForTask`.
 
@@ -483,6 +491,9 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 | Area | Path |
 |------|------|
 | Primary data list | `apps/shell/src/components/views/MyTasksView.tsx` |
+| Shared queue layout | `apps/shell/src/components/views/ActiveTransactionQueueView.tsx` |
+| Distribution queue | `apps/shell/src/components/views/ActiveDistributionView.tsx` |
+| Panel chrome | `apps/shell/src/components/prototype/primary-data/TaskWorkChrome.tsx` |
 | Task work screen | `apps/shell/src/components/views/MyTaskWorkView.tsx` |
 | Bourse | `apps/shell/src/components/views/BourseInquiryView.tsx` |
 | Placeholders | `apps/shell/src/components/views/ActiveTransactionPlaceholderView.tsx` |
@@ -501,7 +512,6 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 | Item | Notes |
 |------|--------|
-| **توزيع المعاملات** | Placeholder page only — build real distribution UI |
 | **دراسة حالة العقار** | Placeholder page only |
 | **Bourse queue Tailwind** | Still on `po-properties-tbl--bourse-queue` CSS — migrate if gaps appear |
 | **احتمال تعذر vs تعذر** | Approval workflow discussed, not implemented |
@@ -510,7 +520,115 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 ---
 
-## 10. Suggested next steps (not done yet)
+## 10. June 2026 — Primary-data panel, البورصة العقارية, validation (continued session)
+
+### 10.1 Split panel & task work UX
+
+| Item | Details |
+|------|---------|
+| **Shared layout** | `ActiveTransactionQueueView.tsx` — used by `MyTasksView` (البيانات الأولية) and `ActiveDistributionView` (توزيع المعاملات) |
+| **Sticky panel** | `prototype.css` — `po-primary-data-layout`, rail toggle, panel animation; form scrolls with long tables |
+| **In-panel work** | `CaseStudyTaskWork` (`MyTaskWorkView.tsx`) with `layout="panel"`, `onEnfathSaved`, `onClose` |
+| **Removed panel chrome** | No «اختر معاملة», إغلاق, لوحة التحكم link, duplicate bourse labels in panel |
+| **Bourse in panel** | `bourseInquiryPanelOnly` — primary panel shows إنفاذ fields only; full bourse form stays on **استعلام بورصة** tab |
+| **Race fix** | `advancingRef` + open next task URL before `syncQueue` so panel does not close mid-advance |
+
+**Styles:** `packages/design-system/src/styles/prototype.css` — primary-data layout, rail, sticky panel slot.
+
+---
+
+### 10.2 Labels — مصدر البيانات & البورصة العقارية
+
+| Before | After | Where |
+|--------|-------|--------|
+| نوع المعرف | **مصدر البيانات** (right-aligned) | `PoPropertyEnfathForm.tsx`, `PoDetailPropertyCard.tsx` |
+| استعلام بورصة (pill) | **البورصة العقارية** | Pill + `identifierTypeLabel()` in `po-intake-data.ts` |
+| استعلام بورصة (sidebar) | Unchanged | Nav tab title still «استعلام بورصة» unless renamed later |
+
+---
+
+### 10.3 توزيع المعاملات (restored)
+
+Briefly removed from sidebar; **restored** per product request.
+
+| Piece | Path / behavior |
+|-------|-----------------|
+| **Page** | `/active-distribution` — `ActiveDistributionView.tsx` |
+| **Nav** | `ACTIVE_TRANSACTIONS_NAV` in `active-transactions.ts` |
+| **Filter** | `filterTasksForDistribution` — phase `distribution` |
+| **Routes** | `activeDistributionPath()`, `distributionTaskPath()` in `my-task-routes.ts` |
+| **تسجيل عيني save** | After إنفاذ on primary data → redirect to distribution task URL (not stay on primary list) |
+
+---
+
+### 10.4 البورصة العقارية — validation & save (primary-data panel only)
+
+**Problem:** Saving from البيانات الأولية panel showed **الحي مطلوب** although **الحي** is not on that form. Causes:
+
+1. API **update** used full `propertyToDto` → triggered **بورصة** validation when `bourseDataCompleted` was true.
+2. Old API **إنفاذ** rules for `bourse_inquiry` required `district` / classification on insert.
+
+**Fixes (scoped):**
+
+| Layer | Change |
+|-------|--------|
+| **Backend** `WorkOrderValidator.cs` | `BourseInquiry` on **إنفاذ:** requires صك/مهمة/تاريخ/مالك/محكمة/دائرة (not الحي). **بورصة** step still requires الحي + المدينة + التصنيف + نوع العقار. |
+| **Frontend** `po-intake-storage.ts` | `updatePropertyInPo` uses `propertyToEnfathDto` when `!bourseDataCompleted` |
+| **Frontend** `MyTaskWorkView.tsx` | `saveEnfath` sets `bourseDataCompleted: false` for `bourse_inquiry` before update |
+| **الحي in UI** | Removed only from this panel path — **still required** on `PoPropertyBourseForm` (استعلام بورصة tab) |
+
+**Note:** Restart API (`dotnet run`) after backend validator changes so old DLL is not served.
+
+---
+
+### 10.5 Auto-advance after save (البورصة العقارية)
+
+`nextPrimaryDataTaskId()` in `my-task-row.ts` — if saved task already left the list (phase `bourse`), pick next task by **`propertyOrdinal`** instead of list index only.
+
+`MyTasksView.handleEnfathSaved` passes `saved?.propertyOrdinal` from `loadWorkflowTasks()`.
+
+---
+
+### 10.6 PO intake chrome removal
+
+| Removed from `/po/intake` | Kept |
+|---------------------------|------|
+| قسم دراسة الحالة / استلام أمر عمل جديد / الخطوة 1 من 1 / step indicator / hint | **رجوع**, form fields, **حفظ أمر العمل** |
+| Card title «بيانات أمر العمل (PO)» + subtitle | |
+| Blue note (استحقاق 4 أيام / استعلام بورصة) | |
+
+`PoIntakeWizardShell.tsx` — `hideWizardChrome` prop.  
+`po-chrome.ts` — intake top bar title **أوامر العمل** (breadcrumb: دراسة الحالة / أوامر العمل).  
+Removed unused `PO_INTAKE_HINTS` from `po-intake-data.ts`.
+
+---
+
+### 10.7 Key files (this session)
+
+| Area | Path |
+|------|------|
+| Shared queue + panel | `ActiveTransactionQueueView.tsx` |
+| Primary data | `MyTasksView.tsx` |
+| Distribution queue | `ActiveDistributionView.tsx` |
+| Panel chrome | `TaskWorkChrome.tsx` |
+| Enfath / مصدر البيانات | `PoPropertyEnfathForm.tsx` |
+| Task save / panel logic | `MyTaskWorkView.tsx` |
+| Next-task helper | `my-task-row.ts` |
+| API DTO / update split | `po-intake-storage.ts` |
+| Server validation | `backend/RealEstateEval.Api/Services/WorkOrderValidator.cs` |
+| Intake UI | `PoIntakeFlow.tsx`, `PoIntakeWizardShell.tsx` |
+
+---
+
+### 10.8 Git / deploy notes
+
+- Pushed earlier commit on `main`: primary-data split panel (see repo history).
+- Later session changes (validation, auto-advance, intake chrome, distribution restore) may be **local uncommitted** — run `git status` before PR.
+- API must be **restarted** after `WorkOrderValidator` edits (build can fail while process locks `RealEstateEval.Api.exe`).
+
+---
+
+## 11. Suggested next steps (not done yet)
 
 **Users (from Phase 1):**
 
@@ -533,7 +651,7 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 
 ---
 
-## 11. Session changelog (high level)
+## 12. Session changelog (high level)
 
 1. Fixed dev environment (npm, tooling notes).  
 2. Designed and implemented user persistence from HR / Proc / CRM wizards.  
@@ -553,6 +671,10 @@ Property form loads courts from API (`courts-storage.ts`) with fallback to `COUR
 16. **البيانات الأولية:** `MyTasksView` workflow queue; columns رقم العقار, PO, نوع الإسناد, أخصائي, countdown; removed رقم الصك and old filters/actions.  
 17. **Layout:** Fixed table white space (CSS specificity + Tailwind on primary table); compact hero.  
 18. **Sidebar:** Red dummy nav items, badge counts for primary + bourse queues.  
+19. **Split panel:** `ActiveTransactionQueueView` — table + rail + sticky side panel on البيانات الأولية; `?task=` URLs; `TaskWorkChrome` minimal panel UI.  
+20. **Save flows:** Auto-advance to next property after حفظ; تسجيل عيني → توزيع المعاملات; restored **توزيع المعاملات** page (`ActiveDistributionView`).  
+21. **مصدر البيانات / البورصة العقارية:** Renamed labels; البورصة path validation aligned (no الحي on primary panel save); `propertyToEnfathDto` on partial update.  
+22. **PO intake:** Stripped wizard chrome on `/po/intake` (`hideWizardChrome`).  
 
 ---
 

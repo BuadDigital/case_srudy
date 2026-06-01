@@ -60,12 +60,24 @@ internal static class WorkOrderValidator
 
         if (idType == PropertyIdentifierType.BourseInquiry)
         {
-            if (string.IsNullOrWhiteSpace(dto.District))
-                errors["district"] = "الحي مطلوب";
-            if (string.IsNullOrWhiteSpace(dto.Classification))
-                errors["classification"] = "التصنيف مطلوب";
-            if (string.IsNullOrWhiteSpace(dto.PropertyType))
-                errors["propertyType"] = "نوع العقار مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.DeedNumber))
+                errors["deedNumber"] = "رقم الصك مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.TaskNumber))
+                errors["taskNumber"] = "رقم المهمة مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.DeedDate))
+                errors["deedDate"] = "تاريخ الصك مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.OwnerName))
+                errors["ownerName"] = "اسم المالك مطلوب";
+            if (string.IsNullOrWhiteSpace(dto.Court))
+                errors["court"] = "المحكمة مطلوبة";
+            if (string.IsNullOrWhiteSpace(dto.Circuit))
+                errors["circuit"] = "الدائرة مطلوبة";
+
+            if (!string.IsNullOrWhiteSpace(dto.DeedNumber) &&
+                deedExistsInPo(dto.DeedNumber.Trim(), excludePropertyId))
+            {
+                errors["deedNumber"] = "رقم الصك مسجّل مسبقاً في هذا أمر العمل";
+            }
         }
         else
         {

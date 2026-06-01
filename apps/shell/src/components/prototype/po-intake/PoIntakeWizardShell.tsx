@@ -24,6 +24,7 @@ export function PoIntakeWizardShell({
   footerExtra,
   flowTitle,
   flowDept,
+  hideWizardChrome,
   children,
 }: {
   steps: readonly string[];
@@ -41,6 +42,8 @@ export function PoIntakeWizardShell({
   /** Override default PO intake title (e.g. property registration). */
   flowTitle?: string;
   flowDept?: string;
+  /** PO receive flow: form only — no dept/title/step chrome. */
+  hideWizardChrome?: boolean;
   children: ReactNode;
 }) {
   const meta = PO_INTAKE_FLOW;
@@ -86,17 +89,25 @@ export function PoIntakeWizardShell({
                     <button type="button" className="btn btn-sm" onClick={handleBack}>
                       {REG_BACK}
                     </button>
-                    <div className="reg-topbar-titles">
-                      <div className="reg-tb-flow">{dept}</div>
-                      <div className="reg-tb-title">{title}</div>
-                    </div>
+                    {hideWizardChrome ? null : (
+                      <div className="reg-topbar-titles">
+                        <div className="reg-tb-flow">{dept}</div>
+                        <div className="reg-tb-title">{title}</div>
+                      </div>
+                    )}
                   </div>
-                  <span className="reg-step-badge">
-                    الخطوة {displayStep} من {steps.length}
-                  </span>
+                  {hideWizardChrome ? null : (
+                    <span className="reg-step-badge">
+                      الخطوة {displayStep} من {steps.length}
+                    </span>
+                  )}
                 </header>
-                <StepIndicator steps={[...steps]} current={step} />
-                {hint ? <p className="reg-step-hint">{hint}</p> : null}
+                {hideWizardChrome ? null : (
+                  <StepIndicator steps={[...steps]} current={step} />
+                )}
+                {!hideWizardChrome && hint ? (
+                  <p className="reg-step-hint">{hint}</p>
+                ) : null}
                 <div className="reg-body reg-body--panel">{children}</div>
                 <footer className="reg-foot reg-foot--panel">
                   {footerExtra}

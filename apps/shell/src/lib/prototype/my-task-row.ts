@@ -1,7 +1,14 @@
 import type { PoIntakeRecord, PoPropertyIntake } from "@/lib/prototype/po-intake-data";
-import { dueDateToDeadline } from "@/lib/prototype/po-intake-data";
+import {
+  dueDateToDeadline,
+  formatPropertyDeedDisplay,
+} from "@/lib/prototype/po-intake-data";
 import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
-import { taskPhaseLabel, taskStatusLabel } from "@/lib/prototype/tasks-storage";
+import {
+  loadWorkflowTasks,
+  taskPhaseLabel,
+  taskStatusLabel,
+} from "@/lib/prototype/tasks-storage";
 
 export type TaskTableRow = {
   deedLabel: string;
@@ -91,8 +98,10 @@ export function formatPrimaryDataPropertyLabel(
   property: PoPropertyIntake | null,
   record: PoIntakeRecord | undefined,
 ): string {
-  const deed = property?.deedNumber.trim();
-  if (deed) return deed;
+  if (property) {
+    const label = formatPropertyDeedDisplay(property);
+    if (label !== "—") return label;
+  }
   return formatPropertySlotOnPo(task, record);
 }
 
@@ -208,4 +217,49 @@ export function buildTaskTableRow(
     statusBadgeClass: "b-prog",
     statusLabel: "بانتظار المراجعة",
   };
+}
+
+/** Oldest PO receipt first, then property slot within the same PO. */
+export function compareQueueTasksOldestFirst(
+  a: WorkflowTask,
+  b: WorkflowTask,
+  poByNumber: Map<string, PoIntakeRecord>,
+): number {
+  const recordA = poByNumber.get(a.poNumber.trim());
+  const recordB = poByNumber.get(b.poNumber.trim());
+  const dateA =
+    recordA?.receivedFromEnfathAt?.trim() ||
+    recordA?.createdAtUtc ||
+    a.createdAt ||
+    "";
+  const dateB =
+    recordB?.receivedFromEnfathAt?.trim() ||
+    recordB?.createdAtUtc ||
+    b.createdAt ||
+    "";
+  if (dateA !== dateB) return dateA.localeCompare(dateB);
+  const poCmp = a.poNumber.trim().localeCompare(b.poNumber.trim(), "ar");
+  if (poCmp !== 0) return poCmp;
+  return a.propertyOrdinal - b.propertyOrdinal;
+}
+
+/** Next task in queue order after `currentTaskId` (listed must already be sorted). */
+export function nextPrimaryDataTaskId(
+  listed: WorkflowTask[],
+  currentTaskId: string,
+  poByNumber: Map<string, PoIntakeRecord>,
+): string | null {
+  const idx = listed.findIndex((t) => t.id === currentTaskId);
+  if (idx >= 0 && idx + 1 < listed.length) {
+    return listed[idx + 1]!.id;
+  }
+  const pivot =
+    listed.find((t) => t.id === currentTaskId) ??
+    loadWorkflowTasks().find((t) => t.id === currentTaskId);
+  if (!pivot) return null;
+  return (
+    listed.find(
+      (t) => compareQueueTasksOldestFirst(pivot, t, poByNumber) < 0,
+    )?.id ?? null
+  );
 }

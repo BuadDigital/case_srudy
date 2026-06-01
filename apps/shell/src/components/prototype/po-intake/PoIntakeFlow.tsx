@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ASSIGNMENT_TYPE_OPTIONS,
-  PO_INTAKE_HINTS,
   PO_INTAKE_STEPS,
   type AssignmentType,
   type PoIntakeRecord,
@@ -62,7 +61,6 @@ export function PoIntakeFlow({
   });
 
   const isSuccess = step > LAST_STEP;
-  const hint = PO_INTAKE_HINTS[0] ?? "";
 
   const isDirty = useMemo(
     () =>
@@ -202,7 +200,8 @@ export function PoIntakeFlow({
     <PoIntakeWizardShell
       steps={PO_INTAKE_STEPS}
       step={Math.min(step, LAST_STEP)}
-      hint={hint}
+      hint=""
+      hideWizardChrome
       saving={saving}
       success={isSuccess}
       showPrev={false}
@@ -227,15 +226,7 @@ export function PoIntakeFlow({
       ) : null}
 
       {!isSuccess ? (
-        <RegistrationFormCard
-          title="بيانات أمر العمل (PO)"
-          subtitle="يُنسخ رقم التعميد وتاريخ التعميد من منصة إنفاذ — تُسجَّل العقارات لاحقاً داخل أمر العمل"
-        >
-          <div className="note note-info" style={{ marginBottom: 14 }}>
-            بعد الحفظ يُحسب تاريخ الاستلام الفعلي وتاريخ الاستحقاق (4 أيام عمل)
-            تلقائياً من تاريخ التعميد. أضف العقارات من قائمة العقارات داخل أمر
-            العمل، ثم أكمل بيانات البورصة من «استعلام البورصة».
-          </div>
+        <RegistrationFormCard>
           <div className="reg-fg2">
             <RegField
               id="po_number"

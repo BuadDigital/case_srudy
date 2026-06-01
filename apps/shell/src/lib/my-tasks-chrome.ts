@@ -26,5 +26,13 @@ export function resolveMyTasksChrome(
       title: "تنفيذ المعاملة",
     };
   }
+  if (parts[0] === "active-distribution" && taskId) {
+    decodeTaskParam(taskId);
+    return {
+      breadcrumb:
+        "دراسة الحالة / المعاملات النشطة / توزيع المعاملات / تنفيذ المعاملة",
+      title: "توزيع المعاملة",
+    };
+  }
   return null;
 }
