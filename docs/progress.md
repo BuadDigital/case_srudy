@@ -160,7 +160,7 @@ After backend changes without `dev:api`, **restart the API** so inserts/validati
 
 | Table | Purpose |
 |-------|---------|
-| `WorkOrders` | PO header: `PoNumber` (unique), assignment type, Enfath receipt date/time, internal assignment date, assignment specialist, computed `DueDateAt`, `RegisteredByUserId` → `Users` |
+| `WorkOrders` | PO header: `PoNumber` (unique), assignment type, Enfath receipt date/time, assignment specialist, computed `DueDateAt` |
 | `WorkOrderProperties` | Property under a PO: deed/reg identifier, location, classification/type, court/circuit, deed status, attachment **filenames** only (`AssignmentDocFileName`, `RealEstateRegFileName`) |
 | `PropertyContacts` | 1..n contacts per property (`Name`, `Phone`, `SortOrder`) |
 | `CourtCatalogEntries` | City → court → circuits (JSON), seeded on first API read if empty |
@@ -647,7 +647,6 @@ Removed unused `PO_INTAKE_HINTS` from `po-intake-data.ts`.
 **General:**
 
 - Wire remaining prototype modules (messages, financial, KPI) to real APIs  
-- Extract extra fields from `RegistrationPayloadJson` if any wizard fields are not yet mapped  
 
 ---
 

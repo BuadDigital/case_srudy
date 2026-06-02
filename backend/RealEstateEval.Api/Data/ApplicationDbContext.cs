@@ -41,7 +41,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
             e.Property(x => x.JobTitle).HasMaxLength(256);
             e.Property(x => x.PermissionLevel).HasMaxLength(64);
-            e.Property(x => x.RegistrationPayloadJson).HasColumnType("jsonb");
         });
 
         builder.Entity<HrEmployeeProfile>(e =>
@@ -83,11 +82,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.AssignmentSpecialist).HasMaxLength(256);
             e.Property(x => x.AssignmentSpecialistEmail).HasMaxLength(256);
             e.Property(x => x.ReceivedFromEnfathTime).HasMaxLength(8);
-            e.Property(x => x.InternalAssignmentAt).IsRequired(false);
-            e.HasOne(x => x.RegisteredBy)
-                .WithMany()
-                .HasForeignKey(x => x.RegisteredByUserId)
-                .OnDelete(DeleteBehavior.SetNull);
             e.HasMany(x => x.Properties)
                 .WithOne(x => x.WorkOrder)
                 .HasForeignKey(x => x.WorkOrderId)

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateEval.Api.Contracts;
 using RealEstateEval.Api.Services;
@@ -11,10 +12,14 @@ namespace RealEstateEval.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserRegistrationService _users;
+    private readonly IWebHostEnvironment _env;
 
-    public UsersController(IUserRegistrationService users)
+    public UsersController(
+        IUserRegistrationService users,
+        IWebHostEnvironment env)
     {
         _users = users;
+        _env = env;
     }
 
     [HttpGet]
@@ -57,10 +62,14 @@ public class UsersController : ControllerBase
         return await Create(data, _users.CreateCrmAsync, cancellationToken);
     }
 
+    /// <summary>Development only — wipes HR/Proc/CRM registrations; keeps seeded org accounts.</summary>
     [HttpDelete("registered")]
     public async Task<ActionResult<DeleteRegisteredUsersResponseDto>> DeleteAllRegistered(
         CancellationToken cancellationToken)
     {
+        if (!_env.IsDevelopment())
+            return NotFound();
+
         var deleted = await _users.DeleteAllRegisteredAsync(cancellationToken);
         return Ok(new DeleteRegisteredUsersResponseDto { DeletedCount = deleted });
     }

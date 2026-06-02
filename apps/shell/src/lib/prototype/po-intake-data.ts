@@ -251,7 +251,6 @@ export function hasBourseDetailFields(
     | "restrictionsPresent"
     | "boundariesAvailability"
     | "boundariesExternalDocName"
-    | "boundaries"
   >,
 ): boolean {
   return Boolean(
@@ -263,8 +262,7 @@ export function hasBourseDetailFields(
       property.deedStatus.trim() ||
       property.restrictionsPresent.trim() ||
       property.boundariesAvailability.trim() ||
-      property.boundariesExternalDocName.trim() ||
-      property.boundaries.trim(),
+      property.boundariesExternalDocName.trim(),
   );
 }
 
@@ -299,15 +297,12 @@ export type PoPropertyIntake = {
   deedDate: string;
   ownerName: string;
   restrictionsPresent: string;
-  restrictions: string;
-  boundariesMatch: string;
   boundariesAvailability: string;
   boundariesExternalDocName: string;
   city: string;
   district: string;
   deedStatus: string;
   area: string;
-  boundaries: string;
   court: string;
   circuit: string;
   classification: string;
@@ -328,7 +323,6 @@ export type PoIntakeRecord = {
   receivedFromEnfathAt: string;
   /** وقت الاستلام (HH:mm) — اختياري؛ يُستخدم في حساب تاريخ الاستحقاق */
   receivedFromEnfathTime: string;
-  internalAssignmentAt?: string;
   assignmentSpecialist: string;
   assignmentSpecialistEmail: string;
   expectedPropertyCount: number;
@@ -353,15 +347,12 @@ export function emptyProperty(): PoPropertyIntake {
     deedDate: "",
     ownerName: "",
     restrictionsPresent: "",
-    restrictions: "",
-    boundariesMatch: "",
     boundariesAvailability: "",
     boundariesExternalDocName: "",
     city: "",
     district: "",
     deedStatus: "",
     area: "",
-    boundaries: "",
     court: "",
     circuit: "",
     classification: "",

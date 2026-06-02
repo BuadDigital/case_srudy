@@ -11,8 +11,6 @@ public class WorkOrderProperty
     public string? OwnerName { get; set; }
     /// <summary>yes / no — القيود على العقار (مرحلة البورصة).</summary>
     public string? RestrictionsPresent { get; set; }
-    public string? Restrictions { get; set; }
-    public string? BoundariesMatch { get; set; }
     /// <summary>deed / bourse / doc / no</summary>
     public string? BoundariesAvailability { get; set; }
     public string? BoundariesExternalDocName { get; set; }
@@ -20,7 +18,6 @@ public class WorkOrderProperty
     public string District { get; set; } = "";
     public string? DeedStatus { get; set; }
     public string? Area { get; set; }
-    public string? Boundaries { get; set; }
     public string? Court { get; set; }
     public string? Circuit { get; set; }
     public string Classification { get; set; } = "";

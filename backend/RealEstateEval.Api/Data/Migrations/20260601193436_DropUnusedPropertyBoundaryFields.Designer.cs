@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RealEstateEval.Api.Data;
@@ -11,9 +12,11 @@ using RealEstateEval.Api.Data;
 namespace RealEstateEval.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260601193436_DropUnusedPropertyBoundaryFields")]
+    partial class DropUnusedPropertyBoundaryFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -443,6 +446,10 @@ namespace RealEstateEval.Api.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("RegistrationPayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<int>("RegistrationSource")
                         .HasColumnType("integer");
 
@@ -482,6 +489,9 @@ namespace RealEstateEval.Api.Data.Migrations
                     b.Property<int>("ExpectedPropertyCount")
                         .HasColumnType("integer");
 
+                    b.Property<DateOnly?>("InternalAssignmentAt")
+                        .HasColumnType("date");
+
                     b.Property<string>("PoNumber")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -497,10 +507,15 @@ namespace RealEstateEval.Api.Data.Migrations
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
 
+                    b.Property<string>("RegisteredByUserId")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PoNumber")
                         .IsUnique();
+
+                    b.HasIndex("RegisteredByUserId");
 
                     b.ToTable("WorkOrders", (string)null);
                 });
@@ -704,6 +719,16 @@ namespace RealEstateEval.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RealEstateEval.Api.Models.WorkOrder", b =>
+                {
+                    b.HasOne("RealEstateEval.Api.Models.ApplicationUser", "RegisteredBy")
+                        .WithMany()
+                        .HasForeignKey("RegisteredByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("RegisteredBy");
                 });
 
             modelBuilder.Entity("RealEstateEval.Api.Models.WorkOrderProperty", b =>

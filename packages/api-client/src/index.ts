@@ -13,6 +13,14 @@ export function getApiBase(): string {
   return `http://127.0.0.1:${port}`;
 }
 
+// Server session validation (disabled for now):
+// export {
+//   fetchCurrentUser,
+//   type AuthApiConfig,
+//   type FetchCurrentUserResult,
+//   type UserInfoDto,
+// } from "./auth";
+
 export {
   createCrmUser,
   createHrUser,

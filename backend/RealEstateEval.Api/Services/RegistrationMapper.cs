@@ -1,4 +1,3 @@
-using System.Text.Json;
 using RealEstateEval.Api.Contracts;
 using RealEstateEval.Api.Models;
 
@@ -20,9 +19,6 @@ public static class RegistrationMapper
         if (string.IsNullOrWhiteSpace(value)) return null;
         return DateOnly.TryParse(value, out var d) ? d : null;
     }
-
-    public static string SerializePayload(RegistrationPayloadDto data) =>
-        JsonSerializer.Serialize(data);
 
     private const string SecAccount = "الحساب والصلاحيات";
     private const string SecHr = "بيانات التوظيف";
@@ -207,7 +203,6 @@ public static class RegistrationMapper
             JobTitle = jobTitle,
             PermissionLevel = GetOptional(data, "hr_perms"),
             Status = UserStatus.Active,
-            RegistrationPayloadJson = SerializePayload(data),
             CreatedAtUtc = DateTime.UtcNow,
         };
 
@@ -266,7 +261,6 @@ public static class RegistrationMapper
             ContractType = contractType,
             JobTitle = jobTitle,
             Status = UserStatus.Active,
-            RegistrationPayloadJson = SerializePayload(data),
             CreatedAtUtc = DateTime.UtcNow,
         };
 
@@ -321,7 +315,6 @@ public static class RegistrationMapper
             ContractType = ContractType.ServiceProvider,
             JobTitle = jobTitle,
             Status = UserStatus.Active,
-            RegistrationPayloadJson = SerializePayload(data),
             CreatedAtUtc = DateTime.UtcNow,
         };
 

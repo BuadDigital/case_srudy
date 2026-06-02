@@ -82,7 +82,6 @@ public class WorkOrderService : IWorkOrderService
 
     public async Task<(WorkOrderDto? Result, Dictionary<string, string>? Errors)> CreateAsync(
         CreateWorkOrderRequest request,
-        string? userId,
         CancellationToken cancellationToken)
     {
         var headerErrors = WorkOrderValidator.ValidateHeader(request);
@@ -127,13 +126,11 @@ public class WorkOrderService : IWorkOrderService
             PromulgationDate = promulgation,
             ReceivedFromEnfathAt = promulgation,
             ReceivedFromEnfathTime = request.ReceivedFromEnfathTime?.Trim(),
-            InternalAssignmentAt = null,
             AssignmentSpecialist = request.AssignmentSpecialist.Trim(),
             AssignmentSpecialistEmail = request.AssignmentSpecialistEmail.Trim(),
             ExpectedPropertyCount = request.ExpectedPropertyCount,
             DueDateAt = BusinessDueDateCalculator.Compute(promulgation, request.ReceivedFromEnfathTime),
             CreatedAtUtc = DateTime.UtcNow,
-            RegisteredByUserId = userId,
         };
 
         foreach (var propDto in request.Properties)

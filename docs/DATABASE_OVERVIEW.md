@@ -108,7 +108,6 @@ Aligned with **إضافة مستخدم** in the app.
 | `JobTitle` | Shown as **الدور** in the users table |
 | `PermissionLevel` | HR only: مدير، مشرف، محرر، قارئ |
 | `Status` | `Active` (نشط) |
-| `RegistrationPayloadJson` | Full wizard answers (JSON, audit trail) |
 | `CreatedAtUtc` | Registration timestamp |
 
 #### HrEmployeeProfiles — تسجيل موظف

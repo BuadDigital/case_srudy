@@ -69,3 +69,22 @@ public static class PropertyIdentifierTypeLabels
         return n == Deed || string.IsNullOrEmpty(n);
     }
 }
+
+/// <summary>PO list workflow status returned to the shell (progress | done).</summary>
+public static class WorkOrderListStatus
+{
+    public const string Progress = "progress";
+    public const string Done = "done";
+
+    public static string FromWorkOrder(WorkOrder entity)
+    {
+        var expected = Math.Max(1, entity.ExpectedPropertyCount);
+        if (entity.Properties.Count < expected) return Progress;
+
+        var ready = entity.Properties.Count(p =>
+            p.BourseDataCompleted ||
+            p.IdentifierType == PropertyIdentifierType.RealEstateRegistration);
+
+        return ready >= expected ? Done : Progress;
+    }
+}

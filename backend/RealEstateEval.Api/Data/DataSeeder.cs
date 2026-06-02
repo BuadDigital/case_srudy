@@ -145,7 +145,6 @@ public static class DataSeeder
                 JobTitle = jobTitle,
                 PermissionLevel = "MANAGER",
                 Status = UserStatus.Active,
-                RegistrationPayloadJson = "{}",
                 CreatedAtUtc = DateTime.UtcNow,
             };
             db.UserProfiles.Add(profile);

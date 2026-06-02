@@ -69,7 +69,6 @@ public class WorkOrdersController : ControllerBase
     {
         var (result, errors) = await _workOrders.CreateAsync(
             request,
-            UserId(),
             cancellationToken);
         if (errors is { Count: > 0 })
             return BadRequest(new FieldErrorsResponseDto { Errors = errors });

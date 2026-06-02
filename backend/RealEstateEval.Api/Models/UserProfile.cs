@@ -10,7 +10,6 @@ public class UserProfile
     public string JobTitle { get; set; } = string.Empty;
     public string? PermissionLevel { get; set; }
     public UserStatus Status { get; set; } = UserStatus.Active;
-    public string RegistrationPayloadJson { get; set; } = "{}";
     public DateTime CreatedAtUtc { get; set; }
 
     public HrEmployeeProfile? HrEmployee { get; set; }

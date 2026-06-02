@@ -81,21 +81,11 @@ function BourseDetailFields({ property }: { property: PoPropertyIntake }) {
       <DetailField label="المساحة" value={property.area} ltr />
       <DetailField label="حالة الصك" value={property.deedStatus} />
       <DetailField label="القيود على العقار" value={restrictionsLabel} />
-      {property.restrictionsPresent === "yes" ? (
-        <DetailField label="تفاصيل القيود" value={property.restrictions} />
-      ) : null}
       <DetailField label="توفر الحدود" value={boundariesLabel} />
       {property.boundariesAvailability === "doc" ? (
         <DetailField
           label="المستند الخارجي للحدود"
           value={property.boundariesExternalDocName}
-        />
-      ) : null}
-      <DetailField label="وصف الحدود" value={property.boundaries} />
-      {!isBourseInquiryIdentifier(property.identifierType) ? (
-        <DetailField
-          label="مطابقة الحدود"
-          value={property.boundariesMatch}
         />
       ) : null}
     </>
@@ -127,14 +117,7 @@ function DeedOwnerFields({
       <DetailField label="تاريخ الصك" value={property.deedDate} ltr />
       <DetailField label="اسم المالك" value={property.ownerName} />
       {!isBourseId ? (
-        <>
-          <DetailField label="حالة الصك" value={property.deedStatus} />
-          <DetailField label="القيود" value={property.restrictions} />
-          <DetailField
-            label="مطابقة الحدود"
-            value={property.boundariesMatch}
-          />
-        </>
+        <DetailField label="حالة الصك" value={property.deedStatus} />
       ) : (
         <DetailField label="حالة المسار" value={deedDisplay} />
       )}

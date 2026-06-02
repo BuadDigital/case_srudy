@@ -156,35 +156,6 @@ internal static class WorkOrderValidator
         return errors;
     }
 
-    public static Dictionary<string, string> ValidateProperty(
-        WorkOrderPropertyDto dto,
-        AssignmentType assignmentType,
-        string poNumber,
-        Guid? excludePropertyId,
-        Func<string, Guid?, bool> deedExistsInPo,
-        bool requireBourseFields)
-    {
-        if (!requireBourseFields && !dto.BourseDataCompleted)
-            return ValidatePropertyEnfath(dto, assignmentType, poNumber, excludePropertyId, deedExistsInPo);
-
-        var errors = ValidatePropertyEnfath(dto, assignmentType, poNumber, excludePropertyId, deedExistsInPo);
-        var bourse = ValidatePropertyBourse(new UpdatePropertyBourseRequest
-        {
-            City = dto.City,
-            District = dto.District,
-            Classification = dto.Classification,
-            PropertyType = dto.PropertyType,
-            Area = dto.Area,
-            DeedStatus = dto.DeedStatus,
-            RestrictionsPresent = dto.RestrictionsPresent,
-            BoundariesAvailability = dto.BoundariesAvailability,
-            BoundariesExternalDocName = dto.BoundariesExternalDocName,
-        });
-        foreach (var kv in bourse)
-            errors[kv.Key] = kv.Value;
-        return errors;
-    }
-
     private static void ValidateContacts(WorkOrderPropertyDto dto, Dictionary<string, string> errors)
     {
         var hasContact = false;

@@ -18,15 +18,12 @@ public class WorkOrderPropertyDto
     public string? DeedDate { get; set; }
     public string? OwnerName { get; set; }
     public string? RestrictionsPresent { get; set; }
-    public string? Restrictions { get; set; }
-    public string? BoundariesMatch { get; set; }
     public string? BoundariesAvailability { get; set; }
     public string? BoundariesExternalDocName { get; set; }
     public string City { get; set; } = "";
     public string District { get; set; } = "";
     public string? DeedStatus { get; set; }
     public string? Area { get; set; }
-    public string? Boundaries { get; set; }
     public string? Court { get; set; }
     public string? Circuit { get; set; }
     public string Classification { get; set; } = "";
@@ -47,7 +44,6 @@ public class WorkOrderDto
     public string PromulgationDate { get; set; } = "";
     public string ReceivedFromEnfathAt { get; set; } = "";
     public string? ReceivedFromEnfathTime { get; set; }
-    public string? InternalAssignmentAt { get; set; }
     public string AssignmentSpecialist { get; set; } = "";
     public string AssignmentSpecialistEmail { get; set; } = "";
     public int ExpectedPropertyCount { get; set; }

@@ -11,6 +11,14 @@ Content-Type: application/json
   "password": "Admin123!"
 }
 
+### Current user (session restore)
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Development only — delete registered users (404 in Production)
+DELETE {{host}}/api/users/registered
+Authorization: Bearer {{token}}
+
 ### List work orders
 GET {{host}}/api/work-orders
 Authorization: Bearer {{token}}

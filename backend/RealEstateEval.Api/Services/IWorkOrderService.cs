@@ -15,7 +15,6 @@ public interface IWorkOrderService
         CancellationToken cancellationToken);
     Task<(WorkOrderDto? Result, Dictionary<string, string>? Errors)> CreateAsync(
         CreateWorkOrderRequest request,
-        string? userId,
         CancellationToken cancellationToken);
     Task<(WorkOrderDto? Result, Dictionary<string, string>? Errors)> UpdateHeaderAsync(
         string poNumber,

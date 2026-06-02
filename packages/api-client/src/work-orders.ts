@@ -27,15 +27,12 @@ export type WorkOrderPropertyDto = {
   deedDate?: string;
   ownerName?: string;
   restrictionsPresent?: string;
-  restrictions?: string;
-  boundariesMatch?: string;
   boundariesAvailability?: string;
   boundariesExternalDocName?: string;
   city?: string;
   district?: string;
   deedStatus?: string;
   area?: string;
-  boundaries?: string;
   court?: string;
   circuit?: string;
   classification?: string;
@@ -55,7 +52,6 @@ export type WorkOrderDto = {
   promulgationDate: string;
   receivedFromEnfathAt: string;
   receivedFromEnfathTime?: string;
-  internalAssignmentAt?: string;
   assignmentSpecialist: string;
   assignmentSpecialistEmail: string;
   expectedPropertyCount: number;
