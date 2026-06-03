@@ -61,6 +61,9 @@ public static class RegistrationMapper
             OrgRoles.HrAdmin => "مدير الموارد البشرية",
             OrgRoles.ProcAdmin => "مدير العقود والمشتريات",
             OrgRoles.CrmAdmin => "مدير علاقات العملاء",
+            DepartmentRoles.Hr => "دور الموارد البشرية (HR)",
+            DepartmentRoles.Proc => "دور العقود والمشتريات (PROC)",
+            DepartmentRoles.Crm => "دور علاقات العملاء (CRM)",
             _ => roleName,
         };
 

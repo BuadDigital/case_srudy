@@ -17,10 +17,14 @@ export type PageId =
   | "financial"
   | "kpi"
   | "users"
-  | "courts";
+  | "courts"
+  | "system-tools";
 
 export type RoleId =
   | "cdo"
+  | "hr-admin"
+  | "proc-admin"
+  | "crm-admin"
   | "general-manager"
   | "section-supervisor"
   | "operations-coordinator"
@@ -59,6 +63,9 @@ export function isRoleId(value: string): value is RoleId {
 
 const ROLE_ID_SET: Record<RoleId, true> = {
   cdo: true,
+  "hr-admin": true,
+  "proc-admin": true,
+  "crm-admin": true,
   "general-manager": true,
   "section-supervisor": true,
   "operations-coordinator": true,
@@ -92,6 +99,7 @@ export function isPageId(value: string): value is PageId {
     value === "financial" ||
     value === "kpi" ||
     value === "users" ||
-    value === "courts"
+    value === "courts" ||
+    value === "system-tools"
   );
 }

@@ -13,3 +13,13 @@ public static class OrgRoles
     public static bool IsOrgRole(string? roleName) =>
         roleName is not null && All.Contains(roleName);
 }
+
+/// <summary>Identity roles assigned to created users per owning department.</summary>
+public static class DepartmentRoles
+{
+    public const string Hr = "HR";
+    public const string Proc = "PROC";
+    public const string Crm = "CRM";
+
+    public static readonly string[] All = [Hr, Proc, Crm];
+}

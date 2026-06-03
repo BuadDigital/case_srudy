@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateEval.Api.Contracts;
+using RealEstateEval.Api.Models;
 using RealEstateEval.Api.Services;
 
 namespace RealEstateEval.Api.Controllers;
@@ -26,7 +27,8 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<UserListItemDto>>> List(
         CancellationToken cancellationToken)
     {
-        var list = await _users.ListAsync(cancellationToken);
+        var sourceScope = ScopeForCurrentUser();
+        var list = await _users.ListAsync(sourceScope, cancellationToken);
         return Ok(list);
     }
 
@@ -43,6 +45,8 @@ public class UsersController : ControllerBase
         [FromBody] RegistrationPayloadDto data,
         CancellationToken cancellationToken)
     {
+        if (!CanCreate(RegistrationSource.Hr))
+            return Forbid();
         return await Create(data, _users.CreateHrAsync, cancellationToken);
     }
 
@@ -51,6 +55,8 @@ public class UsersController : ControllerBase
         [FromBody] RegistrationPayloadDto data,
         CancellationToken cancellationToken)
     {
+        if (!CanCreate(RegistrationSource.Proc))
+            return Forbid();
         return await Create(data, _users.CreateProcAsync, cancellationToken);
     }
 
@@ -59,6 +65,8 @@ public class UsersController : ControllerBase
         [FromBody] RegistrationPayloadDto data,
         CancellationToken cancellationToken)
     {
+        if (!CanCreate(RegistrationSource.Crm))
+            return Forbid();
         return await Create(data, _users.CreateCrmAsync, cancellationToken);
     }
 
@@ -88,5 +96,24 @@ public class UsersController : ControllerBase
             "Users",
             null,
             result);
+    }
+
+    private RegistrationSource? ScopeForCurrentUser()
+    {
+        if (User.IsInRole(OrgRoles.Cdo))
+            return null;
+        if (User.IsInRole(OrgRoles.HrAdmin))
+            return RegistrationSource.Hr;
+        if (User.IsInRole(OrgRoles.ProcAdmin))
+            return RegistrationSource.Proc;
+        if (User.IsInRole(OrgRoles.CrmAdmin))
+            return RegistrationSource.Crm;
+        return null;
+    }
+
+    private bool CanCreate(RegistrationSource targetSource)
+    {
+        var scope = ScopeForCurrentUser();
+        return scope is null || scope == targetSource;
     }
 }

@@ -5,20 +5,15 @@ import type { StaffUser } from "@/lib/prototype/constants";
 import { userListItemToStaff } from "@/lib/users-api";
 import type { SubmitRegistrationFn } from "./RegisterUserFlow";
 import {
-  EMP_TYPES,
   HR_HINTS,
   HR_STEPS,
-  JOB_TITLES,
-  ORG,
-  PERMS,
 } from "@/lib/prototype/registration-data";
-import { RegField, RegSelect } from "./FormFields";
+import { RegField } from "./FormFields";
 import { RegistrationConfirmBanner } from "./RegistrationConfirmBanner";
 import { RegistrationFormCard } from "./RegistrationFormCard";
 import { RegistrationSuccess } from "./RegistrationSuccess";
 import { RegistrationWizardShell } from "./RegistrationWizardShell";
 import { SummaryGrid } from "./SummaryGrid";
-import { TypePills } from "./TypePills";
 import {
   REG_CONFIRM_SAVE,
   REG_NEXT,
@@ -26,16 +21,19 @@ import {
 } from "./registration-labels";
 import {
   collectRequiredErrors,
-  fieldRequired,
   hasFieldErrors,
   mergeFieldErrors,
   type FieldErrors,
-  validateEmail,
-  validatePasswordPairFields,
 } from "./registration-utils";
 import { useRegistrationDraft } from "./useRegistrationDraft";
 
-const REVIEW_STEP = HR_STEPS.length;
+const MINIMAL_HR_STEPS = ["بيانات الحساب", "مراجعة وحفظ"];
+const MINIMAL_HR_HINTS = [
+  "أدخل اسم المستخدم ورقم الجوال",
+  "راجع البيانات قبل الحفظ",
+];
+const REVIEW_STEP = MINIMAL_HR_STEPS.length;
+const DEFAULT_HR_PASSWORD = "Ejada@123";
 
 export function HrRegistrationFlow({
   existingEmails,
@@ -69,60 +67,52 @@ export function HrRegistrationFlow({
     resetConfirm,
   } = useRegistrationDraft({});
 
-  const dept = data.hr_dept ?? "";
-  const section = data.hr_section ?? "";
-  const subs = dept && ORG[dept] ? ORG[dept].subs : [];
-  const titles =
-    section && JOB_TITLES[section] ? JOB_TITLES[section] : [];
-
-  const isSuccess = step > HR_STEPS.length;
+  const isSuccess = step > MINIMAL_HR_STEPS.length;
   const title = useMemo(() => {
     if (isSuccess) return "تم التسجيل بنجاح";
-    return HR_STEPS[step - 1] ?? "";
+    return MINIMAL_HR_STEPS[step - 1] ?? "";
   }, [step, isSuccess]);
+
+  function generatedEmail(username: string) {
+    return `${username.toLowerCase()}@ejadah.dev`;
+  }
+
+  function payloadFromMinimalInput() {
+    const username = (data.hr_username ?? "").trim();
+    const phone = (data.hr_phone ?? "").trim();
+    const displayName = username || "موظف";
+    const email = generatedEmail(username);
+    return {
+      hr_empType: "دوام كامل",
+      hr_dept: "إدارة التقييم العقاري",
+      hr_section: "قسم دراسة الحالة",
+      hr_jobTitle: "أخصائي دراسة حالة",
+      hr_perms: "قارئ",
+      hr_name: displayName,
+      hr_phone: phone,
+      hr_email: email,
+      hr_username: username,
+      hr_pwd: DEFAULT_HR_PASSWORD,
+      hr_pwd2: DEFAULT_HR_PASSWORD,
+    };
+  }
 
   function validateStep(): boolean {
     clearErrors();
     let errors: FieldErrors = {};
 
     if (step === 1) {
-      if (!data.hr_empType) {
-        errors.hr_empType = "يرجى اختيار نوع التوظيف";
+      errors = mergeFieldErrors(
+        errors,
+        collectRequiredErrors(data, ["hr_username", "hr_phone"]),
+      );
+      const username = (data.hr_username ?? "").trim();
+      if (username && !/^[A-Za-z0-9._-]{3,40}$/.test(username)) {
+        errors.hr_username =
+          "اسم المستخدم يقبل أحرف إنجليزية/أرقام و . _ - فقط (3-40)";
       }
-      const deptErr = fieldRequired(dept, "يرجى اختيار الإدارة");
-      if (deptErr) errors.hr_dept = deptErr;
-      errors = mergeFieldErrors(
-        errors,
-        collectRequiredErrors(data, ["hr_perms"], "يرجى اختيار مستوى الصلاحيات"),
-      );
-    }
-
-    if (step === 2) {
-      errors = mergeFieldErrors(
-        errors,
-        collectRequiredErrors(data, ["hr_name", "hr_phone"]),
-      );
-    }
-
-    if (step === 3) {
-      errors = mergeFieldErrors(
-        errors,
-        collectRequiredErrors(data, [
-          "hr_email",
-          "hr_username",
-          "hr_pwd",
-          "hr_pwd2",
-        ]),
-        validatePasswordPairFields(
-          "hr_pwd",
-          "hr_pwd2",
-          data.hr_pwd,
-          data.hr_pwd2,
-        ),
-      );
-      const em = validateEmail(data.hr_email ?? "");
-      if (em) errors.hr_email = em;
-      if (existingEmails.has((data.hr_email ?? "").trim().toLowerCase())) {
+      const email = generatedEmail(username);
+      if (username && existingEmails.has(email)) {
         errors.hr_email = "هذا البريد مستخدم مسبقاً";
       }
     }
@@ -138,7 +128,8 @@ export function HrRegistrationFlow({
   async function saveUser() {
     setSaving(true);
     try {
-      const result = await submitRegistration("hr", data);
+      const payload = payloadFromMinimalInput();
+      const result = await submitRegistration("hr", payload);
       if (!result.ok) {
         applyFieldErrors(result.errors);
         setPendingConfirm(false);
@@ -147,7 +138,7 @@ export function HrRegistrationFlow({
       const user = userListItemToStaff(result.user);
       setSavedUser(user);
       onComplete(user);
-      setStep(HR_STEPS.length + 1);
+      setStep(MINIMAL_HR_STEPS.length + 1);
       setPendingConfirm(false);
     } catch {
       setError("تعذر حفظ المستخدم. تحقق من الاتصال بالخادم.");
@@ -189,7 +180,7 @@ export function HrRegistrationFlow({
     return (
       <RegistrationWizardShell
         source="hr"
-        steps={HR_STEPS}
+        steps={MINIMAL_HR_STEPS}
         step={step}
         title={title}
         hint=""
@@ -214,10 +205,10 @@ export function HrRegistrationFlow({
   return (
     <RegistrationWizardShell
       source="hr"
-      steps={HR_STEPS}
+      steps={MINIMAL_HR_STEPS}
       step={step}
       title={title}
-      hint={HR_HINTS[step - 1] ?? ""}
+      hint={MINIMAL_HR_HINTS[step - 1] ?? HR_HINTS[step - 1] ?? ""}
       saving={saving}
       isDirty={isDirty}
       showPrev={step > 1}
@@ -227,87 +218,15 @@ export function HrRegistrationFlow({
       onNext={handleNext}
     >
       {step === 1 ? (
-        <>
-          <RegistrationFormCard
-            title="نوع التوظيف"
-            subtitle="يحدد آلية العقد والفوترة"
-          >
-            <TypePills
-              options={EMP_TYPES.map((t) => ({ value: t, label: t }))}
-              value={data.hr_empType ?? ""}
-              onChange={(v) => patch("hr_empType", v)}
-              error={fieldErrors.hr_empType}
-            />
-          </RegistrationFormCard>
-          <RegistrationFormCard
-            title="الهيكل التنظيمي"
-            subtitle="الإدارة والقسم والمسمى الوظيفي"
-          >
-            <div className="reg-fg2" style={{ marginBottom: 12 }}>
-              <RegSelect
-                id="hr_dept"
-                label="الإدارة"
-                required
-                options={Object.keys(ORG)}
-                value={dept}
-                error={fieldErrors.hr_dept}
-                onChange={(v) => {
-                  setData((d) => ({
-                    ...d,
-                    hr_dept: v,
-                    hr_section: "",
-                    hr_jobTitle: "",
-                  }));
-                }}
-              />
-              <RegSelect
-                id="hr_section"
-                label="القسم"
-                options={subs}
-                value={section}
-                onChange={(v) => {
-                  setData((d) => ({ ...d, hr_section: v, hr_jobTitle: "" }));
-                }}
-              />
-            </div>
-            <div className="reg-fg2" style={{ marginTop: 12 }}>
-              <RegSelect
-                id="hr_jobTitle"
-                label="المسمى الوظيفي"
-                options={titles}
-                value={data.hr_jobTitle ?? ""}
-                onChange={(v) => patch("hr_jobTitle", v)}
-              />
-              <RegSelect
-                id="hr_perms"
-                label="مستوى الصلاحيات"
-                required
-                options={PERMS}
-                value={data.hr_perms ?? ""}
-                error={fieldErrors.hr_perms}
-                onChange={(v) => patch("hr_perms", v)}
-              />
-            </div>
-          </RegistrationFormCard>
-        </>
-      ) : null}
-
-      {step === 2 ? (
-        <RegistrationFormCard title="البيانات الشخصية">
+        <RegistrationFormCard title="بيانات الموظف الأساسية">
           <div className="reg-fg2">
             <RegField
-              id="hr_name"
-              label="الاسم الكامل"
+              id="hr_username"
+              label="اسم المستخدم"
               required
-              value={data.hr_name ?? ""}
-              error={fieldErrors.hr_name}
-              onChange={(v) => patch("hr_name", v)}
-            />
-            <RegField
-              id="hr_idno"
-              label="رقم الهوية الوطنية"
-              value={data.hr_idno ?? ""}
-              onChange={(v) => patch("hr_idno", v)}
+              value={data.hr_username ?? ""}
+              error={fieldErrors.hr_username ?? fieldErrors.hr_email}
+              onChange={(v) => patch("hr_username", v)}
             />
             <RegField
               id="hr_phone"
@@ -319,66 +238,15 @@ export function HrRegistrationFlow({
               error={fieldErrors.hr_phone}
               onChange={(v) => patch("hr_phone", v)}
             />
-            <RegField
-              id="hr_empNo"
-              label="رقم الموظف"
-              placeholder="اختياري"
-              value={data.hr_empNo ?? ""}
-              onChange={(v) => patch("hr_empNo", v)}
-            />
-            <RegField
-              id="hr_joinDate"
-              label="تاريخ الانضمام"
-              type="date"
-              value={data.hr_joinDate ?? ""}
-              onChange={(v) => patch("hr_joinDate", v)}
-            />
-          </div>
-        </RegistrationFormCard>
-      ) : null}
-
-      {step === 3 ? (
-        <RegistrationFormCard title="بيانات حساب الدخول">
-          <div className="reg-fg2">
-            <RegField
-              id="hr_email"
-              label="البريد الإلكتروني"
-              required
-              type="email"
-              dir="ltr"
-              value={data.hr_email ?? ""}
-              error={fieldErrors.hr_email}
-              onChange={(v) => patch("hr_email", v)}
-            />
-            <RegField
-              id="hr_username"
-              label="اسم المستخدم"
-              required
-              value={data.hr_username ?? ""}
-              error={fieldErrors.hr_username}
-              onChange={(v) => patch("hr_username", v)}
-            />
-            <RegField
-              id="hr_pwd"
-              label="كلمة المرور الأولية"
-              required
-              type="password"
-              value={data.hr_pwd ?? ""}
-              error={fieldErrors.hr_pwd}
-              onChange={(v) => patch("hr_pwd", v)}
-            />
-            <RegField
-              id="hr_pwd2"
-              label="تأكيد كلمة المرور"
-              required
-              type="password"
-              value={data.hr_pwd2 ?? ""}
-              error={fieldErrors.hr_pwd2}
-              onChange={(v) => patch("hr_pwd2", v)}
-            />
           </div>
           <div className="reg-info-box" style={{ marginTop: 12 }}>
-            ستُرسل بيانات الدخول تلقائياً إلى البريد الإلكتروني بعد الحفظ
+            يتم توليد البريد تلقائياً بصيغة
+            {" "}
+            <span dir="ltr">
+              {generatedEmail((data.hr_username ?? "").trim() || "username")}
+            </span>
+            {" "}
+            وكلمة مرور مؤقتة من النظام.
           </div>
         </RegistrationFormCard>
       ) : null}
@@ -392,16 +260,13 @@ export function HrRegistrationFlow({
           >
             <SummaryGrid
               rows={[
-                { l: "نوع التوظيف", v: data.hr_empType ?? "" },
-                { l: "الإدارة", v: dept },
-                { l: "القسم", v: section },
-                { l: "المسمى الوظيفي", v: data.hr_jobTitle ?? "" },
-                { l: "الصلاحيات", v: data.hr_perms ?? "" },
-                { l: "الاسم الكامل", v: data.hr_name ?? "" },
-                { l: "رقم الهوية", v: data.hr_idno ?? "" },
-                { l: "البريد الإلكتروني", v: data.hr_email ?? "" },
-                { l: "رقم الجوال", v: data.hr_phone ?? "" },
                 { l: "اسم المستخدم", v: data.hr_username ?? "" },
+                { l: "رقم الجوال", v: data.hr_phone ?? "" },
+                {
+                  l: "البريد الإلكتروني (تلقائي)",
+                  v: generatedEmail((data.hr_username ?? "").trim()),
+                },
+                { l: "الصلاحية الافتراضية", v: "قارئ" },
               ]}
             />
           </RegistrationFormCard>

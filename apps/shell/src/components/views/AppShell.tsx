@@ -27,7 +27,14 @@ import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
 import { PoNumber } from "@/components/ui/PoNumber";
 
-const GROUP_ORDER = ["الإدارة", "قسم دراسة الحالة", "قسم التقييم العقاري", "المالية"];
+const GROUP_ORDER = [
+  "الإدارة",
+  "إدارة المنظمة",
+  "قسم دراسة الحالة",
+  "قسم التقييم العقاري",
+  "الرفع المساحي",
+  "المالية",
+];
 
 type NavRun = { label: string | null; items: (typeof NAV)[number][] };
 
@@ -234,10 +241,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { role, setRole, rolePages } = usePrototype();
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
 
-  const navRuns = useMemo(
-    () => navRunsForRole(rolePages),
+  const navPages = useMemo(
+    () => [...new Set<PageId>([...rolePages, "system-tools"])],
     [rolePages],
   );
+
+  const navRuns = useMemo(() => navRunsForRole(navPages), [navPages]);
 
   const activeTransactionItems = useMemo(
     () =>
@@ -293,7 +302,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const r = e.target.value as RoleId;
     setRole(r);
     const nextPages = ROLES[r].pages;
-    if (!nextPages.includes(currentPage) && currentPage !== "my-tasks") {
+    if (
+      !nextPages.includes(currentPage) &&
+      currentPage !== "my-tasks" &&
+      currentPage !== "system-tools"
+    ) {
       router.push("/dashboard");
     }
   }

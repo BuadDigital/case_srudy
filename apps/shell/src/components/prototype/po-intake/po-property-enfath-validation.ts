@@ -95,6 +95,16 @@ export function mergePropertyEnfathValidation(
 }
 
 export function firstEnfathValidationMessage(errors: FieldErrors): string {
+  const contactPhoneKey = Object.keys(errors).find((k) =>
+    k.startsWith("contact_phone_"),
+  );
+  const contactRoleKey = Object.keys(errors).find((k) =>
+    k.startsWith("contact_role_"),
+  );
+  const contactNameKey = Object.keys(errors).find((k) =>
+    k.startsWith("contact_name_"),
+  );
+
   return (
     errors._contacts ??
     errors._ ??
@@ -114,6 +124,9 @@ export function firstEnfathValidationMessage(errors: FieldErrors): string {
     errors.delegationLetterFileName ??
     errors.realEstateRegFileName ??
     errors.assignmentDocFileName ??
+    (contactPhoneKey ? errors[contactPhoneKey] : undefined) ??
+    (contactRoleKey ? errors[contactRoleKey] : undefined) ??
+    (contactNameKey ? errors[contactNameKey] : undefined) ??
     "يرجى تعبئة بيانات العقار"
   );
 }

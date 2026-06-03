@@ -20,6 +20,7 @@ public class UserRegistrationService : IUserRegistrationService
     }
 
     public async Task<IReadOnlyList<UserListItemDto>> ListAsync(
+        RegistrationSource? sourceScope = null,
         CancellationToken cancellationToken = default)
     {
         var rows = await _db.UserProfiles
@@ -49,6 +50,7 @@ public class UserRegistrationService : IUserRegistrationService
                 var roles = rolesByUser.GetValueOrDefault(p.UserId, []);
                 return !roles.Any(OrgRoles.IsOrgRole);
             })
+            .Where(p => sourceScope is null || p.RegistrationSource == sourceScope.Value)
             .Select(p => RegistrationMapper.ToListItem(
                 p.User,
                 p,
@@ -144,7 +146,7 @@ public class UserRegistrationService : IUserRegistrationService
             profile,
             "hr_email",
             Get(data, "hr_pwd"),
-            RegistrationMapper.MapPermissionToRole(Get(data, "hr_perms")),
+            DepartmentRoles.Hr,
             cancellationToken);
     }
 
@@ -161,7 +163,7 @@ public class UserRegistrationService : IUserRegistrationService
             profile,
             "pc_email",
             Get(data, "pc_pwd"),
-            null,
+            DepartmentRoles.Proc,
             cancellationToken);
     }
 
@@ -178,7 +180,7 @@ public class UserRegistrationService : IUserRegistrationService
             profile,
             "crm_email",
             Get(data, "crm_pwd"),
-            null,
+            DepartmentRoles.Crm,
             cancellationToken);
     }
 

@@ -14,7 +14,7 @@ public static class DataSeeder
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var db = services.GetRequiredService<ApplicationDbContext>();
 
-        foreach (var role in LegacyRoles.Concat(OrgRoles.All))
+        foreach (var role in LegacyRoles.Concat(OrgRoles.All).Concat(DepartmentRoles.All))
         {
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));

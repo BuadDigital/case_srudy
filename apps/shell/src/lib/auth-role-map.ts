@@ -1,20 +1,37 @@
 import type { RoleId } from "@platform/types";
-import { STORAGE_ROLE_KEY } from "@/lib/prototype/constants";
+import { ROLES, STORAGE_ROLE_KEY } from "@/lib/prototype/constants";
 
-/** Maps seeded org login emails to prototype navigation role. */
-const EMAIL_TO_ROLE: Record<string, RoleId> = {
+/**
+ * Maps seeded login emails to prototype sidebar roles.
+ * Identity roles on the API (HrAdmin, ProcAdmin, …) are separate.
+ */
+const EMAIL_TO_PROTOTYPE_ROLE: Record<string, RoleId> = {
+  "admin@local.dev": "general-manager",
   "s.salhy@gmail.com": "cdo",
+  "a.alamin@gmail.com": "hr-admin",
+  "a.alqadri@gmail.com": "proc-admin",
+  "g.abdo@gmail.com": "crm-admin",
   "abdulrahman@ejadah.dev": "section-supervisor",
 };
 
-export function prototypeRoleForEmail(email: string): RoleId | null {
-  const key = email.trim().toLowerCase();
-  return EMAIL_TO_ROLE[key] ?? null;
+const DEFAULT_PROTOTYPE_ROLE: RoleId = "general-manager";
+
+function isPrototypeRole(value: string): value is RoleId {
+  return value in ROLES;
 }
 
+/** Resolve shell navigation role for a login email. */
+export function prototypeRoleForEmail(email: string): RoleId {
+  const key = email.trim().toLowerCase();
+  const mapped = EMAIL_TO_PROTOTYPE_ROLE[key];
+  if (mapped && isPrototypeRole(mapped)) return mapped;
+  return DEFAULT_PROTOTYPE_ROLE;
+}
+
+/** Persist prototype role after successful login (client only). */
 export function applyPrototypeRoleForEmail(email: string): void {
+  if (typeof window === "undefined") return;
   const role = prototypeRoleForEmail(email);
-  if (role && typeof window !== "undefined") {
-    sessionStorage.setItem(STORAGE_ROLE_KEY, role);
-  }
+  if (!isPrototypeRole(role)) return;
+  sessionStorage.setItem(STORAGE_ROLE_KEY, role);
 }

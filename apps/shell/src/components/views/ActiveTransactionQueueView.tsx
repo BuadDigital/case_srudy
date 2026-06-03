@@ -137,9 +137,16 @@ export function ActiveTransactionQueueView({
     [router, config],
   );
 
-  const togglePanel = useCallback(() => {
-    setPanelOpen((open) => !open);
-  }, []);
+  const handleRowClick = useCallback(
+    (taskId: string) => {
+      if (selectedId === taskId) {
+        closePanel();
+        return;
+      }
+      openTask(taskId);
+    },
+    [selectedId, closePanel, openTask],
+  );
 
   useEffect(() => {
     if (!queueApiRef) return;
@@ -237,17 +244,14 @@ export function ActiveTransactionQueueView({
                         <tr
                           key={task.id}
                           className={`po-properties-row${active ? " po-bourse-row-active" : ""}`}
-                          onClick={() => openTask(task.id)}
+                          onClick={() => handleRowClick(task.id)}
                         >
                           <td className="po-pd-td-center">
                             <span className="id-cell po-num-ltr">
                               {row.propertySlot}
                             </span>
                           </td>
-                          <td
-                            className="po-properties-cell-muted po-pd-td-center"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <td className="po-properties-cell-muted po-pd-td-center">
                             <PoNumber value={task.poNumber} link />
                           </td>
                           <td className="po-properties-cell-muted po-pd-td-center">
@@ -268,20 +272,12 @@ export function ActiveTransactionQueueView({
                   </tbody>
                 </table>
               </div>
+              <p className="po-properties-hint">
+                اضغط الصف لفتح التوزيع — اضغط نفس الصف مرة أخرى للإغلاق.
+              </p>
             </>
           )}
         </article>
-
-        {hasRail ? (
-          <button
-            type="button"
-            className="po-primary-data-rail"
-            onClick={togglePanel}
-            aria-expanded={panelOpen}
-            aria-controls={config.panelId}
-            title={panelOpen ? "إخفاء النموذج" : "إظهار النموذج"}
-          />
-        ) : null}
 
         {hasRail ? (
           <div

@@ -8,11 +8,7 @@ import { EyeIconButton } from "@/components/ui/EyeIconButton";
 import { PoNumber } from "@/components/ui/PoNumber";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
-import {
-  assignmentTypeBadgeClass,
-  formatDateAr,
-  isPastDue,
-} from "@/lib/prototype/po-intake-data";
+import { formatDateAr, isPastDue } from "@/lib/prototype/po-intake-data";
 import { deletePoRecord } from "@/lib/prototype/po-intake-storage";
 import {
   poHeaderEditPath,
@@ -158,13 +154,7 @@ export function PoListView() {
                   <td className="id-cell">
                     <PoNumber value={p.id} link />
                   </td>
-                  <td>
-                    <span
-                      className={`badge ${assignmentTypeBadgeClass(p.type)}`}
-                    >
-                      {p.type}
-                    </span>
-                  </td>
+                  <td>{p.type}</td>
                   <td>{p.count}</td>
                   <td>{p.done}</td>
                   <td style={{ minWidth: 110 }}>

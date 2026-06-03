@@ -1,8 +1,5 @@
 "use client";
 
-/* data: URLs from local file cache — next/image does not apply */
-/* eslint-disable @next/next/no-img-element */
-
 import { useMemo, useState } from "react";
 import {
   getCachedAssignmentDoc,

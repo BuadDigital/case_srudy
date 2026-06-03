@@ -1,12 +1,11 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { PoIntakeFlow } from "@/components/prototype/po-intake/PoIntakeFlow";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { canReceivePo } from "@/lib/prototype/po-roles";
-import { poListPath } from "@/lib/po-routes";
+import { poPropertiesPath } from "@/lib/po-routes";
 import { prototypeKeys } from "@/lib/query/prototype-keys";
 
 export default function PoIntakePage() {
@@ -16,7 +15,7 @@ export default function PoIntakePage() {
 
   useEffect(() => {
     if (!canReceivePo(role)) {
-      router.replace(poListPath());
+      router.replace("/po");
     }
   }, [role, router]);
 
@@ -26,11 +25,11 @@ export default function PoIntakePage() {
 
   return (
     <PoIntakeFlow
-      onCompleteAction={() => {
+      onCompleteAction={(record) => {
         void queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
-        router.push(poListPath());
+        router.push(poPropertiesPath(record.poNumber));
       }}
-      onBackAction={() => router.push(poListPath())}
+      onBackAction={() => router.push("/po")}
     />
   );
 }

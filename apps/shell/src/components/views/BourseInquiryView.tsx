@@ -244,10 +244,7 @@ export function BourseInquiryView() {
                               </span>
                             </span>
                           </td>
-                          <td
-                            className="po-properties-cell-muted"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <td className="po-properties-cell-muted">
                             <PoNumber value={item.poNumber} link />
                           </td>
                           <td className="po-properties-cell-muted">

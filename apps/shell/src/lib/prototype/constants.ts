@@ -32,6 +32,30 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "courts",
     ],
   },
+  "hr-admin": {
+    name: "علي الأمين",
+    dept: "مدير الموارد البشرية",
+    init: "عل",
+    bg: "var(--info-bg)",
+    tc: "var(--info)",
+    pages: ["dashboard", "users", "messages"],
+  },
+  "proc-admin": {
+    name: "أحمد القادري",
+    dept: "مدير العقود والمشتريات",
+    init: "أق",
+    bg: "var(--warning-bg)",
+    tc: "var(--warning)",
+    pages: ["dashboard", "users", "messages"],
+  },
+  "crm-admin": {
+    name: "جمال عبده",
+    dept: "مدير علاقات العملاء",
+    init: "جع",
+    bg: "var(--success-bg)",
+    tc: "var(--success)",
+    pages: ["dashboard", "users", "messages"],
+  },
   "general-manager": {
     name: "سالم الغريب",
     dept: "مدير الإدارة العام",
@@ -233,6 +257,12 @@ export const NAV: NavItem[] = [
     placeholder: true,
   },
   {
+    id: "system-tools",
+    label: "ادوات النظام",
+    icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
+    grp: "عام",
+  },
+  {
     id: "financial",
     label: "التقارير المالية",
     icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
@@ -280,6 +310,7 @@ export const PAGE_TITLES: Record<PageId, string> = {
   kpi: "مؤشرات الأداء",
   users: "إدارة المستخدمين",
   courts: "المحاكم والدوائر",
+  "system-tools": "ادوات النظام",
 };
 
 export const PAGE_BREADCRUMB: Record<PageId, string> = {
@@ -301,6 +332,7 @@ export const PAGE_BREADCRUMB: Record<PageId, string> = {
   kpi: "الإدارة",
   users: "الإدارة",
   courts: "الإدارة",
+  "system-tools": "عام",
 };
 
 /** Mock rows aligned with `requirment/system_prototype_4.html` (PO / VR / عقارات). */
@@ -438,6 +470,13 @@ export const VALID_PAGE_IDS = new Set<PageId>([
 
 export const ROLE_OPTIONS: { group: string; value: RoleId; label: string }[] = [
   { group: "الإدارة", value: "cdo", label: "سليمان — مسؤول التحول الرقمي (CDO)" },
+  { group: "إدارة المنظمة", value: "hr-admin", label: "علي الأمين — الموارد البشرية" },
+  {
+    group: "إدارة المنظمة",
+    value: "proc-admin",
+    label: "أحمد القادري — العقود والمشتريات",
+  },
+  { group: "إدارة المنظمة", value: "crm-admin", label: "جمال عبده — علاقات العملاء" },
   { group: "الإدارة", value: "general-manager", label: "سالم الغريب — مدير الإدارة" },
   { group: "الإدارة", value: "section-supervisor", label: "عبدالرحمن النفيعي — مشرف دراسة الحالة" },
   { group: "قسم دراسة الحالة", value: "operations-coordinator", label: "منسق العمليات" },

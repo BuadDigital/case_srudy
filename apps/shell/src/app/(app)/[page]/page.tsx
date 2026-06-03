@@ -16,6 +16,7 @@ import { MessagesView } from "@/components/views/MessagesView";
 import { SurveyView } from "@/components/views/SurveyView";
 import { UsersView } from "@/components/views/UsersView";
 import { ValuationRequestsView } from "@/components/views/ValuationRequestsView";
+import { SystemToolsView } from "@/components/views/SystemToolsView";
 import { VALID_PAGE_IDS } from "@/lib/prototype/constants";
 import type { PageId } from "@platform/types";
 
@@ -57,6 +58,7 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   kpi: <KpiView />,
   users: <UsersView />,
   courts: <CourtsView />,
+  "system-tools": <SystemToolsView />,
 };
 
 export default async function PrototypePage({

@@ -1,10 +1,13 @@
 using RealEstateEval.Api.Contracts;
+using RealEstateEval.Api.Models;
 
 namespace RealEstateEval.Api.Services;
 
 public interface IUserRegistrationService
 {
-    Task<IReadOnlyList<UserListItemDto>> ListAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UserListItemDto>> ListAsync(
+        RegistrationSource? sourceScope = null,
+        CancellationToken cancellationToken = default);
     Task<(CreateUserResponseDto? Result, Dictionary<string, string>? Errors)> CreateHrAsync(
         RegistrationPayloadDto data,
         CancellationToken cancellationToken = default);

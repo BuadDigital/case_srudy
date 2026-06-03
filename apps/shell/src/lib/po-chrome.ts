@@ -14,14 +14,14 @@ export function resolvePoChrome(pathname: string): PoChrome | null {
   if (parts.length === 1) {
     return {
       breadcrumb: "دراسة الحالة / أوامر العمل",
-      title: "أوامر العمل",
+      title: "",
     };
   }
 
   if (parts[1] === "intake") {
     return {
       breadcrumb: "دراسة الحالة / أوامر العمل",
-      title: "أوامر العمل",
+      title: "استلام أمر عمل جديد",
     };
   }
 
