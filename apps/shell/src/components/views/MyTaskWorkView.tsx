@@ -114,8 +114,8 @@ export function CaseStudyTaskWork({
     setDistribution(migrateDistribution(task.distribution));
   }, [task.id, task.distribution]);
 
-  const isSupervisor = role === "section-supervisor";
-  const isSpecialist = role === "case-specialist";
+  const isSupervisor = role === "section-supervisor" || role === "cdo";
+  const isSpecialist = role === "case-specialist" || role === "cdo";
 
   const loadProperty = useCallback(async () => {
     setLoading(true);
@@ -368,8 +368,10 @@ export function CaseStudyTaskWork({
   const showBourseStep =
     (task.phase === "bourse" || bourseInquiryFastPath) && !bourseInquiryPanelOnly;
   const showDistribution = task.phase === "distribution";
+  const showCaseStudy = task.phase === "case-study";
   const showPrimarySave =
     isSpecialist &&
+    !showCaseStudy &&
     task.phase !== "obstruction" &&
     task.phase !== "done" &&
     task.status !== "completed";
@@ -456,6 +458,39 @@ export function CaseStudyTaskWork({
           </p>
         )}
       </RegistrationFormCard>
+      </TaskWorkChrome>
+    );
+  }
+
+  if (showCaseStudy) {
+    return (
+      <TaskWorkChrome
+        layout={layout}
+        title={`دراسة حالة — ${deedTitle}`}
+        subtitle={workSubtitle}
+        deedBadge={panelDeedBadge}
+        onClose={exit}
+        onSave={exit}
+        saveLabel="رجوع للمهام"
+        variant="detail"
+        showFooter={false}
+      >
+        <RegistrationFormCard title="دراسة حالة العقار">
+          <div className="note note-success" style={{ marginBottom: 12 }}>
+            تم تأكيد التوزيع وإرسال المهام للأطراف. المعاملة في مرحلة دراسة
+            الحالة.
+          </div>
+          <DistributionPartiesForm
+            distribution={migrateDistribution(task.distribution)}
+            onPatch={() => {}}
+            showEngineering={engineeringOfficeAvailable(
+              property,
+              hasPriorSurvey,
+            )}
+            engineeringHint={engineeringUnavailableHint()}
+            readOnly
+          />
+        </RegistrationFormCard>
       </TaskWorkChrome>
     );
   }

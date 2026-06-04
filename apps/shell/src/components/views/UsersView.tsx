@@ -43,7 +43,7 @@ function addButtonLabel(
 
 function usersTitleForSource(preferredSource: RegistrationSource | null): string {
   if (preferredSource === "hr") return "موظفو الموارد البشرية";
-  if (preferredSource === "proc") return "مستخدمو العقود والمشتريات";
+  if (preferredSource === "proc") return "مستخدمو المالية والعقود";
   if (preferredSource === "crm") return "مستخدمو علاقات العملاء";
   return "جميع المستخدمين";
 }
@@ -51,7 +51,7 @@ function usersTitleForSource(preferredSource: RegistrationSource | null): string
 function usersEmptyForSource(preferredSource: RegistrationSource | null): string {
   if (preferredSource === "hr") return "لا يوجد موظفون في الموارد البشرية — أضف موظفاً جديداً.";
   if (preferredSource === "proc")
-    return "لا يوجد مستخدمون في العقود والمشتريات — أضف مستخدماً جديداً.";
+    return "لا يوجد مستخدمون في المالية والعقود — أضف مستخدماً جديداً.";
   if (preferredSource === "crm")
     return "لا يوجد مستخدمون في علاقات العملاء — أضف مستخدماً جديداً.";
   return "لا يوجد مستخدمون — أضف مستخدماً جديداً.";

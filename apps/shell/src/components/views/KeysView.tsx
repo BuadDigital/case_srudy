@@ -2,10 +2,11 @@
 
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { MOCK_PROPERTIES } from "@/lib/prototype/constants";
+import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
 
 export function KeysView() {
   const { role } = usePrototype();
-  const viewOnly = role === "general-manager";
+  const viewOnly = !isSuperAdmin(role) && role === "general-manager";
   const kp = MOCK_PROPERTIES.filter((p) => p.key);
 
   return (

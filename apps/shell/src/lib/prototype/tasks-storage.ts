@@ -1,4 +1,10 @@
 import type { RoleId } from "@platform/types";
+import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
+import {
+  PROTOTYPE_ROLE_ASSIGNEE_ID,
+  partyAccountForRole,
+} from "@/lib/prototype/distribution-parties";
+import { ROLES } from "@/lib/prototype/constants";
 import type {
   AssignmentType,
   PoIntakeRecord,
@@ -25,6 +31,7 @@ export type CaseStudyTaskPhase =
   | "enfath"
   | "bourse"
   | "distribution"
+  | "case-study"
   | "done"
   | "obstruction";
 
@@ -102,6 +109,8 @@ export type WorkflowTask = {
   phase: CaseStudyTaskPhase;
   assigneeRole: RoleId;
   assigneeName: string;
+  /** Distribution dropdown id (e.g. fi-ahmed) — filters queue per prototype user. */
+  assigneeId?: string;
   parentTaskId?: string;
   status: WorkflowTaskStatus;
   distribution?: TaskDistributionDraft;
@@ -167,6 +176,7 @@ export function taskPhaseLabel(phase: CaseStudyTaskPhase): string {
   if (phase === "enfath") return "البيانات الأولية للعقار";
   if (phase === "bourse") return "المرحلة 2 — بيانات البورصة";
   if (phase === "distribution") return "المرحلة 3 — توزيع الأطراف";
+  if (phase === "case-study") return "دراسة حالة العقار";
   if (phase === "obstruction") return "تعذر — بانتظار المشرف";
   return "مكتملة";
 }
@@ -219,7 +229,7 @@ export function distributionValidationError(
     return "فعّل طرفاً واحداً على الأقل ثم اختر المسؤول من القائمة.";
   }
   if (distribution.governmentAuditor && !distribution.governmentAuditorId.trim()) {
-    return "اختر المدقق الحكومي من القائمة.";
+    return "اختر المراجع الحكومي من القائمة.";
   }
   if (distribution.valuationDepartment) {
     if (!distribution.operationsCoordinatorId.trim()) {
@@ -265,7 +275,7 @@ function phaseAfterEnfathRegistration(
   return "bourse";
 }
 
-function caseStudyTaskForProperty(
+export function caseStudyTaskForProperty(
   poNumber: string,
   propertyId: string,
   list = loadWorkflowTasks(),
@@ -350,7 +360,33 @@ export function syncTaskSlotsForPo(record: PoIntakeRecord): WorkflowTask[] {
 
   for (let i = 0; i < record.properties.length; i++) {
     const prop = record.properties[i];
-    if (!prop.id || linkedIds.has(prop.id)) continue;
+    if (!prop.id) continue;
+    if (linkedIds.has(prop.id)) {
+      const linked = caseStudyTaskForProperty(poNumber, prop.id, list);
+      if (
+        linked &&
+        linked.phase !== "done" &&
+        linked.phase !== "obstruction" &&
+        linked.phase !== "case-study"
+      ) {
+        const targetPhase = phaseAfterEnfathRegistration(prop);
+        if (linked.phase !== targetPhase) {
+          const idx = list.findIndex((t) => t.id === linked.id);
+          if (idx >= 0) {
+            list[idx] = {
+              ...list[idx],
+              phase: targetPhase,
+              title:
+                targetPhase === "distribution"
+                  ? `توزيع الأطراف — ${formatPropertyDeedDisplay(prop) || poNumber}`
+                  : propertyTaskTitle(prop, poNumber),
+              updatedAt: new Date().toISOString(),
+            };
+          }
+        }
+      }
+      continue;
+    }
 
     const preferred = tasks.find(
       (t) => !t.propertyId && t.propertyOrdinal === i + 1,
@@ -516,6 +552,17 @@ export function advanceTaskAfterBourse(
   });
 }
 
+/** After استعلام البورصة — move linked case-study task to توزيع المعاملات. */
+export function advanceTaskAfterBourseForProperty(
+  poNumber: string,
+  propertyId: string,
+  property: PoPropertyIntake,
+): WorkflowTask | null {
+  const task = caseStudyTaskForProperty(poNumber, propertyId);
+  if (!task) return null;
+  return advanceTaskAfterBourse(task.id, property);
+}
+
 function childTaskTitle(
   kind: WorkflowTaskKind,
   poNumber: string,
@@ -570,6 +617,7 @@ export function confirmTaskDistribution(
   const spawn = (
     kind: Exclude<WorkflowTaskKind, "case-study-property">,
     assigneeName: string,
+    assigneeId: string,
     assigneeRole?: RoleId,
   ) => {
     const meta = CHILD_ASSIGNEE[kind];
@@ -584,6 +632,7 @@ export function confirmTaskDistribution(
       phase: "done",
       assigneeRole: assigneeRole ?? meta.role,
       assigneeName: name,
+      assigneeId: assigneeId.trim() || undefined,
       parentTaskId: parent.id,
       status: "open",
       createdAt: now,
@@ -595,6 +644,7 @@ export function confirmTaskDistribution(
     spawn(
       "government-review",
       assigneeLabel(GOVERNMENT_AUDITORS, distribution.governmentAuditorId),
+      distribution.governmentAuditorId,
     );
   }
   if (distribution.valuationDepartment) {
@@ -604,28 +654,33 @@ export function confirmTaskDistribution(
         VALUATION_COORDINATORS,
         distribution.operationsCoordinatorId,
       ),
+      distribution.operationsCoordinatorId,
     );
     spawn(
       "field-inspection",
       assigneeLabel(FIELD_INSPECTORS, distribution.inspectorId),
+      distribution.inspectorId,
     );
     spawn(
       "property-appraisal",
       assigneeLabel(VALUATORS, distribution.valuatorId),
+      distribution.valuatorId,
     );
   }
   if (distribution.engineeringOffice) {
     spawn(
       "engineering-survey",
       assigneeLabel(ENGINEERING_OFFICES, distribution.engineeringOfficeId),
+      distribution.engineeringOfficeId,
       "engineering-office",
     );
   }
 
   const updatedParent: WorkflowTask = {
     ...parent,
-    phase: "done",
-    status: "completed",
+    phase: "case-study",
+    status: "open",
+    title: `دراسة حالة — ${deed || parent.poNumber}`,
     distribution,
     updatedAt: now,
   };
@@ -700,8 +755,33 @@ export function tasksForRole(
   role: RoleId,
   tasks = loadWorkflowTasks(),
 ): WorkflowTask[] {
+  if (isSuperAdmin(role)) return [...tasks].sort(compareWorkflowTasks);
   return tasks
     .filter((t) => t.assigneeRole === role)
+    .sort(compareWorkflowTasks);
+}
+
+/** Party queues — match role and selected person from توزيع المعاملات. */
+export function tasksForPartyAssignee(
+  viewerRole: RoleId,
+  tasks = loadWorkflowTasks(),
+  queueRole?: RoleId,
+): WorkflowTask[] {
+  if (isSuperAdmin(viewerRole) && !queueRole) {
+    return [...tasks].sort(compareWorkflowTasks);
+  }
+  const role =
+    isSuperAdmin(viewerRole) && queueRole ? queueRole : viewerRole;
+  const account = partyAccountForRole(role);
+  const expectedId = PROTOTYPE_ROLE_ASSIGNEE_ID[role];
+  const expectedName = account?.name ?? ROLES[role]?.name;
+  return tasks
+    .filter((t) => t.assigneeRole === role)
+    .filter((t) => {
+      if (t.assigneeId && expectedId) return t.assigneeId === expectedId;
+      if (expectedName) return t.assigneeName.trim() === expectedName.trim();
+      return true;
+    })
     .sort(compareWorkflowTasks);
 }
 

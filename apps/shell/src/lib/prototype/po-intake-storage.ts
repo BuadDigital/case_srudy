@@ -6,7 +6,14 @@ import type {
 import { classificationRequiresSurvey, computeBusinessDueDate, emptyProperty, parsePropertyIdentifierType, poListStatusForAssignmentType,} from "@/lib/prototype/po-intake-data";
 import { propertyHasIncompleteContact, contactsForApi } from "@/components/prototype/po-intake/po-property-validation";
 import { getPropertyFailure, deleteFailuresForPo } from "@/lib/prototype/failures-storage";
-import { advanceTaskAfterEnfath, deleteTasksForPo, deleteTasksForProperty, linkNewPropertyToTaskSlot, syncTaskSlotsForPo,} from "@/lib/prototype/tasks-storage";
+import {
+  advanceTaskAfterBourseForProperty,
+  advanceTaskAfterEnfath,
+  deleteTasksForPo,
+  deleteTasksForProperty,
+  linkNewPropertyToTaskSlot,
+  syncTaskSlotsForPo,
+} from "@/lib/prototype/tasks-storage";
 import type { PoRow, PropertyRow } from "@/lib/prototype/constants";
 import type { PendingBoursePropertyDto,UpdatePropertyBourseRequest,WorkOrderDto,WorkOrderPropertyDto} from "@platform/api-client";
 import {
@@ -357,7 +364,6 @@ export function poPropertyToPropertyRow(
             ? "progress"
             : "new",
     specialist: record.assignmentSpecialist,
-    preparer: "—",
   };
 }
 
@@ -393,7 +399,9 @@ export async function completePropertyBourse(
   }
 
   notifyWorkOrdersChanged();
-  return { ok: true, data: dtoToProperty(result.data) };
+  const saved = dtoToProperty(result.data);
+  advanceTaskAfterBourseForProperty(poNumber, propertyId, saved);
+  return { ok: true, data: saved };
 }
 
 export async function loadPropertyRows(): Promise<PropertyRow[]> {

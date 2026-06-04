@@ -13,12 +13,18 @@ export type PageId =
   | "failures"
   | "valuation-requests"
   | "field-form"
+  | "property-inspection"
+  | "government-review"
+  | "valuation-coordination"
+  | "property-appraisal"
+  | "active-survey"
   | "messages"
   | "financial"
   | "kpi"
   | "users"
   | "courts"
-  | "system-tools";
+  | "system-tools"
+  | "case-study-info-roles";
 
 export type RoleId =
   | "cdo"
@@ -27,10 +33,7 @@ export type RoleId =
   | "crm-admin"
   | "general-manager"
   | "section-supervisor"
-  | "operations-coordinator"
   | "case-specialist"
-  | "report-preparer"
-  | "court-delegate"
   | "valuation-coordinator"
   | "real-estate-appraiser"
   | "field-inspector"
@@ -68,10 +71,7 @@ const ROLE_ID_SET: Record<RoleId, true> = {
   "crm-admin": true,
   "general-manager": true,
   "section-supervisor": true,
-  "operations-coordinator": true,
   "case-specialist": true,
-  "report-preparer": true,
-  "court-delegate": true,
   "valuation-coordinator": true,
   "real-estate-appraiser": true,
   "field-inspector": true,
@@ -95,11 +95,17 @@ export function isPageId(value: string): value is PageId {
     value === "failures" ||
     value === "valuation-requests" ||
     value === "field-form" ||
+    value === "property-inspection" ||
+    value === "government-review" ||
+    value === "valuation-coordination" ||
+    value === "property-appraisal" ||
+    value === "active-survey" ||
     value === "messages" ||
     value === "financial" ||
     value === "kpi" ||
     value === "users" ||
     value === "courts" ||
-    value === "system-tools"
+    value === "system-tools" ||
+    value === "case-study-info-roles"
   );
 }

@@ -27,6 +27,15 @@ export type PrimaryDataTableRow = {
   remainingTime: RemainingTimeState;
 };
 
+export type DistributionTableRow = {
+  deedLabel: string;
+  city: string;
+  district: string;
+  propertyType: string;
+  classification: string;
+  area: string;
+};
+
 export type RemainingTimeState =
   | { status: "missing" }
   | { status: "overdue" }
@@ -103,6 +112,26 @@ export function formatPrimaryDataPropertyLabel(
     if (label !== "—") return label;
   }
   return formatPropertySlotOnPo(task, record);
+}
+
+function fieldOrDash(value: string | undefined): string {
+  const v = value?.trim();
+  return v ? v : "—";
+}
+
+export function buildDistributionTableRow(
+  task: WorkflowTask,
+  property: PoPropertyIntake | null,
+  record: PoIntakeRecord | undefined,
+): DistributionTableRow {
+  return {
+    deedLabel: formatPrimaryDataPropertyLabel(task, property, record),
+    city: fieldOrDash(property?.city),
+    district: fieldOrDash(property?.district),
+    propertyType: fieldOrDash(property?.propertyType),
+    classification: fieldOrDash(property?.classification),
+    area: fieldOrDash(property?.area),
+  };
 }
 
 export function buildPrimaryDataTableRow(
@@ -196,6 +225,16 @@ export function buildTaskTableRow(
       deedStatus,
       statusBadgeClass: "b-prog",
       statusLabel: "بانتظار التوزيع",
+    };
+  }
+  if (task.phase === "case-study") {
+    return {
+      deedLabel,
+      location,
+      typeDisplay,
+      deedStatus,
+      statusBadgeClass: "b-prog",
+      statusLabel: "دراسة الحالة",
     };
   }
   if (!property?.deedNumber.trim()) {

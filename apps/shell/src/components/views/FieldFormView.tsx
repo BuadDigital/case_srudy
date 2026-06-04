@@ -2,12 +2,15 @@ const COND_OPTS = ["ممتاز", "جيد", "متوسط", "يحتاج صيانة"
 const ACC_OPTS = ["سهل", "متوسط", "صعب", "غير ممكن"] as const;
 const FIELD_LABELS = ["واجهة رئيسية", "المدخل", "الداخل", "المحيط"] as const;
 
-export function FieldFormView() {
+export function FieldFormView({ embedded = false }: { embedded?: boolean }) {
   return (
     <>
-      <div className="note note-info">
-        هذا النموذج مُحسَّن للموبايل — يفتحه المعاين في الميدان بجانب برنامج مقياس
-      </div>
+      {!embedded ? (
+        <div className="note note-info">
+          هذا النموذج مُحسَّن للموبايل — يفتحه المعاين في الميدان بجانب برنامج
+          مقياس
+        </div>
+      ) : null}
       <div className="field-form">
         <div className="field-sec-title">١ — بيانات العقار الأساسية</div>
         <div className="form-row">
@@ -185,14 +188,16 @@ export function FieldFormView() {
           <textarea id="ff-gen" className="form-control" rows={2} placeholder="أي ملاحظات إضافية..." />
         </div>
       </div>
-      <div style={{ display: "flex", gap: 10 }}>
-        <button type="button" className="btn btn-primary">
-          حفظ وإرسال
-        </button>
-        <button type="button" className="btn">
-          حفظ مسودة
-        </button>
-      </div>
+      {!embedded ? (
+        <div style={{ display: "flex", gap: 10 }}>
+          <button type="button" className="btn btn-primary">
+            حفظ وإرسال
+          </button>
+          <button type="button" className="btn">
+            حفظ مسودة
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }

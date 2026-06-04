@@ -24,12 +24,14 @@ function PartyBlock({
   title,
   description,
   onEnabledChange,
+  readOnly,
   children,
 }: {
   enabled: boolean;
   title: string;
   description: string;
   onEnabledChange: (checked: boolean) => void;
+  readOnly?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -40,6 +42,7 @@ function PartyBlock({
         <input
           type="checkbox"
           checked={enabled}
+          disabled={readOnly}
           onChange={(e) => onEnabledChange(e.target.checked)}
         />
         <div className="my-tasks-party-body">
@@ -62,6 +65,7 @@ type Props = {
   onPatch: (patch: Partial<TaskDistributionDraft>) => void;
   showEngineering: boolean;
   engineeringHint?: string | null;
+  readOnly?: boolean;
 };
 
 export function DistributionPartiesForm({
@@ -69,17 +73,21 @@ export function DistributionPartiesForm({
   onPatch,
   showEngineering,
   engineeringHint,
+  readOnly = false,
 }: Props) {
   return (
     <div className="my-tasks-party-stack">
-      <p className="my-tasks-party-intro">
-        فعّل الطرف ثم اختر المسؤول من القائمة. الطرف غير المفعّل لن يُسند إليه
-        أي جزء من المعاملة.
-      </p>
+      {!readOnly ? (
+        <p className="my-tasks-party-intro">
+          فعّل الطرف ثم اختر المسؤول من القائمة. الطرف غير المفعّل لن يُسند إليه
+          أي جزء من المعاملة.
+        </p>
+      ) : null}
 
       <PartyBlock
+        readOnly={readOnly}
         enabled={distribution.governmentAuditor}
-        title="المدقق الحكومي"
+        title="المراجع الحكومي"
         description="زيارة المحكمة وجمع المفاتيح عند التوفر."
         onEnabledChange={(checked) =>
           onPatch({
@@ -95,15 +103,16 @@ export function DistributionPartiesForm({
           label="المسؤول"
           className="reg-fg"
           required={distribution.governmentAuditor}
-          disabled={!distribution.governmentAuditor}
+          disabled={readOnly || !distribution.governmentAuditor}
           options={toOptions(GOVERNMENT_AUDITORS)}
           value={distribution.governmentAuditorId}
-          placeholder="اختر المدقق الحكومي…"
+          placeholder="اختر المراجع الحكومي…"
           onChange={(v) => onPatch({ governmentAuditorId: v })}
         />
       </PartyBlock>
 
       <PartyBlock
+        readOnly={readOnly}
         enabled={distribution.valuationDepartment}
         title="قسم التقييم العقاري"
         description="منسق العمليات يستلم المعاملة ثم يُسند للمعاين والمقيم (مستخدمون نشطون في النظام)."
@@ -124,7 +133,7 @@ export function DistributionPartiesForm({
             label="منسق عمليات التقييم"
             className="reg-fg"
             required={distribution.valuationDepartment}
-            disabled={!distribution.valuationDepartment}
+            disabled={readOnly || !distribution.valuationDepartment}
             options={toOptions(VALUATION_COORDINATORS)}
             value={distribution.operationsCoordinatorId}
             placeholder="اختر المنسق…"
@@ -135,7 +144,7 @@ export function DistributionPartiesForm({
             label="المعاين الميداني"
             className="reg-fg"
             required={distribution.valuationDepartment}
-            disabled={!distribution.valuationDepartment}
+            disabled={readOnly || !distribution.valuationDepartment}
             options={toOptions(FIELD_INSPECTORS)}
             value={distribution.inspectorId}
             placeholder="اختر المعاين…"
@@ -146,7 +155,7 @@ export function DistributionPartiesForm({
             label="المقيم العقاري"
             className="reg-fg"
             required={distribution.valuationDepartment}
-            disabled={!distribution.valuationDepartment}
+            disabled={readOnly || !distribution.valuationDepartment}
             options={toOptions(VALUATORS)}
             value={distribution.valuatorId}
             placeholder="اختر المقيم…"
@@ -157,6 +166,7 @@ export function DistributionPartiesForm({
 
       {showEngineering ? (
         <PartyBlock
+          readOnly={readOnly}
           enabled={distribution.engineeringOffice}
           title="المكتب الهندسي"
           description="مجموعة مكاتب هندسية لإصدار تقارير الرفع المساحي — حسابات نشطة لإدارة المعاملات الواردة."
@@ -174,7 +184,7 @@ export function DistributionPartiesForm({
             label="المكتب"
             className="reg-fg"
             required={distribution.engineeringOffice}
-            disabled={!distribution.engineeringOffice}
+            disabled={readOnly || !distribution.engineeringOffice}
             options={toOptions(ENGINEERING_OFFICES)}
             value={distribution.engineeringOfficeId}
             placeholder="اختر المكتب الهندسي…"

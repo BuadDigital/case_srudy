@@ -1,11 +1,12 @@
 "use client";
 
 import { usePrototype } from "@/contexts/PrototypeContext";
+import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
 import { MOCK_SURVEY_OFFICES } from "@/lib/prototype/constants";
 
 export function SurveyView() {
   const { role } = usePrototype();
-  const viewOnly = role === "general-manager";
+  const viewOnly = !isSuperAdmin(role) && role === "general-manager";
 
   return (
     <>

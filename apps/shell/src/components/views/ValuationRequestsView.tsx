@@ -3,11 +3,12 @@
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
 import { MOCK_VR, type RoleId } from "@/lib/prototype/constants";
+import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
 
 function isValuationMgr(role: RoleId) {
   return (
+    isSuperAdmin(role) ||
     role === "general-manager" ||
-    role === "section-supervisor" ||
     role === "valuation-coordinator"
   );
 }

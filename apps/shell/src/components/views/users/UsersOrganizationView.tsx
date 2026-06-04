@@ -5,8 +5,8 @@ import { useOrganizationQuery } from "@/lib/query/prototype-queries";
 
 function roleLabel(systemRole: string) {
   if (systemRole === "CDO") return "مسؤول التحول الرقمي";
-  if (systemRole === "HrAdmin") return "مدير الموارد البشرية";
-  if (systemRole === "ProcAdmin") return "مدير العقود والمشتريات";
+  if (systemRole === "HrAdmin") return "أخصائية موارد بشرية";
+  if (systemRole === "ProcAdmin") return "مدير المالية والعقود";
   if (systemRole === "CrmAdmin") return "مدير علاقات العملاء";
   return systemRole;
 }

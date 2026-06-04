@@ -125,8 +125,8 @@ export default function LoginPage() {
           CDO: <strong style={{ color: "var(--text2)" }}>s.salhy@gmail.com</strong> /{" "}
           <strong style={{ color: "var(--text2)" }}>sliman123</strong>
           <br />
-          مديرو الإدارات: علي (HR) · أحمد (PROC) · جمال (CRM) — كلمات المرور كما في
-          الإعداد.
+          إدارة المنظمة: آلاء (HR) · علي (المالية والعقود) · شهد (CRM) — كلمات المرور
+          كما في الإعداد. سليمان (CDO) ينشئ حساباتهم.
           <br />
           تجريبي قديم: <strong style={{ color: "var(--text2)" }}>admin@local.dev</strong> /{" "}
           <strong style={{ color: "var(--text2)" }}>Admin123!</strong>

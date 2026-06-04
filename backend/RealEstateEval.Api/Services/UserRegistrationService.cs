@@ -116,7 +116,7 @@ public class UserRegistrationService : IUserRegistrationService
                 new OrgDepartmentDto
                 {
                     Code = "PROCUREMENT",
-                    Title = "العقود والمشتريات",
+                    Title = "المالية والعقود",
                     Description = "مقدمو خدمة — أفراد ومؤسسات",
                     IsActive = true,
                     Admin = byRole.GetValueOrDefault(OrgRoles.ProcAdmin),

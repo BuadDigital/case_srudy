@@ -12,13 +12,15 @@ import {
   type FailureRecord,
 } from "@/lib/prototype/failures-storage";
 import { formatDateAr, formatPoDisplay } from "@/lib/prototype/po-intake-data";
+import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
+import type { RoleId } from "@platform/types";
 
-function isCaseEditor(role: string) {
-  return role === "case-specialist" || role === "report-preparer";
+function isCaseEditor(role: RoleId) {
+  return isSuperAdmin(role) || role === "case-specialist";
 }
 
-function isSupervisor(role: string) {
-  return role === "section-supervisor";
+function isSupervisor(role: RoleId) {
+  return isSuperAdmin(role) || role === "section-supervisor";
 }
 
 export function FailuresView() {
@@ -92,7 +94,9 @@ export function FailuresView() {
         <div className="note note-info">
           {role === "general-manager"
             ? "أنت في وضع الاطلاع — صلاحية التعديل للمشرف والأخصائي"
-            : "أنت في وضع المراقبة — لا تملك صلاحية تعديل التعذرات"}
+            : role === "cdo"
+              ? "صلاحيات كاملة — يمكنك اعتماد التعذرات وإنشاؤها"
+              : "أنت في وضع المراقبة — لا تملك صلاحية تعديل التعذرات"}
         </div>
       ) : null}
       {ca ? (

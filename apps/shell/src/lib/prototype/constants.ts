@@ -1,5 +1,6 @@
 import type { NavItem, PageId, RoleDef, RoleId } from "@platform/types";
 import { ACTIVE_TRANSACTIONS_NAV } from "@/lib/prototype/active-transactions";
+import { SETTINGS_NAV } from "@/lib/prototype/settings-nav";
 
 export type { NavItem, PageId, RoleDef, RoleId };
 
@@ -9,56 +10,39 @@ export const STORAGE_ROLE_KEY = "evalPrototypeRole";
 export const ROLES: Record<RoleId, RoleDef> = {
   cdo: {
     name: "سليمان",
-    dept: "مسؤول التحول الرقمي (CDO)",
+    dept: "المسؤول الأعلى — التحول الرقمي (CDO)",
     init: "سل",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
-    pages: [
-      "dashboard",
-      "po",
-      "active-primary-data",
-      "bourse-inquiry",
-      "active-distribution",
-      "active-case-study",
-      "survey",
-      "keys",
-      "failures",
-      "valuation-requests",
-      "field-form",
-      "messages",
-      "financial",
-      "kpi",
-      "users",
-      "courts",
-    ],
+    pages: ["dashboard"],
   },
   "hr-admin": {
-    name: "علي الأمين",
-    dept: "مدير الموارد البشرية",
-    init: "عل",
+    name: "آلاء قمصاني",
+    dept: "أخصائية موارد بشرية",
+    init: "آق",
     bg: "var(--info-bg)",
     tc: "var(--info)",
     pages: ["dashboard", "users", "messages"],
   },
   "proc-admin": {
-    name: "أحمد القادري",
-    dept: "مدير العقود والمشتريات",
-    init: "أق",
+    name: "علي الأمين",
+    dept: "مدير المالية والعقود",
+    init: "عل",
     bg: "var(--warning-bg)",
     tc: "var(--warning)",
     pages: ["dashboard", "users", "messages"],
   },
   "crm-admin": {
-    name: "جمال عبده",
+    name: "شهد العماري",
     dept: "مدير علاقات العملاء",
-    init: "جع",
+    init: "شع",
     bg: "var(--success-bg)",
     tc: "var(--success)",
     pages: ["dashboard", "users", "messages"],
   },
   "general-manager": {
     name: "سالم الغريب",
-    dept: "مدير الإدارة العام",
+    dept: "مدير إدارة التقييم العقاري",
     init: "سغ",
     bg: "var(--info-bg)",
     tc: "var(--info)",
@@ -73,12 +57,12 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "keys",
       "failures",
       "valuation-requests",
-      "field-form",
       "messages",
       "financial",
       "kpi",
       "users",
       "courts",
+      "case-study-info-roles",
     ],
   },
   "section-supervisor": {
@@ -94,31 +78,8 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "bourse-inquiry",
       "active-distribution",
       "active-case-study",
-      "survey",
       "keys",
       "failures",
-      "valuation-requests",
-      "messages",
-      "financial",
-      "kpi",
-      "users",
-      "courts",
-    ],
-  },
-  "operations-coordinator": {
-    name: "منسق العمليات",
-    dept: "قسم دراسة الحالة",
-    init: "من",
-    bg: "var(--purple-bg)",
-    tc: "var(--purple)",
-    pages: [
-      "dashboard",
-      "po",
-      "active-primary-data",
-      "bourse-inquiry",
-      "active-distribution",
-      "active-case-study",
-      "survey",
       "messages",
     ],
   },
@@ -139,29 +100,13 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "messages",
     ],
   },
-  "report-preparer": {
-    name: "صالح الحبشي",
-    dept: "معد التقرير",
-    init: "صح",
-    bg: "var(--success-bg)",
-    tc: "var(--success)",
-    pages: ["dashboard", "po", "messages"],
-  },
-  "court-delegate": {
-    name: "فراس كمرين",
-    dept: "مندوب المحكمة",
-    init: "فك",
-    bg: "var(--orange-bg)",
-    tc: "var(--orange)",
-    pages: ["dashboard", "keys", "messages"],
-  },
   "valuation-coordinator": {
-    name: "منسق التقييم",
-    dept: "قسم التقييم العقاري",
-    init: "قت",
+    name: "محمد دياب",
+    dept: "منسق عمليات التقييم",
+    init: "مد",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
-    pages: ["dashboard", "valuation-requests", "messages"],
+    pages: ["dashboard", "valuation-coordination", "messages"],
   },
   "real-estate-appraiser": {
     name: "عبدالله الكثيري",
@@ -169,7 +114,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "عك",
     bg: "var(--info-bg)",
     tc: "var(--info)",
-    pages: ["dashboard", "valuation-requests", "messages"],
+    pages: ["dashboard", "property-appraisal", "messages"],
   },
   "field-inspector": {
     name: "أحمد سعيد",
@@ -177,27 +122,27 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "أس",
     bg: "var(--info-bg)",
     tc: "var(--info)",
-    pages: ["dashboard", "field-form", "messages"],
+    pages: ["dashboard", "property-inspection", "messages"],
   },
   "government-reviewer": {
-    name: "خالد المرشدي",
+    name: "فراس كمرين",
     dept: "مراجع حكومي",
-    init: "خم",
+    init: "فك",
     bg: "var(--orange-bg)",
     tc: "var(--orange)",
-    pages: ["dashboard", "messages"],
+    pages: ["dashboard", "government-review", "messages"],
   },
   "engineering-office": {
-    name: "مكتب الرياض الهندسي",
+    name: "مكتب جدة للمساحة",
     dept: "مكتب هندسي — رفع مساحي",
-    init: "ره",
+    init: "جد",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
-    pages: ["dashboard", "survey", "messages"],
+    pages: ["dashboard", "active-survey", "messages"],
   },
   "financial-officer": {
     name: "إيمان النهدي",
-    dept: "موظف الشؤون المالية",
+    dept: "موظف مالي — المالية والعقود",
     init: "إن",
     bg: "var(--danger-bg)",
     tc: "var(--danger)",
@@ -242,25 +187,12 @@ export const NAV: NavItem[] = [
     placeholder: true,
   },
   {
-    id: "field-form",
-    label: "نموذج المعاين",
-    icon: "M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 0 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
-    grp: null,
-    placeholder: true,
-  },
-  {
     id: "messages",
     label: "المراسلة الداخلية",
     icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
     grp: "عام",
     badge: "3",
     placeholder: true,
-  },
-  {
-    id: "system-tools",
-    label: "ادوات النظام",
-    icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
-    grp: "عام",
   },
   {
     id: "financial",
@@ -276,27 +208,27 @@ export const NAV: NavItem[] = [
     grp: null,
     placeholder: true,
   },
-  {
-    id: "users",
-    label: "إدارة المستخدمين",
-    icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
-    grp: null,
-  },
-  {
-    id: "courts",
-    label: "المحاكم والدوائر",
-    icon: "M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6",
-    grp: "الإدارة",
-    placeholder: true,
-  },
 ];
+
+/** CDO (super admin) — union of every prototype route. Filled after NAV is defined. */
+export const ALL_PROTOTYPE_PAGES: PageId[] = [
+  ...new Set<PageId>([
+    ...NAV.map((n) => n.id),
+    ...ACTIVE_TRANSACTIONS_NAV.map((n) => n.id),
+    ...SETTINGS_NAV.map((n) => n.id),
+    "my-tasks",
+    "properties",
+  ]),
+];
+
+ROLES.cdo.pages = ALL_PROTOTYPE_PAGES;
 
 export const PAGE_TITLES: Record<PageId, string> = {
   dashboard: "لوحة التحكم",
   "my-tasks": "تنفيذ المعاملة",
   "active-primary-data": "البيانات الأولية",
   "active-distribution": "توزيع المعاملات",
-  "active-case-study": "دراسة حالة العقار",
+  "active-case-study": "",
   po: "أوامر العمل",
   "bourse-inquiry": "استعلام بورصة",
   properties: "العقارات",
@@ -305,12 +237,18 @@ export const PAGE_TITLES: Record<PageId, string> = {
   failures: "إدارة التعذرات",
   "valuation-requests": "طلبات التقييم",
   "field-form": "نموذج المعاين",
+  "property-inspection": "معاينة العقار",
+  "government-review": "المراجعة الحكومية",
+  "valuation-coordination": "استلام التقييم",
+  "property-appraisal": "تقييم العقار",
+  "active-survey": "الرفع المساحي",
   messages: "المراسلة",
   financial: "التقارير المالية",
   kpi: "مؤشرات الأداء",
   users: "إدارة المستخدمين",
-  courts: "المحاكم والدوائر",
+  courts: "المحاكم و الدوائر",
   "system-tools": "ادوات النظام",
+  "case-study-info-roles": "علاقة المستخدم بالمعلومة",
 };
 
 export const PAGE_BREADCRUMB: Record<PageId, string> = {
@@ -318,7 +256,7 @@ export const PAGE_BREADCRUMB: Record<PageId, string> = {
   "my-tasks": "دراسة الحالة / المعاملات النشطة",
   "active-primary-data": "دراسة الحالة / المعاملات النشطة / البيانات الأولية",
   "active-distribution": "دراسة الحالة / المعاملات النشطة / توزيع المعاملات",
-  "active-case-study": "دراسة الحالة / المعاملات النشطة / دراسة حالة العقار",
+  "active-case-study": "دراسة الحالة / المعاملات النشطة / دراسة حالة العقارات",
   po: "دراسة الحالة",
   "bourse-inquiry": "دراسة الحالة / المعاملات النشطة / استعلام بورصة",
   properties: "دراسة الحالة",
@@ -327,12 +265,18 @@ export const PAGE_BREADCRUMB: Record<PageId, string> = {
   failures: "دراسة الحالة",
   "valuation-requests": "التقييم العقاري",
   "field-form": "التقييم العقاري",
+  "property-inspection": "المعاملات النشطة / معاينة العقار",
+  "government-review": "المعاملات النشطة / المراجعة الحكومية",
+  "valuation-coordination": "المعاملات النشطة / استلام التقييم",
+  "property-appraisal": "المعاملات النشطة / تقييم العقار",
+  "active-survey": "المعاملات النشطة / الرفع المساحي",
   messages: "عام",
   financial: "المالية",
   kpi: "الإدارة",
   users: "الإدارة",
   courts: "الإدارة",
   "system-tools": "عام",
+  "case-study-info-roles": "دراسة الحالة / الإعدادات",
 };
 
 /** Mock rows aligned with `requirment/system_prototype_4.html` (PO / VR / عقارات). */
@@ -375,7 +319,6 @@ export type PropertyRow = {
   study: PropertyWorkflowStage;
   status: PropertyWorkflowStage;
   specialist: string;
-  preparer: string;
 };
 
 export const MOCK_VR: VrRow[] = [
@@ -386,13 +329,13 @@ export const MOCK_VR: VrRow[] = [
 ];
 
 export const MOCK_PROPERTIES: PropertyRow[] = [
-  { id: "E-4401", po: "PO-2024-018", area: "مكة المكرمة", type: "أرض", key: false, survey: "done", val: "done", study: "progress", status: "progress", specialist: "أسامة الصالحي", preparer: "صالح الحبشي" },
-  { id: "E-4402", po: "PO-2024-018", area: "مكة المكرمة", type: "شقة", key: true, survey: "progress", val: "progress", study: "new", status: "progress", specialist: "أسامة الصالحي", preparer: "أيمن بن محفوظ" },
-  { id: "E-4403", po: "PO-2024-016", area: "جدة", type: "فيلا", key: true, survey: "done", val: "done", study: "done", status: "done", specialist: "أيمن مجرشي", preparer: "صالح الحبشي" },
-  { id: "E-4404", po: "PO-2024-016", area: "جدة", type: "أرض", key: false, survey: "new", val: "new", study: "new", status: "new", specialist: "أيمن مجرشي", preparer: "أيمن بن محفوظ" },
-  { id: "E-4405", po: "PO-2024-016", area: "الطائف", type: "عمارة", key: false, survey: "progress", val: "progress", study: "new", status: "progress", specialist: "وليد باشماخ", preparer: "صالح الحبشي" },
-  { id: "E-4406", po: "PO-2024-018", area: "مكة المكرمة", type: "محل", key: false, survey: "done", val: "new", study: "new", status: "progress", specialist: "عمر الحمراني", preparer: "أيمن بن محفوظ" },
-  { id: "E-4407", po: "PO-2024-016", area: "جدة", type: "أرض", key: true, survey: "new", val: "new", study: "fail", status: "fail", specialist: "أيمن مجرشي", preparer: "صالح الحبشي" },
+  { id: "E-4401", po: "PO-2024-018", area: "مكة المكرمة", type: "أرض", key: false, survey: "done", val: "done", study: "progress", status: "progress", specialist: "أسامة الصالحي" },
+  { id: "E-4402", po: "PO-2024-018", area: "مكة المكرمة", type: "شقة", key: true, survey: "progress", val: "progress", study: "new", status: "progress", specialist: "أسامة الصالحي" },
+  { id: "E-4403", po: "PO-2024-016", area: "جدة", type: "فيلا", key: true, survey: "done", val: "done", study: "done", status: "done", specialist: "أيمن مجرشي" },
+  { id: "E-4404", po: "PO-2024-016", area: "جدة", type: "أرض", key: false, survey: "new", val: "new", study: "new", status: "new", specialist: "أيمن مجرشي" },
+  { id: "E-4405", po: "PO-2024-016", area: "الطائف", type: "عمارة", key: false, survey: "progress", val: "progress", study: "new", status: "progress", specialist: "وليد باشماخ" },
+  { id: "E-4406", po: "PO-2024-018", area: "مكة المكرمة", type: "محل", key: false, survey: "done", val: "new", study: "new", status: "progress", specialist: "عمر الحمراني" },
+  { id: "E-4407", po: "PO-2024-016", area: "جدة", type: "أرض", key: true, survey: "new", val: "new", study: "fail", status: "fail", specialist: "أيمن مجرشي" },
 ];
 
 export type TeamKind = "internal" | "freelance" | "external";
@@ -455,7 +398,7 @@ export type MessagePreview = {
 };
 
 export const MOCK_MESSAGES: MessagePreview[] = [
-  { from: "عبدالله البسيوني", dept: "دراسة الحالة", preview: "تم استلام PO-2024-018 — 12 عقاراً يرجى المتابعة", time: "18 د", unread: true },
+  { from: "عبدالرحمن النفيعي", dept: "دراسة الحالة", preview: "تم استلام PO-2024-018 — 12 عقاراً يرجى المتابعة", time: "18 د", unread: true },
   { from: "عبدالله الكثيري", dept: "التقييم العقاري", preview: "اكتمل تقييم E-4401 وتم رفع التقرير على النظام", time: "45 د", unread: true },
   { from: "مكتب الرياض الهندسي", dept: "مزود خارجي", preview: "استلمنا طلبات PO-2024-016 وسنبدأ غداً", time: "2 س", unread: false },
   { from: "إيمان النهدي", dept: "الشؤون المالية", preview: "التقرير المالي لشهر يناير جاهز للمراجعة", time: "3 س", unread: false },
@@ -465,28 +408,62 @@ export const MOCK_MESSAGES: MessagePreview[] = [
 export const VALID_PAGE_IDS = new Set<PageId>([
   ...NAV.map((n) => n.id),
   ...ACTIVE_TRANSACTIONS_NAV.map((n) => n.id),
+  ...SETTINGS_NAV.map((n) => n.id),
   "my-tasks",
 ]);
 
 export const ROLE_OPTIONS: { group: string; value: RoleId; label: string }[] = [
-  { group: "الإدارة", value: "cdo", label: "سليمان — مسؤول التحول الرقمي (CDO)" },
-  { group: "إدارة المنظمة", value: "hr-admin", label: "علي الأمين — الموارد البشرية" },
+  {
+    group: "التحول الرقمي",
+    value: "cdo",
+    label: "سليمان — المسؤول الأعلى (CDO)",
+  },
+  { group: "إدارة المنظمة", value: "hr-admin", label: "آلاء قمصاني — الموارد البشرية" },
   {
     group: "إدارة المنظمة",
     value: "proc-admin",
-    label: "أحمد القادري — العقود والمشتريات",
+    label: "علي الأمين — المالية والعقود",
   },
-  { group: "إدارة المنظمة", value: "crm-admin", label: "جمال عبده — علاقات العملاء" },
-  { group: "الإدارة", value: "general-manager", label: "سالم الغريب — مدير الإدارة" },
-  { group: "الإدارة", value: "section-supervisor", label: "عبدالرحمن النفيعي — مشرف دراسة الحالة" },
-  { group: "قسم دراسة الحالة", value: "operations-coordinator", label: "منسق العمليات" },
-  { group: "قسم دراسة الحالة", value: "case-specialist", label: "أخصائي دراسة الحالة" },
-  { group: "قسم دراسة الحالة", value: "report-preparer", label: "معد التقرير" },
-  { group: "قسم دراسة الحالة", value: "court-delegate", label: "مندوب المحكمة" },
-  { group: "قسم التقييم العقاري", value: "valuation-coordinator", label: "منسق عمليات التقييم" },
-  { group: "قسم التقييم العقاري", value: "real-estate-appraiser", label: "مقيم عقاري" },
+  { group: "إدارة المنظمة", value: "crm-admin", label: "شهد العماري — علاقات العملاء" },
+  {
+    group: "إدارة التقييم العقاري",
+    value: "general-manager",
+    label: "سالم الغريب — مدير إدارة التقييم العقاري",
+  },
+  {
+    group: "قسم دراسة الحالة",
+    value: "section-supervisor",
+    label: "عبدالرحمن النفيعي — مشرف دراسة الحالة",
+  },
+  {
+    group: "قسم دراسة الحالة",
+    value: "case-specialist",
+    label: "أسامة الصالحي — أخصائي دراسة الحالة",
+  },
+  {
+    group: "قسم دراسة الحالة",
+    value: "government-reviewer",
+    label: "فراس كمرين — مراجع حكومي",
+  },
+  {
+    group: "قسم التقييم العقاري",
+    value: "valuation-coordinator",
+    label: "محمد دياب — منسق عمليات التقييم",
+  },
+  {
+    group: "قسم التقييم العقاري",
+    value: "real-estate-appraiser",
+    label: "عبدالله الكثيري — مقيم عقاري",
+  },
   { group: "قسم التقييم العقاري", value: "field-inspector", label: "أحمد سعيد — معاين ميداني" },
-  { group: "قسم التقييم العقاري", value: "government-reviewer", label: "خالد المرشدي — مراجع حكومي" },
-  { group: "الرفع المساحي", value: "engineering-office", label: "مكتب الرياض الهندسي — مكتب هندسي" },
-  { group: "المالية", value: "financial-officer", label: "إيمان النهدي — موظف مالي" },
+  {
+    group: "المالية والعقود",
+    value: "financial-officer",
+    label: "إيمان النهدي — موظف مالي",
+  },
+  {
+    group: "مزود خارجي",
+    value: "engineering-office",
+    label: "مكتب جدة للمساحة — رفع مساحي",
+  },
 ];

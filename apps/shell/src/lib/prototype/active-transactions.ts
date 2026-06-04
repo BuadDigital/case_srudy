@@ -16,7 +16,8 @@ export type ActiveTransactionNavItem = {
   placeholder?: boolean;
 };
 
-export const ACTIVE_TRANSACTIONS_NAV: ActiveTransactionNavItem[] = [
+/** دراسة الحالة — المعاملات النشطة */
+export const CASE_STUDY_ACTIVE_TRANSACTIONS_NAV: ActiveTransactionNavItem[] = [
   {
     id: "active-primary-data",
     label: "البيانات الأولية",
@@ -37,12 +38,35 @@ export const ACTIVE_TRANSACTIONS_NAV: ActiveTransactionNavItem[] = [
   },
   {
     id: "active-case-study",
-    label: "دراسة حالة العقار",
+    label: "دراسة حالة العقارات",
     icon: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
     available: true,
-    placeholder: true,
   },
 ];
+
+export function taskMatchesCaseStudy(task: WorkflowTask): boolean {
+  if (task.kind !== "case-study-property") return false;
+  return task.phase === "case-study";
+}
+
+export function filterTasksForCaseStudy(
+  tasks: WorkflowTask[],
+): WorkflowTask[] {
+  return tasks.filter((t) => taskMatchesCaseStudy(t));
+}
+
+import { PARTY_ACTIVE_TRANSACTIONS_NAV } from "@/lib/prototype/party-task-pages";
+
+export const ACTIVE_TRANSACTIONS_NAV: ActiveTransactionNavItem[] = [
+  ...CASE_STUDY_ACTIVE_TRANSACTIONS_NAV,
+  ...PARTY_ACTIVE_TRANSACTIONS_NAV,
+];
+
+export function activeTransactionNavForRole(
+  rolePages: PageId[],
+): ActiveTransactionNavItem[] {
+  return ACTIVE_TRANSACTIONS_NAV.filter((item) => rolePages.includes(item.id));
+}
 
 export function isActiveTransactionPlaceholder(page: PageId): boolean {
   return ACTIVE_TRANSACTIONS_NAV.some((n) => n.id === page && n.placeholder);

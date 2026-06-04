@@ -256,7 +256,7 @@ project1_study_case/
 ├── packages/
 │   ├── design-system/         # prototype.css, badges
 │   ├── auth-client/           # session, AppAuthGate
-│   ├── api-client/            # apiBase (stub)
+│   ├── api-client/            # getApiBase + users/work-orders/courts fetch helpers
 │   └── types/                 # PageId, RoleId, nav types
 ├── backend/
 │   └── RealEstateEval.Api/    # Identity + JWT (monolith for now)
@@ -416,17 +416,18 @@ Base URL (dev): `http://localhost:5160`
 
 **Response:** `token`, `expiresAtUtc`, `user` (`id`, `email`, `displayName`).
 
-### Domain APIs (planned)
+### Domain APIs (live today)
 
-| Area | Prefix (sketch) | Status |
-|------|-----------------|--------|
-| Identity / users | `/api/identity/v1` | Partial (login only) |
-| Case study | `/api/case/v1` | Planned |
-| Valuation | `/api/valuation/v1` | Planned |
-| Operations | `/api/operations/v1` | Planned |
-| Financial / reporting | `/api/financial/v1`, `/api/reporting/v1` | Planned |
+| Area | Prefix | Status |
+|------|--------|--------|
+| Auth | `/api/auth` | Login + `/me` |
+| Users | `/api/users` | List, org overview, HR/Proc/CRM registration |
+| Work orders | `/api/work-orders` | PO + properties CRUD, prior deed, pending bourse |
+| Courts | `/api/courts` | Catalog GET/PUT |
 
-See [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) section 8.
+Workflow tasks, case-study form drafts, and failures remain **browser localStorage** until persisted. See `docs/progress.md`.
+
+Future service split sketch: [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md).
 
 ---
 
@@ -448,8 +449,8 @@ See [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](docs/ARCHITECTURE_MI
 |--------|-------|-------------|
 | Dashboard | `/dashboard` | KPIs, team, summaries |
 | Purchase orders | `/po` | PO list and progress |
-| Properties | `/properties` | Property registry |
-| Assignment | `/assignment` | Workload distribution |
+| Properties | `/properties` | Redirects to `/po` |
+| Assignment | `/assignment` | Legacy redirect → `/dashboard` |
 | Survey | `/survey` | Engineering offices |
 | Keys | `/keys` | إدارة المفاتيح |
 | Impediments | `/failures` | إدارة التعذرات |
@@ -474,17 +475,17 @@ Use this checklist to see what exists **today** vs what is only planned.
 | **Login + JWT** | ✅ | Needs API + Postgres running |
 | **Security (Identity, JWT, auth gate, password policy)** | ✅ | See [Security Features](#-security-features) |
 | **Role switcher (demo)** | ✅ | Sidebar dropdown — **not** real server-side security yet |
-| **Add user (إدارة المستخدمين)** | ✅ | Frontend only → `localStorage` key `evalStaffUsers` |
+| **Add user (إدارة المستخدمين)** | ✅ | API (`POST /api/users/hr|proc|crm`) + registration wizards |
 | **Monorepo F0** | ✅ | `apps/shell` + `packages/*` |
 | **Microfrontends (F2–F5)** | ❌ | Only documented; not built |
-| **Domain APIs** (PO, properties, …) | ❌ | Backend = Identity only |
+| **Domain APIs** (PO, properties, courts, users) | ✅ | `RealEstateEval.Api` — see `docs/progress.md` |
 | **Per-role `@ejadah.dev` login** | ❌ | Draft in `docs/DEMO_ROLE_CREDENTIALS.txt` |
 | **Docker platform stack** | ✅ | Postgres, RabbitMQ, Redis, Jaeger, Prometheus, Grafana, ES, Kibana, Fluent Bit |
 | **Apps wired to Redis/RabbitMQ/Jaeger** | ❌ | Infra runs; code not connected |
 | **Cassandra** | ❌ | Deferred; not in Docker Compose |
-| **Case study form UI** | ⏳ | Reference: `requirements/case_study_form 2.html` — not in Next app yet |
-| **Registration flow UI** | ⏳ | Reference: `requirements/ejada-registration_1.html` — not in Next app yet |
-| **PO/property detail pages** | ❌ | Lists only; no drill-down yet |
+| **Case study form UI** | ✅ | `CaseStudyForm` + `/case-study/[taskId]` (draft in localStorage) |
+| **Registration flow UI** | ✅ | `RegisterUserFlow` + HR/Proc/CRM flows → API |
+| **PO/property detail pages** | ✅ | `/po/{poNumber}/property/*` routes |
 | **Module Federation** | ❌ | Single Next.js deploy |
 
 ### Reference files (`requirements/`)
@@ -550,16 +551,15 @@ docker compose -f infra/docker-compose.yml down
 | You want to… | Edit this |
 |--------------|-----------|
 | Change labels, nav, mock tables | `apps/shell/src/lib/prototype/constants.ts` |
-| Change a screen layout | `apps/shell/src/components/prototype/*View.tsx` |
+| Change a screen layout | `apps/shell/src/components/views/*View.tsx` |
 | Map URL → screen | `apps/shell/src/app/(app)/[page]/page.tsx` |
 | Login page | `apps/shell/src/app/login/page.tsx` |
-| Sidebar / layout / logout | `apps/shell/src/components/prototype/AppShell.tsx` |
+| Sidebar / layout / logout | `apps/shell/src/components/views/AppShell.tsx` |
 | Role switcher behavior | `apps/shell/src/contexts/PrototypeContext.tsx` |
 | Shared styles / badges | `packages/design-system/` |
 | Auth session helpers | `packages/auth-client/` |
 | API base URL | `packages/api-client/` + `NEXT_PUBLIC_API_URL` |
-| Add-user modal | `apps/shell/src/components/prototype/AddUserModal.tsx` |
-| Staff list persistence | `apps/shell/src/lib/prototype/staff-users.ts` |
+| User registration / staff list | `apps/shell/src/lib/users-api.ts` + `components/prototype/registration/` |
 | Backend login / users | `backend/RealEstateEval.Api/` |
 | Docker / observability | `infra/docker-compose.yml`, `docs/LOCAL_INFRA.md` |
 
@@ -567,7 +567,7 @@ docker compose -f infra/docker-compose.yml down
 
 1. Add `PageId` in `packages/types/src/navigation.ts`
 2. Add nav item + mock data in `constants.ts`
-3. Create `YourView.tsx` under `components/prototype/`
+3. Create `YourView.tsx` under `components/views/`
 4. Register in `[page]/page.tsx` → `VIEWS` map
 5. Add role `pages` array for each role in `ROLES`
 
@@ -577,14 +577,6 @@ docker compose -f infra/docker-compose.yml down
 2. Compare side-by-side with http://localhost:3000 (same role via sidebar switcher).
 3. For new forms, start from `case_study_form 2.html` or `ejada-registration_1.html`, then port HTML/CSS patterns into React + `prototype.css`.
 4. Do **not** copy prototype JS business logic blindly — keep mock data in `constants.ts` until APIs exist.
-
-**Reset demo user list (إدارة المستخدمين):**
-
-```js
-// Browser DevTools → Console
-localStorage.removeItem('evalStaffUsers');
-location.reload();
-```
 
 **Reset prototype role:**
 

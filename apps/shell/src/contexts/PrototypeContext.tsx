@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { PageId, RoleId } from "@platform/types";
 import { ROLES, STORAGE_ROLE_KEY } from "@/lib/prototype/constants";
+import { pagesForPrototypeRole } from "@/lib/prototype/prototype-role-access";
 
 type Ctx = {
   role: RoleId;
@@ -45,7 +46,7 @@ export function PrototypeProvider({ children }: { children: React.ReactNode }) {
     () => ({
       role,
       setRole,
-      rolePages: ROLES[role].pages,
+      rolePages: pagesForPrototypeRole(role),
     }),
     [role, setRole],
   );

@@ -205,21 +205,23 @@ export function BourseInquiryView() {
               <div className="po-properties-tbl-wrap">
                 <table className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--bourse-queue">
                   <colgroup>
-                    <col className="po-col-deed" />
-                    <col className="po-col-location" />
-                    <col className="po-col-type" />
-                    <col className="po-col-deed-status" />
+                    <col className="po-bq-col-deed" />
+                    <col className="po-bq-col-po" />
+                    <col className="po-bq-col-task" />
+                    <col className="po-bq-col-owner" />
+                    <col className="po-bq-col-due" />
                   </colgroup>
                   <thead>
                     <tr>
                       <th>رقم الصك</th>
                       <th>أمر العمل</th>
+                      <th>رقم المهمة</th>
                       <th>المالك</th>
                       <th>الاستحقاق</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item, index) => {
+                    {items.map((item) => {
                       const active =
                         selected?.poNumber === item.poNumber &&
                         selected?.propertyId === item.propertyId;
@@ -232,20 +234,17 @@ export function BourseInquiryView() {
                           onClick={() => void openItem(item)}
                         >
                           <td>
-                            <span className="po-properties-deed">
-                              <span
-                                className="po-properties-row-idx"
-                                aria-hidden
-                              >
-                                {index + 1}
-                              </span>
-                              <span className="id-cell po-num-ltr">
-                                {deedLabel}
-                              </span>
+                            <span className="id-cell po-num-ltr">
+                              {deedLabel}
                             </span>
                           </td>
                           <td className="po-properties-cell-muted">
                             <PoNumber value={item.poNumber} link />
+                          </td>
+                          <td className="po-properties-cell-muted">
+                            <span className="id-cell po-num-ltr">
+                              {item.taskNumber?.trim() || "—"}
+                            </span>
                           </td>
                           <td className="po-properties-cell-muted">
                             {item.ownerName || "—"}

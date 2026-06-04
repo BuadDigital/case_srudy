@@ -18,22 +18,40 @@ import {
 import {
   ACTIVE_TRANSACTIONS_GROUP,
   ACTIVE_TRANSACTIONS_GROUP_ICON,
-  ACTIVE_TRANSACTIONS_NAV,
+  activeTransactionNavForRole,
   type ActiveTransactionNavItem,
   isInActiveTransactionsSection,
 } from "@/lib/prototype/active-transactions";
+import {
+  SETTINGS_GROUP,
+  SETTINGS_GROUP_ICON,
+  settingsNavForRole,
+  type SettingsNavItem,
+  isInSettingsSection,
+} from "@/lib/prototype/settings-nav";
+import { isPartyTaskPage } from "@/lib/prototype/party-task-pages";
+import { decodeTaskParam, isPartyTaskWorkPath } from "@/lib/my-task-routes";
+import { findPropertyForTask } from "@/lib/prototype/my-task-row";
+import {
+  formatPropertyDeedDisplay,
+} from "@/lib/prototype/po-intake-data";
+import { loadWorkflowTasks } from "@/lib/prototype/tasks-storage";
 import { resolvePoChrome } from "@/lib/po-chrome";
 import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
+import { usePoRecordQuery } from "@/lib/query/prototype-queries";
+import { pagesForPrototypeRole } from "@/lib/prototype/prototype-role-access";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
 import { PoNumber } from "@/components/ui/PoNumber";
 
+/** Must match `group` on every entry in ROLE_OPTIONS (constants.ts). */
 const GROUP_ORDER = [
-  "الإدارة",
+  "التحول الرقمي",
   "إدارة المنظمة",
+  "إدارة التقييم العقاري",
   "قسم دراسة الحالة",
   "قسم التقييم العقاري",
-  "الرفع المساحي",
-  "المالية",
+  "المالية والعقود",
+  "مزود خارجي",
 ];
 
 type NavRun = { label: string | null; items: (typeof NAV)[number][] };
@@ -78,14 +96,20 @@ function NavRow({
   item,
   active,
   onPrefetch,
+  badgeCount,
 }: {
   item: (typeof NAV)[number];
   active: boolean;
   onPrefetch: (page: PageId) => void;
+  badgeCount?: number;
 }) {
   const cls = `nav-item${active ? " active" : ""}${item.placeholder ? " nav-item-dummy" : ""}`;
-  const badge = item.badge ? (
-    <span className="nav-badge">{item.badge}</span>
+  const badgeValue =
+    badgeCount != null && badgeCount > 0
+      ? String(badgeCount)
+      : item.badge;
+  const badge = badgeValue ? (
+    <span className="nav-badge">{badgeValue}</span>
   ) : null;
   return (
     <Link
@@ -174,16 +198,20 @@ function ActiveTransactionsNavDropdown({
   items,
   currentPage,
   onTaskWork,
+  onCaseStudyWorkspace,
   onPrefetch,
   badges,
 }: {
   items: ActiveTransactionNavItem[];
   currentPage: PageId;
   onTaskWork: boolean;
+  onCaseStudyWorkspace: boolean;
   onPrefetch: (page: PageId) => void;
   badges: Partial<Record<PageId, number>>;
 }) {
-  const inSection = isInActiveTransactionsSection(currentPage, onTaskWork);
+  const inSection =
+    isInActiveTransactionsSection(currentPage, onTaskWork) ||
+    onCaseStudyWorkspace;
   const [open, setOpen] = useState(inSection);
 
   useEffect(() => {
@@ -192,6 +220,8 @@ function ActiveTransactionsNavDropdown({
 
   const childActive = (tx: ActiveTransactionNavItem) =>
     currentPage === tx.id ||
+    (tx.id === "active-case-study" && onCaseStudyWorkspace) ||
+    (isPartyTaskPage(tx.id) && onTaskWork) ||
     ((tx.id === "active-primary-data" || tx.id === "active-distribution") &&
       onTaskWork);
 
@@ -234,6 +264,60 @@ function ActiveTransactionsNavDropdown({
   );
 }
 
+function SettingsNavDropdown({
+  items,
+  currentPage,
+  onPrefetch,
+}: {
+  items: SettingsNavItem[];
+  currentPage: PageId;
+  onPrefetch: (page: PageId) => void;
+}) {
+  const inSection = isInSettingsSection(currentPage);
+  const [open, setOpen] = useState(inSection);
+
+  useEffect(() => {
+    if (inSection) setOpen(true);
+  }, [inSection]);
+
+  return (
+    <div className={`nav-dropdown nav-dropdown-settings${open ? " open" : ""}`}>
+      <button
+        type="button"
+        className={`nav-item nav-dropdown-toggle nav-settings-group${inSection ? " active" : ""}`}
+        aria-expanded={open}
+        aria-controls="nav-settings"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <NavIcon d={SETTINGS_GROUP_ICON} size={13} />
+        <span>{SETTINGS_GROUP}</span>
+        <NavDropdownChevron />
+      </button>
+      {open ? (
+        <div
+          id="nav-settings"
+          className="nav-dropdown-items"
+          role="group"
+          aria-label={SETTINGS_GROUP}
+        >
+          {items.map((item) => (
+            <ActiveTransactionNavRow
+              key={item.id}
+              id={item.id}
+              label={item.label}
+              icon={item.icon}
+              available={item.available}
+              placeholder={item.placeholder}
+              active={currentPage === item.id}
+              onPrefetch={onPrefetch}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -241,21 +325,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { role, setRole, rolePages } = usePrototype();
   const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
 
-  const navPages = useMemo(
-    () => [...new Set<PageId>([...rolePages, "system-tools"])],
+  const navPages = useMemo(() => rolePages, [rolePages]);
+
+  const settingsNavItems = useMemo(
+    () => settingsNavForRole(rolePages),
     [rolePages],
   );
 
   const navRuns = useMemo(() => navRunsForRole(navPages), [navPages]);
 
   const activeTransactionItems = useMemo(
-    () =>
-      ACTIVE_TRANSACTIONS_NAV.filter((item) => rolePages.includes(item.id)),
+    () => activeTransactionNavForRole(rolePages),
     [rolePages],
   );
 
   const showActiveTransactionsGroup = activeTransactionItems.length > 0;
   const activeTxBadges = useActiveTransactionNavBadges();
+  const insertActiveTxAfterPo = rolePages.includes("po");
 
   const prefetchPage = useMemo(
     () => (page: PageId) => prefetchPrototypePage(queryClient, page),
@@ -272,28 +358,69 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   const searchParams = useSearchParams();
+  const onCaseStudyWorkspace = pathname?.startsWith("/case-study/") ?? false;
+  const caseStudyTaskId = onCaseStudyWorkspace
+    ? pathname.split("/").filter(Boolean)[1] ?? null
+    : null;
+
+  const caseStudyTask = useMemo(() => {
+    if (!caseStudyTaskId) return null;
+    const id = decodeTaskParam(caseStudyTaskId);
+    return loadWorkflowTasks().find((t) => t.id === id) ?? null;
+  }, [caseStudyTaskId]);
+
+  const { data: caseStudyPo } = usePoRecordQuery(
+    caseStudyTask?.poNumber ?? null,
+  );
+
+  const caseStudyDeedLabel = useMemo(() => {
+    if (!caseStudyTask || !caseStudyPo) return "";
+    const prop = findPropertyForTask(caseStudyPo, caseStudyTask);
+    if (!prop) return "";
+    const formatted = formatPropertyDeedDisplay(prop);
+    if (formatted && formatted !== "—") return formatted;
+    return prop.deedNumber.trim();
+  }, [caseStudyTask, caseStudyPo]);
 
   const poChrome = useMemo(
     () => (pathname ? resolvePoChrome(pathname) : null),
     [pathname],
   );
+  const taskQuery = searchParams.get("task");
   const myTasksChrome = useMemo(
     () =>
       pathname
         ? resolveMyTasksChrome(
             pathname,
-            currentPage === "active-primary-data"
-              ? searchParams.get("task")
+            currentPage === "active-primary-data" ||
+              currentPage === "active-distribution" ||
+              currentPage === "active-case-study" ||
+              onCaseStudyWorkspace ||
+              isPartyTaskPage(currentPage)
+              ? onCaseStudyWorkspace
+                ? caseStudyTaskId
+                : taskQuery
               : null,
+            onCaseStudyWorkspace
+              ? { deedLabel: caseStudyDeedLabel }
+              : undefined,
           )
         : null,
-    [pathname, currentPage, searchParams],
+    [
+      pathname,
+      currentPage,
+      taskQuery,
+      onCaseStudyWorkspace,
+      caseStudyTaskId,
+      caseStudyDeedLabel,
+    ],
   );
   const inPoSection = pathname?.startsWith("/po") ?? false;
   const onTaskWork =
     (pathname?.startsWith("/my-tasks/") ?? false) ||
-    (currentPage === "active-primary-data" && Boolean(searchParams.get("task"))) ||
-    (currentPage === "active-distribution" && Boolean(searchParams.get("task")));
+    (currentPage === "active-primary-data" && Boolean(taskQuery)) ||
+    (currentPage === "active-distribution" && Boolean(taskQuery)) ||
+    (pathname ? isPartyTaskWorkPath(pathname) && Boolean(taskQuery) : false);
 
   const def = ROLES[role];
   const chipName = authDisplayName ?? def.name;
@@ -301,12 +428,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   function onRoleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const r = e.target.value as RoleId;
     setRole(r);
-    const nextPages = ROLES[r].pages;
-    if (
-      !nextPages.includes(currentPage) &&
-      currentPage !== "my-tasks" &&
-      currentPage !== "system-tools"
-    ) {
+    const nextPages = pagesForPrototypeRole(r);
+    if (!nextPages.includes(currentPage) && currentPage !== "my-tasks") {
       router.push("/dashboard");
     }
   }
@@ -355,7 +478,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </select>
         </div>
-        <nav id="nav" aria-label="التنقل الرئيسي">
+        <nav id="nav" className="sb-nav" aria-label="التنقل الرئيسي">
           {navRuns.map((run, ri) => {
             const blocks: React.ReactNode[] = [];
             blocks.push(
@@ -377,11 +500,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       onPrefetch={prefetchPage}
                     />,
                   ];
-                  if (
+                  const shouldInsertActiveTx =
                     !activeTransactionsInserted &&
                     showActiveTransactionsGroup &&
-                    item.id === "po"
-                  ) {
+                    ((insertActiveTxAfterPo && item.id === "po") ||
+                      (!insertActiveTxAfterPo && item.id === "dashboard"));
+                  if (shouldInsertActiveTx) {
                     activeTransactionsInserted = true;
                     nodes.push(
                       <ActiveTransactionsNavDropdown
@@ -389,6 +513,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         items={activeTransactionItems}
                         currentPage={currentPage}
                         onTaskWork={onTaskWork}
+                        onCaseStudyWorkspace={onCaseStudyWorkspace}
                         onPrefetch={prefetchPage}
                         badges={activeTxBadges}
                       />,
@@ -406,11 +531,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               items={activeTransactionItems}
               currentPage={currentPage}
               onTaskWork={onTaskWork}
+              onCaseStudyWorkspace={onCaseStudyWorkspace}
               onPrefetch={prefetchPage}
               badges={activeTxBadges}
             />
           ) : null}
         </nav>
+        <div className="sb-nav-footer" aria-label="إعدادات النظام">
+          <SettingsNavDropdown
+            items={settingsNavItems}
+            currentPage={currentPage}
+            onPrefetch={prefetchPage}
+          />
+        </div>
       </div>
       <div id="main">
         <div id="topbar">
@@ -421,19 +554,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 PAGE_BREADCRUMB[currentPage] ??
                 ""}
             </div>
-            <div className="tb-title" id="page-title">
-              {poChrome?.titlePo ? (
-                <span className="po-heading-with-num">
-                  <span className="po-heading-ar">{poChrome.title}</span>
-                  <PoNumber value={poChrome.titlePo} />
-                </span>
-              ) : (
-                (poChrome?.title ??
-                  myTasksChrome?.title ??
-                  PAGE_TITLES[currentPage] ??
-                  currentPage)
-              )}
-            </div>
+            {(() => {
+              const pageTitle =
+                poChrome?.title ??
+                myTasksChrome?.title ??
+                PAGE_TITLES[currentPage] ??
+                "";
+              if (!pageTitle && !poChrome?.titlePo) return null;
+              return (
+                <div className="tb-title" id="page-title">
+                  {poChrome?.titlePo ? (
+                    <span className="po-heading-with-num">
+                      <span className="po-heading-ar">{poChrome.title}</span>
+                      <PoNumber value={poChrome.titlePo} />
+                    </span>
+                  ) : (
+                    pageTitle
+                  )}
+                </div>
+              );
+            })()}
           </div>
           <div className="tb-right">
             <div className="user-chip">

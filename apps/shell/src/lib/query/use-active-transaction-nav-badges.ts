@@ -4,10 +4,18 @@ import { useMemo } from "react";
 import type { PageId } from "@platform/types";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import {
+  filterTasksForCaseStudy,
   filterTasksForDistribution,
   filterTasksForPrimaryData,
 } from "@/lib/prototype/active-transactions";
-import { tasksForRole } from "@/lib/prototype/tasks-storage";
+import {
+  PARTY_TASK_PAGES,
+  filterTasksForPartyKind,
+} from "@/lib/prototype/party-task-pages";
+import {
+  tasksForPartyAssignee,
+  tasksForRole,
+} from "@/lib/prototype/tasks-storage";
 import type { PoIntakeRecord } from "@/lib/prototype/po-intake-data";
 import {
   usePendingBourseItemsQuery,
@@ -31,6 +39,7 @@ export function useActiveTransactionNavBadges(): Partial<Record<PageId, number>>
   return useMemo(() => {
     const poByNumber = poRecordsMap(poRecords);
     const mine = tasksForRole(role, tasks ?? []);
+    const partyMine = tasksForPartyAssignee(role, tasks ?? []);
 
     const primaryOpen = filterTasksForPrimaryData(mine, poByNumber).filter(
       (t) => t.status === "open" || t.status === "blocked",
@@ -42,10 +51,24 @@ export function useActiveTransactionNavBadges(): Partial<Record<PageId, number>>
       (t) => t.status === "open" || t.status === "blocked",
     ).length;
 
+    const caseStudyOpen = filterTasksForCaseStudy(mine).filter(
+      (t) => t.status === "open" || t.status === "blocked",
+    ).length;
+
     const badges: Partial<Record<PageId, number>> = {};
     if (primaryOpen > 0) badges["active-primary-data"] = primaryOpen;
     if (bourseOpen > 0) badges["bourse-inquiry"] = bourseOpen;
     if (distributionOpen > 0) badges["active-distribution"] = distributionOpen;
+    if (caseStudyOpen > 0) badges["active-case-study"] = caseStudyOpen;
+
+    for (const def of Object.values(PARTY_TASK_PAGES)) {
+      if (def.roleId !== role) continue;
+      const open = filterTasksForPartyKind(partyMine, def.kind).filter(
+        (t) => t.status === "open",
+      ).length;
+      if (open > 0) badges[def.pageId] = open;
+    }
+
     return badges;
   }, [role, tasks, poRecords, pendingBourse]);
 }

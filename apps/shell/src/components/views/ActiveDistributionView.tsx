@@ -13,8 +13,10 @@ import { filterTasksForDistribution } from "@/lib/prototype/active-transactions"
 
 const DISTRIBUTION_QUEUE: ActiveTransactionQueueConfig = {
   pageTitle: "توزيع المعاملات",
+  tableLayout: "distribution",
   emptyLine: "لا توجد معاملات بانتظار التوزيع.",
-  emptyHint: "تظهر هنا بعد إكمال البيانات الأولية (مثل مسار تسجيل عيني).",
+  emptyHint:
+    "تظهر هنا بعد إكمال استعلام البورصة — المدينة والحي ونوع العقار من بيانات الصك.",
   panelId: "distribution-panel",
   getBasePath: activeDistributionPath,
   getTaskPath: distributionTaskPath,

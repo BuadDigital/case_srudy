@@ -1,6 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { usePrototype } from "@/contexts/PrototypeContext";
+import { clearAllPoData } from "@/lib/prototype/clear-all-po-data";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
 import {
   PO_ROLE_RULES,
   SYSTEM_TOOLS_FILTER_FIELDS,
@@ -61,10 +65,15 @@ function SummaryPanel({
 }
 
 export function SystemToolsView() {
+  const queryClient = useQueryClient();
+  const { role } = usePrototype();
+  const isSuperAdmin = role === "cdo";
   const [draftFilters, setDraftFilters] = useState<Record<string, string>>({});
   const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
     {},
   );
+  const [clearBusy, setClearBusy] = useState(false);
+  const [clearMessage, setClearMessage] = useState<string | null>(null);
   const allCards = useMemo(() => buildSystemToolsSummaryCards(), []);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(
     allCards[0]?.id ?? null,
@@ -91,8 +100,67 @@ export function SystemToolsView() {
     setAppliedFilters({});
   }
 
+  async function handleClearAllPos() {
+    if (
+      !window.confirm(
+        "حذف جميع أوامر العمل من الخادم ومسح التخزين المحلي (المهام، التعذرات، المسودات، المرفقات)؟ لا يمكن التراجع.",
+      )
+    ) {
+      return;
+    }
+    setClearBusy(true);
+    setClearMessage(null);
+    try {
+      const result = await clearAllPoData();
+      await queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
+      const errPart =
+        result.errors.length > 0
+          ? ` — تحذيرات: ${result.errors.slice(0, 3).join("؛ ")}`
+          : "";
+      setClearMessage(
+        `تم حذف ${result.deletedFromApi} أمر عمل من الخادم ومسح التخزين المحلي.${errPart}`,
+      );
+    } catch {
+      setClearMessage("تعذّر إكمال المسح — تحقق من تشغيل API وتسجيل الدخول.");
+    } finally {
+      setClearBusy(false);
+    }
+  }
+
   return (
     <div className="sys-tools-layout">
+      {isSuperAdmin ? (
+        <div className="card" style={{ marginBottom: 12, gridColumn: "1 / -1" }}>
+          <div className="card-header">
+            <span className="card-title">صيانة النظام (CDO)</span>
+          </div>
+          <div className="card-body">
+            <p className="sys-tools-main-hint" style={{ marginBottom: 12 }}>
+              يحذف كل PO من قاعدة البيانات ويمسح{" "}
+              <code dir="ltr">evalWorkflowTasks</code>،{" "}
+              <code dir="ltr">evalFailureRecords</code>، مسودة الإدخال، وذاكرة
+              مرفقات العقارات في المتصفح.
+            </p>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              disabled={clearBusy}
+              onClick={() => void handleClearAllPos()}
+            >
+              {clearBusy ? "جاري الحذف…" : "حذف جميع أوامر العمل"}
+            </button>
+            {clearMessage ? (
+              <div
+                className={`note ${clearMessage.includes("تحذير") || clearMessage.includes("تعذّر") ? "note-warn" : "note-success"}`}
+                style={{ marginTop: 12 }}
+                role="status"
+              >
+                {clearMessage}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <div className="card sys-tools-main-card">
         <div className="card-header">
           <span className="card-title">{SYSTEM_TOOLS_MODULE_TITLE}</span>

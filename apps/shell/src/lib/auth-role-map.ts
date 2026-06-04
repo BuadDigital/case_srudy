@@ -1,5 +1,6 @@
 import type { RoleId } from "@platform/types";
 import { ROLES, STORAGE_ROLE_KEY } from "@/lib/prototype/constants";
+import { DISTRIBUTION_PARTY_ACCOUNTS } from "@/lib/prototype/distribution-party-accounts";
 
 /**
  * Maps seeded login emails to prototype sidebar roles.
@@ -11,8 +12,15 @@ const EMAIL_TO_PROTOTYPE_ROLE: Record<string, RoleId> = {
   "a.alamin@gmail.com": "hr-admin",
   "a.alqadri@gmail.com": "proc-admin",
   "g.abdo@gmail.com": "crm-admin",
+  "salam@ejadah.dev": "general-manager",
   "abdulrahman@ejadah.dev": "section-supervisor",
+  "osama@ejadah.dev": "case-specialist",
+  "eman@ejadah.dev": "financial-officer",
 };
+
+for (const account of DISTRIBUTION_PARTY_ACCOUNTS) {
+  EMAIL_TO_PROTOTYPE_ROLE[account.email.trim().toLowerCase()] = account.roleId;
+}
 
 const DEFAULT_PROTOTYPE_ROLE: RoleId = "general-manager";
 

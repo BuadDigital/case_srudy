@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { CreateUserResult } from "@platform/api-client";
 import type { RegistrationPayload } from "@platform/types";
 import type { StaffUser } from "@/lib/prototype/constants";
+import { userListItemToStaff } from "@/lib/users-api";
 import type { RegistrationSource } from "@/lib/prototype/registration-data";
 import { RegistrationFormCard } from "./RegistrationFormCard";
 import { RegField } from "./FormFields";
@@ -121,7 +122,7 @@ export function RegisterUserFlow({
       return;
     }
     setDoneUserName(result.user.displayName);
-    onComplete(result.user);
+    onComplete(userListItemToStaff(result.user));
   }
 
   if (doneUserName) {

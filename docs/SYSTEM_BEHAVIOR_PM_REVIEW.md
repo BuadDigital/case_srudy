@@ -92,7 +92,7 @@ Dynamic route: `apps/shell/src/app/(app)/[page]/page.tsx`.
 |-------|----------------|-----------|-------------|
 | `/dashboard` | لوحة التحكم | `DashboardView` | **Mixed:** property stats + active POs from **API**; valuation table rows from **MOCK_VR**; team cards from **MOCK** |
 | `/po` | أوامر العمل | `PoListView` | **API** |
-| `/assignment` | الإسناد والتوزيع | `AssignmentView` | **Mock** (hard-coded POs, specialists, load bars) |
+| `/assignment` | *(legacy URL)* | — | Redirects to `/dashboard` |
 | `/survey` | الرفع المساحي | `SurveyView` | **Mock** offices |
 | `/keys` | إدارة المفاتيح | `KeysView` | **Mock** properties with `key: true` |
 | `/failures` | إدارة التعذرات | `FailuresView` | **`localStorage`** (`evalFailureRecords`) |
@@ -104,7 +104,7 @@ Dynamic route: `apps/shell/src/app/(app)/[page]/page.tsx`.
 | `/users` | إدارة المستخدمين | `UsersView` | **API** (+ registration wizards) |
 | `/courts` | المحاكم والدوائر | `CourtsView` | **API** (catalog); supervisor edit |
 
-**Orphan component:** `PropertiesListView.tsx` (global property list with filters) exists in code but is **not mounted** on any route; properties are accessed **per PO** (see below).
+Properties are accessed **per PO** only (`/po/{poNumber}/property`). For active-transaction queues (البيانات الأولية، بورصة، توزيع، دراسة حالة)، see `docs/progress.md` sections 5.3 and 8.
 
 ### 4.3 Work order (PO) sub-routes
 
@@ -343,7 +343,7 @@ Columns **مسح / تقييم / دراسة** on any global property table use ru
 
 | Phase | Intended business step | Current state |
 |-------|------------------------|---------------|
-| Distribution | Assign specialist/preparer/inspector/engineering office | `AssignmentView` mock only |
+| Distribution | Assign specialist/preparer/inspector/engineering office | `ActiveDistributionView` — **localStorage** tasks + mock party lists (not full API) |
 | Survey | Order and track رفع مساحي | `SurveyView` mock |
 | Keys | Track physical keys | `KeysView` mock |
 | Valuation | VR intake from case study | `ValuationRequestsView` mock |

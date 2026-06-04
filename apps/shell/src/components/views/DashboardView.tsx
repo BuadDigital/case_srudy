@@ -18,11 +18,7 @@ import {
 } from "@/lib/query/prototype-queries";
 import { TeamCurrentLoadCard } from "@/components/views/TeamCurrentLoadCard";
 
-const MGR_ROLES = new Set([
-  "general-manager",
-  "section-supervisor",
-  "operations-coordinator",
-]);
+const MGR_ROLES = new Set(["cdo", "general-manager", "section-supervisor"]);
 
 const TEAM_LOAD_ROLES = new Set([...MGR_ROLES, "cdo"]);
 

@@ -50,6 +50,12 @@ export function prefetchPrototypePage(
     case "keys":
     case "active-primary-data":
     case "active-distribution":
+    case "active-case-study":
+    case "property-inspection":
+    case "government-review":
+    case "valuation-coordination":
+    case "property-appraisal":
+    case "active-survey":
       void queryClient.prefetchQuery({
         queryKey: prototypeKeys.poRecords(),
         queryFn: loadPoRecords,
