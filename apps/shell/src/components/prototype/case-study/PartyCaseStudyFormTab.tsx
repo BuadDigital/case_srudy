@@ -4,16 +4,17 @@ import { useMemo } from "react";
 import { CaseStudyForm } from "@/components/prototype/case-study/CaseStudyForm";
 import { partyIdForRoleId } from "@/lib/prototype/case-study-info-roles-data";
 import { findPropertyForTask } from "@/lib/prototype/my-task-row";
-import { getPoRecord } from "@/lib/prototype/po-intake-storage";
 import type { PartyTaskPageDef } from "@/lib/prototype/party-task-pages";
+import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
 import {
-  loadWorkflowTasks,
-  type WorkflowTask,
-} from "@/lib/prototype/tasks-storage";
-import { useEffect, useState } from "react";
+  usePoRecordQuery,
+  useWorkflowTasksQuery,
+} from "@/lib/query/prototype-queries";
 
-function resolveParentCaseStudyTask(task: WorkflowTask): WorkflowTask | null {
-  const all = loadWorkflowTasks();
+function resolveParentCaseStudyTask(
+  task: WorkflowTask,
+  all: WorkflowTask[],
+): WorkflowTask | null {
   if (task.kind === "case-study-property") return task;
   if (task.parentTaskId) {
     const parent = all.find((t) => t.id === task.parentTaskId);
@@ -37,23 +38,19 @@ export function PartyCaseStudyFormTab({
   childTask: WorkflowTask;
 }) {
   const partyId = partyIdForRoleId(def.roleId);
-  const parentTask = useMemo(
-    () => resolveParentCaseStudyTask(childTask),
-    [childTask],
+  const { data: tasks } = useWorkflowTasksQuery();
+  const { data: record, isPending: recordLoading } = usePoRecordQuery(
+    childTask.poNumber,
   );
-  const [record, setRecord] = useState<Awaited<
-    ReturnType<typeof getPoRecord>
-  > | null>(null);
 
-  useEffect(() => {
-    void getPoRecord(childTask.poNumber).then(setRecord);
-  }, [childTask.poNumber]);
+  const parentTask = useMemo(
+    () => resolveParentCaseStudyTask(childTask, tasks ?? []),
+    [childTask, tasks],
+  );
 
   const property = useMemo(
     () =>
-      record && parentTask
-        ? findPropertyForTask(record, parentTask)
-        : null,
+      record && parentTask ? findPropertyForTask(record, parentTask) : null,
     [record, parentTask],
   );
 
@@ -63,6 +60,10 @@ export function PartyCaseStudyFormTab({
         لا يوجد طرف مطابق لهذا الدور في مصفوفة علاقة المستخدم بالمعلومة.
       </div>
     );
+  }
+
+  if (recordLoading && !record) {
+    return <p className="po-properties-loading">جاري التحميل…</p>;
   }
 
   if (!parentTask) {

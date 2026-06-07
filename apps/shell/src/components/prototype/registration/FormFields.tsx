@@ -103,6 +103,55 @@ function regSelectEntries(options: RegSelectOption[]): { value: string; label: s
   );
 }
 
+export function RegTextarea({
+  id,
+  label,
+  required,
+  placeholder,
+  value,
+  onChange,
+  className,
+  error,
+  hint,
+  rows = 4,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  error?: string;
+  hint?: string;
+  rows?: number;
+}) {
+  const describedBy = [hint ? `${id}-hint` : null, error ? `${id}-error` : null]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <FieldWrap
+      label={label}
+      required={required}
+      className={className}
+      error={error}
+      hint={hint}
+      fieldId={id}
+    >
+      <textarea
+        id={id}
+        className={`reg-fi reg-fi--textarea${error ? " reg-fi--error" : ""}`}
+        rows={rows}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy || undefined}
+      />
+    </FieldWrap>
+  );
+}
+
 export function RegSelect({
   id,
   label,

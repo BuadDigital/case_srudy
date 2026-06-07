@@ -8,6 +8,10 @@ export const prototypeKeys = {
   workflowTasks: () => [...prototypeKeys.all, "workflow-tasks"] as const,
   pendingBourseItems: () =>
     [...prototypeKeys.all, "pending-bourse-items"] as const,
+  failures: () => [...prototypeKeys.all, "failures"] as const,
+  courtsCatalog: () => [...prototypeKeys.all, "courts-catalog"] as const,
+  caseStudyInfoRoles: () =>
+    [...prototypeKeys.all, "case-study-info-roles"] as const,
   staffUsers: () => [...prototypeKeys.all, "staff-users"] as const,
   organization: () => [...prototypeKeys.all, "organization"] as const,
 };

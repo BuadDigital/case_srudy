@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import { PoNumber } from "@/components/ui/PoNumber";
-import { StatValue } from "@/components/ui/StatValue";
 import {
   emptyProperty,
   formatDateAr,
@@ -13,8 +13,9 @@ import {
 import {
   completePropertyBourse,
   findPropertyInRecord,
-  loadPendingBourseItems,
 } from "@/lib/prototype/po-intake-storage";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
+import { usePendingBourseItemsQuery } from "@/lib/query/prototype-queries";
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import {
   hasFieldErrors,
@@ -28,8 +29,13 @@ import {
 import type { PendingBoursePropertyDto } from "@platform/api-client";
 
 export function BourseInquiryView() {
-  const [items, setItems] = useState<PendingBoursePropertyDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const {
+    data: items = [],
+    isFetched,
+    refetch,
+  } = usePendingBourseItemsQuery();
+  const loading = !isFetched;
   const [selected, setSelected] = useState<PendingBoursePropertyDto | null>(null);
   const [property, setProperty] = useState<PoPropertyIntake>(emptyProperty);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -37,24 +43,11 @@ export function BourseInquiryView() {
   const [saving, setSaving] = useState(false);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    const list = await loadPendingBourseItems();
-    setItems(list);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    void loadPendingBourseItems().then((list) => {
-      if (!cancelled) {
-        setItems(list);
-        setLoading(false);
-      }
+    await queryClient.invalidateQueries({
+      queryKey: prototypeKeys.pendingBourseItems(),
     });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    await refetch();
+  }, [queryClient, refetch]);
 
   const patchProperty = useCallback(
     <K extends keyof PoPropertyIntake>(key: K, value: PoPropertyIntake[K]) => {
@@ -135,29 +128,6 @@ export function BourseInquiryView() {
 
   return (
     <div className="po-bourse-inquiry-page">
-      <div className="stat-grid po-bourse-stat-grid">
-        <div className="stat-card warn">
-          <div className="stat-label">بانتظار البورصة</div>
-          <StatValue value={loading ? undefined : pendingCount} />
-          <div className="stat-sub">صكوك تحتاج إكمال بيانات البورصة</div>
-        </div>
-        <div className="stat-card blue">
-          <div className="stat-label">المرحلة</div>
-          <div className="po-bourse-stat-phase">استعلام البورصة</div>
-          <div className="stat-sub">بعد تسجيل بيانات إنفاذ للعقار</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">الحقول المطلوبة</div>
-          <div className="po-bourse-stat-phase">مدينة · تصنيف · حدود</div>
-          <div className="stat-sub">من القائمة الهرمية المعتمدة</div>
-        </div>
-        <div className="stat-card red">
-          <div className="stat-label">الحالة في القائمة</div>
-          <div className="po-bourse-stat-phase">قيد الدراسة</div>
-          <div className="stat-sub">حتى إكمال بيانات البورصة</div>
-        </div>
-      </div>
-
       <div className="note note-info po-bourse-intro">
         <strong>مسار العمل:</strong> اختر صكاً من قائمة الانتظار، أكمل المدينة
         والتصنيف ونوع العقار وبيانات الحدود من البورصة، ثم احفظ — يُزال الصك
@@ -203,7 +173,10 @@ export function BourseInquiryView() {
           ) : (
             <>
               <div className="po-properties-tbl-wrap">
-                <table className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--bourse-queue">
+                <table
+                  className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--bourse-queue"
+                  data-pending={loading}
+                >
                   <colgroup>
                     <col className="po-bq-col-deed" />
                     <col className="po-bq-col-po" />

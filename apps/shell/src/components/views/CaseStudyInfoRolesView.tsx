@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   CASE_STUDY_INFO_PARTIES,
   CASE_STUDY_INFO_ROLE_TYPES,
@@ -11,10 +11,14 @@ import {
 } from "@/lib/prototype/case-study-info-roles-data";
 import {
   emptyCaseStudyInfoRolesConfig,
-  loadCaseStudyInfoRolesConfig,
   saveCaseStudyInfoRolesConfig,
   type CaseStudyInfoRolesConfig,
 } from "@/lib/prototype/case-study-info-roles-storage";
+import {
+  setCaseStudyInfoRolesCache,
+  useCaseStudyInfoRolesQuery,
+} from "@/lib/query/prototype-queries";
+import { useQueryClient } from "@tanstack/react-query";
 
 function setMatrixRole(
   config: CaseStudyInfoRolesConfig,
@@ -44,23 +48,23 @@ function questionStatus(
 }
 
 export function CaseStudyInfoRolesView() {
-  const [config, setConfig] = useState<CaseStudyInfoRolesConfig | null>(null);
+  const queryClient = useQueryClient();
+  const { data: config, isFetched } = useCaseStudyInfoRolesQuery();
   const [openId, setOpenId] = useState<string | null>(
     CASE_STUDY_QUESTION_CATALOG[0]?.key ?? null,
   );
   const [activeSec, setActiveSec] = useState(CASE_STUDY_INFO_SECTIONS[0]?.id);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    setConfig(loadCaseStudyInfoRolesConfig());
-  }, []);
-
-  const persist = useCallback((next: CaseStudyInfoRolesConfig) => {
-    setConfig(next);
-    saveCaseStudyInfoRolesConfig(next);
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2500);
-  }, []);
+  const persist = useCallback(
+    (next: CaseStudyInfoRolesConfig) => {
+      saveCaseStudyInfoRolesConfig(next);
+      setCaseStudyInfoRolesCache(queryClient, next);
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2500);
+    },
+    [queryClient],
+  );
 
   const summary = useMemo(() => {
     if (!config) return { done: 0, partial: 0, empty: 0, pct: 0 };
@@ -78,7 +82,7 @@ export function CaseStudyInfoRolesView() {
     return { done, partial, empty, pct, total };
   }, [config]);
 
-  if (!config) {
+  if (!isFetched || !config) {
     return <p className="po-properties-loading">جاري التحميل…</p>;
   }
 

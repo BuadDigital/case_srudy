@@ -1,6 +1,5 @@
 import { PoPropertyEditRoute } from "@/components/views/po-routes/PoPropertyEditRoute";
 import { decodePoParam } from "@/lib/po-routes";
-
 export default async function PoPropertyEditPage({
   params,
 }: {

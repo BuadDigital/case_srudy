@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DistributionPartiesForm } from "@/components/prototype/distribution/DistributionPartiesForm";
@@ -39,7 +39,6 @@ import {
   completePropertyBourse,
   deedExistsInPo,
   findPriorDeedFull,
-  getPoRecord,
   updatePropertyInPo,
 } from "@/lib/prototype/po-intake-storage";
 import { poPropertyFailurePath } from "@/lib/po-routes";
@@ -51,32 +50,25 @@ import {
   defaultDistribution,
   distributionValidationError,
   engineeringOfficeAvailable,
-  loadWorkflowTasks,
   migrateDistribution,
   patchTaskDistribution,
   resolveTaskObstruction,
-  TASKS_CHANGED_EVENT,
   taskDisplayPropertyLabel,
   taskKindLabel,
   type TaskDistributionDraft,
   type WorkflowTask,
 } from "@/lib/prototype/tasks-storage";
+import {
+  usePoRecordQuery,
+  useWorkflowTasksQuery,
+} from "@/lib/query/prototype-queries";
 
 function useWorkflowTask(taskId: string): WorkflowTask | null {
-  const [task, setTask] = useState<WorkflowTask | null>(null);
-
-  const reload = useCallback(() => {
-    setTask(loadWorkflowTasks().find((t) => t.id === taskId) ?? null);
-  }, [taskId]);
-
-  useEffect(() => {
-    reload();
-    const onChange = () => reload();
-    window.addEventListener(TASKS_CHANGED_EVENT, onChange);
-    return () => window.removeEventListener(TASKS_CHANGED_EVENT, onChange);
-  }, [reload]);
-
-  return task;
+  const { data: tasks } = useWorkflowTasksQuery();
+  return useMemo(
+    () => tasks?.find((t) => t.id === taskId) ?? null,
+    [tasks, taskId],
+  );
 }
 
 export function CaseStudyTaskWork({
@@ -105,10 +97,13 @@ export function CaseStudyTaskWork({
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [hasPriorSurvey, setHasPriorSurvey] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [distribution, setDistribution] = useState<TaskDistributionDraft>(
     () => migrateDistribution(task.distribution),
   );
+  const { data: poRecord, isPending: poRecordLoading } = usePoRecordQuery(
+    task.poNumber,
+  );
+  const loading = poRecordLoading && !poRecord;
 
   useEffect(() => {
     setDistribution(migrateDistribution(task.distribution));
@@ -117,31 +112,26 @@ export function CaseStudyTaskWork({
   const isSupervisor = role === "section-supervisor" || role === "cdo";
   const isSpecialist = role === "case-specialist" || role === "cdo";
 
-  const loadProperty = useCallback(async () => {
-    setLoading(true);
-    const record = await getPoRecord(task.poNumber);
-    setAssignmentType(record?.assignmentType ?? task.assignmentType ?? "تنفيذ");
-    if (task.propertyId && record) {
+  useEffect(() => {
+    if (!poRecord) return;
+    setAssignmentType(poRecord.assignmentType ?? task.assignmentType ?? "تنفيذ");
+    if (task.propertyId) {
       const prop =
-        record.properties.find((p) => p.id === task.propertyId) ?? emptyProperty();
+        poRecord.properties.find((p) => p.id === task.propertyId) ??
+        emptyProperty();
       setProperty(prop);
       if (prop.deedNumber.trim()) {
-        const prior = await findPriorDeedFull(
-          prop.deedNumber.trim(),
-          task.poNumber,
+        void findPriorDeedFull(prop.deedNumber.trim(), task.poNumber).then(
+          (prior) => setHasPriorSurvey(Boolean(prior)),
         );
-        setHasPriorSurvey(Boolean(prior));
+      } else {
+        setHasPriorSurvey(false);
       }
     } else {
       setProperty(emptyProperty());
       setHasPriorSurvey(false);
     }
-    setLoading(false);
-  }, [task.poNumber, task.propertyId, task.assignmentType]);
-
-  useEffect(() => {
-    void loadProperty();
-  }, [loadProperty]);
+  }, [poRecord, task.propertyId, task.poNumber, task.assignmentType]);
 
   const patchProperty = useCallback(
     <K extends keyof PoPropertyIntake>(key: K, value: PoPropertyIntake[K]) => {

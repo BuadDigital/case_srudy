@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  ASSIGNMENT_TYPE_OPTIONS,
-  PO_INTAKE_STEPS,
   type AssignmentType,
   type PoIntakeRecord,
 } from "@/lib/prototype/po-intake-data";
@@ -15,30 +13,16 @@ import {
   savePoDraft,
   savePoRecord,
 } from "@/lib/prototype/po-intake-storage";
-import { RegField, RegSelect } from "@/components/prototype/registration/FormFields";
-import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import {
   collectRequiredErrors,
   hasFieldErrors,
   mergeFieldErrors,
   type FieldErrors,
 } from "@/components/prototype/registration/registration-utils";
-import { PoIntakeWizardShell } from "./PoIntakeWizardShell";
 
-const LAST_STEP = PO_INTAKE_STEPS.length;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function PoIntakeFlow({
-  onCompleteAction,
-  onBackAction,
-}: {
-  onCompleteAction: (record: PoIntakeRecord) => void;
-  onBackAction: () => void;
-}) {
-  const [step, setStep] = useState(() => {
-    const draftStep = loadPoDraft()?.step ?? 1;
-    return draftStep > LAST_STEP ? 1 : draftStep;
-  });
+export function usePoIntakeForm(onComplete: (record: PoIntakeRecord) => void) {
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -81,7 +65,7 @@ export function PoIntakeFlow({
 
   useEffect(() => {
     savePoDraft({
-      step,
+      step: 1,
       poNumber,
       promulgationDate,
       assignmentType,
@@ -93,7 +77,6 @@ export function PoIntakeFlow({
       ),
     });
   }, [
-    step,
     poNumber,
     promulgationDate,
     assignmentType,
@@ -149,7 +132,7 @@ export function PoIntakeFlow({
     return true;
   }
 
-  async function handleSave() {
+  async function save() {
     if (!(await validateHeader())) return;
 
     setSaving(true);
@@ -175,93 +158,26 @@ export function PoIntakeFlow({
     }
 
     clearPoDraft();
-    onCompleteAction(result.data);
+    onComplete(result.data);
   }
 
-  return (
-    <PoIntakeWizardShell
-      steps={PO_INTAKE_STEPS}
-      step={step}
-      hint=""
-      hideWizardChrome
-      saving={saving}
-      showPrev={false}
-      nextLabel="حفظ أمر العمل"
-      isDirty={isDirty}
-      onBack={onBackAction}
-      onPrev={() => {}}
-      onNext={() => void handleSave()}
-    >
-      {formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
-          {formError}
-        </div>
-      ) : null}
-
-      <RegistrationFormCard>
-        <div className="reg-fg2">
-          <RegField
-            id="po_number"
-            label="رقم التعميد (PO)"
-            required
-            dir="ltr"
-            value={poNumber}
-            error={fieldErrors.poNumber}
-            placeholder="مثال: PO-2025-001"
-            onChange={setPoNumber}
-          />
-          <RegField
-            id="promulgation_date"
-            label="تاريخ التعميد"
-            required
-            type="date"
-            value={promulgationDate}
-            error={fieldErrors.promulgationDate}
-            onChange={setPromulgationDate}
-          />
-          <RegField
-            id="po_specialist"
-            label="اسم أخصائي الإسناد"
-            required
-            value={assignmentSpecialist}
-            error={fieldErrors.assignmentSpecialist}
-            onChange={setAssignmentSpecialist}
-          />
-          <RegField
-            id="po_specialist_email"
-            label="إيميل أخصائي الإسناد"
-            required
-            type="email"
-            dir="ltr"
-            value={assignmentSpecialistEmail}
-            error={fieldErrors.assignmentSpecialistEmail}
-            onChange={setAssignmentSpecialistEmail}
-          />
-          <RegSelect
-            id="assignment_type"
-            label="نوع الإسناد"
-            required
-            options={[...ASSIGNMENT_TYPE_OPTIONS]}
-            value={assignmentType}
-            error={fieldErrors.assignmentType}
-            onChange={(v) => setAssignmentType(v as AssignmentType)}
-          />
-          <RegField
-            id="expected_property_count"
-            label="عدد العقارات"
-            required
-            type="number"
-            dir="ltr"
-            value={expectedPropertyCount}
-            error={fieldErrors.expectedPropertyCount}
-            placeholder="1"
-            onChange={(v) => {
-              const digits = v.replace(/\D/g, "").slice(0, 3);
-              setExpectedPropertyCount(digits || "");
-            }}
-          />
-        </div>
-      </RegistrationFormCard>
-    </PoIntakeWizardShell>
-  );
+  return {
+    saving,
+    formError,
+    fieldErrors,
+    isDirty,
+    poNumber,
+    setPoNumber,
+    promulgationDate,
+    setPromulgationDate,
+    assignmentType,
+    setAssignmentType,
+    assignmentSpecialist,
+    setAssignmentSpecialist,
+    assignmentSpecialistEmail,
+    setAssignmentSpecialistEmail,
+    expectedPropertyCount,
+    setExpectedPropertyCount,
+    save,
+  };
 }

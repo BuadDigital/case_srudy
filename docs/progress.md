@@ -224,7 +224,7 @@ Seeder: `backend/RealEstateEval.Api/Data/DataSeeder.cs`.
 | URL | Screen | Data source |
 |-----|--------|-------------|
 | `/login` | Login | API JWT |
-| `/welcome` | Welcome | Static |
+| `/welcome` | Redirect | `next.config` → `/dashboard` |
 | `/dashboard` | Dashboard | PO + property stats API; team table mock |
 | `/[page]` | Dynamic pages | See table below |
 | `/po` | PO list | API |
@@ -235,7 +235,7 @@ Seeder: `backend/RealEstateEval.Api/Data/DataSeeder.cs`.
 | `/po/{poNumber}/property/{id}` | Property detail | API |
 | `/po/{poNumber}/property/{id}/edit` | Edit property | API |
 | `/po/{poNumber}/property/{id}/failure` | Report failure | **localStorage** |
-| `/my-tasks/{taskId}` | Redirect | → `/active-primary-data?task=` |
+| `/my-tasks/{taskId}` | Redirect | `next.config` → `/active-primary-data?task=` |
 | `/case-study/{taskId}` | Case study workspace (أخصائي) | PO API + **local tasks** + **local form** |
 
 **Redirects:** `/properties` → `/po`; `/my-tasks` → `/active-primary-data`; `/assignment` → `/dashboard`.
@@ -515,6 +515,7 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | `docs/SYSTEM_BEHAVIOR_PM_REVIEW.md` | PM behavior review |
 | `docs/DEMO_ROLE_CREDENTIALS.txt` | Future @ejadah.dev demo passwords |
 | `docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md` | Target architecture |
+| `docs/LEARNING_FAST_APPS.md` | **Study guide (EN):** frontend (TanStack/CWV/Next.js), backend (EF/HybridCache), PostgreSQL (EXPLAIN, indexes, pg_stat_statements) |
 | `README.md` | Full stack readme + roadmap |
 | `apps/plan/FRONTEND.md` | Frontend plan |
 | `backend/plan/LOCAL_INFRA.md` | Infra URLs |

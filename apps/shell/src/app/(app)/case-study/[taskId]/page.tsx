@@ -1,5 +1,4 @@
 "use client";
-
 import { CaseStudyWorkspaceView } from "@/components/views/CaseStudyWorkspaceView";
 import { decodeTaskParam } from "@/lib/my-task-routes";
 import { use } from "react";

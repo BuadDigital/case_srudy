@@ -1,6 +1,7 @@
 import type { NavItem, PageId, RoleDef, RoleId } from "@platform/types";
 import { ACTIVE_TRANSACTIONS_NAV } from "@/lib/prototype/active-transactions";
 import { SETTINGS_NAV } from "@/lib/prototype/settings-nav";
+import { SYSTEM_FIELDS_NAV } from "@/lib/prototype/system-fields-nav";
 
 export type { NavItem, PageId, RoleDef, RoleId };
 
@@ -216,6 +217,7 @@ export const ALL_PROTOTYPE_PAGES: PageId[] = [
     ...NAV.map((n) => n.id),
     ...ACTIVE_TRANSACTIONS_NAV.map((n) => n.id),
     ...SETTINGS_NAV.map((n) => n.id),
+    ...SYSTEM_FIELDS_NAV.map((n) => n.id),
     "my-tasks",
     "properties",
   ]),
@@ -274,9 +276,9 @@ export const PAGE_BREADCRUMB: Record<PageId, string> = {
   financial: "المالية",
   kpi: "الإدارة",
   users: "الإدارة",
-  courts: "الإدارة",
-  "system-tools": "عام",
-  "case-study-info-roles": "دراسة الحالة / الإعدادات",
+  courts: "جميع حقول النظام / المحاكم و الدوائر",
+  "system-tools": "جميع حقول النظام / ادوات النظام",
+  "case-study-info-roles": "جميع حقول النظام / علاقة المستخدم بالمعلومة",
 };
 
 /** Mock rows aligned with `requirment/system_prototype_4.html` (PO / VR / عقارات). */
@@ -409,6 +411,7 @@ export const VALID_PAGE_IDS = new Set<PageId>([
   ...NAV.map((n) => n.id),
   ...ACTIVE_TRANSACTIONS_NAV.map((n) => n.id),
   ...SETTINGS_NAV.map((n) => n.id),
+  ...SYSTEM_FIELDS_NAV.map((n) => n.id),
   "my-tasks",
 ]);
 

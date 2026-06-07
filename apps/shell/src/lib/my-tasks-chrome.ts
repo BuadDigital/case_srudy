@@ -31,14 +31,6 @@ export function resolveMyTasksChrome(
     }
   }
 
-  if (parts[0] === "my-tasks" && parts[1]) {
-    decodeTaskParam(parts[1]);
-    return {
-      breadcrumb:
-        "دراسة الحالة / المعاملات النشطة / البيانات الأولية / تنفيذ المعاملة",
-      title: "تنفيذ المعاملة",
-    };
-  }
   if (parts[0] === "active-primary-data" && taskId) {
     decodeTaskParam(taskId);
     return {

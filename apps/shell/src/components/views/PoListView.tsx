@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { StatValue } from "@/components/ui/StatValue";
@@ -10,11 +10,8 @@ import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
 import { formatDateAr, isPastDue } from "@/lib/prototype/po-intake-data";
 import { deletePoRecord } from "@/lib/prototype/po-intake-storage";
-import {
-  poHeaderEditPath,
-  poIntakePath,
-  poPropertiesPath,
-} from "@/lib/po-routes";
+import { poHeaderEditPath, poPropertiesPath } from "@/lib/po-routes";
+import { PoIntakeModal } from "@/components/prototype/po-intake/PoIntakeModal";
 import { prototypeKeys } from "@/lib/query/prototype-keys";
 import { usePoListRowsQuery } from "@/lib/query/prototype-queries";
 import {
@@ -27,6 +24,7 @@ import {
 
 export function PoListView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { role } = usePrototype();
   const viewOnly = isPoViewOnly(role);
@@ -35,6 +33,14 @@ export function PoListView() {
   const showDelete = canDeletePo(role);
   const showEye = canViewPoEye(role);
   const [toast, setToast] = useState<string | null>(null);
+  const [intakeOpen, setIntakeOpen] = useState(false);
+
+  useEffect(() => {
+    if (!showIntake) return;
+    if (searchParams.get("intake") !== "1") return;
+    setIntakeOpen(true);
+    router.replace("/po", { scroll: false });
+  }, [showIntake, searchParams, router]);
 
   const { data: rows } = usePoListRowsQuery();
   const list = useMemo(() => rows ?? [], [rows]);
@@ -80,6 +86,18 @@ export function PoListView() {
 
   return (
     <>
+      {showIntake ? (
+        <PoIntakeModal
+          open={intakeOpen}
+          onClose={() => setIntakeOpen(false)}
+          onComplete={(record) => {
+            setIntakeOpen(false);
+            void queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
+            router.push(poPropertiesPath(record.poNumber));
+          }}
+        />
+      ) : null}
+
       {toast ? (
         <div className="note note-success reg-users-toast" role="status">
           {toast}
@@ -112,7 +130,7 @@ export function PoListView() {
             <button
               type="button"
               className="btn btn-sm btn-primary"
-              onClick={() => router.push(poIntakePath())}
+              onClick={() => setIntakeOpen(true)}
             >
               + تسجيل امر عمل (PO) جديد
             </button>

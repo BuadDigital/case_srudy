@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { emptyProperty,formatPoDisplay,isBourseInquiryIdentifier,type PoIntakeRecord,type PoPropertyIntake,}from "@/lib/prototype/po-intake-data";
-import { addPropertyToPo,deedExistsInPo,getPoRecord,} from "@/lib/prototype/po-intake-storage";
+import { addPropertyToPo, deedExistsInPo } from "@/lib/prototype/po-intake-storage";
+import { usePoRecordQuery } from "@/lib/query/prototype-queries";
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import { hasFieldErrors,type FieldErrors,} from "@/components/prototype/registration/registration-utils";
 import { PoIntakeWizardShell } from "./PoIntakeWizardShell";
@@ -17,8 +18,8 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
   onBackAction: () => void;
   onSavedAction: () => void;
 }) {
-  const [record, setRecord] = useState<PoIntakeRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: record, isPending: recordLoading } = usePoRecordQuery(poNumber);
+  const loading = recordLoading && !record;
   const [properties, setProperties] = useState<PoPropertyIntake[]>([]);
   const [currentProperty, setCurrentProperty] = useState<PoPropertyIntake>(
     emptyProperty,
@@ -27,18 +28,6 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const activePropertyRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void getPoRecord(poNumber).then((loaded) => {
-      if (cancelled) return;
-      setRecord(loaded);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [poNumber]);
 
   const expectedTotal = record?.expectedPropertyCount ?? 1;
   const alreadyRegistered = record?.properties.length ?? 0;

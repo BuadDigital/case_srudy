@@ -17,6 +17,7 @@ import {
 } from "@/lib/prototype/po-intake-data";
 import { isValidContactEntry } from "./po-property-validation";
 import { AssignmentDocAttachment } from "./AssignmentDocAttachment";
+import { PoDetailCaseStudySection } from "./PoDetailCaseStudySection";
 
 function DetailField({
   label,
@@ -176,7 +177,7 @@ export function PoDetailPropertyCard({
 
           {showBourseSection ? (
             <DetailSection
-              title="بيانات البورصة"
+              title="استعلام البورصة"
               badge={
                 boursePending ? (
                   <span className="badge b-prog">بانتظار الإكمال</span>
@@ -187,14 +188,21 @@ export function PoDetailPropertyCard({
             >
               {boursePending && !hasBourseDetailFields(property) ? (
                 <p className="po-property-detail-empty-contacts">
-                  لم تُسجَّل بعد بيانات استعلام البورصة — أكملها من قائمة
-                  استعلام بورصة.
+                  لم تُسجَّل بعد بيانات استعلام البورصة — أكملها من «استعلام
+                  البورصة» في القائمة الجانبية.
                 </p>
               ) : (
                 <BourseDetailFields property={property} />
               )}
             </DetailSection>
           ) : null}
+
+          <DetailSection title="دراسة حالة العقارات">
+            <PoDetailCaseStudySection
+              poNumber={poNumber}
+              propertyId={property.id}
+            />
+          </DetailSection>
 
           <DetailSection title="ضباط الاتصال">
             {validContacts.length === 0 ? (

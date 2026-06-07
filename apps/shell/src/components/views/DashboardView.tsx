@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { useHasMounted } from "@/hooks/use-has-mounted";
 import { StatValue } from "@/components/ui/StatValue";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
@@ -30,6 +31,7 @@ function teamTint(t: TeamKind): { bg: string; fg: string } {
 
 export function DashboardView() {
   const router = useRouter();
+  const mounted = useHasMounted();
   const { role } = usePrototype();
   const mgr = MGR_ROLES.has(role);
   const showTeamLoad = TEAM_LOAD_ROLES.has(role);
@@ -37,7 +39,7 @@ export function DashboardView() {
   const { data: propertyItems } = usePropertyListItemsQuery();
 
   const propertyStats = useMemo(() => {
-    if (!propertyItems) return undefined;
+    if (!mounted || !propertyItems) return undefined;
     const rows = propertyItems.map((item) => item.row);
     const total = rows.length;
     const done = rows.filter((r) => r.status === "done").length;
@@ -48,10 +50,10 @@ export function DashboardView() {
       fail: rows.filter((r) => r.status === "fail").length,
       donePct: total > 0 ? `${Math.round((done / total) * 100)}% من الإجمالي` : "—",
     };
-  }, [propertyItems]);
+  }, [mounted, propertyItems]);
 
   const poActive = (poRows ?? []).filter((p) => p.status === "progress");
-  const poReady = poRows !== undefined;
+  const poReady = mounted && poRows !== undefined;
 
   return (
     <>
@@ -97,7 +99,10 @@ export function DashboardView() {
                 عرض الكل
               </Link>
             </div>
-            <table className="tbl" data-pending={!poReady}>
+            <table
+              className="tbl"
+              data-pending={poReady ? undefined : "true"}
+            >
               <thead>
                 <tr>
                   <th>PO</th>

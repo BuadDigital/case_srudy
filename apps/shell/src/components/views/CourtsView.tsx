@@ -4,10 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import { CITY_OPTIONS } from "@/lib/prototype/po-intake-data";
 import {
-  loadCourtsCatalog,
   saveCourtsCatalog,
   type CourtCatalogEntry,
 } from "@/lib/prototype/courts-storage";
+import { useCourtsCatalogQuery } from "@/lib/query/prototype-queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
 import { canManageCourts } from "@/lib/prototype/po-roles";
 import { RegField, RegSelect } from "@/components/prototype/registration/FormFields";
 
@@ -19,28 +21,21 @@ function newCourtId(): string {
 }
 
 export function CourtsView() {
+  const queryClient = useQueryClient();
   const { role } = usePrototype();
   const canEdit = canManageCourts(role);
-  const [entries, setEntries] = useState<CourtCatalogEntry[]>([]);
+  const { data: entries = [], isFetched, refetch } = useCourtsCatalogQuery();
   const [city, setCity] = useState<string>(CITY_OPTIONS[0]);
   const [court, setCourt] = useState("");
   const [circuitInput, setCircuitInput] = useState("");
   const [toast, setToast] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const list = await loadCourtsCatalog();
-    setEntries(list);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    void loadCourtsCatalog().then((list) => {
-      if (!cancelled) setEntries(list);
+    await queryClient.invalidateQueries({
+      queryKey: prototypeKeys.courtsCatalog(),
     });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    await refetch();
+  }, [queryClient, refetch]);
 
   useEffect(() => {
     if (!toast) return;

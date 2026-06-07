@@ -7,8 +7,9 @@ export function poListPath(): string {
   return "/po";
 }
 
+/** @deprecated Intake is a modal on the PO list; opens via state, not navigation. */
 export function poIntakePath(): string {
-  return "/po/intake";
+  return poListPath();
 }
 
 export function poHeaderEditPath(poNumber: string): string {

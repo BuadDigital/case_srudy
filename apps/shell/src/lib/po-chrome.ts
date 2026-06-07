@@ -18,13 +18,6 @@ export function resolvePoChrome(pathname: string): PoChrome | null {
     };
   }
 
-  if (parts[1] === "intake") {
-    return {
-      breadcrumb: "دراسة الحالة / أوامر العمل",
-      title: "استلام أمر عمل جديد",
-    };
-  }
-
   const poNumber = decodePoParam(parts[1]);
 
   if (parts[2] === "edit") {

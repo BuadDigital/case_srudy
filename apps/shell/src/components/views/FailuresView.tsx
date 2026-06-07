@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import {
   approveFailure,
   createFailure,
   failureStatusLabel,
-  loadFailures,
   returnFailure,
   submitFailureForReview,
   type FailureRecord,
 } from "@/lib/prototype/failures-storage";
+import { StatValue } from "@/components/ui/StatValue";
+import { useFailuresQuery } from "@/lib/query/prototype-queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
 import { formatDateAr, formatPoDisplay } from "@/lib/prototype/po-intake-data";
 import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
 import type { RoleId } from "@platform/types";
@@ -24,26 +27,18 @@ function isSupervisor(role: RoleId) {
 }
 
 export function FailuresView() {
+  const queryClient = useQueryClient();
   const { role } = usePrototype();
   const ce = isCaseEditor(role);
   const ca = isSupervisor(role);
 
-  const [items, setItems] = useState<FailureRecord[]>(() =>
-    typeof window !== "undefined" ? loadFailures() : [],
-  );
+  const { data: items = [], isFetched, refetch } = useFailuresQuery();
   const [supervisorNote, setSupervisorNote] = useState<Record<string, string>>({});
 
   const refresh = useCallback(() => {
-    setItems(loadFailures());
-  }, []);
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "evalFailureRecords") refresh();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [refresh]);
+    void queryClient.invalidateQueries({ queryKey: prototypeKeys.failures() });
+    void refetch();
+  }, [queryClient, refetch]);
 
   const stats = useMemo(() => {
     const open = items.filter(
@@ -74,19 +69,19 @@ export function FailuresView() {
       <div className="stat-grid">
         <div className="stat-card red">
           <div className="stat-label">تعذرات مفتوحة</div>
-          <div className="stat-value">{stats.open}</div>
+          <StatValue value={isFetched ? stats.open : undefined} />
         </div>
         <div className="stat-card warn">
           <div className="stat-label">قيد المراجعة</div>
-          <div className="stat-value">{stats.review}</div>
+          <StatValue value={isFetched ? stats.review : undefined} />
         </div>
         <div className="stat-card green">
           <div className="stat-label">معتمدة</div>
-          <div className="stat-value">{stats.approved}</div>
+          <StatValue value={isFetched ? stats.approved : undefined} />
         </div>
         <div className="stat-card">
           <div className="stat-label">الإجمالي</div>
-          <div className="stat-value">{items.length}</div>
+          <StatValue value={isFetched ? items.length : undefined} />
         </div>
       </div>
 

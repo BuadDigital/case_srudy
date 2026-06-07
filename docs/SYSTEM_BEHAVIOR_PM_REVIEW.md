@@ -81,7 +81,7 @@ After login, reviewers can switch among **11 demo personas** (CDO, general manag
 |-------|--------|-------------|
 | `/` | Redirects into app or login | — |
 | `/login` | Login | Auth API |
-| `/welcome` | Welcome (if used) | Static |
+| `/welcome` | Redirect | → `/dashboard` (`next.config`) |
 
 ### 4.2 Main modules (`/{page}`)
 

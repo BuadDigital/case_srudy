@@ -21,11 +21,7 @@ import {
   formatPropertyDeedDisplay,
   formatPropertyTypeLine,
 } from "@/lib/prototype/po-intake-data";
-import {
-  loadWorkflowTasks,
-  tasksForRole,
-  type WorkflowTask,
-} from "@/lib/prototype/tasks-storage";
+import { tasksForRole, type WorkflowTask } from "@/lib/prototype/tasks-storage";
 import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
 import {
   usePoRecordQuery,
@@ -95,20 +91,21 @@ function TabPlaceholder({ title }: { title: string }) {
 export function CaseStudyWorkspaceView({ taskId }: { taskId: string }) {
   const router = useRouter();
   const { role } = usePrototype();
-  const { data: tasks, isLoading: tasksLoading } = useWorkflowTasksQuery();
+  const {
+    data: tasks,
+    isFetched: tasksFetched,
+    isPending: tasksPending,
+  } = useWorkflowTasksQuery();
   const [tab, setTab] = useState<TabId>("info");
 
   const task = useMemo((): WorkflowTask | null => {
-    const list = tasks ?? loadWorkflowTasks();
-    return list.find((t) => t.id === taskId) ?? null;
+    return tasks?.find((t) => t.id === taskId) ?? null;
   }, [tasks, taskId]);
 
   const canAccess = useMemo(() => {
     if (!task) return false;
     if (isSuperAdmin(role)) return true;
-    return tasksForRole(role, tasks ?? loadWorkflowTasks()).some(
-      (t) => t.id === taskId,
-    );
+    return tasksForRole(role, tasks ?? []).some((t) => t.id === taskId);
   }, [task, role, tasks, taskId]);
 
   const { data: record, isPending: recordLoading } = usePoRecordQuery(
@@ -121,8 +118,7 @@ export function CaseStudyWorkspaceView({ taskId }: { taskId: string }) {
   );
 
   const tracks = useMemo(
-    () =>
-      task ? buildCaseStudyTracks(task, tasks ?? loadWorkflowTasks()) : [],
+    () => (task ? buildCaseStudyTracks(task, tasks ?? []) : []),
     [task, tasks],
   );
 
@@ -137,7 +133,8 @@ export function CaseStudyWorkspaceView({ taskId }: { taskId: string }) {
   const subtitleParts = [poLabel, deedDisplay, city, district].filter(Boolean);
   const subtitle = subtitleParts.join(" • ");
 
-  const loading = tasksLoading || recordLoading;
+  const loading =
+    (!tasksFetched && tasksPending) || (recordLoading && !record);
 
   if (!loading && (!task || !canAccess)) {
     return (
@@ -213,59 +210,55 @@ export function CaseStudyWorkspaceView({ taskId }: { taskId: string }) {
 
         <div className="case-study-tab-panel">
           {tab === "info" ? (
-            <div className="grid-2 case-study-info-grid">
-              <RegistrationFormCard title="بيانات العقار">
-                <InfoRow
-                  label="أمر العمل"
-                  value={
-                    task.poNumber.trim() ? (
-                      <PoNumber value={task.poNumber} link />
-                    ) : (
-                      "—"
-                    )
-                  }
-                />
-                <InfoRow label="رقم الصك" value={deedDisplay || "—"} />
-                <InfoRow label="المدينة" value={city || "—"} />
-                <InfoRow label="الحي" value={district || "—"} />
-                <InfoRow
-                  label="نوع العقار"
-                  value={
-                    property
-                      ? formatPropertyTypeLine(property) ||
-                        property.classification ||
-                        "—"
-                      : "—"
-                  }
-                />
-                <InfoRow
-                  label="تاريخ الاستلام"
-                  value={
-                    record?.receivedFromEnfathAt
-                      ? formatDateAr(record.receivedFromEnfathAt)
-                      : "—"
-                  }
-                />
-                <InfoRow
-                  label="الأخصائي"
-                  value={
-                    record?.assignmentSpecialist?.trim() ||
-                    task.assigneeName ||
+            <RegistrationFormCard title="بيانات العقار">
+              <InfoRow
+                label="أمر العمل"
+                value={
+                  task.poNumber.trim() ? (
+                    <PoNumber value={task.poNumber} link />
+                  ) : (
                     "—"
-                  }
-                />
-              </RegistrationFormCard>
-
-              <RegistrationFormCard title="حالة المسارات">
-                {tracks.map((tr) => (
-                  <TrackRow key={tr.id} track={tr} />
-                ))}
-              </RegistrationFormCard>
-            </div>
+                  )
+                }
+              />
+              <InfoRow label="رقم الصك" value={deedDisplay || "—"} />
+              <InfoRow label="المدينة" value={city || "—"} />
+              <InfoRow label="الحي" value={district || "—"} />
+              <InfoRow
+                label="نوع العقار"
+                value={
+                  property
+                    ? formatPropertyTypeLine(property) ||
+                      property.classification ||
+                      "—"
+                    : "—"
+                }
+              />
+              <InfoRow
+                label="تاريخ الاستلام"
+                value={
+                  record?.receivedFromEnfathAt
+                    ? formatDateAr(record.receivedFromEnfathAt)
+                    : "—"
+                }
+              />
+              <InfoRow
+                label="الأخصائي"
+                value={
+                  record?.assignmentSpecialist?.trim() ||
+                  task.assigneeName ||
+                  "—"
+                }
+              />
+            </RegistrationFormCard>
           ) : null}
 
           {tab === "parties" ? (
-            <TabPlaceholder title="الأطراف والحالة" />
+            <RegistrationFormCard title="حالة المسارات">
+              {tracks.map((tr) => (
+                <TrackRow key={tr.id} track={tr} />
+              ))}
+            </RegistrationFormCard>
           ) : null}
           {tab === "form" ? (
             <CaseStudyForm

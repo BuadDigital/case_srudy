@@ -461,7 +461,7 @@ Future service split sketch: [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES
 | KPI | `/kpi` | Performance indicators |
 | Users | `/users` | إدارة المستخدمين |
 | Login | `/login` | Authentication |
-| Welcome (redirect) | `/welcome` | Legacy redirect → dashboard |
+| Welcome (redirect) | `/welcome` | `next.config` → `/dashboard` |
 
 ---
 

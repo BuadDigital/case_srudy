@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PartyCaseStudyFormTab } from "@/components/prototype/case-study/PartyCaseStudyFormTab";
 import { FieldFormView } from "@/components/views/FieldFormView";
@@ -10,7 +10,7 @@ import {
   formatPoDisplay,
   formatPropertyDeedDisplay,
 } from "@/lib/prototype/po-intake-data";
-import { getPoRecord } from "@/lib/prototype/po-intake-storage";
+import { usePoRecordQuery } from "@/lib/query/prototype-queries";
 import type { PartyTaskPageDef } from "@/lib/prototype/party-task-pages";
 import { partyTaskPath } from "@/lib/my-task-routes";
 import {
@@ -136,36 +136,29 @@ export function PartyActiveTaskWork({
 }) {
   const router = useRouter();
   const exit = onClose ?? (() => router.push(partyTaskPath(def.pageId)));
-  const [loading, setLoading] = useState(true);
-  const [deedLabel, setDeedLabel] = useState(taskDisplayPropertyLabel(task));
-  const [location, setLocation] = useState("—");
+  const { data: record, isPending: recordLoading } = usePoRecordQuery(
+    task.poNumber,
+  );
   const [saving, setSaving] = useState(false);
   const [workTab, setWorkTab] = useState<"task" | "case-study">("task");
 
-  const loadContext = useCallback(async () => {
-    setLoading(true);
-    const record = await getPoRecord(task.poNumber);
+  const { deedLabel, location } = useMemo(() => {
     const property = record?.properties.find((p) => p.id === task.propertyId);
     if (property) {
-      setDeedLabel(
-        formatPropertyDeedDisplay(property) ||
+      return {
+        deedLabel:
+          formatPropertyDeedDisplay(property) ||
           `خانة ${task.propertyOrdinal}`,
-      );
-      setLocation(
-        property.district
+        location: property.district
           ? `${property.city} · ${property.district}`
           : property.city || "—",
-      );
-    } else {
-      setDeedLabel(taskDisplayPropertyLabel(task));
-      setLocation("—");
+      };
     }
-    setLoading(false);
-  }, [task.poNumber, task.propertyId, task.propertyOrdinal]);
-
-  useEffect(() => {
-    void loadContext();
-  }, [loadContext]);
+    return {
+      deedLabel: taskDisplayPropertyLabel(task),
+      location: "—",
+    };
+  }, [record, task]);
 
   function submitWork() {
     setSaving(true);
@@ -175,7 +168,7 @@ export function PartyActiveTaskWork({
     exit();
   }
 
-  if (loading) {
+  if (recordLoading && !record) {
     return (
       <TaskWorkChrome
         layout={layout}

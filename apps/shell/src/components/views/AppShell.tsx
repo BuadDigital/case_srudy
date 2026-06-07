@@ -2,11 +2,16 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, startTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavIcon } from "@/components/views/NavIcon";
 import { usePrototype } from "@/contexts/PrototypeContext";
-import { prefetchPrototypePage } from "@/lib/query/prototype-queries";
-import { clearAuthSession, getAuthDisplayName } from "@platform/auth-client";
+import {
+  prefetchPoRecord,
+  prefetchPrototypePage,
+  usePoRecordQuery,
+  useWorkflowTasksQuery,
+} from "@/lib/query/prototype-queries";
+import { clearAuthSession } from "@platform/auth-client";
 import type { PageId, RoleId } from "@platform/types";
 import {
   NAV,
@@ -29,17 +34,23 @@ import {
   type SettingsNavItem,
   isInSettingsSection,
 } from "@/lib/prototype/settings-nav";
+import {
+  SYSTEM_FIELDS_GROUP,
+  SYSTEM_FIELDS_GROUP_ICON,
+  systemFieldsNavForRole,
+  type SystemFieldsNavItem,
+  isInSystemFieldsSection,
+} from "@/lib/prototype/system-fields-nav";
 import { isPartyTaskPage } from "@/lib/prototype/party-task-pages";
 import { decodeTaskParam, isPartyTaskWorkPath } from "@/lib/my-task-routes";
 import { findPropertyForTask } from "@/lib/prototype/my-task-row";
 import {
   formatPropertyDeedDisplay,
 } from "@/lib/prototype/po-intake-data";
-import { loadWorkflowTasks } from "@/lib/prototype/tasks-storage";
 import { resolvePoChrome } from "@/lib/po-chrome";
 import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
-import { usePoRecordQuery } from "@/lib/query/prototype-queries";
 import { pagesForPrototypeRole } from "@/lib/prototype/prototype-role-access";
+import { ActiveTransactionsSituationBar } from "@/components/prototype/active-transactions/ActiveTransactionsSituationBar";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
 import { PoNumber } from "@/components/ui/PoNumber";
 
@@ -264,16 +275,25 @@ function ActiveTransactionsNavDropdown({
   );
 }
 
-function SettingsNavDropdown({
+function FooterNavDropdown({
+  groupLabel,
+  groupIcon,
+  groupClass,
+  panelId,
   items,
   currentPage,
+  inSection,
   onPrefetch,
 }: {
-  items: SettingsNavItem[];
+  groupLabel: string;
+  groupIcon: string;
+  groupClass: string;
+  panelId: string;
+  items: (SettingsNavItem | SystemFieldsNavItem)[];
   currentPage: PageId;
+  inSection: boolean;
   onPrefetch: (page: PageId) => void;
 }) {
-  const inSection = isInSettingsSection(currentPage);
   const [open, setOpen] = useState(inSection);
 
   useEffect(() => {
@@ -284,21 +304,21 @@ function SettingsNavDropdown({
     <div className={`nav-dropdown nav-dropdown-settings${open ? " open" : ""}`}>
       <button
         type="button"
-        className={`nav-item nav-dropdown-toggle nav-settings-group${inSection ? " active" : ""}`}
+        className={`nav-item nav-dropdown-toggle ${groupClass}${inSection ? " active" : ""}`}
         aria-expanded={open}
-        aria-controls="nav-settings"
+        aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
       >
-        <NavIcon d={SETTINGS_GROUP_ICON} size={13} />
-        <span>{SETTINGS_GROUP}</span>
+        <NavIcon d={groupIcon} size={13} />
+        <span>{groupLabel}</span>
         <NavDropdownChevron />
       </button>
       {open ? (
         <div
-          id="nav-settings"
+          id={panelId}
           className="nav-dropdown-items"
           role="group"
-          aria-label={SETTINGS_GROUP}
+          aria-label={groupLabel}
         >
           {items.map((item) => (
             <ActiveTransactionNavRow
@@ -323,7 +343,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { role, setRole, rolePages } = usePrototype();
-  const [authDisplayName, setAuthDisplayName] = useState<string | null>(null);
 
   const navPages = useMemo(() => rolePages, [rolePages]);
 
@@ -331,6 +350,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => settingsNavForRole(rolePages),
     [rolePages],
   );
+
+  const systemFieldsNavItems = useMemo(
+    () => systemFieldsNavForRole(rolePages),
+    [rolePages],
+  );
+
+  const showSystemFieldsGroup = systemFieldsNavItems.some((i) => i.available);
+  const showSettingsGroup = settingsNavItems.some((i) => i.available);
 
   const navRuns = useMemo(() => navRunsForRole(navPages), [navPages]);
 
@@ -348,14 +375,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     [queryClient],
   );
 
-  useEffect(() => {
-    startTransition(() => setAuthDisplayName(getAuthDisplayName()));
-  }, []);
-
   const currentPage = useMemo(() => {
     const seg = pathname?.split("/").filter(Boolean)[0];
     return (seg ?? "dashboard") as PageId;
   }, [pathname]);
+
+  useEffect(() => {
+    prefetchPrototypePage(queryClient, currentPage);
+  }, [queryClient, currentPage]);
 
   const searchParams = useSearchParams();
   const onCaseStudyWorkspace = pathname?.startsWith("/case-study/") ?? false;
@@ -363,15 +390,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? pathname.split("/").filter(Boolean)[1] ?? null
     : null;
 
+  const { data: workflowTasks } = useWorkflowTasksQuery();
+
   const caseStudyTask = useMemo(() => {
     if (!caseStudyTaskId) return null;
     const id = decodeTaskParam(caseStudyTaskId);
-    return loadWorkflowTasks().find((t) => t.id === id) ?? null;
-  }, [caseStudyTaskId]);
+    return workflowTasks?.find((t) => t.id === id) ?? null;
+  }, [caseStudyTaskId, workflowTasks]);
 
   const { data: caseStudyPo } = usePoRecordQuery(
     caseStudyTask?.poNumber ?? null,
   );
+
+  useEffect(() => {
+    if (caseStudyTask?.poNumber) {
+      prefetchPrototypePage(queryClient, "active-case-study");
+      prefetchPoRecord(queryClient, caseStudyTask.poNumber);
+    }
+  }, [queryClient, caseStudyTask?.poNumber]);
 
   const caseStudyDeedLabel = useMemo(() => {
     if (!caseStudyTask || !caseStudyPo) return "";
@@ -417,13 +453,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
   const inPoSection = pathname?.startsWith("/po") ?? false;
   const onTaskWork =
-    (pathname?.startsWith("/my-tasks/") ?? false) ||
     (currentPage === "active-primary-data" && Boolean(taskQuery)) ||
     (currentPage === "active-distribution" && Boolean(taskQuery)) ||
     (pathname ? isPartyTaskWorkPath(pathname) && Boolean(taskQuery) : false);
 
+  const showActiveTransactionsSituation =
+    isInActiveTransactionsSection(currentPage, onTaskWork) ||
+    onCaseStudyWorkspace;
+
   const def = ROLES[role];
-  const chipName = authDisplayName ?? def.name;
+  /** يطابق «تبديل الدور» — اسم الشخصية وليس displayName من تسجيل الدخول */
+  const chipName = def.name;
 
   function onRoleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const r = e.target.value as RoleId;
@@ -537,12 +577,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
           ) : null}
         </nav>
-        <div className="sb-nav-footer" aria-label="إعدادات النظام">
-          <SettingsNavDropdown
-            items={settingsNavItems}
-            currentPage={currentPage}
-            onPrefetch={prefetchPage}
-          />
+        <div className="sb-nav-footer" aria-label="قوائم النظام">
+          {showSystemFieldsGroup ? (
+            <FooterNavDropdown
+              groupLabel={SYSTEM_FIELDS_GROUP}
+              groupIcon={SYSTEM_FIELDS_GROUP_ICON}
+              groupClass="nav-system-fields-group"
+              panelId="nav-system-fields"
+              items={systemFieldsNavItems}
+              currentPage={currentPage}
+              inSection={isInSystemFieldsSection(currentPage)}
+              onPrefetch={prefetchPage}
+            />
+          ) : null}
+          {showSettingsGroup ? (
+            <FooterNavDropdown
+              groupLabel={SETTINGS_GROUP}
+              groupIcon={SETTINGS_GROUP_ICON}
+              groupClass="nav-settings-group"
+              panelId="nav-settings"
+              items={settingsNavItems}
+              currentPage={currentPage}
+              inSection={isInSettingsSection(currentPage)}
+              onPrefetch={prefetchPage}
+            />
+          ) : null}
         </div>
       </div>
       <div id="main">
@@ -603,7 +662,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </div>
-        <div id="content">{children}</div>
+        <div id="content">
+          {showActiveTransactionsSituation ? (
+            <ActiveTransactionsSituationBar />
+          ) : null}
+          {children}
+        </div>
       </div>
     </div>
   );

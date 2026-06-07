@@ -14,15 +14,17 @@ import {
   findPropertyForTask,
 } from "@/lib/prototype/my-task-row";
 import type { PoIntakeRecord } from "@/lib/prototype/po-intake-data";
-import { loadPoRecords } from "@/lib/prototype/po-intake-storage";
 import {
-  loadWorkflowTasks,
-  syncTasksFromPoRecords,
   tasksForPartyAssignee,
   tasksForRole,
   type WorkflowTask,
 } from "@/lib/prototype/tasks-storage";
-import { useWorkflowTasksQuery } from "@/lib/query/prototype-queries";
+import {
+  usePoRecordsQuery,
+  useWorkflowTasksQuery,
+} from "@/lib/query/prototype-queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
 
 export type ActiveTransactionQueueTableLayout = "primary-data" | "distribution";
 
@@ -77,10 +79,20 @@ export function ActiveTransactionQueueView({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const selectedId = searchParams.get("task");
   const { role } = usePrototype();
-  const { data: tasks, refetch, isLoading } = useWorkflowTasksQuery();
-  const [poRecords, setPoRecords] = useState<PoIntakeRecord[]>([]);
+  const {
+    data: tasks,
+    refetch: refetchTasks,
+    isFetched: tasksFetched,
+  } = useWorkflowTasksQuery();
+  const {
+    data: poRecords = [],
+    isFetched: poRecordsFetched,
+  } = usePoRecordsQuery();
+  const queueReady = tasksFetched && poRecordsFetched;
+  const isLoading = !queueReady;
   const [now, setNow] = useState(() => new Date());
   const [panelOpen, setPanelOpen] = useState(() => Boolean(selectedId));
   const advancingRef = useRef(false);
@@ -88,29 +100,22 @@ export function ActiveTransactionQueueView({
 
   const refreshWork = useCallback(() => {
     bump((n) => n + 1);
-    void refetch();
-  }, [refetch]);
+    void refetchTasks();
+  }, [refetchTasks]);
 
   const syncQueue = useCallback(async () => {
-    const records = await loadPoRecords();
-    syncTasksFromPoRecords(records);
-    setPoRecords(records);
+    await queryClient.invalidateQueries({ queryKey: prototypeKeys.poRecords() });
+    await queryClient.invalidateQueries({
+      queryKey: prototypeKeys.workflowTasks(),
+    });
     bump((n) => n + 1);
-    await refetch();
-  }, [refetch]);
+    await refetchTasks();
+  }, [queryClient, refetchTasks]);
 
   useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(tick);
   }, []);
-
-  useEffect(() => {
-    void loadPoRecords().then((records) => {
-      syncTasksFromPoRecords(records);
-      setPoRecords(records);
-      void refetch();
-    });
-  }, [refetch]);
 
   useEffect(() => {
     if (selectedId) setPanelOpen(true);
@@ -195,11 +200,11 @@ export function ActiveTransactionQueueView({
     if (advancingRef.current) return;
     if (!selectedId || isLoading) return;
     if (selectedTask) return;
-    const stillExists = loadWorkflowTasks().some((t) => t.id === selectedId);
+    const stillExists = (tasks ?? []).some((t) => t.id === selectedId);
     if (!stillExists || listed.every((t) => t.id !== selectedId)) {
       closePanel();
     }
-  }, [selectedId, selectedTask, isLoading, listed, closePanel]);
+  }, [selectedId, selectedTask, isLoading, listed, closePanel, tasks]);
 
   const hasRail = !useFullPage && !isLoading && listed.length > 0 && renderPanel;
   const layoutClass = [
@@ -247,7 +252,10 @@ export function ActiveTransactionQueueView({
                 className={`po-properties-tbl-wrap${config.tableLayout === "distribution" ? " po-properties-tbl-wrap--scroll" : ""}`}
               >
                 {config.tableLayout === "distribution" ? (
-                  <table className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--distribution">
+                  <table
+                    className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--distribution"
+                    data-pending={isLoading}
+                  >
                     <colgroup>
                       <col className="po-dist-col-deed" />
                       <col className="po-dist-col-po" />
@@ -313,7 +321,10 @@ export function ActiveTransactionQueueView({
                     </tbody>
                   </table>
                 ) : (
-                  <table className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--primary-data">
+                  <table
+                    className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--primary-data"
+                    data-pending={isLoading}
+                  >
                     <colgroup>
                       <col className="po-col-property-slot" />
                       <col className="po-col-po" />

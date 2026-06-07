@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
   /** Required when colleagues open http://YOUR_LAN_IP:3000 — otherwise login JS is blocked. */
   allowedDevOrigins,
   /** LAN guests call /api on :3000; Next proxies to the .NET API on this machine. */
+  async redirects() {
+    return [
+      { source: "/welcome", destination: "/dashboard", permanent: true },
+      {
+        source: "/my-tasks/:taskId",
+        destination: "/active-primary-data?task=:taskId",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
