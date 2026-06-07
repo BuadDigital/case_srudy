@@ -39,6 +39,7 @@ import {
 import { buildCaseStudyReportModel } from "@/lib/prototype/case-study-report-model";
 import type { PoIntakeRecord, PoPropertyIntake } from "@/lib/prototype/po-intake-data";
 import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
+import { useWorkflowTasksQuery } from "@/lib/query/prototype-queries";
 
 const STEP_AR_NUMS = ["١", "٢", "٣", "٤", "٥"] as const;
 
@@ -390,11 +391,35 @@ export function CaseStudyForm({
   const [hydrated, setHydrated] = useState(false);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [partyRevision, setPartyRevision] = useState(0);
+  const { data: workflowTasks } = useWorkflowTasksQuery();
+  const [partyAnswersByKey, setPartyAnswersByKey] = useState<
+    Record<string, PartyQuestionContribution[]>
+  >({});
 
-  const partyAnswersByKey = useMemo(() => {
-    if (isParty) return {};
-    return collectPartyAnswersByQuestion(taskId, infoRoles.matrix);
-  }, [isParty, taskId, infoRoles.matrix, partyRevision, hydrated]);
+  useEffect(() => {
+    if (isParty || !hydrated) {
+      setPartyAnswersByKey({});
+      return;
+    }
+    let cancelled = false;
+    void collectPartyAnswersByQuestion(
+      taskId,
+      infoRoles.matrix,
+      workflowTasks ?? [],
+    ).then((result) => {
+      if (!cancelled) setPartyAnswersByKey(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isParty,
+    taskId,
+    infoRoles.matrix,
+    partyRevision,
+    hydrated,
+    workflowTasks,
+  ]);
 
   const partyContribCount = useMemo(
     () => countPartyContributions(partyAnswersByKey),
@@ -422,7 +447,7 @@ export function CaseStudyForm({
             [key]: approved,
           },
         };
-        saveCaseStudyFormDraft(next);
+        void saveCaseStudyFormDraft(next);
         return next;
       });
     },
@@ -447,38 +472,47 @@ export function CaseStudyForm({
       };
 
   useEffect(() => {
-    const parentDraft = loadCaseStudyFormDraft(referenceTaskId);
-    const partyStored = isParty
-      ? loadPartyCaseStudyFormDraft(storageTaskId)
-      : null;
-    const stored = isParty ? partyStored : loadCaseStudyFormDraft(storageTaskId);
-    const base =
-      stored ?? emptyCaseStudyFormDraft(storageTaskId, seed);
-    const mergedAnswers = isParty
-      ? { ...parentDraft?.answers, ...base.answers }
-      : base.answers;
-    setDraft({
-      ...base,
-      ...seed,
-      answers: mergedAnswers,
-      specialistReviewApproved: {
-        ...base.specialistReviewApproved,
-        ...stored?.specialistReviewApproved,
-      },
-      requestNumber: seed.requestNumber ?? base.requestNumber,
-      deedNumber: seed.deedNumber ?? base.deedNumber,
-      requestDate: seed.requestDate ?? base.requestDate,
-      currentStep: stored ? migrateFormStep(stored.currentStep) : 0,
-    });
-    setHydrated(true);
+    let cancelled = false;
+    (async () => {
+      const parentDraft = await loadCaseStudyFormDraft(referenceTaskId);
+      const partyStored = isParty
+        ? await loadPartyCaseStudyFormDraft(storageTaskId)
+        : null;
+      const stored = isParty
+        ? partyStored
+        : await loadCaseStudyFormDraft(storageTaskId);
+      const base =
+        stored ?? emptyCaseStudyFormDraft(storageTaskId, seed);
+      const mergedAnswers = isParty
+        ? { ...parentDraft?.answers, ...base.answers }
+        : base.answers;
+      if (cancelled) return;
+      setDraft({
+        ...base,
+        ...seed,
+        answers: mergedAnswers,
+        specialistReviewApproved: {
+          ...base.specialistReviewApproved,
+          ...stored?.specialistReviewApproved,
+        },
+        requestNumber: seed.requestNumber ?? base.requestNumber,
+        deedNumber: seed.deedNumber ?? base.deedNumber,
+        requestDate: seed.requestDate ?? base.requestDate,
+        currentStep: stored ? migrateFormStep(stored.currentStep) : 0,
+      });
+      setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per task
   }, [storageTaskId, referenceTaskId, isParty]);
 
   const persist = useCallback(
     (next: CaseStudyFormDraft) => {
       setDraft(next);
-      if (isParty) savePartyCaseStudyFormDraft(next);
-      else saveCaseStudyFormDraft(next);
+      if (isParty) void savePartyCaseStudyFormDraft(next);
+      else void saveCaseStudyFormDraft(next);
     },
     [isParty],
   );
@@ -490,18 +524,19 @@ export function CaseStudyForm({
         const displayAnswers = { ...d.answers, [key]: value };
         const next = { ...d, answers: displayAnswers };
         if (isParty && partyChildTaskId) {
-          const prevParty = loadPartyCaseStudyFormDraft(partyChildTaskId);
-          const partyAnswers = {
-            ...(prevParty?.answers ?? {}),
-            [key]: value,
-          };
-          savePartyCaseStudyFormDraft({
-            ...next,
-            taskId: partyChildTaskId,
-            answers: partyAnswers,
+          void loadPartyCaseStudyFormDraft(partyChildTaskId).then((prevParty) => {
+            const partyAnswers = {
+              ...(prevParty?.answers ?? {}),
+              [key]: value,
+            };
+            void savePartyCaseStudyFormDraft({
+              ...next,
+              taskId: partyChildTaskId,
+              answers: partyAnswers,
+            });
           });
         } else {
-          saveCaseStudyFormDraft(next);
+          void saveCaseStudyFormDraft(next);
         }
         return next;
       });
@@ -534,7 +569,7 @@ export function CaseStudyForm({
     if (isParty) return;
     setDraft((d) => {
       const next = { ...d, [key]: value };
-      saveCaseStudyFormDraft(next);
+      void saveCaseStudyFormDraft(next);
       return next;
     });
   };

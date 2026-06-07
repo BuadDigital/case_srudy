@@ -259,7 +259,7 @@ export async function savePoRecord(
 
   notifyWorkOrdersChanged();
   const saved = dtoToRecord(result.data);
-  syncTaskSlotsForPo(saved);
+  await syncTaskSlotsForPo(saved);
   return { ok: true, data: saved };
 }
 
@@ -400,7 +400,7 @@ export async function completePropertyBourse(
 
   notifyWorkOrdersChanged();
   const saved = dtoToProperty(result.data);
-  advanceTaskAfterBourseForProperty(poNumber, propertyId, saved);
+  await advanceTaskAfterBourseForProperty(poNumber, propertyId, saved);
   return { ok: true, data: saved };
 }
 
@@ -491,7 +491,7 @@ export async function updatePoRecord(
   const saved = dtoToRecord(result.data);
   const full = await getPoRecord(record.poNumber);
   if (full) {
-    syncTaskSlotsForPo({
+    await syncTaskSlotsForPo({
       ...full,
       expectedPropertyCount: saved.expectedPropertyCount,
       assignmentType: saved.assignmentType,
@@ -500,7 +500,7 @@ export async function updatePoRecord(
       assignmentSpecialistEmail: saved.assignmentSpecialistEmail,
     });
   } else {
-    syncTaskSlotsForPo({ ...record, ...saved, properties: record.properties });
+    await syncTaskSlotsForPo({ ...record, ...saved, properties: record.properties });
   }
   return { ok: true, data: saved };
 }
@@ -554,9 +554,9 @@ export async function addPropertyToPo(
   const prop = dtoToProperty(result.data);
   const record = await getPoRecord(poNumber);
   if (options?.assignToTaskId) {
-    advanceTaskAfterEnfath(options.assignToTaskId, prop);
+    await advanceTaskAfterEnfath(options.assignToTaskId, prop);
   } else if (record) {
-    linkNewPropertyToTaskSlot(record, prop);
+    await linkNewPropertyToTaskSlot(record, prop);
   }
   return { ok: true, data: prop };
 }
@@ -576,7 +576,7 @@ export async function removePropertyFromPo(
     };
   }
   const record = await getPoRecord(poNumber);
-  deleteTasksForProperty(
+  await deleteTasksForProperty(
     poNumber,
     propertyId,
     record?.expectedPropertyCount ?? 1,

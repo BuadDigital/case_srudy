@@ -39,7 +39,7 @@ const queryDefaults = { staleTime: STALE_MS, gcTime: GC_MS };
 /** Loads POs from API and keeps workflow task slots in sync. */
 export async function loadPoRecordsWithTaskSync() {
   const records = await loadPoRecords();
-  syncTasksFromPoRecords(records);
+  await syncTasksFromPoRecords();
   return records;
 }
 

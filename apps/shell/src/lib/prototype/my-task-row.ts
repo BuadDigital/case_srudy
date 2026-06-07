@@ -3,11 +3,10 @@ import {
   dueDateToDeadline,
   formatPropertyDeedDisplay,
 } from "@/lib/prototype/po-intake-data";
-import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
 import {
-  loadWorkflowTasks,
   taskPhaseLabel,
   taskStatusLabel,
+  type WorkflowTask,
 } from "@/lib/prototype/tasks-storage";
 
 export type TaskTableRow = {
@@ -292,9 +291,7 @@ export function nextPrimaryDataTaskId(
   if (idx >= 0 && idx + 1 < listed.length) {
     return listed[idx + 1]!.id;
   }
-  const pivot =
-    listed.find((t) => t.id === currentTaskId) ??
-    loadWorkflowTasks().find((t) => t.id === currentTaskId);
+  const pivot = listed.find((t) => t.id === currentTaskId);
   if (!pivot) return null;
   return (
     listed.find(

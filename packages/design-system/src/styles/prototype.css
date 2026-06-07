@@ -161,6 +161,7 @@ a.nav-item{color:rgba(255,255,255,.48);}
 .po-properties-tbl--compact .badge{font-size:10px;padding:2px 8px;}
 /* بورصة queue — fixed column sizes tuned to content */
 .po-properties-tbl--bourse-queue .po-bq-col-deed{width:9rem;}
+.po-properties-tbl--bourse-queue .po-bq-col-deed-date{width:8rem;}
 .po-properties-tbl--bourse-queue .po-bq-col-po{width:7rem;}
 .po-properties-tbl--bourse-queue .po-bq-col-task{width:7rem;}
 /* po-bq-col-owner: no width — absorbs all remaining space */
@@ -356,6 +357,8 @@ a.nav-item{color:rgba(255,255,255,.48);}
   .po-bourse-inquiry-layout--split{grid-template-columns:1fr;}
   .po-bourse-hint-panel{display:none;}
 }
+.po-bourse-vitality-block{margin-bottom:14px;}
+.po-bourse-obstruction-panel{margin:12px 0 16px;padding:14px 16px;border:1px solid var(--warn-border,#f5d9a8);border-radius:10px;background:var(--warn-bg,#fffaf0);}
 .po-bourse-queue-box{margin-bottom:0;}
 .po-bourse-queue-hero{padding-bottom:12px;}
 .po-bourse-queue-hero .po-properties-title{font-size:16px;margin:0;}

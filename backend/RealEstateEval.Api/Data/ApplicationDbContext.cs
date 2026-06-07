@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<WorkOrderProperty> WorkOrderProperties => Set<WorkOrderProperty>();
     public DbSet<PropertyContact> PropertyContacts => Set<PropertyContact>();
     public DbSet<CourtCatalogEntry> CourtCatalogEntries => Set<CourtCatalogEntry>();
+    public DbSet<WorkflowTask> WorkflowTasks => Set<WorkflowTask>();
+    public DbSet<CaseStudyForm> CaseStudyForms => Set<CaseStudyForm>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -123,6 +125,50 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.City).HasMaxLength(128);
             e.Property(x => x.Court).HasMaxLength(256);
             e.Property(x => x.CircuitsJson).HasColumnType("jsonb");
+        });
+
+        builder.Entity<WorkflowTask>(e =>
+        {
+            e.ToTable("WorkflowTasks");
+            e.Property(x => x.Kind).HasMaxLength(64);
+            e.Property(x => x.PoNumber).HasMaxLength(64);
+            e.Property(x => x.Title).HasMaxLength(512);
+            e.Property(x => x.Phase).HasMaxLength(32);
+            e.Property(x => x.AssigneeRole).HasMaxLength(64);
+            e.Property(x => x.AssigneeName).HasMaxLength(256);
+            e.Property(x => x.AssigneeId).HasMaxLength(64);
+            e.Property(x => x.Status).HasMaxLength(32);
+            e.Property(x => x.DistributionJson).HasColumnType("jsonb");
+            e.Property(x => x.ObstructionReason).HasMaxLength(2000);
+            e.Property(x => x.ObstructionPriorPhase).HasMaxLength(32);
+            e.Property(x => x.AssignmentType).HasMaxLength(64);
+            e.HasIndex(x => x.PoNumber);
+            e.HasIndex(x => new { x.PoNumber, x.PropertyOrdinal });
+            e.HasIndex(x => x.PropertyId);
+            e.HasIndex(x => x.ParentTaskId);
+        });
+
+        builder.Entity<CaseStudyForm>(e =>
+        {
+            e.ToTable("CaseStudyForms");
+            e.Property(x => x.Status).HasMaxLength(32);
+            e.Property(x => x.RequestNumber).HasMaxLength(128);
+            e.Property(x => x.RequestDate).HasMaxLength(32);
+            e.Property(x => x.DeedNumber).HasMaxLength(128);
+            e.Property(x => x.AnswersJson).HasColumnType("jsonb");
+            e.Property(x => x.DeedRemarks).HasMaxLength(4000);
+            e.Property(x => x.SurveyRemarks).HasMaxLength(4000);
+            e.Property(x => x.ComponentsRemarks).HasMaxLength(4000);
+            e.Property(x => x.OccupancyRemarks).HasMaxLength(4000);
+            e.Property(x => x.MeterType).HasMaxLength(32);
+            e.Property(x => x.MeterNumber).HasMaxLength(128);
+            e.Property(x => x.HoaFee).HasMaxLength(64);
+            e.Property(x => x.SigDeed).HasMaxLength(256);
+            e.Property(x => x.SigApprover).HasMaxLength(256);
+            e.Property(x => x.SigDate).HasMaxLength(32);
+            e.Property(x => x.SpecialistReviewApprovedJson).HasColumnType("jsonb");
+            e.Property(x => x.PoNumber).HasMaxLength(64);
+            e.HasIndex(x => new { x.TaskId, x.IsPartyForm }).IsUnique();
         });
     }
 }

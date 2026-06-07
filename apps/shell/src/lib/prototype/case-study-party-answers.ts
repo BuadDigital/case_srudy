@@ -9,11 +9,7 @@ import {
 import type { CaseStudyInfoRolesMatrix } from "@/lib/prototype/case-study-info-roles-storage";
 import { partyRoleOnQuestion } from "@/lib/prototype/case-study-info-roles-storage";
 import { loadPartyCaseStudyFormDraft } from "@/lib/prototype/case-study-form-storage";
-import {
-  loadWorkflowTasks,
-  type WorkflowTask,
-  type WorkflowTaskKind,
-} from "@/lib/prototype/tasks-storage";
+import type { WorkflowTask, WorkflowTaskKind } from "@/lib/prototype/tasks-storage";
 
 export type PartyQuestionContribution = {
   partyId: CaseStudyInfoPartyId | null;
@@ -46,25 +42,29 @@ function roleLabel(role: CaseStudyInfoRoleType | null | undefined): string | nul
   return CASE_STUDY_INFO_ROLE_TYPES.find((r) => r.id === role)?.label ?? null;
 }
 
-export function childTasksForCaseStudyParent(parentTaskId: string): WorkflowTask[] {
-  return loadWorkflowTasks().filter(
+export function childTasksForCaseStudyParent(
+  parentTaskId: string,
+  tasks: WorkflowTask[],
+): WorkflowTask[] {
+  return tasks.filter(
     (t) => t.parentTaskId === parentTaskId && t.kind !== "case-study-property",
   );
 }
 
 /** إجابات الأطراف المسندة — للعرض في نموذج الأخصائي */
-export function collectPartyAnswersByQuestion(
+export async function collectPartyAnswersByQuestion(
   parentTaskId: string,
   matrix: CaseStudyInfoRolesMatrix,
-): Record<string, PartyQuestionContribution[]> {
+  tasks: WorkflowTask[],
+): Promise<Record<string, PartyQuestionContribution[]>> {
   const byKey: Record<string, PartyQuestionContribution[]> = {};
-  const children = childTasksForCaseStudyParent(parentTaskId);
+  const children = childTasksForCaseStudyParent(parentTaskId, tasks);
 
   for (const child of children) {
     const meta = KIND_PARTY_LABEL[child.kind];
     if (!meta) continue;
 
-    const draft = loadPartyCaseStudyFormDraft(child.id);
+    const draft = await loadPartyCaseStudyFormDraft(child.id);
     if (!draft) continue;
 
     const partyFromRole = child.assigneeRole

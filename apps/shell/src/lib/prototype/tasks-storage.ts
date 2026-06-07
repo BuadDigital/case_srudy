@@ -1,4 +1,17 @@
 import type { RoleId } from "@platform/types";
+import type { WorkflowTaskDto } from "@platform/api-client";
+import {
+  advanceWorkflowTaskAfterBourse,
+  advanceWorkflowTaskAfterEnfath,
+  confirmWorkflowTaskDistribution,
+  deleteWorkflowTasksForPo,
+  deleteWorkflowTasksForProperty,
+  listWorkflowTasks,
+  patchWorkflowTask,
+  patchWorkflowTaskDistribution,
+  syncWorkflowTasks,
+} from "@platform/api-client";
+import { workOrdersApiConfig } from "@/lib/work-orders-api-config";
 import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
 import {
   PROTOTYPE_ROLE_ASSIGNEE_ID,
@@ -23,6 +36,7 @@ import {
   VALUATORS,
 } from "@/lib/prototype/distribution-parties";
 
+/** @deprecated Tasks persist in PostgreSQL — kept for storage-event compatibility. */
 export const TASKS_STORAGE_KEY = "evalWorkflowTasks";
 export const TASKS_CHANGED_EVENT = "eval-workflow-tasks-changed";
 
@@ -121,39 +135,59 @@ export type WorkflowTask = {
   updatedAt: string;
 };
 
-function newId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 export function notifyTasksChanged(): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(TASKS_CHANGED_EVENT));
 }
 
-export function loadWorkflowTasks(): WorkflowTask[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(TASKS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as WorkflowTask[];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((t) => ({
-      ...t,
-      distribution: t.distribution
-        ? migrateDistribution(t.distribution)
-        : undefined,
-    }));
-  } catch {
-    return [];
-  }
+function dtoToTask(dto: WorkflowTaskDto): WorkflowTask {
+  return {
+    id: dto.id,
+    kind: dto.kind as WorkflowTaskKind,
+    poNumber: dto.poNumber,
+    propertyId: dto.propertyId,
+    propertyOrdinal: dto.propertyOrdinal,
+    title: dto.title,
+    phase: dto.phase as CaseStudyTaskPhase,
+    assigneeRole: dto.assigneeRole as RoleId,
+    assigneeName: dto.assigneeName,
+    assigneeId: dto.assigneeId,
+    parentTaskId: dto.parentTaskId,
+    status: dto.status as WorkflowTaskStatus,
+    distribution: dto.distribution
+      ? migrateDistribution(dto.distribution)
+      : undefined,
+    obstructionReason: dto.obstructionReason,
+    obstructionPriorPhase: dto.obstructionPriorPhase as
+      | CaseStudyTaskPhase
+      | undefined,
+    assignmentType: dto.assignmentType as AssignmentType | undefined,
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
+  };
 }
 
-function saveWorkflowTasks(list: WorkflowTask[]): void {
-  localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(list));
-  notifyTasksChanged();
+function distributionToDto(
+  distribution: TaskDistributionDraft,
+): WorkflowTaskDto["distribution"] {
+  return {
+    governmentAuditor: distribution.governmentAuditor,
+    governmentAuditorId: distribution.governmentAuditorId,
+    valuationDepartment: distribution.valuationDepartment,
+    operationsCoordinatorId: distribution.operationsCoordinatorId,
+    inspectorId: distribution.inspectorId,
+    valuatorId: distribution.valuatorId,
+    engineeringOffice: distribution.engineeringOffice,
+    engineeringOfficeId: distribution.engineeringOfficeId,
+  };
+}
+
+export async function loadWorkflowTasks(): Promise<WorkflowTask[]> {
+  const config = workOrdersApiConfig();
+  if (!config) return [];
+  const result = await listWorkflowTasks(config);
+  if (!result.ok) return [];
+  return result.data.map(dtoToTask);
 }
 
 function poCaseTasks(list: WorkflowTask[], poNumber: string): WorkflowTask[] {
@@ -261,24 +295,10 @@ export function slotTaskTitle(
   return `تسجيل عقار ${ordinal} من ${total} — ${poNumber}`;
 }
 
-function propertyTaskTitle(property: PoPropertyIntake, poNumber: string): string {
-  const deed = formatPropertyDeedDisplay(property);
-  if (deed && deed !== "—") return `${deed} — ${poNumber}`;
-  return `عقار — ${poNumber}`;
-}
-
-function phaseAfterEnfathRegistration(
-  property: PoPropertyIntake,
-): CaseStudyTaskPhase {
-  if (property.identifierType === "real_estate_reg") return "distribution";
-  if (property.bourseDataCompleted) return "distribution";
-  return "bourse";
-}
-
 export function caseStudyTaskForProperty(
   poNumber: string,
   propertyId: string,
-  list = loadWorkflowTasks(),
+  list: WorkflowTask[],
 ): WorkflowTask | undefined {
   return list.find(
     (t) =>
@@ -288,416 +308,170 @@ export function caseStudyTaskForProperty(
   );
 }
 
-function newSlotTask(
-  poNumber: string,
-  ordinal: number,
-  total: number,
-  assignmentType?: AssignmentType,
-): WorkflowTask {
-  const now = new Date().toISOString();
-  return {
-    id: newId(),
-    kind: "case-study-property",
-    poNumber,
-    propertyOrdinal: ordinal,
-    title: slotTaskTitle(poNumber, ordinal, total),
-    phase: "enfath",
-    assigneeRole: "case-specialist",
-    assigneeName: "أخصائي دراسة الحالة",
-    status: "open",
-    distribution: defaultDistribution(),
-    assignmentType,
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
-/**
- * Ensures one open task slot per expected property on the PO (manual count at PO registration).
- * Links existing properties to empty slots; adds/removes slots when expected count changes.
- */
-export function syncTaskSlotsForPo(record: PoIntakeRecord): WorkflowTask[] {
-  const poNumber = record.poNumber.trim();
-  const expected = Math.max(1, record.expectedPropertyCount ?? 1);
-  let list = loadWorkflowTasks();
-
-  list = list.filter((t) => {
-    if (t.kind !== "case-study-property" || t.poNumber.trim() !== poNumber) {
-      return true;
-    }
-    if (t.propertyOrdinal > expected && !t.propertyId && t.phase === "enfath") {
-      return false;
-    }
-    return true;
-  });
-
-  let tasks = poCaseTasks(list, poNumber);
-  const byOrdinal = new Map(tasks.map((t) => [t.propertyOrdinal, t]));
-
-  for (let ord = 1; ord <= expected; ord++) {
-    const existing = byOrdinal.get(ord);
-    if (!existing) {
-      const task = newSlotTask(poNumber, ord, expected, record.assignmentType);
-      list = [task, ...list];
-      byOrdinal.set(ord, task);
-    } else if (!existing.propertyId) {
-      const idx = list.findIndex((t) => t.id === existing.id);
-      if (idx >= 0) {
-        list[idx] = {
-          ...list[idx],
-          title: slotTaskTitle(poNumber, ord, expected),
-          assignmentType: record.assignmentType,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-    }
-  }
-
-  tasks = poCaseTasks(list, poNumber);
-  const linkedIds = new Set(
-    tasks.filter((t) => t.propertyId).map((t) => t.propertyId!),
-  );
-
-  for (let i = 0; i < record.properties.length; i++) {
-    const prop = record.properties[i];
-    if (!prop.id) continue;
-    if (linkedIds.has(prop.id)) {
-      const linked = caseStudyTaskForProperty(poNumber, prop.id, list);
-      if (
-        linked &&
-        linked.phase !== "done" &&
-        linked.phase !== "obstruction" &&
-        linked.phase !== "case-study"
-      ) {
-        const targetPhase = phaseAfterEnfathRegistration(prop);
-        if (linked.phase !== targetPhase) {
-          const idx = list.findIndex((t) => t.id === linked.id);
-          if (idx >= 0) {
-            list[idx] = {
-              ...list[idx],
-              phase: targetPhase,
-              title:
-                targetPhase === "distribution"
-                  ? `توزيع الأطراف — ${formatPropertyDeedDisplay(prop) || poNumber}`
-                  : propertyTaskTitle(prop, poNumber),
-              updatedAt: new Date().toISOString(),
-            };
-          }
-        }
-      }
-      continue;
-    }
-
-    const preferred = tasks.find(
-      (t) => !t.propertyId && t.propertyOrdinal === i + 1,
-    );
-    const slot =
-      preferred ??
-      tasks
-        .filter((t) => !t.propertyId)
-        .sort((a, b) => a.propertyOrdinal - b.propertyOrdinal)[0];
-
-    if (!slot) continue;
-
-    const idx = list.findIndex((t) => t.id === slot.id);
-    if (idx < 0) continue;
-
-    list[idx] = {
-      ...list[idx],
-      propertyId: prop.id,
-      phase: phaseAfterEnfathRegistration(prop),
-      title: propertyTaskTitle(prop, poNumber),
-      assignmentType: record.assignmentType,
-      updatedAt: new Date().toISOString(),
-    };
-    linkedIds.add(prop.id);
-  }
-
-  saveWorkflowTasks(list);
-  return poCaseTasks(list, poNumber);
+/** Server-side slot sync from work orders. */
+export async function syncTaskSlotsForPo(
+  record: PoIntakeRecord,
+): Promise<WorkflowTask[]> {
+  await syncTasksFromPoRecords();
+  const list = await loadWorkflowTasks();
+  return poCaseTasks(list, record.poNumber.trim());
 }
 
 /** Link a property registered outside مهامي (e.g. PO → إضافة عقار) to the next empty slot. */
-export function linkNewPropertyToTaskSlot(
+export async function linkNewPropertyToTaskSlot(
   record: PoIntakeRecord,
   property: PoPropertyIntake,
-): WorkflowTask | null {
+): Promise<WorkflowTask | null> {
   if (!property.id) return null;
-  syncTaskSlotsForPo(record);
-
-  const existing = caseStudyTaskForProperty(record.poNumber, property.id);
+  await syncTaskSlotsForPo(record);
+  const list = await loadWorkflowTasks();
+  const existing = caseStudyTaskForProperty(record.poNumber, property.id, list);
   if (existing) return existing;
 
-  const tasks = poCaseTasks(loadWorkflowTasks(), record.poNumber);
+  const tasks = poCaseTasks(list, record.poNumber);
   const slot = tasks
     .filter((t) => !t.propertyId)
     .sort((a, b) => a.propertyOrdinal - b.propertyOrdinal)[0];
-
   if (!slot) return null;
 
-  return updateTask(slot.id, {
-    propertyId: property.id,
-    phase: phaseAfterEnfathRegistration(property),
-    title: propertyTaskTitle(property, record.poNumber),
-    assignmentType: record.assignmentType,
-  });
+  return advanceTaskAfterEnfath(slot.id, property);
 }
 
-export function deleteTasksForProperty(
+export async function deleteTasksForProperty(
   poNumber: string,
   propertyId: string,
   expectedPropertyCount = 1,
-): void {
-  const nPo = poNumber.trim();
-  const nProp = propertyId.trim();
-  const list = loadWorkflowTasks();
-  const linked = list.find(
-    (t) =>
-      t.kind === "case-study-property" &&
-      t.poNumber.trim() === nPo &&
-      t.propertyId === nProp,
+): Promise<void> {
+  const config = workOrdersApiConfig();
+  if (!config) return;
+  await deleteWorkflowTasksForProperty(
+    config,
+    poNumber,
+    propertyId,
+    expectedPropertyCount,
   );
-
-  if (linked) {
-    const expected = Math.max(1, expectedPropertyCount);
-    const parentIds = new Set([linked.id]);
-    const withoutChildren = list.filter((t) => {
-      if (t.poNumber.trim() !== nPo) return true;
-      if (t.propertyId === nProp) return false;
-      if (t.parentTaskId && parentIds.has(t.parentTaskId)) return false;
-      return true;
-    });
-    const idx = withoutChildren.findIndex((t) => t.id === linked.id);
-    if (idx >= 0) {
-      withoutChildren[idx] = {
-        ...withoutChildren[idx],
-        propertyId: undefined,
-        phase: "enfath",
-        status: "open",
-        title: slotTaskTitle(nPo, linked.propertyOrdinal, expected),
-        distribution: defaultDistribution(),
-        obstructionReason: undefined,
-        obstructionPriorPhase: undefined,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-    saveWorkflowTasks(withoutChildren);
-    return;
-  }
-
-  const parentIds = new Set(
-    list
-      .filter((t) => t.poNumber.trim() === nPo && t.propertyId === nProp)
-      .map((t) => t.id),
-  );
-  saveWorkflowTasks(
-    list.filter((t) => {
-      if (t.poNumber.trim() !== nPo) return true;
-      if (t.propertyId === nProp) return false;
-      if (t.parentTaskId && parentIds.has(t.parentTaskId)) return false;
-      return true;
-    }),
-  );
+  notifyTasksChanged();
 }
 
-export function deleteTasksForPo(poNumber: string): void {
-  const n = poNumber.trim();
-  saveWorkflowTasks(loadWorkflowTasks().filter((t) => t.poNumber.trim() !== n));
+export async function deleteTasksForPo(poNumber: string): Promise<void> {
+  const config = workOrdersApiConfig();
+  if (!config) return;
+  await deleteWorkflowTasksForPo(config, poNumber);
+  notifyTasksChanged();
 }
 
-function updateTask(
-  id: string,
-  patch: Partial<WorkflowTask>,
-): WorkflowTask | null {
-  const list = loadWorkflowTasks();
-  const idx = list.findIndex((t) => t.id === id);
-  if (idx < 0) return null;
-  const next: WorkflowTask = {
-    ...list[idx],
-    ...patch,
-    updatedAt: new Date().toISOString(),
-  };
-  list[idx] = next;
-  saveWorkflowTasks(list);
-  return next;
-}
-
-export function advanceTaskAfterEnfath(
+export async function advanceTaskAfterEnfath(
   taskId: string,
   property: PoPropertyIntake,
-): WorkflowTask | null {
-  const poNumber =
-    loadWorkflowTasks().find((t) => t.id === taskId)?.poNumber ?? "";
-  const phase = phaseAfterEnfathRegistration(property);
-  const title =
-    phase === "distribution"
-      ? `توزيع الأطراف — ${formatPropertyDeedDisplay(property) || poNumber}`
-      : propertyTaskTitle(property, poNumber);
-  return updateTask(taskId, {
+): Promise<WorkflowTask | null> {
+  const config = workOrdersApiConfig();
+  if (!config || !property.id) return null;
+  const result = await advanceWorkflowTaskAfterEnfath(config, taskId, {
     propertyId: property.id,
-    phase,
-    title,
+    identifierType: property.identifierType,
+    bourseDataCompleted: Boolean(property.bourseDataCompleted),
+    deedNumber: property.deedNumber,
   });
+  if (!result.ok) return null;
+  notifyTasksChanged();
+  return dtoToTask(result.data);
 }
 
-export function advanceTaskAfterBourse(
+export async function advanceTaskAfterBourse(
   taskId: string,
   property: PoPropertyIntake,
-): WorkflowTask | null {
-  const poNumber =
-    loadWorkflowTasks().find((t) => t.id === taskId)?.poNumber ?? "";
-  return updateTask(taskId, {
-    phase: "distribution",
-    title: `توزيع الأطراف — ${formatPropertyDeedDisplay(property) || poNumber}`,
-  });
+): Promise<WorkflowTask | null> {
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await advanceWorkflowTaskAfterBourse(
+    config,
+    taskId,
+    formatPropertyDeedDisplay(property),
+  );
+  if (!result.ok) return null;
+  notifyTasksChanged();
+  return dtoToTask(result.data);
 }
 
 /** After استعلام البورصة — move linked case-study task to توزيع المعاملات. */
-export function advanceTaskAfterBourseForProperty(
+export async function advanceTaskAfterBourseForProperty(
   poNumber: string,
   propertyId: string,
   property: PoPropertyIntake,
-): WorkflowTask | null {
-  const task = caseStudyTaskForProperty(poNumber, propertyId);
+  tasks?: WorkflowTask[],
+): Promise<WorkflowTask | null> {
+  const list = tasks ?? (await loadWorkflowTasks());
+  const task = caseStudyTaskForProperty(poNumber, propertyId, list);
   if (!task) return null;
   return advanceTaskAfterBourse(task.id, property);
 }
 
-function childTaskTitle(
-  kind: WorkflowTaskKind,
-  poNumber: string,
-  deed: string,
-): string {
-  const ref = deed.trim() || poNumber;
-  if (kind === "field-inspection") return `معاينة ميدانية — ${ref}`;
-  if (kind === "government-review") return `مراجعة حكومية — ${ref}`;
-  if (kind === "valuation-coordination") return `منسق التقييم — ${ref}`;
-  if (kind === "property-appraisal") return `تقييم عقاري — ${ref}`;
-  return `رفع مساحي — ${ref}`;
-}
-
-const CHILD_ASSIGNEE: Record<
-  Exclude<WorkflowTaskKind, "case-study-property">,
-  { role: RoleId; defaultName: string }
-> = {
-  "field-inspection": { role: "field-inspector", defaultName: "معاين ميداني" },
-  "government-review": {
-    role: "government-reviewer",
-    defaultName: "مراجع حكومي",
-  },
-  "engineering-survey": {
-    role: "engineering-office",
-    defaultName: "مكتب هندسي",
-  },
-  "valuation-coordination": {
-    role: "valuation-coordinator",
-    defaultName: "منسق التقييم",
-  },
-  "property-appraisal": {
-    role: "real-estate-appraiser",
-    defaultName: "مقيم عقاري",
-  },
-};
-
-export function confirmTaskDistribution(
-  taskId: string,
+function buildAssigneeNames(
   distribution: TaskDistributionDraft,
-  deedNumber = "",
-): { parent: WorkflowTask | null; children: WorkflowTask[] } {
-  const list = loadWorkflowTasks();
-  const parent = list.find((t) => t.id === taskId);
-  if (!parent || parent.phase !== "distribution" || !parent.propertyId) {
-    return { parent: null, children: [] };
-  }
-
-  const now = new Date().toISOString();
-  const children: WorkflowTask[] = [];
-  const deed = deedNumber.trim();
-
-  const spawn = (
-    kind: Exclude<WorkflowTaskKind, "case-study-property">,
-    assigneeName: string,
-    assigneeId: string,
-    assigneeRole?: RoleId,
-  ) => {
-    const meta = CHILD_ASSIGNEE[kind];
-    const name = assigneeName.trim() || meta.defaultName;
-    children.push({
-      id: newId(),
-      kind,
-      poNumber: parent.poNumber,
-      propertyId: parent.propertyId,
-      propertyOrdinal: parent.propertyOrdinal,
-      title: childTaskTitle(kind, parent.poNumber, deed),
-      phase: "done",
-      assigneeRole: assigneeRole ?? meta.role,
-      assigneeName: name,
-      assigneeId: assigneeId.trim() || undefined,
-      parentTaskId: parent.id,
-      status: "open",
-      createdAt: now,
-      updatedAt: now,
-    });
-  };
-
+): Record<string, string> {
+  const names: Record<string, string> = {};
   if (distribution.governmentAuditor) {
-    spawn(
-      "government-review",
-      assigneeLabel(GOVERNMENT_AUDITORS, distribution.governmentAuditorId),
+    names["government-review"] = assigneeLabel(
+      GOVERNMENT_AUDITORS,
       distribution.governmentAuditorId,
     );
   }
   if (distribution.valuationDepartment) {
-    spawn(
-      "valuation-coordination",
-      assigneeLabel(
-        VALUATION_COORDINATORS,
-        distribution.operationsCoordinatorId,
-      ),
+    names["valuation-coordination"] = assigneeLabel(
+      VALUATION_COORDINATORS,
       distribution.operationsCoordinatorId,
     );
-    spawn(
-      "field-inspection",
-      assigneeLabel(FIELD_INSPECTORS, distribution.inspectorId),
+    names["field-inspection"] = assigneeLabel(
+      FIELD_INSPECTORS,
       distribution.inspectorId,
     );
-    spawn(
-      "property-appraisal",
-      assigneeLabel(VALUATORS, distribution.valuatorId),
+    names["property-appraisal"] = assigneeLabel(
+      VALUATORS,
       distribution.valuatorId,
     );
   }
   if (distribution.engineeringOffice) {
-    spawn(
-      "engineering-survey",
-      assigneeLabel(ENGINEERING_OFFICES, distribution.engineeringOfficeId),
+    names["engineering-survey"] = assigneeLabel(
+      ENGINEERING_OFFICES,
       distribution.engineeringOfficeId,
-      "engineering-office",
     );
   }
-
-  const updatedParent: WorkflowTask = {
-    ...parent,
-    phase: "case-study",
-    status: "open",
-    title: `دراسة حالة — ${deed || parent.poNumber}`,
-    distribution,
-    updatedAt: now,
-  };
-
-  const idx = list.findIndex((t) => t.id === taskId);
-  list[idx] = updatedParent;
-  saveWorkflowTasks([...children, ...list]);
-
-  return { parent: updatedParent, children };
+  return names;
 }
 
-export function escalateTaskForObstruction(
+export async function confirmTaskDistribution(
+  taskId: string,
+  distribution: TaskDistributionDraft,
+  deedNumber = "",
+): Promise<{ parent: WorkflowTask | null; children: WorkflowTask[] }> {
+  const config = workOrdersApiConfig();
+  if (!config) return { parent: null, children: [] };
+
+  const normalized = migrateDistribution(distribution);
+  const result = await confirmWorkflowTaskDistribution(config, taskId, {
+    distribution: distributionToDto(normalized)!,
+    deedNumber,
+    assigneeNames: buildAssigneeNames(normalized),
+  });
+  if (!result.ok || !result.data.parent) {
+    return { parent: null, children: [] };
+  }
+
+  notifyTasksChanged();
+  return {
+    parent: dtoToTask(result.data.parent),
+    children: result.data.children.map(dtoToTask),
+  };
+}
+
+export async function escalateTaskForObstruction(
   poNumber: string,
   propertyId: string,
   reason: string,
-): WorkflowTask | null {
-  const task = loadWorkflowTasks().find(
+  tasks?: WorkflowTask[],
+): Promise<WorkflowTask | null> {
+  const list = tasks ?? (await loadWorkflowTasks());
+  const task = list.find(
     (t) =>
       t.kind === "case-study-property" &&
       t.poNumber === poNumber &&
@@ -706,7 +480,9 @@ export function escalateTaskForObstruction(
   );
   if (!task) return null;
 
-  return updateTask(task.id, {
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await patchWorkflowTask(config, task.id, {
     phase: "obstruction",
     obstructionPriorPhase: task.phase,
     assigneeRole: "section-supervisor",
@@ -714,27 +490,50 @@ export function escalateTaskForObstruction(
     status: "blocked",
     obstructionReason: reason.trim(),
   });
+  if (!result.ok) return null;
+  notifyTasksChanged();
+  return dtoToTask(result.data);
 }
 
-export function resolveTaskObstruction(taskId: string): WorkflowTask | null {
-  const task = loadWorkflowTasks().find((t) => t.id === taskId);
-  if (!task || task.phase !== "obstruction") return null;
+export async function resolveTaskObstruction(
+  taskId: string,
+  task?: WorkflowTask,
+): Promise<WorkflowTask | null> {
+  const resolved =
+    task ?? (await loadWorkflowTasks()).find((t) => t.id === taskId);
+  if (!resolved || resolved.phase !== "obstruction") return null;
 
   const resumePhase =
-    task.obstructionPriorPhase ?? (task.propertyId ? "bourse" : "enfath");
+    resolved.obstructionPriorPhase ??
+    (resolved.propertyId ? "bourse" : "enfath");
 
-  return updateTask(taskId, {
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await patchWorkflowTask(config, taskId, {
     phase: resumePhase,
     assigneeRole: "case-specialist",
     assigneeName: "أخصائي دراسة الحالة",
     status: "open",
-    obstructionReason: undefined,
-    obstructionPriorPhase: undefined,
+    obstructionReason: "",
+    obstructionPriorPhase: "",
   });
+  if (!result.ok) return null;
+  notifyTasksChanged();
+  return dtoToTask(result.data);
 }
 
-export function completeChildTask(taskId: string): WorkflowTask | null {
-  return updateTask(taskId, { status: "completed", phase: "done" });
+export async function completeChildTask(
+  taskId: string,
+): Promise<WorkflowTask | null> {
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await patchWorkflowTask(config, taskId, {
+    status: "completed",
+    phase: "done",
+  });
+  if (!result.ok) return null;
+  notifyTasksChanged();
+  return dtoToTask(result.data);
 }
 
 export function compareWorkflowTasks(
@@ -753,7 +552,7 @@ export function compareWorkflowTasks(
 
 export function tasksForRole(
   role: RoleId,
-  tasks = loadWorkflowTasks(),
+  tasks: WorkflowTask[],
 ): WorkflowTask[] {
   if (isSuperAdmin(role)) return [...tasks].sort(compareWorkflowTasks);
   return tasks
@@ -764,7 +563,7 @@ export function tasksForRole(
 /** Party queues — match role and selected person from توزيع المعاملات. */
 export function tasksForPartyAssignee(
   viewerRole: RoleId,
-  tasks = loadWorkflowTasks(),
+  tasks: WorkflowTask[],
   queueRole?: RoleId,
 ): WorkflowTask[] {
   if (isSuperAdmin(viewerRole) && !queueRole) {
@@ -785,20 +584,24 @@ export function tasksForPartyAssignee(
     .sort(compareWorkflowTasks);
 }
 
-export function syncTasksFromPoRecords(records: PoIntakeRecord[]): void {
-  for (const record of records) {
-    syncTaskSlotsForPo(record);
-  }
+export async function syncTasksFromPoRecords(): Promise<void> {
+  const config = workOrdersApiConfig();
+  if (!config) return;
+  await syncWorkflowTasks(config);
+  notifyTasksChanged();
 }
 
-export function patchTaskDistribution(
+export async function patchTaskDistribution(
   taskId: string,
   patch: Partial<TaskDistributionDraft>,
-): WorkflowTask | null {
-  const task = loadWorkflowTasks().find((t) => t.id === taskId);
-  if (!task) return null;
+  task?: WorkflowTask,
+): Promise<WorkflowTask | null> {
+  const resolved =
+    task ?? (await loadWorkflowTasks()).find((t) => t.id === taskId);
+  if (!resolved) return null;
+
   const distribution = migrateDistribution({
-    ...(task.distribution ?? defaultDistribution()),
+    ...(resolved.distribution ?? defaultDistribution()),
     ...patch,
   });
   if (!distribution.governmentAuditor) {
@@ -812,5 +615,15 @@ export function patchTaskDistribution(
   if (!distribution.engineeringOffice) {
     distribution.engineeringOfficeId = "";
   }
-  return updateTask(taskId, { distribution });
+
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await patchWorkflowTaskDistribution(
+    config,
+    taskId,
+    distributionToDto(distribution)!,
+  );
+  if (!result.ok) return null;
+  notifyTasksChanged();
+  return dtoToTask(result.data);
 }

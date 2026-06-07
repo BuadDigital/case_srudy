@@ -31,9 +31,15 @@ import {
   isBourseInquiryIdentifier,
   skipsBourseForIdentifier,
   type AssignmentType,
+  type BourseDeedVitality,
   type PoPropertyIntake,
   type PropertyIdentifierType,
 } from "@/lib/prototype/po-intake-data";
+import { ROLES } from "@/lib/prototype/constants";
+import {
+  submitBourseObstruction,
+  validateBourseObstructionReason,
+} from "@/lib/prototype/bourse-obstruction";
 import {
   addPropertyToPo,
   completePropertyBourse,
@@ -62,6 +68,8 @@ import {
   usePoRecordQuery,
   useWorkflowTasksQuery,
 } from "@/lib/query/prototype-queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { prototypeKeys } from "@/lib/query/prototype-keys";
 
 function useWorkflowTask(taskId: string): WorkflowTask | null {
   const { data: tasks } = useWorkflowTasksQuery();
@@ -89,6 +97,7 @@ export function CaseStudyTaskWork({
   ) => void | Promise<void>;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const exit = onClose ?? (() => router.push(myTasksPath()));
   const { role } = usePrototype();
   const [assignmentType, setAssignmentType] = useState<AssignmentType>("تنفيذ");
@@ -96,6 +105,13 @@ export function CaseStudyTaskWork({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deedVitality, setDeedVitality] = useState<BourseDeedVitality | null>(
+    null,
+  );
+  const [obstructionReason, setObstructionReason] = useState("");
+  const [obstructionReasonError, setObstructionReasonError] = useState<
+    string | undefined
+  >();
   const [hasPriorSurvey, setHasPriorSurvey] = useState(false);
   const [distribution, setDistribution] = useState<TaskDistributionDraft>(
     () => migrateDistribution(task.distribution),
@@ -111,6 +127,12 @@ export function CaseStudyTaskWork({
 
   const isSupervisor = role === "section-supervisor" || role === "cdo";
   const isSpecialist = role === "case-specialist" || role === "cdo";
+
+  useEffect(() => {
+    setDeedVitality(null);
+    setObstructionReason("");
+    setObstructionReasonError(undefined);
+  }, [task.id]);
 
   useEffect(() => {
     if (!poRecord) return;
@@ -162,7 +184,7 @@ export function CaseStudyTaskWork({
         engineeringOfficeId: "",
       });
       setDistribution(next);
-      patchTaskDistribution(task.id, next);
+      void patchTaskDistribution(task.id, next, task);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when engineering unavailable
   }, [loading, task.phase, task.id, showEngineering, property.classification]);
@@ -220,7 +242,7 @@ export function CaseStudyTaskWork({
         ? { ...result.data, bourseDataCompleted: true }
         : result.data;
       if (task.propertyId) {
-        advanceTaskAfterEnfath(task.id, advanced);
+        await advanceTaskAfterEnfath(task.id, advanced);
       }
       if (onEnfathSaved) {
         await onEnfathSaved(task.id, {
@@ -234,6 +256,43 @@ export function CaseStudyTaskWork({
 
   async function saveBourse() {
     setFormError(null);
+
+    if (!deedVitality) {
+      setFormError("اختر حالة الصك: فعال أو غير فعال.");
+      return;
+    }
+
+    if (deedVitality === "inactive") {
+      const obstructionError = validateBourseObstructionReason(
+        deedVitality,
+        obstructionReason,
+      );
+      if (obstructionError) {
+        setObstructionReasonError(obstructionError);
+        setFormError(obstructionError);
+        return;
+      }
+      if (!task.propertyId) {
+        setFormError("لا يوجد عقار مرتبط بهذه المهمة.");
+        return;
+      }
+      setSaving(true);
+      submitBourseObstruction({
+        poNumber: task.poNumber,
+        propertyId: task.propertyId,
+        deedNumber: property.deedNumber,
+        reason: obstructionReason,
+        specialist: ROLES[role]?.name ?? "أخصائي دراسة الحالة",
+      });
+      setSaving(false);
+      void queryClient.invalidateQueries({ queryKey: prototypeKeys.failures() });
+      void queryClient.invalidateQueries({
+        queryKey: prototypeKeys.workflowTasks(),
+      });
+      onRefresh();
+      return;
+    }
+
     const bourseInquiryFastPath =
       task.phase === "enfath" && isBourseInquiryIdentifier(property.identifierType);
 
@@ -298,13 +357,13 @@ export function CaseStudyTaskWork({
         return;
       }
       prop = updated.data;
-      advanceTaskAfterEnfath(task.id, updated.data);
+      await advanceTaskAfterEnfath(task.id, updated.data);
     }
 
     const result = await completePropertyBourse(
       task.poNumber,
       propertyId!,
-      prop,
+      { ...prop, deedStatus: "فعال" },
     );
     setSaving(false);
 
@@ -314,11 +373,11 @@ export function CaseStudyTaskWork({
       return;
     }
 
-    advanceTaskAfterBourse(task.id, result.data);
+    await advanceTaskAfterBourse(task.id, result.data);
     onRefresh();
   }
 
-  function confirmDistribution() {
+  async function confirmDistribution() {
     setFormError(null);
     const validation = distributionValidationError(
       distribution,
@@ -329,7 +388,7 @@ export function CaseStudyTaskWork({
       return;
     }
 
-    confirmTaskDistribution(
+    await confirmTaskDistribution(
       task.id,
       distribution,
       formatPropertyDeedDisplay(property),
@@ -337,14 +396,14 @@ export function CaseStudyTaskWork({
     onRefresh();
   }
 
-  function patchDistribution(patch: Partial<TaskDistributionDraft>) {
+  async function patchDistribution(patch: Partial<TaskDistributionDraft>) {
     const next = migrateDistribution({ ...distribution, ...patch });
     if (!showEngineering) {
       next.engineeringOffice = false;
       next.engineeringOfficeId = "";
     }
     setDistribution(next);
-    patchTaskDistribution(task.id, next);
+    await patchTaskDistribution(task.id, next, task);
     onRefresh();
   }
 
@@ -359,6 +418,8 @@ export function CaseStudyTaskWork({
     (task.phase === "bourse" || bourseInquiryFastPath) && !bourseInquiryPanelOnly;
   const showDistribution = task.phase === "distribution";
   const showCaseStudy = task.phase === "case-study";
+  const bourseObstructionPath =
+    showBourseStep && deedVitality === "inactive";
   const showPrimarySave =
     isSpecialist &&
     !showCaseStudy &&
@@ -373,7 +434,9 @@ export function CaseStudyTaskWork({
     : showBourseStep
       ? saving
         ? "جاري الحفظ…"
-        : "حفظ والانتقال للتوزيع"
+        : bourseObstructionPath
+          ? "إرسال للمشرف — إدارة التعذرات"
+          : "حفظ والانتقال للتوزيع"
       : showDistribution
         ? "تأكيد التوزيع وإرسال المهام"
         : "حفظ";
@@ -432,7 +495,7 @@ export function CaseStudyTaskWork({
               type="button"
               className="btn btn-primary"
               onClick={() => {
-                resolveTaskObstruction(task.id);
+                void resolveTaskObstruction(task.id, task);
                 onRefresh();
               }}
             >
@@ -606,6 +669,15 @@ export function CaseStudyTaskWork({
             property={property}
             fieldErrors={fieldErrors}
             onPatch={patchProperty}
+            showDeedVitalityFlow
+            deedVitality={deedVitality}
+            onDeedVitalityChange={setDeedVitality}
+            obstructionReason={obstructionReason}
+            onObstructionReasonChange={(v) => {
+              setObstructionReason(v);
+              setObstructionReasonError(undefined);
+            }}
+            obstructionReasonError={obstructionReasonError}
           />
         </RegistrationFormCard>
       ) : null}
@@ -663,7 +735,7 @@ export function MyTaskWorkView({ taskId }: { taskId: string }) {
         subtitle={`${taskKindLabel(task.kind)} · ${formatPoDisplay(task.poNumber)}`}
         onBack={() => router.push(myTasksPath())}
         onSave={() => {
-          if (task.status !== "completed") completeChildTask(task.id);
+          if (task.status !== "completed") void completeChildTask(task.id);
           router.push(myTasksPath());
         }}
         saveLabel={

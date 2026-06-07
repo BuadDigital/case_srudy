@@ -126,6 +126,7 @@ export type PendingBoursePropertyDto = {
   propertyId: string;
   identifierType?: string;
   deedNumber: string;
+  deedDate?: string;
   ownerName?: string;
   taskNumber?: string;
   assignmentType: string;

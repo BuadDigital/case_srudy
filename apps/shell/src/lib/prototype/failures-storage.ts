@@ -60,6 +60,26 @@ function patchPropertyDeedStatus(
   })();
 }
 
+/** من بيانات البورصة — متعذر (صك غير فعال) → مباشرة لمراجعة المشرف. */
+export function reportBourseObstructionToSupervisor(input: {
+  poNumber: string;
+  propertyId: string;
+  deedNumber: string;
+  reason: string;
+  specialist: string;
+}): FailureRecord {
+  const record = createFailure({
+    poNumber: input.poNumber,
+    propertyId: input.propertyId,
+    deedNumber: input.deedNumber,
+    title: "متعذر — الصك غير فعال",
+    internalNote: input.reason.trim(),
+    specialist: input.specialist,
+  });
+  submitFailureForReview(record.id);
+  return record;
+}
+
 export function createFailure(input: {
   poNumber: string;
   propertyId: string;
@@ -85,7 +105,7 @@ export function createFailure(input: {
   const list = loadFailures();
   saveFailures([record, ...list]);
   patchPropertyDeedStatus(input.poNumber, input.propertyId, "قيد التحقق");
-  escalateTaskForObstruction(
+  void escalateTaskForObstruction(
     input.poNumber,
     input.propertyId,
     input.title.trim() || input.internalNote.trim(),

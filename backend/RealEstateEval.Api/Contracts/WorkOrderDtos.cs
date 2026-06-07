@@ -151,6 +151,7 @@ public class PendingBoursePropertyDto
     public Guid PropertyId { get; set; }
     public string IdentifierType { get; set; } = "deed";
     public string DeedNumber { get; set; } = "";
+    public string? DeedDate { get; set; }
     public string? OwnerName { get; set; }
     public string? TaskNumber { get; set; }
     public string AssignmentType { get; set; } = "";

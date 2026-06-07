@@ -105,6 +105,7 @@ internal static class WorkOrderMapper
             PropertyId = p.Id,
             IdentifierType = PropertyIdentifierTypeLabels.ToApiValue(p.IdentifierType),
             DeedNumber = p.DeedNumber,
+            DeedDate = p.DeedDate,
             OwnerName = p.OwnerName,
             TaskNumber = p.TaskNumber,
             AssignmentType = AssignmentTypeLabels.ToLabel(p.WorkOrder.AssignmentType),

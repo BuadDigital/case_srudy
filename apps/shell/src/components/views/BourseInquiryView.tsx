@@ -2,6 +2,13 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { usePrototype } from "@/contexts/PrototypeContext";
+import { ROLES } from "@/lib/prototype/constants";
+import {
+  submitBourseObstruction,
+  validateBourseObstructionReason,
+} from "@/lib/prototype/bourse-obstruction";
+import type { BourseDeedVitality } from "@/lib/prototype/po-intake-data";
 import { PoNumber } from "@/components/ui/PoNumber";
 import {
   emptyProperty,
@@ -15,7 +22,10 @@ import {
   findPropertyInRecord,
 } from "@/lib/prototype/po-intake-storage";
 import { prototypeKeys } from "@/lib/query/prototype-keys";
-import { usePendingBourseItemsQuery } from "@/lib/query/prototype-queries";
+import {
+  useFailuresQuery,
+  usePendingBourseItemsQuery,
+} from "@/lib/query/prototype-queries";
 import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
 import {
   hasFieldErrors,
@@ -29,18 +39,35 @@ import {
 import type { PendingBoursePropertyDto } from "@platform/api-client";
 
 export function BourseInquiryView() {
+  const { role } = usePrototype();
   const queryClient = useQueryClient();
   const {
-    data: items = [],
+    data: rawItems = [],
     isFetched,
     refetch,
   } = usePendingBourseItemsQuery();
+  const { data: failures = [] } = useFailuresQuery();
+
+  const items = rawItems.filter((item) => {
+    const failure = failures.find(
+      (f) =>
+        f.poNumber === item.poNumber && f.propertyId === item.propertyId,
+    );
+    return !failure || failure.status === "returned";
+  });
   const loading = !isFetched;
   const [selected, setSelected] = useState<PendingBoursePropertyDto | null>(null);
   const [property, setProperty] = useState<PoPropertyIntake>(emptyProperty);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deedVitality, setDeedVitality] = useState<BourseDeedVitality | null>(
+    null,
+  );
+  const [obstructionReason, setObstructionReason] = useState("");
+  const [obstructionReasonError, setObstructionReasonError] = useState<
+    string | undefined
+  >();
 
   const refresh = useCallback(async () => {
     await queryClient.invalidateQueries({
@@ -70,6 +97,9 @@ export function BourseInquiryView() {
     setSelected(item);
     setFormError(null);
     setFieldErrors({});
+    setDeedVitality(null);
+    setObstructionReason("");
+    setObstructionReasonError(undefined);
     const hit = await findPropertyInRecord(item.poNumber, item.propertyId);
     if (hit) {
       setProperty({ ...hit.property, id: item.propertyId });
@@ -89,10 +119,50 @@ export function BourseInquiryView() {
     setProperty(emptyProperty());
     setFormError(null);
     setFieldErrors({});
+    setDeedVitality(null);
+    setObstructionReason("");
+    setObstructionReasonError(undefined);
   }
 
   async function handleSubmit() {
     if (!selected) return;
+
+    if (!deedVitality) {
+      setFormError("اختر حالة الصك: فعال أو غير فعال.");
+      return;
+    }
+
+    if (deedVitality === "inactive") {
+      const obstructionError = validateBourseObstructionReason(
+        deedVitality,
+        obstructionReason,
+      );
+      if (obstructionError) {
+        setObstructionReasonError(obstructionError);
+        setFormError(obstructionError);
+        return;
+      }
+
+      setSaving(true);
+      setFormError(null);
+      setObstructionReasonError(undefined);
+      submitBourseObstruction({
+        poNumber: selected.poNumber,
+        propertyId: selected.propertyId,
+        deedNumber: property.deedNumber || selected.deedNumber,
+        reason: obstructionReason,
+        specialist: ROLES[role]?.name ?? "أخصائي دراسة الحالة",
+      });
+      setSaving(false);
+      closeForm();
+      await queryClient.invalidateQueries({ queryKey: prototypeKeys.failures() });
+      await queryClient.invalidateQueries({
+        queryKey: prototypeKeys.workflowTasks(),
+      });
+      await refresh();
+      return;
+    }
+
     const errors = validatePropertyBourseFields(property);
     if (hasFieldErrors(errors)) {
       setFieldErrors(errors);
@@ -105,7 +175,7 @@ export function BourseInquiryView() {
     const result = await completePropertyBourse(
       selected.poNumber,
       selected.propertyId,
-      property,
+      { ...property, deedStatus: "فعال" },
     );
     setSaving(false);
 
@@ -118,6 +188,8 @@ export function BourseInquiryView() {
     closeForm();
     await refresh();
   }
+
+  const obstructionPath = deedVitality === "inactive";
 
   const pendingCount = items.length;
   const showSplit =
@@ -179,6 +251,7 @@ export function BourseInquiryView() {
                 >
                   <colgroup>
                     <col className="po-bq-col-deed" />
+                    <col className="po-bq-col-deed-date" />
                     <col className="po-bq-col-po" />
                     <col className="po-bq-col-task" />
                     <col className="po-bq-col-owner" />
@@ -187,6 +260,7 @@ export function BourseInquiryView() {
                   <thead>
                     <tr>
                       <th>رقم الصك</th>
+                      <th>تاريخ الصك</th>
                       <th>أمر العمل</th>
                       <th>رقم المهمة</th>
                       <th>المالك</th>
@@ -210,6 +284,11 @@ export function BourseInquiryView() {
                             <span className="id-cell po-num-ltr">
                               {deedLabel}
                             </span>
+                          </td>
+                          <td className="po-properties-cell-muted">
+                            {item.deedDate?.trim()
+                              ? formatDateAr(item.deedDate)
+                              : "—"}
                           </td>
                           <td className="po-properties-cell-muted">
                             <PoNumber value={item.poNumber} link />
@@ -278,6 +357,15 @@ export function BourseInquiryView() {
                   property={property}
                   fieldErrors={fieldErrors}
                   onPatch={patchProperty}
+                  showDeedVitalityFlow
+                  deedVitality={deedVitality}
+                  onDeedVitalityChange={setDeedVitality}
+                  obstructionReason={obstructionReason}
+                  onObstructionReasonChange={(v) => {
+                    setObstructionReason(v);
+                    setObstructionReasonError(undefined);
+                  }}
+                  obstructionReasonError={obstructionReasonError}
                 />
               </RegistrationFormCard>
 
@@ -288,7 +376,11 @@ export function BourseInquiryView() {
                   disabled={saving}
                   onClick={() => void handleSubmit()}
                 >
-                  {saving ? "جاري الحفظ…" : "حفظ وإكمال البورصة"}
+                  {saving
+                    ? "جاري الحفظ…"
+                    : obstructionPath
+                      ? "إرسال للمشرف — إدارة التعذرات"
+                      : "حفظ وإكمال البورصة"}
                 </button>
               </div>
             </div>

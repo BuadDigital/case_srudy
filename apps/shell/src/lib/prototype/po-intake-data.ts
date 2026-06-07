@@ -35,6 +35,13 @@ export function showsCourtFields(type: AssignmentType): boolean {
 
 export const DEED_STATUS_OPTIONS = ["فعال", "موقوف", "قيد التحقق"] as const;
 
+/** بيانات البورصة — فعالية الصك قبل إكمال المسار. */
+export type BourseDeedVitality = "active" | "inactive";
+
+export const BOURSE_DEED_VITALITY_ACTIVE = "الصك فعال";
+export const BOURSE_DEED_VITALITY_INACTIVE = "الصك غير فعال";
+export const BOURSE_OBSTRUCTION_LABEL = "متعذر";
+
 export const RESTRICTIONS_PRESENT_OPTIONS = [
   { value: "yes", label: "توجد قيود" },
   { value: "no", label: "لا توجد قيود" },

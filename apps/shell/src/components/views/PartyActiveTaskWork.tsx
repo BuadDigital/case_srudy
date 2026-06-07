@@ -160,9 +160,9 @@ export function PartyActiveTaskWork({
     };
   }, [record, task]);
 
-  function submitWork() {
+  async function submitWork() {
     setSaving(true);
-    completeChildTask(task.id);
+    await completeChildTask(task.id);
     setSaving(false);
     onRefresh();
     exit();

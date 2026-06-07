@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CASE_STUDY_FORM_STEPS,
   caseStudyFormSummary,
@@ -79,10 +79,21 @@ export function PoDetailCaseStudySection({
     [poNumber, propertyId, tasks],
   );
 
-  const draft = useMemo(
-    () => (task ? loadCaseStudyFormDraft(task.id) : null),
-    [task],
-  );
+  const [draft, setDraft] = useState<CaseStudyFormDraft | null>(null);
+
+  useEffect(() => {
+    if (!task) {
+      setDraft(null);
+      return;
+    }
+    let cancelled = false;
+    void loadCaseStudyFormDraft(task.id).then((loaded) => {
+      if (!cancelled) setDraft(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [task?.id]);
 
   const summary = useMemo(
     () => (draft ? caseStudyFormSummary(draft.answers) : null),
