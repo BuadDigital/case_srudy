@@ -1,7 +1,7 @@
 # Project Progress — Ejada Internal (نظام إجادة الداخلي)
 
-**Last updated:** 3 June 2026 (case study workflow, نموذج الدراسة, علاقة المستخدم بالمعلومة)  
-**Repo:** `study-realstate-eval` monorepo on branch `main`  
+**Last updated:** 7 June 2026 (workflow tasks + case study forms API, bourse obstruction flow)  
+**Repo:** [BuadDigital/case_srudy](https://github.com/BuadDigital/case_srudy) · branch `main` · latest commit `9016a40`  
 **Audience:** Project manager and developers — single handoff document.
 
 ---
@@ -10,11 +10,11 @@
 
 | Layer | What is real today | What is prototype-only |
 |-------|-------------------|------------------------|
-| **PostgreSQL** | Users, profiles (HR/Proc/CRM), work orders, properties, contacts, courts catalog | Workflow tasks, failures, file bytes, messages/KPI data |
-| **ASP.NET API** | Auth (JWT), users, work orders, courts | No messaging, search, attachments blob, failures |
-| **Next.js shell** | PO + users + active-transaction queues wired to API | Most other nav screens use mocks; sidebar **role switcher** for demo |
+| **PostgreSQL** | Users, profiles (HR/Proc/CRM), work orders, properties, contacts, courts catalog, **workflow tasks**, **case study form drafts** | Failures (تعذرات), file bytes, messages/KPI data, info-role matrix |
+| **ASP.NET API** | Auth (JWT), users, work orders, courts, **workflow tasks**, **case study forms** | No messaging, search, attachments blob, failures |
+| **Next.js shell** | PO + users + active-transaction queues + tasks + case study forms wired to API | Failures, info-role matrix, attachment previews; sidebar **role switcher** for demo |
 
-**Demo path:** Login → PO list/intake → properties per PO → **البيانات الأولية** → **استعلام بورصة** → **توزيع المعاملات** (تأكيد التوزيع) → **دراسة حالة العقارات** (queue + workspace) → **نموذج الدراسة** per party task → **الإعدادات** (علاقة المستخدم بالمعلومة) → users → **ادوات النظام**.
+**Demo path:** Login → PO list/intake → properties per PO → **البيانات الأولية** → **استعلام بورصة** (حالة الصك: فعال / غير فعال → متعذر) → **توزيع المعاملات** → **دراسة حالة العقارات** → **نموذج الدراسة** → party tasks → **إدارة التعذرات** (supervisor) → **جميع حقول النظام** / **الإعدادات**.
 
 ---
 
@@ -28,7 +28,7 @@ property_study/
 │   ├── RealEstateEval.Api/  # ASP.NET Core 10 API
 │   └── plan/                # Backend infra notes (LOCAL_INFRA.md)
 ├── packages/
-│   ├── api-client/          # fetch wrappers (auth, users, work-orders, courts)
+│   ├── api-client/          # fetch wrappers (auth, users, work-orders, courts, workflow-tasks, case-study-forms)
 │   ├── auth-client/         # JWT session + AppAuthGate
 │   ├── design-system/       # prototype.css, registration.css, StatusBadge
 │   └── types/               # PageId, RoleId, user/org DTO types
@@ -52,8 +52,8 @@ property_study/
 
 ```bash
 docker compose -f infra/docker-compose.yml up -d postgres
-npm run dev:api          # API http://localhost:5160 — applies EF migrations on start
 npm install            # once, at repo root
+npm run dev:api        # API http://localhost:5160 — applies EF migrations on start
 npm run dev            # Next.js http://localhost:3000 (LAN)
 # or: npm run dev:local
 npm run dev:stop       # free ports 3000 + 5160
@@ -120,16 +120,22 @@ Seeder: `backend/RealEstateEval.Api/Data/DataSeeder.cs`.
 | **Identity** | `Users`, `Roles`, `UserRoles`, `UserClaims`, `RoleClaims`, `UserLogins`, `UserTokens` |
 | **Users domain** | `UserProfiles` (+ `HrEmployeeProfiles`, `ProcServiceProviderProfiles`, `CrmClientProfiles`) |
 | **Case study** | `WorkOrders`, `WorkOrderProperties`, `PropertyContacts`, `CourtCatalogEntries` |
+| **Workflow** | `WorkflowTasks` — phases, distribution JSON, obstruction fields, parent/child links |
+| **Case study forms** | `CaseStudyForms` — specialist + party drafts per task (answers JSON, step, status) |
 
 ### 3.2 Work order schema (current model)
 
 **`WorkOrders`:** `PoNumber` (unique), `AssignmentType`, `PromulgationDate`, `ReceivedFromEnfathAt`, `ReceivedFromEnfathTime`, `AssignmentSpecialist`, `AssignmentSpecialistEmail`, `ExpectedPropertyCount`, `DueDateAt`, `CreatedAtUtc`.
 
-**`WorkOrderProperties`:** `IdentifierType` (deed / real-estate reg / bourse inquiry), deed/task/owner/court/circuit, location (`City`, `District`), classification/type, `DeedStatus`, `Area`, boundaries flags (`BoundariesAvailability`, `BoundariesExternalDocName`), `RestrictionsPresent`, attachment **filenames** (`AssignmentDocFileName`, `RealEstateRegFileName`, `DelegationLetterFileName`, `OtherDocumentFileNames` JSON), `BourseDataCompleted`.
+**`WorkOrderProperties`:** `IdentifierType` (deed / real-estate reg / bourse inquiry), deed/task/owner/court/circuit, `DeedDate`, location (`City`, `District`), classification/type, `DeedStatus`, `Area`, boundaries flags (`BoundariesAvailability`, `BoundariesExternalDocName`), `RestrictionsPresent`, attachment **filenames** (`AssignmentDocFileName`, `RealEstateRegFileName`, `DelegationLetterFileName`, `OtherDocumentFileNames` JSON), `BourseDataCompleted`.
 
 **`PropertyContacts`:** `Name`, `Phone`, `Role`, `SortOrder`.
 
 **`CourtCatalogEntries`:** `City`, `Court`, `CircuitsJson` (jsonb).
+
+**`WorkflowTasks`:** `PoNumber`, `PropertyId`, `Kind`, `Phase`, `Status`, `Title`, distribution parties, `ParentTaskId`, `ObstructionReason`, `ObstructionPriorPhase`, assignee fields, timestamps.
+
+**`CaseStudyForms`:** `TaskId`, `IsParty`, form JSON blob (answers, steps, remarks, signatures).
 
 ### 3.3 Migration history (apply in order)
 
@@ -144,12 +150,14 @@ Seeder: `backend/RealEstateEval.Api/Data/DataSeeder.cs`.
 | `20260521143044_AddExpectedPropertyCount` | Expected property count on PO |
 | `20260601193436_DropUnusedPropertyBoundaryFields` | Removed legacy boundary text columns |
 | `20260601193623_DropUnusedAuditFields` | Removed unused audit columns |
+| `20260607072126_AddWorkflowTasksAndCaseStudyForms` | **Workflow tasks + case study forms** |
 
 ### 3.4 Not stored in database
 
-- Workflow tasks (`evalWorkflowTasks` in browser)
-- Failure records (`failures-storage` in browser)
-- Assignment/reg/decree **file content** (filenames only)
+- Failure records (إدارة التعذرات — `failures-storage` in browser)
+- Info-role matrix (علاقة المستخدم بالمعلومة — `evalCaseStudyInfoRoles`)
+- Assignment/reg/decree **file content** (filenames only; preview cache in localStorage)
+- PO intake draft (`evalPoIntakeDraft`)
 - Messages, KPI, survey, valuation mock entities
 
 ---
@@ -206,12 +214,42 @@ Seeder: `backend/RealEstateEval.Api/Data/DataSeeder.cs`.
 - Contacts: ≥1, name + phone (≥10 digits).
 - Unique deed per PO; unique `PoNumber`.
 
+**Pending bourse DTO** includes `DeedDate` (تاريخ الصك) for queue display.
+
 ### 4.4 Courts — `CourtsController`
 
 | Method | Route |
 |--------|-------|
 | GET | `/api/courts` | Auto-seed if empty |
 | PUT | `/api/courts` | Replace catalog (supervisor) |
+
+### 4.5 Workflow tasks — `WorkflowTasksController`
+
+| Method | Route | Notes |
+|--------|-------|-------|
+| GET | `/api/workflow-tasks` | List all tasks |
+| GET | `/api/workflow-tasks/{id}` | Single task |
+| POST | `/api/workflow-tasks/sync` | Rebuild from work orders |
+| PATCH | `/api/workflow-tasks/{id}/distribution` | Save distribution draft |
+| POST | `/api/workflow-tasks/{id}/confirm-distribution` | Confirm + spawn party child tasks |
+| POST | `/api/workflow-tasks/{id}/advance-after-enfath` | After primary data save |
+| POST | `/api/workflow-tasks/{id}/advance-after-bourse` | After bourse completion |
+| PATCH | `/api/workflow-tasks/{id}` | General patch (phase, status, obstruction) |
+| DELETE | `/api/workflow-tasks/by-po/{poNumber}` | Cascade delete for PO |
+| DELETE | `/api/workflow-tasks/by-po/{poNumber}/properties/{propertyId}` | Delete property tasks |
+
+**Service:** `WorkflowTaskService.cs` · **Frontend:** `packages/api-client/src/workflow-tasks.ts`, `tasks-storage.ts`.
+
+### 4.6 Case study forms — `CaseStudyFormsController`
+
+| Method | Route | Notes |
+|--------|-------|-------|
+| GET | `/api/case-study-forms/{taskId}` | Specialist form draft |
+| PUT | `/api/case-study-forms/{taskId}` | Save specialist draft |
+| GET | `/api/case-study-forms/party/{taskId}` | Party form draft |
+| PUT | `/api/case-study-forms/party/{taskId}` | Save party draft |
+
+**Service:** `CaseStudyFormService.cs` · **Frontend:** `packages/api-client/src/case-study-forms.ts`, `case-study-form-storage.ts`.
 
 ---
 
@@ -236,7 +274,7 @@ Seeder: `backend/RealEstateEval.Api/Data/DataSeeder.cs`.
 | `/po/{poNumber}/property/{id}/edit` | Edit property | API |
 | `/po/{poNumber}/property/{id}/failure` | Report failure | **localStorage** |
 | `/my-tasks/{taskId}` | Redirect | `next.config` → `/active-primary-data?task=` |
-| `/case-study/{taskId}` | Case study workspace (أخصائي) | PO API + **local tasks** + **local form** |
+| `/case-study/{taskId}` | Case study workspace (أخصائي) | PO API + **API tasks** + **API form** |
 
 **Redirects:** `/properties` → `/po`; `/my-tasks` → `/active-primary-data`; `/assignment` → `/dashboard`.
 
@@ -245,16 +283,16 @@ Seeder: `backend/RealEstateEval.Api/Data/DataSeeder.cs`.
 | `PageId` | Component | API | Nav note |
 |----------|-----------|-----|----------|
 | `dashboard` | `DashboardView` | Partial | — |
-| `active-primary-data` | `MyTasksView` | PO API + **local tasks** | المعاملات النشطة |
-| `bourse-inquiry` | `BourseInquiryView` | API pending-bourse | المعاملات النشطة |
-| `active-distribution` | `ActiveDistributionView` | PO API + **local tasks** | المعاملات النشطة |
-| `active-case-study` | `ActiveCaseStudyView` | PO API + **local tasks** | المعاملات النشطة |
-| `case-study-info-roles` | `CaseStudyInfoRolesView` | **localStorage** | الإعدادات (sidebar footer) |
-| `property-inspection`, `government-review`, `valuation-coordination`, `property-appraisal`, `active-survey` | `PartyActiveTaskView` | PO API + **local tasks** | المعاملات النشطة (after distribution) |
-| `failures` | `FailuresView` | **localStorage** | Live page, static badge |
+| `active-primary-data` | `MyTasksView` | PO + **workflow tasks** API | المعاملات النشطة |
+| `bourse-inquiry` | `BourseInquiryView` | PO + tasks API | المعاملات النشطة |
+| `active-distribution` | `ActiveDistributionView` | PO + tasks API | المعاملات النشطة |
+| `active-case-study` | `ActiveCaseStudyView` | PO + tasks API | المعاملات النشطة |
+| `case-study-info-roles` | `CaseStudyInfoRolesView` | **localStorage** | جميع حقول النظام |
+| `property-inspection`, `government-review`, `valuation-coordination`, `property-appraisal`, `active-survey` | `PartyActiveTaskView` | PO + tasks + form API | المعاملات النشطة |
+| `failures` | `FailuresView` | **localStorage** | Live page |
 | `users` | `UsersView` | API | الإعدادات |
-| `courts` | `CourtsView` | API | الإعدادات (placeholder flag) |
-| `system-tools` | `SystemToolsView` | Catalog only | الإعدادات |
+| `courts` | `CourtsView` | API | جميع حقول النظام (placeholder flag) |
+| `system-tools` | `SystemToolsView` | Catalog only | جميع حقول النظام |
 | `survey`, `keys`, `valuation-requests`, `field-form`, `messages`, `financial`, `kpi` | Various `*View` | **Mocks** | Red placeholder in nav |
 
 ### 5.3 Sidebar — المعاملات النشطة
@@ -264,25 +302,32 @@ Under **أوامر العمل (PO)** (`active-transactions.ts`):
 | Item | Route | Status |
 |------|-------|--------|
 | البيانات الأولية | `/active-primary-data` | Done |
-| استعلام بورصة | `/bourse-inquiry` | Done |
+| استعلام بورصة | `/bourse-inquiry` | Done (+ حالة الصك / تعذر flow) |
 | توزيع المعاملات | `/active-distribution` | Done |
-| دراسة حالة العقارات | `/active-case-study` | **Done** (queue; opens `/case-study/{taskId}`) |
-| معاينة العقار / المراجعة الحكومية / استلام التقييم / تقييم العقار / الرفع المساحي | Party `PageId`s | **Done** (queue + work panel; see section 8.5) |
+| دراسة حالة العقارات | `/active-case-study` | Done (queue; opens `/case-study/{taskId}`) |
+| معاينة العقار / المراجعة الحكومية / استلام التقييم / تقييم العقار / الرفع المساحي | Party `PageId`s | Done (queue + work panel; see section 8.5) |
 
 **Badges:** `use-active-transaction-nav-badges.ts` (primary open, bourse pending, distribution open, case-study open).
 
-### 5.3.1 Sidebar — الإعدادات (footer)
+### 5.3.1 Sidebar — جميع حقول النظام (footer)
 
 Pinned at bottom of sidebar (`AppShell` → `sb-nav-footer`):
 
 | Item | Route | Access |
 |------|-------|--------|
-| ادوات النظام | `/system-tools` | Per `ROLES[].pages` (CDO: all) |
-| إدارة المستخدمين | `/users` | Per role |
-| المحاكم و الدوائر | `/courts` | Per role (nav placeholder styling) |
-| **علاقة المستخدم بالمعلومة** | `/case-study-info-roles` | CDO + `general-manager` (prototype) |
+| ادوات النظام | `/system-tools` | **All prototype roles** |
+| علاقة المستخدم بالمعلومة | `/case-study-info-roles` | **All prototype roles** |
+| المحاكم و الدوائر | `/courts` | **All prototype roles** (nav placeholder styling) |
 
-Config: `settings-nav.ts` · Matrix UI: `CaseStudyInfoRolesView.tsx`.
+Config: `system-fields-nav.ts` · `prototype-role-access.ts` appends `SYSTEM_FIELDS_PAGE_IDS` to every role.
+
+### 5.3.2 Sidebar — الإعدادات (footer)
+
+| Item | Route | Access |
+|------|-------|--------|
+| إدارة المستخدمين | `/users` | Per role |
+
+Config: `settings-nav.ts` (system tools, courts, and info-roles **moved** to جميع حقول النظام in commit `4d3edc6`).
 
 **Removed:** standalone **الإسناد والتوزيع** page (`AssignmentView` deleted; `/assignment` → `/dashboard`). Distribution lives under **توزيع المعاملات** (`ActiveDistributionView`).
 
@@ -326,11 +371,12 @@ Config: `settings-nav.ts` · Matrix UI: `CaseStudyInfoRolesView.tsx`.
 - `PoIntakeFlow.tsx` + `hideWizardChrome` — minimal UI (no step chrome / blue note).
 - Saves header only: PO number, **تاريخ التعميد** (`PromulgationDate`), assignment type, specialist + email, expected property count.
 - On success: navigates via `onCompleteAction`.
+- Optional browser draft: `evalPoIntakeDraft` (not persisted to API until submit).
 
 ### Property forms
 
 - **مصدر البيانات:** صك ملكية · تسجيل عيني · **البورصة العقارية** (`PoPropertyEnfathForm.tsx`).
-- Bourse completion: `PoPropertyBourseForm.tsx` on **استعلام بورصة** tab.
+- Bourse completion: `PoPropertyBourseForm.tsx` on **استعلام بورصة** tab and specialist bourse step.
 - Decree preview: `AssignmentDocAttachment.tsx` + `assignment-doc-attachments.ts` (localStorage, ≤2MB).
 
 ### Properties access
@@ -355,12 +401,20 @@ Config: `settings-nav.ts` · Matrix UI: `CaseStudyInfoRolesView.tsx`.
 - Panel: `CaseStudyTaskWork` (`MyTaskWorkView.tsx`, `layout="panel"`), chrome `TaskWorkChrome.tsx`.
 - After save: صك/بورصة → next task; تسجيل عيني → `/active-distribution?task=…`.
 
+### استعلام بورصة — `BourseInquiryView.tsx`
+
+- Queue from `GET /api/work-orders/properties/pending-bourse` (includes **تاريخ الصك** column).
+- Properties with open failure (except `returned`) are **hidden** from queue.
+- **حالة الصك** in `PoPropertyBourseForm` (`showDeedVitalityFlow`):
+  - **الصك فعال** → complete bourse fields → `completePropertyBourse` → advance task.
+  - **الصك غير فعال** → **متعذر** panel + required **سبب التعذر** → `submitBourseObstruction` → إدارة التعذرات (supervisor review).
+
 ### توزيع المعاملات — `ActiveDistributionView.tsx`
 
 - Filter: `filterTasksForDistribution` (phase `distribution`).
 - Distribution UI: `DistributionPartiesForm.tsx` + `distribution-parties.ts` (mock party lists).
 
-### Workflow tasks — `tasks-storage.ts`
+### Workflow tasks — `tasks-storage.ts` (**PostgreSQL via API**)
 
 | Phase | Meaning |
 |-------|---------|
@@ -372,13 +426,27 @@ Config: `settings-nav.ts` · Matrix UI: `CaseStudyInfoRolesView.tsx`.
 
 **Task kinds:** `case-study-property` (parent per property) + child kinds after distribution (`field-inspection`, `government-review`, `property-appraisal`, `engineering-survey`, `valuation-coordination`) with `parentTaskId`.
 
-**Storage key:** `evalWorkflowTasks` (localStorage). Synced from PO records via `syncTasksFromPoRecords`. Confirming distribution moves linked tasks to `phase: case-study` without auto-opening workspace (user stays on distribution).
+**Persistence:** `WorkflowTasks` table · synced from PO records via `POST /api/workflow-tasks/sync`. Confirming distribution moves linked tasks to `phase: case-study` and creates child party tasks.
+
+**Obstruction:** `escalateTaskForObstruction` sets `phase: obstruction`, `status: blocked`; specialist sees blocked state until supervisor resolves failure.
+
+### Bourse obstruction — `bourse-obstruction.ts` + `failures-storage.ts`
+
+| Step | Behaviour |
+|------|-----------|
+| Specialist selects **الصك غير فعال** | Bourse fields hidden; **متعذر** + reason required |
+| Submit | `reportBourseObstructionToSupervisor` → failure record + `submitFailureForReview` |
+| Property | `deedStatus` → **قيد التحقق** |
+| Task | Escalated to supervisor (`obstruction` phase) |
+| Supervisor | **إدارة التعذرات** — approve (موقوف) or return (فعال, property may re-enter bourse queue) |
+
+**Still browser-only:** failure records (`evalFailures` localStorage). Task escalation uses API; failure list does not.
 
 ### Validation note (panel save)
 
 Partial property updates use `propertyToEnfathDto` when bourse not completed — avoids **الحي مطلوب** on primary panel. Full bourse rules on **استعلام بورصة** and `PUT …/bourse`.
 
-### 8.5 دراسة حالة العقارات (prototype — localStorage)
+### 8.5 دراسة حالة العقارات
 
 **Reference HTML:** `docs/case_study_form 3.html`, `docs/role_definition_form.html`, PDF `requirements/__032785,315703003914,315703003914 دراسة الحالة.pdf`.
 
@@ -400,7 +468,7 @@ Partial property updates use `propertyToEnfathDto` when bourse not completed —
 |------|--------|
 | Steps | 5 (بيانات التعميد removed; PO data still seeded) |
 | Questions | 37 across deed / survey / comp / occ / extra (`case-study-form-data.ts`) |
-| Draft | `evalCaseStudyForm:{taskId}` (`case-study-form-storage.ts`) |
+| Draft | **API** `CaseStudyForms` table (`case-study-form-storage.ts`) |
 | Progress UI | Donut + `2/37` beside step tabs (full-width bottom border on row) |
 | Step 5 | Extra questions + **الاعتماد والتوقيع** (system approver ثابت) + **التقرير النهائي** (HTML/PDF from answers) |
 | Report | `case-study-report-model.ts`, `case-study-report-html.ts`, `CaseStudyReportDocument.tsx` |
@@ -421,7 +489,7 @@ Partial property updates use `propertyToEnfathDto` when bourse not completed —
 | المكتب الهندسي | `engineering-office` |
 | مشرف دراسة الحالة | `section-supervisor` |
 
-**Storage:** `evalCaseStudyInfoRoles` (`case-study-info-roles-storage.ts`).
+**Storage:** `evalCaseStudyInfoRoles` (`case-study-info-roles-storage.ts`) — **not in API/DB yet**.
 
 **Runtime rules (implemented):**
 
@@ -429,15 +497,13 @@ Partial property updates use `propertyToEnfathDto` when bourse not completed —
 |-------|----------------|
 | **أخصائي** (`CaseStudyForm` default) | All 37 questions **editable**; full report on step 5 |
 | **Distributed parties** (`variant="party"`) | All 37 questions **visible**; editable only where matrix assigns أصيل/ثانوي/معتمد; else **عرض فقط** (disabled checkboxes) |
-| Party answers | `evalCaseStudyFormParty:{childTaskId}`; display merges parent specialist draft for read-only context |
+| Party answers | **API** party form per `childTaskId`; display merges parent specialist draft for read-only context |
 
 #### Party tasks — نموذج الدراسة tab
 
 `PartyActiveTaskWork.tsx`: tabs **{workTitle}** + **نموذج الدراسة** → `PartyCaseStudyFormTab.tsx` embeds `CaseStudyForm` linked to parent `case-study-property` task.
 
 Applies to: معاينة العقار · المراجعة الحكومية · استلام التقييم · تقييم العقار · الرفع المساحي (after تأكيد التوزيع creates child tasks).
-
-**Not in API/DB yet** — all case study form, matrix, and party answers are browser-only.
 
 ---
 
@@ -452,7 +518,7 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | `system-tools-view-model.ts` | Card builder + filters |
 | `PO_ROLE_RULES` | Documented permission matrix |
 
-**No API · no DB.** Nav item lives under **الإعدادات** dropdown (see section 5.3.1).
+**No API · no DB.** Nav item lives under **جميع حقول النظام** dropdown (see section 5.3.1).
 
 ---
 
@@ -460,15 +526,20 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 
 | Key / module | Purpose |
 |--------------|---------|
-| `evalWorkflowTasks` | Workflow tasks (phases incl. `case-study`, child party tasks) |
-| `evalCaseStudyForm:{taskId}` | Specialist case study form draft per property task |
-| `evalCaseStudyFormParty:{childTaskId}` | Party-specific answers on distributed tasks |
 | `evalCaseStudyInfoRoles` | Question × party × role matrix (علاقة المستخدم بالمعلومة) |
-| `evalPoIntakeDraft` | PO intake draft |
-| `evalFailures` (failures-storage) | تعذر records |
+| `evalPoIntakeDraft` | PO intake draft (optional, pre-submit) |
+| `evalFailures` (failures-storage) | تعذر records (إدارة التعذرات) |
 | `assignment-doc-attachments` | Image preview cache per property |
 | `evalPrototypeRole` (sessionStorage) | Sidebar role switcher |
 | JWT session (`auth-client`) | API auth |
+
+**Moved to API (no longer localStorage):**
+
+| Former key | Now |
+|------------|-----|
+| `evalWorkflowTasks` | `WorkflowTasks` table + `/api/workflow-tasks` |
+| `evalCaseStudyForm:{taskId}` | `CaseStudyForms` table + `/api/case-study-forms` |
+| `evalCaseStudyFormParty:{childTaskId}` | `/api/case-study-forms/party/{taskId}` |
 
 ---
 
@@ -477,7 +548,7 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | Package | Exports |
 |---------|---------|
 | `@platform/shell` | Next.js app |
-| `@platform/api-client` | `auth`, `users`, `work-orders`, `courts`, field-errors |
+| `@platform/api-client` | `auth`, `users`, `work-orders`, `courts`, `workflow-tasks`, `case-study-forms`, field-errors |
 | `@platform/auth-client` | Session + `AppAuthGate` |
 | `@platform/design-system` | CSS + `StatusBadge` |
 | `@platform/types` | `PageId`, `RoleId`, users, organization types |
@@ -491,18 +562,18 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | Login / JWT | Yes | API | — |
 | Dashboard | Partial | API + mocks | Normal |
 | PO list/detail/properties | Yes | API | Normal |
-| PO intake | Yes | API | Normal |
-| البيانات الأولية | PO Yes; tasks No | API + localStorage | Normal + badge |
-| استعلام بورصة | Yes | API | Normal + badge |
-| توزيع المعاملات | PO Yes; tasks No | API + localStorage | Normal + badge |
-| دراسة حالة العقارات | PO Yes; tasks/form No | API + localStorage | Normal + badge |
-| Case study workspace + form + report | No | localStorage | `/case-study/[taskId]` |
-| علاقة المستخدم بالمعلومة | No | localStorage | الإعدادات |
-| Party queues + نموذج الدراسة tab | PO Yes; tasks/form No | API + localStorage | المعاملات النشطة |
+| PO intake | Yes | API (+ optional draft) | Normal |
+| البيانات الأولية | Yes | API (PO + tasks) | Normal + badge |
+| استعلام بورصة | Yes | API (+ obstruction → local failures) | Normal + badge |
+| توزيع المعاملات | Yes | API (PO + tasks) | Normal + badge |
+| دراسة حالة العقارات | Yes | API (PO + tasks + forms) | Normal + badge |
+| Case study workspace + form + report | Yes (forms) | API | `/case-study/[taskId]` |
+| علاقة المستخدم بالمعلومة | No | localStorage | جميع حقول النظام |
+| Party queues + نموذج الدراسة tab | Yes | API | المعاملات النشطة |
 | Users / org | Yes | API | الإعدادات |
-| Courts | Yes | API | الإعدادات (placeholder flag) |
-| Failures | No | localStorage | Normal (badge mock) |
-| System tools | No | Static catalog | الإعدادات |
+| Courts | Yes | API | جميع حقول النظام (placeholder flag) |
+| Failures (إدارة التعذرات) | No | localStorage | Normal |
+| System tools | No | Static catalog | جميع حقول النظام |
 | Survey, keys, VR, field-form, messages, financial, KPI | No | Mocks | Red |
 
 ---
@@ -516,6 +587,8 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | `docs/DEMO_ROLE_CREDENTIALS.txt` | Future @ejadah.dev demo passwords |
 | `docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md` | Target architecture |
 | `docs/LEARNING_FAST_APPS.md` | **Study guide (EN):** frontend (TanStack/CWV/Next.js), backend (EF/HybridCache), PostgreSQL (EXPLAIN, indexes, pg_stat_statements) |
+| `docs/infath_case_study_fields.md` | Case study field reference |
+| `docs/case_study_module.md` | Case study module notes |
 | `README.md` | Full stack readme + roadmap |
 | `apps/plan/FRONTEND.md` | Frontend plan |
 | `backend/plan/LOCAL_INFRA.md` | Infra URLs |
@@ -524,15 +597,19 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 
 ## 14. Backlog (suggested next steps)
 
+**Failures API:** persist إدارة التعذرات in PostgreSQL; link bourse obstruction end-to-end (today: task escalation via API, failure record in browser only).
+
+**Info roles API:** persist علاقة المستخدم بالمعلومة matrix in DB; enforce أصيل/ثانوي/معتمد server-side.
+
 **Users:** edit/deactivate; search; export.
 
-**PO:** blob storage for attachments; failures API; server pagination/search; persist workflow phases in DB.
+**PO:** blob storage for attachments; server pagination/search.
 
-**Case study:** persist form + info-role matrix + party answers in API/DB; wire أصيل/ثانوي/معتمد to required vs read-only vs approve-only; backend validation on submit; documents/time-log tabs.
+**Case study:** backend validation on form submit; documents/time-log tabs; wire matrix rules to required vs read-only vs approve-only.
 
-**Active transactions:** persist tasks in PostgreSQL; align courts nav (remove red placeholder).
+**Platform:** wire RabbitMQ/Redis/observability; remaining mock modules; map `@ejadah.dev` demo users to Identity + prototype roles; real `/api/auth/me` role binding (replace sidebar switcher).
 
-**Platform:** wire RabbitMQ/Redis/observability; remaining mock modules; map `@ejadah.dev` demo users to Identity + prototype roles.
+**Courts nav:** remove red placeholder styling when PM confirms courts screen is production-ready.
 
 ---
 
@@ -549,13 +626,18 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 9. System tools catalog page.  
 10. Schema tidy-up migrations (boundary/audit field drops).  
 11. **دراسة حالة العقارات:** queue (`ActiveCaseStudyView`), workspace route `/case-study/[taskId]`, phase `case-study` after distribution confirm.  
-12. **نموذج الدراسة:** 5-step form (37 questions), local draft, printable report aligned to PDF reference, fixed approver/stamp assets.  
+12. **نموذج الدراسة:** 5-step form (37 questions), printable report aligned to PDF reference, fixed approver/stamp assets.  
 13. **UI polish:** workspace chrome, progress donut in form step row, tab panel spacing.  
 14. **Sidebar الإعدادات:** dropdown at footer (ادوات النظام · إدارة المستخدمين · المحاكم و الدوائر).  
 15. **علاقة المستخدم بالمعلومة:** admin matrix (`/case-study-info-roles`), `evalCaseStudyInfoRoles`.  
-16. **Party integration:** `PartyActiveTaskWork` tab **نموذج الدراسة** — all questions visible, answer only per matrix; party storage `evalCaseStudyFormParty:{childTaskId}`.  
+16. **Party integration:** `PartyActiveTaskWork` tab **نموذج الدراسة** — all questions visible, answer only per matrix; party storage per child task.  
 17. **Distribution parties:** child workflow tasks + party nav pages (`party-task-pages.ts`).  
+18. **جميع حقول النظام:** new sidebar group; system tools, info-roles, courts visible to all roles; الإعدادات reduced to users only (`4d3edc6`).  
+19. **Workflow tasks API:** `WorkflowTasks` table, full REST, frontend off localStorage (`9016a40`).  
+20. **Case study forms API:** `CaseStudyForms` table, specialist + party drafts persisted (`9016a40`).  
+21. **استعلام بورصة:** تاريخ الصك in pending queue; **حالة الصك** (فعال / غير فعال) → **متعذر** + reason → supervisor in إدارة التعذرات (`9016a40`).  
+22. **GitHub:** pushed to [BuadDigital/case_srudy](https://github.com/BuadDigital/case_srudy) on `main`.
 
 ---
 
-*This file was verified against the codebase on 3 June 2026. Update when `main` changes materially.*
+*This file was verified against the codebase on 7 June 2026. Update when `main` changes materially.*
