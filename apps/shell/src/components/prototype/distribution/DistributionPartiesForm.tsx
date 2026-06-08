@@ -3,12 +3,12 @@
 import type { ReactNode } from "react";
 import { RegSelect } from "@/components/prototype/registration/FormFields";
 import {
-  ENGINEERING_OFFICES,
-  FIELD_INSPECTORS,
-  GOVERNMENT_AUDITORS,
+  getEngineeringOffices,
+  getFieldInspectors,
+  getGovernmentAuditors,
+  getValuationCoordinators,
+  getValuators,
   type DistributionAssignee,
-  VALUATION_COORDINATORS,
-  VALUATORS,
 } from "@/lib/prototype/distribution-parties";
 import type { TaskDistributionDraft } from "@/lib/prototype/tasks-storage";
 
@@ -104,7 +104,7 @@ export function DistributionPartiesForm({
           className="reg-fg"
           required={distribution.governmentAuditor}
           disabled={readOnly || !distribution.governmentAuditor}
-          options={toOptions(GOVERNMENT_AUDITORS)}
+          options={toOptions(getGovernmentAuditors())}
           value={distribution.governmentAuditorId}
           placeholder="اختر المراجع الحكومي…"
           onChange={(v) => onPatch({ governmentAuditorId: v })}
@@ -134,7 +134,7 @@ export function DistributionPartiesForm({
             className="reg-fg"
             required={distribution.valuationDepartment}
             disabled={readOnly || !distribution.valuationDepartment}
-            options={toOptions(VALUATION_COORDINATORS)}
+            options={toOptions(getValuationCoordinators())}
             value={distribution.operationsCoordinatorId}
             placeholder="اختر المنسق…"
             onChange={(v) => onPatch({ operationsCoordinatorId: v })}
@@ -145,7 +145,7 @@ export function DistributionPartiesForm({
             className="reg-fg"
             required={distribution.valuationDepartment}
             disabled={readOnly || !distribution.valuationDepartment}
-            options={toOptions(FIELD_INSPECTORS)}
+            options={toOptions(getFieldInspectors())}
             value={distribution.inspectorId}
             placeholder="اختر المعاين…"
             onChange={(v) => onPatch({ inspectorId: v })}
@@ -156,7 +156,7 @@ export function DistributionPartiesForm({
             className="reg-fg"
             required={distribution.valuationDepartment}
             disabled={readOnly || !distribution.valuationDepartment}
-            options={toOptions(VALUATORS)}
+            options={toOptions(getValuators())}
             value={distribution.valuatorId}
             placeholder="اختر المقيم…"
             onChange={(v) => onPatch({ valuatorId: v })}
@@ -185,7 +185,7 @@ export function DistributionPartiesForm({
             className="reg-fg"
             required={distribution.engineeringOffice}
             disabled={readOnly || !distribution.engineeringOffice}
-            options={toOptions(ENGINEERING_OFFICES)}
+            options={toOptions(getEngineeringOffices())}
             value={distribution.engineeringOfficeId}
             placeholder="اختر المكتب الهندسي…"
             onChange={(v) => onPatch({ engineeringOfficeId: v })}

@@ -54,9 +54,11 @@ export function isPoRegisteredToday(
 export function tasksAssignedToViewer(
   role: RoleId,
   tasks: WorkflowTask[],
+  viewerEmail?: string | null,
 ): WorkflowTask[] {
   if (isSuperAdmin(role)) return tasks;
-  if (PARTY_ROLE_IDS.has(role)) return tasksForPartyAssignee(role, tasks);
+  if (PARTY_ROLE_IDS.has(role))
+    return tasksForPartyAssignee(role, tasks, undefined, viewerEmail);
   return tasksForRole(role, tasks);
 }
 

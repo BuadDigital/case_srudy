@@ -276,6 +276,9 @@ a.nav-item{color:rgba(255,255,255,.48);}
 .b-new{background:var(--info-bg);color:var(--info);}
 .b-prog{background:var(--warning-bg);color:var(--warning);}
 .b-done{background:var(--success-bg);color:var(--success);}
+.gov-delegation-property-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.gov-delegation-property-opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;}
+.gov-delegation-property-opt input{margin-top:3px;}
 .b-fail{background:var(--danger-bg);color:var(--danger);}
 .b-cancel{background:#EEF0F3;color:#6B7A8D;}
 .b-key{background:var(--orange-bg);color:var(--orange);}
@@ -671,3 +674,24 @@ a.nav-item{color:rgba(255,255,255,.48);}
 .cs-form-party-contrib-who{font-size:10px;color:var(--text3);margin-right:auto;}
 .cs-form-review-approve{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px;}
 .cs-form-review-approve input{accent-color:var(--success);}
+
+/* Workflow users — أطراف التنفيذ */
+.wf-users-page{display:flex;flex-direction:column;gap:12px;}
+.wf-users-banner{display:flex;flex-direction:column;gap:4px;line-height:1.55;}
+.wf-users-toolbar-body{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;}
+.wf-users-stats{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text2);}
+.wf-users-toolbar-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.wf-users-saved{font-size:11px;color:var(--success);font-weight:600;}
+.wf-users-list{display:flex;flex-direction:column;gap:12px;}
+.wf-users-card{margin-bottom:0;}
+.wf-users-card-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;}
+.wf-users-card-badges{display:flex;flex-wrap:wrap;gap:6px;}
+.wf-users-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.wf-users-span2{grid-column:1/-1;}
+.wf-users-coverage{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);}
+.wf-users-coverage-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.wf-users-coverage-hint{margin:0 0 10px;font-size:11px;color:var(--text3);line-height:1.5;}
+.wf-users-city-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.wf-users-city-chip{padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:var(--surface2);font-size:11px;cursor:pointer;}
+.wf-users-city-chip.is-on{border-color:var(--primary);background:var(--primary-bg, rgba(59,130,246,.12));color:var(--primary);font-weight:600;}
+.wf-users-card-actions{margin-top:12px;display:flex;justify-content:flex-end;}

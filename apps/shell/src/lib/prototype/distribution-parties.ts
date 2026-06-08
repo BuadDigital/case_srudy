@@ -1,15 +1,17 @@
-/** Re-export assignee lists — defined in distribution-party-accounts.ts */
+/** Re-export assignee lists for transaction distribution. */
 import type { DistributionAssignee } from "@/lib/prototype/distribution-party-accounts";
 export type { DistributionAssignee };
 export {
-  ENGINEERING_OFFICES,
-  FIELD_INSPECTORS,
-  GOVERNMENT_AUDITORS,
-  PROTOTYPE_ROLE_ASSIGNEE_ID,
-  VALUATION_COORDINATORS,
-  VALUATORS,
+  getEngineeringOffices,
+  getFieldInspectors,
+  getGovernmentAuditors,
+  getPrototypeRoleAssigneeId,
+  getValuationCoordinators,
+  getValuators,
   partyAccountByAssigneeId,
+  partyAccountByEmail,
   partyAccountForRole,
+  partyAccountForViewer,
 } from "@/lib/prototype/distribution-party-accounts";
 
 export function assigneeLabel(

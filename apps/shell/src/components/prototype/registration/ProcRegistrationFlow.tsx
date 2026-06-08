@@ -1,6 +1,12 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import type { ProcOpsUnit, ProcMgmtMember } from "./ProcOrgTeamsEditor";
+import {
+  ProcOrgTeamsEditor,
+  defaultProcMgmtTeam,
+  defaultProcOpsUnits,
+} from "./ProcOrgTeamsEditor";
 import type { StaffUser } from "@/lib/prototype/constants";
 import { userListItemToStaff } from "@/lib/users-api";
 import type { SubmitRegistrationFn } from "./RegisterUserFlow";
@@ -49,6 +55,8 @@ export function ProcRegistrationFlow({
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [savedUser, setSavedUser] = useState<StaffUser | null>(null);
+  const [mgmtTeam, setMgmtTeam] = useState<ProcMgmtMember[]>(defaultProcMgmtTeam);
+  const [opsUnits, setOpsUnits] = useState<ProcOpsUnit[]>(defaultProcOpsUnits);
 
   const {
     data,
@@ -78,7 +86,7 @@ export function ProcRegistrationFlow({
   const hints = [
     "اختر نوع مقدم الخدمة",
     "البيانات الأساسية",
-    isOrg ? "فريق الإدارة (اختياري لاحقاً)" : "بيانات الخدمة",
+    isOrg ? "فريق الإدارة والفرق التشغيلية" : "بيانات الخدمة والفوترة",
     isOrg ? "بيانات الفوترة" : "راجع ثم احفظ",
     "راجع ثم احفظ",
   ];
@@ -223,6 +231,9 @@ export function ProcRegistrationFlow({
     );
   }
 
+  const filledMgmt = mgmtTeam.filter((m) => m.name.trim()).length;
+  const filledOps = opsUnits.filter((u) => u.name.trim()).length;
+
   const summaryRows = isOrg
     ? [
         { l: "اسم الجهة", v: data.pc_orgname ?? "" },
@@ -230,6 +241,8 @@ export function ProcRegistrationFlow({
         { l: "المفوض", v: data.pc_delegate ?? "" },
         { l: "البريد", v: data.pc_email ?? "" },
         { l: "نوع الخدمة", v: data.pc_service ?? "" },
+        { l: "فريق الإدارة", v: filledMgmt ? `${filledMgmt} عضو` : "—" },
+        { l: "الفرق التشغيلية", v: filledOps ? `${filledOps} فريق` : "—" },
         { l: "الآيبان", v: data.pc_iban ?? "" },
       ]
     : [
@@ -484,15 +497,12 @@ export function ProcRegistrationFlow({
       ) : null}
 
       {step === 3 && isOrg ? (
-        <RegistrationFormCard
-          title="فريق الإدارة والفرق"
-          subtitle="يمكن إضافة أعضاء الفريق لاحقاً من لوحة الإدارة"
-        >
-          <div className="reg-info-box">
-            بيانات فريق الإدارة والفرق التشغيلية تُكمَّل لاحقاً — يكفي الآن بيانات
-            الجهة والفوترة.
-          </div>
-        </RegistrationFormCard>
+        <ProcOrgTeamsEditor
+          mgmtTeam={mgmtTeam}
+          opsUnits={opsUnits}
+          onMgmtChange={setMgmtTeam}
+          onOpsChange={setOpsUnits}
+        />
       ) : null}
 
       {step === 4 && isOrg ? (

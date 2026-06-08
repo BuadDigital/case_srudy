@@ -6,7 +6,6 @@ export type DistributionAssignee = {
   subtitle?: string;
 };
 
-/** Users selectable in توزيع المعاملات — login + role switcher + task routing. */
 export type DistributionPartyAccount = {
   assigneeId: string;
   name: string;
@@ -16,6 +15,7 @@ export type DistributionPartyAccount = {
   password: string;
   roleOptionGroup: string;
   roleOptionLabel: string;
+  enabled?: boolean;
 };
 
 export const DISTRIBUTION_PARTY_ACCOUNTS: DistributionPartyAccount[] = [
@@ -28,6 +28,7 @@ export const DISTRIBUTION_PARTY_ACCOUNTS: DistributionPartyAccount[] = [
     password: "EjadaCD2025!",
     roleOptionGroup: "قسم دراسة الحالة",
     roleOptionLabel: "فراس كمرين — مراجع حكومي",
+    enabled: true,
   },
   {
     assigneeId: "vc-mohammed-diab",
@@ -38,16 +39,29 @@ export const DISTRIBUTION_PARTY_ACCOUNTS: DistributionPartyAccount[] = [
     password: "EjadaVC2025!",
     roleOptionGroup: "قسم التقييم العقاري",
     roleOptionLabel: "محمد دياب — منسق عمليات التقييم",
+    enabled: true,
   },
   {
     assigneeId: "fi-ahmed",
     name: "أحمد سعيد",
-    subtitle: "معاين ميداني",
+    subtitle: "معاين ميداني — متعاون",
     roleId: "field-inspector",
     email: "ahmed@ejadah.dev",
     password: "EjadaFI2025!",
     roleOptionGroup: "قسم التقييم العقاري",
-    roleOptionLabel: "أحمد سعيد — معاين ميداني",
+    roleOptionLabel: "أحمد سعيد — معاين ميداني (متعاون)",
+    enabled: true,
+  },
+  {
+    assigneeId: "fi-abdullah-abdulmane",
+    name: "عبدالله عبدالمانع",
+    subtitle: "معاين ميداني — دوام كامل",
+    roleId: "field-inspector",
+    email: "abdullah.abdulmane@ejadah.dev",
+    password: "EjadaFI2025!",
+    roleOptionGroup: "قسم التقييم العقاري",
+    roleOptionLabel: "عبدالله عبدالمانع — معاين ميداني",
+    enabled: true,
   },
   {
     assigneeId: "val-abdullah",
@@ -58,6 +72,7 @@ export const DISTRIBUTION_PARTY_ACCOUNTS: DistributionPartyAccount[] = [
     password: "EjadaRA2025!",
     roleOptionGroup: "قسم التقييم العقاري",
     roleOptionLabel: "عبدالله الكثيري — مقيم عقاري",
+    enabled: true,
   },
   {
     assigneeId: "eo-jeddah",
@@ -68,26 +83,16 @@ export const DISTRIBUTION_PARTY_ACCOUNTS: DistributionPartyAccount[] = [
     password: "EjadaEO2025!",
     roleOptionGroup: "الرفع المساحي",
     roleOptionLabel: "مكتب جدة للمساحة — مكتب هندسي",
+    enabled: true,
   },
 ];
 
-export const PROTOTYPE_ROLE_ASSIGNEE_ID: Partial<Record<RoleId, string>> =
-  Object.fromEntries(
-    DISTRIBUTION_PARTY_ACCOUNTS.map((a) => [a.roleId, a.assigneeId]),
-  ) as Partial<Record<RoleId, string>>;
+const REVIEWER_CITY_COVERAGE: Record<string, string[]> = {
+  "gov-firas": ["الرياض", "الطائف"],
+};
 
-export function partyAccountByAssigneeId(
-  assigneeId: string,
-): DistributionPartyAccount | undefined {
-  return DISTRIBUTION_PARTY_ACCOUNTS.find((a) => a.assigneeId === assigneeId);
-}
-
-export function partyAccountForRole(
-  roleId: RoleId,
-): DistributionPartyAccount | undefined {
-  const expectedId = PROTOTYPE_ROLE_ASSIGNEE_ID[roleId];
-  if (!expectedId) return undefined;
-  return partyAccountByAssigneeId(expectedId);
+function enabledAccounts(): DistributionPartyAccount[] {
+  return DISTRIBUTION_PARTY_ACCOUNTS.filter((a) => a.enabled !== false);
 }
 
 function toAssignee(account: DistributionPartyAccount): DistributionAssignee {
@@ -98,27 +103,83 @@ function toAssignee(account: DistributionPartyAccount): DistributionAssignee {
   };
 }
 
-export const GOVERNMENT_AUDITORS: DistributionAssignee[] =
-  DISTRIBUTION_PARTY_ACCOUNTS.filter((a) => a.roleId === "government-reviewer").map(
-    toAssignee,
-  );
+export function getDistributionPartyAccounts(): DistributionPartyAccount[] {
+  return enabledAccounts();
+}
 
-export const VALUATION_COORDINATORS: DistributionAssignee[] =
-  DISTRIBUTION_PARTY_ACCOUNTS.filter(
-    (a) => a.roleId === "valuation-coordinator",
-  ).map(toAssignee);
+export function getReviewerCityCoverage(assigneeId: string): string[] {
+  return REVIEWER_CITY_COVERAGE[assigneeId] ?? [];
+}
 
-export const FIELD_INSPECTORS: DistributionAssignee[] =
-  DISTRIBUTION_PARTY_ACCOUNTS.filter((a) => a.roleId === "field-inspector").map(
-    toAssignee,
-  );
+export function getGovernmentAuditors(): DistributionAssignee[] {
+  return enabledAccounts()
+    .filter((a) => a.roleId === "government-reviewer")
+    .map(toAssignee);
+}
 
-export const VALUATORS: DistributionAssignee[] =
-  DISTRIBUTION_PARTY_ACCOUNTS.filter(
-    (a) => a.roleId === "real-estate-appraiser",
-  ).map(toAssignee);
+export function getValuationCoordinators(): DistributionAssignee[] {
+  return enabledAccounts()
+    .filter((a) => a.roleId === "valuation-coordinator")
+    .map(toAssignee);
+}
 
-export const ENGINEERING_OFFICES: DistributionAssignee[] =
-  DISTRIBUTION_PARTY_ACCOUNTS.filter(
-    (a) => a.roleId === "engineering-office",
-  ).map(toAssignee);
+export function getFieldInspectors(): DistributionAssignee[] {
+  return enabledAccounts()
+    .filter((a) => a.roleId === "field-inspector")
+    .map(toAssignee);
+}
+
+export function getValuators(): DistributionAssignee[] {
+  return enabledAccounts()
+    .filter((a) => a.roleId === "real-estate-appraiser")
+    .map(toAssignee);
+}
+
+export function getEngineeringOffices(): DistributionAssignee[] {
+  return enabledAccounts()
+    .filter((a) => a.roleId === "engineering-office")
+    .map(toAssignee);
+}
+
+export function getPrototypeRoleAssigneeId(): Partial<Record<RoleId, string>> {
+  const map: Partial<Record<RoleId, string>> = {};
+  for (const account of enabledAccounts()) {
+    if (!map[account.roleId]) map[account.roleId] = account.assigneeId;
+  }
+  return map;
+}
+
+export function partyAccountByAssigneeId(
+  assigneeId: string,
+): DistributionPartyAccount | undefined {
+  return enabledAccounts().find((a) => a.assigneeId === assigneeId);
+}
+
+export function partyAccountByEmail(
+  email: string,
+): DistributionPartyAccount | undefined {
+  const key = email.trim().toLowerCase();
+  return enabledAccounts().find((a) => a.email.trim().toLowerCase() === key);
+}
+
+export function partyAccountForRole(
+  roleId: RoleId,
+): DistributionPartyAccount | undefined {
+  const expectedId = getPrototypeRoleAssigneeId()[roleId];
+  if (!expectedId) return undefined;
+  return partyAccountByAssigneeId(expectedId);
+}
+
+export function partyAccountForViewer(
+  roleId: RoleId,
+  viewerEmail?: string | null,
+): DistributionPartyAccount | undefined {
+  if (viewerEmail) {
+    const byEmail = partyAccountByEmail(viewerEmail);
+    if (byEmail?.roleId === roleId) return byEmail;
+  }
+  return partyAccountForRole(roleId);
+}
+
+/** @deprecated Use DISTRIBUTION_PARTY_ACCOUNTS */
+export const DEFAULT_DISTRIBUTION_PARTY_ACCOUNTS = DISTRIBUTION_PARTY_ACCOUNTS;

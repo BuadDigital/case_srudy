@@ -1,9 +1,9 @@
 import {
   assigneeLabel,
-  ENGINEERING_OFFICES,
-  FIELD_INSPECTORS,
-  GOVERNMENT_AUDITORS,
-  VALUATORS,
+  getEngineeringOffices,
+  getFieldInspectors,
+  getGovernmentAuditors,
+  getValuators,
 } from "@/lib/prototype/distribution-parties";
 import {
   migrateDistribution,
@@ -62,21 +62,21 @@ function distributionAssignee(
 ): string {
   if (trackId === "survey") {
     return assigneeLabel(
-      ENGINEERING_OFFICES,
+      getEngineeringOffices(),
       distribution.engineeringOfficeId,
     );
   }
   if (trackId === "government") {
     return assigneeLabel(
-      GOVERNMENT_AUDITORS,
+      getGovernmentAuditors(),
       distribution.governmentAuditorId,
     );
   }
   if (trackId === "inspection") {
-    return assigneeLabel(FIELD_INSPECTORS, distribution.inspectorId);
+    return assigneeLabel(getFieldInspectors(), distribution.inspectorId);
   }
   if (trackId === "appraisal") {
-    return assigneeLabel(VALUATORS, distribution.valuatorId);
+    return assigneeLabel(getValuators(), distribution.valuatorId);
   }
   return "";
 }

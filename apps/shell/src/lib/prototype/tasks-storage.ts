@@ -14,8 +14,8 @@ import {
 import { workOrdersApiConfig } from "@/lib/work-orders-api-config";
 import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
 import {
-  PROTOTYPE_ROLE_ASSIGNEE_ID,
-  partyAccountForRole,
+  getPrototypeRoleAssigneeId,
+  partyAccountForViewer,
 } from "@/lib/prototype/distribution-parties";
 import { ROLES } from "@/lib/prototype/constants";
 import type {
@@ -29,11 +29,11 @@ import {
 } from "@/lib/prototype/po-intake-data";
 import {
   assigneeLabel,
-  ENGINEERING_OFFICES,
-  FIELD_INSPECTORS,
-  GOVERNMENT_AUDITORS,
-  VALUATION_COORDINATORS,
-  VALUATORS,
+  getEngineeringOffices,
+  getFieldInspectors,
+  getGovernmentAuditors,
+  getValuationCoordinators,
+  getValuators,
 } from "@/lib/prototype/distribution-parties";
 
 /** @deprecated Tasks persist in PostgreSQL — kept for storage-event compatibility. */
@@ -91,22 +91,24 @@ export function migrateDistribution(
     ...base,
     governmentAuditor: legacy.governmentReviewer ?? false,
     governmentAuditorId:
-      legacy.governmentReviewer && GOVERNMENT_AUDITORS[0]
-        ? GOVERNMENT_AUDITORS[0].id
+      legacy.governmentReviewer && getGovernmentAuditors()[0]
+        ? getGovernmentAuditors()[0].id
         : "",
     valuationDepartment: legacy.fieldInspector ?? false,
     operationsCoordinatorId:
-      legacy.fieldInspector && VALUATION_COORDINATORS[0]
-        ? VALUATION_COORDINATORS[0].id
+      legacy.fieldInspector && getValuationCoordinators()[0]
+        ? getValuationCoordinators()[0].id
         : "",
     inspectorId:
-      legacy.fieldInspector && FIELD_INSPECTORS[0] ? FIELD_INSPECTORS[0].id : "",
+      legacy.fieldInspector && getFieldInspectors()[0]
+        ? getFieldInspectors()[0].id
+        : "",
     valuatorId:
-      legacy.fieldInspector && VALUATORS[0] ? VALUATORS[0].id : "",
+      legacy.fieldInspector && getValuators()[0] ? getValuators()[0].id : "",
     engineeringOffice: legacy.engineeringOffice ?? false,
     engineeringOfficeId:
-      legacy.engineeringOffice && ENGINEERING_OFFICES[0]
-        ? ENGINEERING_OFFICES[0].id
+      legacy.engineeringOffice && getEngineeringOffices()[0]
+        ? getEngineeringOffices()[0].id
         : "",
   };
 }
@@ -412,27 +414,27 @@ function buildAssigneeNames(
   const names: Record<string, string> = {};
   if (distribution.governmentAuditor) {
     names["government-review"] = assigneeLabel(
-      GOVERNMENT_AUDITORS,
+      getGovernmentAuditors(),
       distribution.governmentAuditorId,
     );
   }
   if (distribution.valuationDepartment) {
     names["valuation-coordination"] = assigneeLabel(
-      VALUATION_COORDINATORS,
+      getValuationCoordinators(),
       distribution.operationsCoordinatorId,
     );
     names["field-inspection"] = assigneeLabel(
-      FIELD_INSPECTORS,
+      getFieldInspectors(),
       distribution.inspectorId,
     );
     names["property-appraisal"] = assigneeLabel(
-      VALUATORS,
+      getValuators(),
       distribution.valuatorId,
     );
   }
   if (distribution.engineeringOffice) {
     names["engineering-survey"] = assigneeLabel(
-      ENGINEERING_OFFICES,
+      getEngineeringOffices(),
       distribution.engineeringOfficeId,
     );
   }
@@ -565,14 +567,16 @@ export function tasksForPartyAssignee(
   viewerRole: RoleId,
   tasks: WorkflowTask[],
   queueRole?: RoleId,
+  viewerEmail?: string | null,
 ): WorkflowTask[] {
   if (isSuperAdmin(viewerRole) && !queueRole) {
     return [...tasks].sort(compareWorkflowTasks);
   }
   const role =
     isSuperAdmin(viewerRole) && queueRole ? queueRole : viewerRole;
-  const account = partyAccountForRole(role);
-  const expectedId = PROTOTYPE_ROLE_ASSIGNEE_ID[role];
+  const account = partyAccountForViewer(role, viewerEmail);
+  const expectedId =
+    account?.assigneeId ?? getPrototypeRoleAssigneeId()[role];
   const expectedName = account?.name ?? ROLES[role]?.name;
   return tasks
     .filter((t) => t.assigneeRole === role)

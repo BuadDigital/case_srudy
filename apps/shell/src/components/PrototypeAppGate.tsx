@@ -1,0 +1,49 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { startTransition, useEffect, useState } from "react";
+import { hasAuthSession } from "@platform/auth-client";
+import { bootstrapPrototypeAuth } from "@/lib/prototype/prototype-auth";
+
+/**
+ * Prototype gate: silent login for the selected sidebar persona — no manual logout/login cycle.
+ */
+export function PrototypeAppGate({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [ok, setOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      const booted = await bootstrapPrototypeAuth();
+      if (cancelled) return;
+
+      if (booted || hasAuthSession()) {
+        setOk(true);
+        return;
+      }
+
+      router.replace("/login");
+      setOk(false);
+    }
+
+    startTransition(() => {
+      void run();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (ok === null) {
+    return (
+      <div className="flex h-screen items-center justify-center text-[var(--text3)]">
+        جاري التحميل…
+      </div>
+    );
+  }
+  if (!ok) return null;
+  return <>{children}</>;
+}

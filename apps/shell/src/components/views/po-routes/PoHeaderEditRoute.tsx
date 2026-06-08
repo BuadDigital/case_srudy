@@ -12,7 +12,13 @@ export function PoHeaderEditRoute({ poNumber }: { poNumber: string }) {
   const queryClient = useQueryClient();
   const { data: record, isPending } = usePoRecordQuery(poNumber);
 
-  if (isPending && !record) return null;
+  if (isPending && !record) {
+    return (
+      <p className="po-properties-loading" style={{ margin: 16 }}>
+        جاري تحميل أمر العمل…
+      </p>
+    );
+  }
 
   if (!record) {
     return (

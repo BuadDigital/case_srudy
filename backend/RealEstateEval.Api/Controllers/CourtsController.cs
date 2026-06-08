@@ -2,10 +2,10 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RealEstateEval.Api.Contracts;
-using RealEstateEval.Api.Data;
-using RealEstateEval.Api.Models;
-using RealEstateEval.Api.Services;
+using RealEstateEval.Application.Contracts;
+using RealEstateEval.Domain;
+using RealEstateEval.Infrastructure.Data;
+using RealEstateEval.Infrastructure.Services;
 
 namespace RealEstateEval.Api.Controllers;
 

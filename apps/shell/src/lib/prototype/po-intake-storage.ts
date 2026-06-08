@@ -4,7 +4,10 @@ import type {
   PoPropertyIntake,
 } from "@/lib/prototype/po-intake-data";
 import { classificationRequiresSurvey, computeBusinessDueDate, emptyProperty, parsePropertyIdentifierType, poListStatusForAssignmentType,} from "@/lib/prototype/po-intake-data";
-import { propertyHasIncompleteContact, contactsForApi } from "@/components/prototype/po-intake/po-property-validation";
+import {
+  contactsForApi,
+  propertyHasIncompleteContact,
+} from "@/lib/domain/po-intake/property-validation";
 import { getPropertyFailure, deleteFailuresForPo } from "@/lib/prototype/failures-storage";
 import {
   advanceTaskAfterBourseForProperty,
@@ -117,8 +120,8 @@ function dtoToRecord(dto: WorkOrderDto): PoIntakeRecord {
     promulgationDate: dto.promulgationDate,
     receivedFromEnfathAt: dto.receivedFromEnfathAt,
     receivedFromEnfathTime: dto.receivedFromEnfathTime ?? "",
-    assignmentSpecialist: dto.assignmentSpecialist,
-    assignmentSpecialistEmail: dto.assignmentSpecialistEmail,
+    assignmentSpecialist: dto.assignmentSpecialist ?? "",
+    assignmentSpecialistEmail: dto.assignmentSpecialistEmail ?? "",
     expectedPropertyCount: dto.expectedPropertyCount ?? 1,
     dueDateAt: dto.dueDateAt,
     createdAtUtc: dto.createdAtUtc,
@@ -195,7 +198,7 @@ function listItemToPoRow(item: {
   status: string;
   receivedFromEnfathAt: string;
   dueDateAt: string;
-  assignmentSpecialist: string;
+  assignmentSpecialist?: string;
 }): PoRow {
   return {
     id: item.poNumber,
@@ -208,7 +211,7 @@ function listItemToPoRow(item: {
     ),
     date: item.receivedFromEnfathAt,
     dueDate: item.dueDateAt,
-    specialist: item.assignmentSpecialist,
+    specialist: item.assignmentSpecialist?.trim() || "—",
   };
 }
 
@@ -241,8 +244,8 @@ export async function savePoRecord(
     assignmentType: record.assignmentType,
     promulgationDate: record.promulgationDate,
     receivedFromEnfathTime: record.receivedFromEnfathTime || undefined,
-    assignmentSpecialist: record.assignmentSpecialist.trim(),
-    assignmentSpecialistEmail: record.assignmentSpecialistEmail.trim(),
+    assignmentSpecialist: record.assignmentSpecialist.trim() || undefined,
+    assignmentSpecialistEmail: record.assignmentSpecialistEmail.trim() || undefined,
     expectedPropertyCount: record.expectedPropertyCount,
     properties: record.properties.map((p) =>
       propertyToEnfathDto(p, { forInsert: true }),
@@ -458,7 +461,7 @@ export async function deletePoRecord(
       error: result.message ?? apiErrorMessage(result.kind),
     };
   }
-  deleteTasksForPo(poNumber);
+  await deleteTasksForPo(poNumber);
   deleteFailuresForPo(poNumber);
   notifyWorkOrdersChanged();
   return { ok: true };
@@ -474,8 +477,8 @@ export async function updatePoRecord(
     assignmentType: record.assignmentType,
     promulgationDate: record.promulgationDate,
     receivedFromEnfathTime: record.receivedFromEnfathTime || undefined,
-    assignmentSpecialist: record.assignmentSpecialist.trim(),
-    assignmentSpecialistEmail: record.assignmentSpecialistEmail.trim(),
+    assignmentSpecialist: record.assignmentSpecialist.trim() || undefined,
+    assignmentSpecialistEmail: record.assignmentSpecialistEmail.trim() || undefined,
     expectedPropertyCount: record.expectedPropertyCount,
   });
 

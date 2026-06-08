@@ -49,7 +49,8 @@ function usersTitleForSource(preferredSource: RegistrationSource | null): string
 }
 
 function usersEmptyForSource(preferredSource: RegistrationSource | null): string {
-  if (preferredSource === "hr") return "لا يوجد موظفون في الموارد البشرية — أضف موظفاً جديداً.";
+  if (preferredSource === "hr")
+    return "لا يوجد موظفون في الموارد البشرية — أعد تشغيل API لتحميل البيانات المُهيّأة، أو أضف موظفاً جديداً.";
   if (preferredSource === "proc")
     return "لا يوجد مستخدمون في المالية والعقود — أضف مستخدماً جديداً.";
   if (preferredSource === "crm")
@@ -199,7 +200,8 @@ function UsersStaffListView({
         <table className="tbl users-tbl" data-pending={!dataReady}>
           <thead>
             <tr>
-              <th>الدور</th>
+              <th>الاسم</th>
+              <th>المسمى / نوع التوظيف</th>
               <th>البريد الإلكتروني</th>
               <th>رقم الجوال</th>
             </tr>
@@ -207,23 +209,29 @@ function UsersStaffListView({
           <tbody>
             {dataReady && loadError ? (
               <tr className="tbl-empty">
-                <td colSpan={3} style={{ textAlign: "center", color: "var(--text3)" }}>
+                <td colSpan={4} style={{ textAlign: "center", color: "var(--text3)" }}>
                   —
                 </td>
               </tr>
             ) : dataReady && staff.length === 0 ? (
               <tr className="tbl-empty">
                 <td
-                  colSpan={3}
+                  colSpan={4}
                   style={{ textAlign: "center", color: "var(--text3)" }}
                 >
                   {usersEmptyForSource(preferredSource)}
                 </td>
               </tr>
             ) : dataReady ? (
-              staff.map((u) => (
+              staff.map((u) => {
+                const empType = u.details?.find(
+                  (d) => d.label === "نوع التوظيف",
+                )?.value;
+                const roleLabel = empType ? `${u.role} · ${empType}` : u.role;
+                return (
                 <tr key={u.id} className="users-row-main">
-                  <td style={{ fontSize: 11, color: "var(--text2)" }}>{u.role}</td>
+                  <td style={{ fontSize: 11, fontWeight: 600 }}>{u.name}</td>
+                  <td style={{ fontSize: 11, color: "var(--text2)" }}>{roleLabel}</td>
                   <td
                     style={{
                       direction: "ltr",
@@ -245,7 +253,8 @@ function UsersStaffListView({
                     {u.phone ?? "—"}
                   </td>
                 </tr>
-              ))
+                );
+              })
             ) : null}
           </tbody>
         </table>

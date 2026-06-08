@@ -11,12 +11,12 @@ import {
   usePoRecordQuery,
   useWorkflowTasksQuery,
 } from "@/lib/query/prototype-queries";
-import { clearAuthSession } from "@platform/auth-client";
 import type { PageId, RoleId } from "@platform/types";
 import {
   NAV,
   PAGE_BREADCRUMB,
   PAGE_TITLES,
+  personaLabelName,
   ROLE_OPTIONS,
   ROLES,
 } from "@/lib/prototype/constants";
@@ -342,7 +342,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { role, setRole, rolePages } = usePrototype();
+  const { role, personaId, setPersona, rolePages } = usePrototype();
 
   const navPages = useMemo(() => rolePages, [rolePages]);
 
@@ -463,20 +463,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const def = ROLES[role];
   /** يطابق «تبديل الدور» — اسم الشخصية وليس displayName من تسجيل الدخول */
-  const chipName = def.name;
+  const chipName = personaLabelName(personaId) ?? def.name;
 
-  function onRoleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const r = e.target.value as RoleId;
-    setRole(r);
-    const nextPages = pagesForPrototypeRole(r);
+  function onPersonaChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setPersona(id);
+    const opt = ROLE_OPTIONS.find((o) => o.id === id);
+    const nextRole = opt?.value ?? role;
+    const nextPages = pagesForPrototypeRole(nextRole);
     if (!nextPages.includes(currentPage) && currentPage !== "my-tasks") {
       router.push("/dashboard");
     }
-  }
-
-  function logout() {
-    clearAuthSession();
-    window.location.assign("/login");
   }
 
   let activeTransactionsInserted = false;
@@ -506,11 +503,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="sb-role">
           <div className="sb-role-lbl">تبديل الدور</div>
-          <select value={role} onChange={onRoleChange} aria-label="تبديل الدور">
+          <select
+            value={personaId}
+            onChange={onPersonaChange}
+            aria-label="تبديل الدور"
+          >
             {GROUP_ORDER.map((g) => (
               <optgroup key={g} label={g}>
                 {ROLE_OPTIONS.filter((o) => o.group === g).map((o) => (
-                  <option key={o.value} value={o.value}>
+                  <option key={o.id} value={o.id}>
                     {o.label}
                   </option>
                 ))}
@@ -652,14 +653,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             </div>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={logout}
-              aria-label="تسجيل الخروج"
-            >
-              تسجيل الخروج
-            </button>
           </div>
         </div>
         <div id="content">

@@ -69,15 +69,8 @@ export function PoHeaderEdit({
         {
           assignmentType,
           promulgationDate,
-          assignmentSpecialist,
-          assignmentSpecialistEmail,
         },
-        [
-          "assignmentType",
-          "promulgationDate",
-          "assignmentSpecialist",
-          "assignmentSpecialistEmail",
-        ],
+        ["assignmentType", "promulgationDate"],
       ),
     );
     if (
@@ -166,7 +159,6 @@ export function PoHeaderEdit({
           <RegField
             id="po_specialist_edit"
             label="اسم أخصائي الإسناد"
-            required
             value={assignmentSpecialist}
             error={fieldErrors.assignmentSpecialist}
             onChange={setAssignmentSpecialist}
@@ -174,7 +166,6 @@ export function PoHeaderEdit({
           <RegField
             id="po_specialist_email_edit"
             label="إيميل أخصائي الإسناد"
-            required
             type="email"
             dir="ltr"
             value={assignmentSpecialistEmail}

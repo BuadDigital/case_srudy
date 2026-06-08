@@ -20,6 +20,7 @@ import { UsersView } from "@/components/views/UsersView";
 import { ValuationRequestsView } from "@/components/views/ValuationRequestsView";
 import { SystemToolsView } from "@/components/views/SystemToolsView";
 import { CaseStudyInfoRolesView } from "@/components/views/CaseStudyInfoRolesView";
+import { GovernmentReviewView } from "@/components/views/GovernmentReviewView";
 import { VALID_PAGE_IDS } from "@/lib/prototype/constants";
 import type { PageId } from "@platform/types";
 
@@ -65,19 +66,32 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   "valuation-requests": <ValuationRequestsView />,
   "field-form": <FieldFormView />,
   ...Object.fromEntries(
-    PARTY_TASK_PAGE_IDS.map((pageId) => [
-      pageId,
-      <Suspense
-        key={pageId}
-        fallback={
-          <div className="po-properties-page">
-            <p className="po-properties-loading">جاري تحميل المهام…</p>
-          </div>
-        }
-      >
-        <PartyActiveTaskView pageId={pageId} />
-      </Suspense>,
-    ]),
+    PARTY_TASK_PAGE_IDS.filter((pageId) => pageId !== "government-review").map(
+      (pageId) => [
+        pageId,
+        <Suspense
+          key={pageId}
+          fallback={
+            <div className="po-properties-page">
+              <p className="po-properties-loading">جاري تحميل المهام…</p>
+            </div>
+          }
+        >
+          <PartyActiveTaskView pageId={pageId} />
+        </Suspense>,
+      ],
+    ),
+  ),
+  "government-review": (
+    <Suspense
+      fallback={
+        <div className="po-properties-page">
+          <p className="po-properties-loading">جاري تحميل المراجعة الحكومية…</p>
+        </div>
+      }
+    >
+      <GovernmentReviewView />
+    </Suspense>
   ),
   messages: <MessagesView />,
   financial: <FinancialView />,

@@ -7,11 +7,41 @@ export type { NavItem, PageId, RoleDef, RoleId };
 
 /** Prototype / screen mock data — replace with API clients when backend is ready. */
 export const STORAGE_ROLE_KEY = "evalPrototypeRole";
+export const STORAGE_PERSONA_KEY = "evalPrototypePersona";
+
+export type RoleOption = {
+  group: string;
+  value: RoleId;
+  label: string;
+  /** Unique key for React + role switcher (email when available). */
+  id: string;
+  email?: string;
+};
+
+export function roleOptionById(id: string): RoleOption | undefined {
+  return ROLE_OPTIONS.find((o) => o.id === id);
+}
+
+export function roleOptionForEmail(email: string): RoleOption | undefined {
+  const key = email.trim().toLowerCase();
+  return ROLE_OPTIONS.find((o) => o.email?.trim().toLowerCase() === key);
+}
+
+export function defaultPersonaIdForRole(role: RoleId): string {
+  return ROLE_OPTIONS.find((o) => o.value === role)?.id ?? role;
+}
+
+export function personaLabelName(personaId: string): string | null {
+  const opt = roleOptionById(personaId);
+  if (!opt) return null;
+  const parts = opt.label.split(" — ");
+  return parts[0]?.trim() ?? null;
+}
 
 export const ROLES: Record<RoleId, RoleDef> = {
   cdo: {
     name: "سليمان",
-    dept: "المسؤول الأعلى — التحول الرقمي (CDO)",
+    dept: "المسؤول",
     init: "سل",
     bg: "var(--purple-bg)",
     tc: "var(--purple)",
@@ -131,7 +161,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
     init: "فك",
     bg: "var(--orange-bg)",
     tc: "var(--orange)",
-    pages: ["dashboard", "government-review", "messages"],
+    pages: ["dashboard", "government-review", "keys", "messages"],
   },
   "engineering-office": {
     name: "مكتب جدة للمساحة",
@@ -415,58 +445,103 @@ export const VALID_PAGE_IDS = new Set<PageId>([
   "my-tasks",
 ]);
 
-export const ROLE_OPTIONS: { group: string; value: RoleId; label: string }[] = [
+export const ROLE_OPTIONS: RoleOption[] = [
   {
     group: "التحول الرقمي",
     value: "cdo",
-    label: "سليمان — المسؤول الأعلى (CDO)",
+    id: "s.salhy@gmail.com",
+    email: "s.salhy@gmail.com",
+    label: "سليمان — المسؤول",
   },
-  { group: "إدارة المنظمة", value: "hr-admin", label: "آلاء قمصاني — الموارد البشرية" },
+  {
+    group: "إدارة المنظمة",
+    value: "hr-admin",
+    id: "a.alamin@gmail.com",
+    email: "a.alamin@gmail.com",
+    label: "آلاء قمصاني — الموارد البشرية",
+  },
   {
     group: "إدارة المنظمة",
     value: "proc-admin",
+    id: "a.alqadri@gmail.com",
+    email: "a.alqadri@gmail.com",
     label: "علي الأمين — المالية والعقود",
   },
-  { group: "إدارة المنظمة", value: "crm-admin", label: "شهد العماري — علاقات العملاء" },
+  {
+    group: "إدارة المنظمة",
+    value: "crm-admin",
+    id: "g.abdo@gmail.com",
+    email: "g.abdo@gmail.com",
+    label: "شهد العماري — علاقات العملاء",
+  },
   {
     group: "إدارة التقييم العقاري",
     value: "general-manager",
+    id: "salam@ejadah.dev",
+    email: "salam@ejadah.dev",
     label: "سالم الغريب — مدير إدارة التقييم العقاري",
   },
   {
     group: "قسم دراسة الحالة",
     value: "section-supervisor",
+    id: "abdulrahman@ejadah.dev",
+    email: "abdulrahman@ejadah.dev",
     label: "عبدالرحمن النفيعي — مشرف دراسة الحالة",
   },
   {
     group: "قسم دراسة الحالة",
     value: "case-specialist",
+    id: "osama@ejadah.dev",
+    email: "osama@ejadah.dev",
     label: "أسامة الصالحي — أخصائي دراسة الحالة",
   },
   {
     group: "قسم دراسة الحالة",
     value: "government-reviewer",
+    id: "feras@ejadah.dev",
+    email: "feras@ejadah.dev",
     label: "فراس كمرين — مراجع حكومي",
   },
   {
     group: "قسم التقييم العقاري",
     value: "valuation-coordinator",
+    id: "valuation@ejadah.dev",
+    email: "valuation@ejadah.dev",
     label: "محمد دياب — منسق عمليات التقييم",
   },
   {
     group: "قسم التقييم العقاري",
     value: "real-estate-appraiser",
+    id: "abdullah.kathiri@ejadah.dev",
+    email: "abdullah.kathiri@ejadah.dev",
     label: "عبدالله الكثيري — مقيم عقاري",
   },
-  { group: "قسم التقييم العقاري", value: "field-inspector", label: "أحمد سعيد — معاين ميداني" },
+  {
+    group: "قسم التقييم العقاري",
+    value: "field-inspector",
+    id: "ahmed@ejadah.dev",
+    email: "ahmed@ejadah.dev",
+    label: "أحمد سعيد — معاين ميداني (متعاون)",
+  },
+  {
+    group: "قسم التقييم العقاري",
+    value: "field-inspector",
+    id: "abdullah.abdulmane@ejadah.dev",
+    email: "abdullah.abdulmane@ejadah.dev",
+    label: "عبدالله عبدالمانع — معاين ميداني",
+  },
   {
     group: "المالية والعقود",
     value: "financial-officer",
+    id: "eman@ejadah.dev",
+    email: "eman@ejadah.dev",
     label: "إيمان النهدي — موظف مالي",
   },
   {
     group: "مزود خارجي",
     value: "engineering-office",
+    id: "survey.jeddah@ejadah.dev",
+    email: "survey.jeddah@ejadah.dev",
     label: "مكتب جدة للمساحة — رفع مساحي",
   },
 ];

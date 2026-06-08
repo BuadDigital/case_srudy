@@ -1,6 +1,6 @@
 # Project Progress — Ejada Internal (نظام إجادة الداخلي)
 
-**Last updated:** 3 June 2026 (case study workflow, نموذج الدراسة, علاقة المستخدم بالمعلومة)  
+**Last updated:** 8 June 2026 (مصطلحات أطراف التنفيذ، إدارة المنظمة، تأجيل أطراف القضية)  
 **Repo:** `study-realstate-eval` monorepo on branch `main`  
 **Audience:** Project manager and developers — single handoff document.
 
@@ -15,6 +15,28 @@
 | **Next.js shell** | PO + users + active-transaction queues wired to API | Most other nav screens use mocks; sidebar **role switcher** for demo |
 
 **Demo path:** Login → PO list/intake → properties per PO → **البيانات الأولية** → **استعلام بورصة** → **توزيع المعاملات** (تأكيد التوزيع) → **دراسة حالة العقارات** (queue + workspace) → **نموذج الدراسة** per party task → **الإعدادات** (علاقة المستخدم بالمعلومة) → users → **ادوات النظام**.
+
+---
+
+## Domain glossary (agreed — do not confuse)
+
+Three separate concepts; **do not merge** in UI labels or data models.
+
+| Concept | Who | Uses the system? | Where in product |
+|---------|-----|------------------|------------------|
+| **أطراف التنفيذ / أطراف القضية** | Parties in the **court enforcement case** (محكوم له/عليه، مالك، وكيل، …) | **No** — external; recorded as **case data** only | PO/property contacts, documents requested *from* them (see deferred §16) |
+| **منفّذو العمل (إسناد داخلي)** | Ejadah staff/vendors who **do the work** on a transaction | **Yes** | توزيع المعاملات → child tasks; e.g. **المحكمة → مراجع حكومي**، **المعاينة → معاين ميداني** |
+| **أدوار المستخدمين (صلاحيات)** | Login accounts — **which screens** each person sees | **Yes** | JWT + prototype `RoleId`; org registration under **إدارة المنظمة** |
+
+**Wrong today (prototype debt):** page `/workflow-users` labelled «أطراف التنفيذ» manages **internal assignees** (Firas, passwords) — **not** court parties. Rename/repurpose when §16 and org screens are implemented.
+
+**Internal execution mapping (confirmed):**
+
+| Work | Internal role |
+|------|----------------|
+| زيارة المحكمة | مراجع حكومي (`government-reviewer`) |
+| المعاينة الميدانية | معاين ميداني (`field-inspector`) |
+| التقييم | مقيم عقاري (`real-estate-appraiser`) — via valuation dept distribution |
 
 ---
 
@@ -524,7 +546,34 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 
 ## 14. Backlog (suggested next steps)
 
-**Users:** edit/deactivate; search; export.
+### 14.1 إدارة المنظمة — screens & permissions
+
+**Reference:** `docs/ejada-registration_1.html` — applied to `/users` registration UX (8 Jun 2026):
+
+| Done | Item |
+|------|------|
+| ✓ | HR full 4-step wizard (employment, org tree, personal, account, review) |
+| ✓ | PROC individual path (unchanged logic) + org teams UI (mgmt + ops — UI only, not persisted to API yet) |
+| ✓ | CRM 4-step flow (existing, themed shell) |
+| ✓ | Side panel + ERP portal styling per source (HR / PROC / CRM) |
+
+**Still TODO:** persist PROC org teams to DB; map `hr_perms` → prototype `RoleId`; edit/deactivate users.
+
+**Registration flows for:**
+
+| Department | Prototype role | API identity | Current UI |
+|------------|----------------|--------------|------------|
+| الموارد البشرية | `hr-admin` | `HrAdmin` | `/users` → `HrRegistrationFlow` |
+| المالية والعقود | `proc-admin` | `ProcAdmin` | `/users` → `ProcRegistrationFlow` |
+| علاقات العملاء | `crm-admin` | `CrmAdmin` | `/users` → `CrmRegistrationFlow` |
+
+**Where exactly:** sidebar group **إدارة المنظمة** (role switcher) → page **إدارة المستخدمين** (`/users`, `settings-nav.ts` / الإعدادات footer). CDO sees `UsersOrganizationView` (read-only org tree); department admins see staff list + registration wizard (`RegisterUserFlow` / `RegistrationPortal`).
+
+**Scope of build:** align fields, steps, labels, and permission model in that HTML with the three flows above — **not** court parties, **not** توزيع المعاملات assignees.
+
+**Prerequisite:** add/commit `docs/ejada-registration_1.html`; confirm with PM before coding.
+
+**Users (other):** edit/deactivate; search; export.
 
 **PO:** blob storage for attachments; failures API; server pagination/search; persist workflow phases in DB.
 
@@ -533,6 +582,27 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 **Active transactions:** persist tasks in PostgreSQL; align courts nav (remove red placeholder).
 
 **Platform:** wire RabbitMQ/Redis/observability; remaining mock modules; map `@ejadah.dev` demo users to Identity + prototype roles.
+
+---
+
+## 16. Deferred — أطراف التنفيذ (court case parties)
+
+**Status:** discussion done; **implementation later**.
+
+**Product question to answer when built:**
+
+> من هم في القضية؟ ماذا نحتاج منهم؟
+
+**Constraints (agreed):**
+
+- أطراف التنفيذ = **أطراف القضية لدى المحكمة** (legal parties), **not** Ejadah employees.
+- They **do not use the system** (no accounts, no `RoleId`, no tasks).
+- Represent as **records on PO/property** (names, legal capacity, contact, documents required/received) — e.g. extend `PropertyContacts` / enforcement fields, not `workflow-users`.
+- Existing hints in codebase: `CONTACT_ROLE_OPTIONS` (مالك، وكيل، …), `PoPropertyEnfathForm` text «يطلب السجل من أطراف التنفيذ», validator message on `RealEstateRegFileName`.
+
+**Open design question for PM:** are parties stored **per PO** or **per property** within a PO?
+
+**Out of scope for this item:** internal assignee lists (Firas, inspectors) — those stay under توزيع المعاملات + future «منفّذو الإسناد» admin if needed.
 
 ---
 
@@ -555,7 +625,8 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 15. **علاقة المستخدم بالمعلومة:** admin matrix (`/case-study-info-roles`), `evalCaseStudyInfoRoles`.  
 16. **Party integration:** `PartyActiveTaskWork` tab **نموذج الدراسة** — all questions visible, answer only per matrix; party storage `evalCaseStudyFormParty:{childTaskId}`.  
 17. **Distribution parties:** child workflow tasks + party nav pages (`party-task-pages.ts`).  
+18. **Terminology (8 Jun 2026):** documented court parties vs internal assignees vs user roles; deferred §16; org registration scope §14.1; `/workflow-users` flagged as misnamed prototype debt.
 
 ---
 
-*This file was verified against the codebase on 3 June 2026. Update when `main` changes materially.*
+*This file was verified against the codebase on 8 June 2026. Update when `main` changes materially.*

@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { usePrototype } from "@/contexts/PrototypeContext";
-import { clearAllPoData } from "@/lib/prototype/clear-all-po-data";
+import { clearAllSystemData } from "@/lib/prototype/clear-all-po-data";
 import { prototypeKeys } from "@/lib/query/prototype-keys";
 import {
   PO_ROLE_RULES,
@@ -100,10 +100,10 @@ export function SystemToolsView() {
     setAppliedFilters({});
   }
 
-  async function handleClearAllPos() {
+  async function handleClearAllSystemData() {
     if (
       !window.confirm(
-        "حذف جميع أوامر العمل من الخادم ومسح التخزين المحلي (المهام، التعذرات، المسودات، المرفقات)؟ لا يمكن التراجع.",
+        "مسح كل بيانات النظام؟ يحذف من الخادم: أوامر العمل، العقارات، البيانات الأولية، مهام سير العمل، نماذج الدراسة، كتالوج المحاكم، وتسجيلات المستخدمين (HR/Proc/CRM). ويمسح من المتصفح كل مفاتيح eval*. لا يمكن التراجع.",
       )
     ) {
       return;
@@ -111,17 +111,20 @@ export function SystemToolsView() {
     setClearBusy(true);
     setClearMessage(null);
     try {
-      const result = await clearAllPoData();
+      const result = await clearAllSystemData();
       await queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
       const errPart =
         result.errors.length > 0
           ? ` — تحذيرات: ${result.errors.slice(0, 3).join("؛ ")}`
           : "";
+      const apiPart = result.apiReset
+        ? `الخادم: ${result.workOrdersDeleted} PO، ${result.workflowTasksDeleted} مهمة، ${result.caseStudyFormsDeleted} نموذج دراسة، ${result.courtCatalogEntriesDeleted} محكمة، ${result.registeredUsersDeleted} مستخدم مسجّل. `
+        : "";
       setClearMessage(
-        `تم حذف ${result.deletedFromApi} أمر عمل من الخادم ومسح التخزين المحلي.${errPart}`,
+        `${apiPart}تم مسح كل التخزين المحلي (eval*).${errPart}`,
       );
     } catch {
-      setClearMessage("تعذّر إكمال المسح — تحقق من تشغيل API وتسجيل الدخول.");
+      setClearMessage("تعذّر إكمال المسح — تحقق من تشغيل API وتسجيل الدخول كـ CDO.");
     } finally {
       setClearBusy(false);
     }
@@ -136,18 +139,20 @@ export function SystemToolsView() {
           </div>
           <div className="card-body">
             <p className="sys-tools-main-hint" style={{ marginBottom: 12 }}>
-              يحذف كل PO من قاعدة البيانات ويمسح{" "}
-              <code dir="ltr">evalWorkflowTasks</code>،{" "}
-              <code dir="ltr">evalFailureRecords</code>، مسودة الإدخال، وذاكرة
-              مرفقات العقارات في المتصفح.
+              يمسح كل بيانات التشغيل من قاعدة البيانات: أوامر العمل
+              والعقارات، البيانات الأولية، مهام سير العمل، نماذج الدراسة،
+              كتالوج المحاكم، وتسجيلات المستخدمين (ما عدا حسابات الإعداد
+              المزروعة). ويمسح من المتصفح كل مفاتيح{" "}
+              <code dir="ltr">eval*</code> (مهام، تعذرات، مسودات، مرفقات،
+              علاقة المستخدم بالمعلومة، خطابات التفويض، إلخ).
             </p>
             <button
               type="button"
               className="btn btn-sm btn-danger"
               disabled={clearBusy}
-              onClick={() => void handleClearAllPos()}
+              onClick={() => void handleClearAllSystemData()}
             >
-              {clearBusy ? "جاري الحذف…" : "حذف جميع أوامر العمل"}
+              {clearBusy ? "جاري المسح…" : "مسح كل بيانات النظام"}
             </button>
             {clearMessage ? (
               <div

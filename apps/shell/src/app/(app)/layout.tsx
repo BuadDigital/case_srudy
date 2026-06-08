@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { AppAuthGate } from "@platform/auth-client";
+import { PrototypeAppGate } from "@/components/PrototypeAppGate";
 import { AppShell } from "@/components/views/AppShell";
 import { PrototypeProvider } from "@/contexts/PrototypeContext";
 import { QueryProvider } from "@/providers/QueryProvider";
@@ -12,14 +12,14 @@ export default function AppSectionLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AppAuthGate>
-      <QueryProvider>
+    <QueryProvider>
+      <PrototypeAppGate>
         <PrototypeProvider>
           <Suspense fallback={null}>
             <AppShell>{children}</AppShell>
           </Suspense>
         </PrototypeProvider>
-      </QueryProvider>
-    </AppAuthGate>
+      </PrototypeAppGate>
+    </QueryProvider>
   );
 }

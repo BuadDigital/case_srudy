@@ -14,6 +14,7 @@
     "dev:api": "dotnet watch run --project backend/RealEstateEval.Api/RealEstateEval.Api.csproj --launch-profile http --non-interactive",
     "build": "npm run build -w @platform/shell",
     "start": "npm run start -w @platform/shell",
-    "lint": "npm run lint -w @platform/shell"
+    "lint": "npm run lint -w @platform/shell",
+    "test:api": "dotnet test backend/RealEstateEval.slnx"
   }
 }

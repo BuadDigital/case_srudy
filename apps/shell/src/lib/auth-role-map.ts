@@ -1,6 +1,12 @@
 import type { RoleId } from "@platform/types";
-import { ROLES, STORAGE_ROLE_KEY } from "@/lib/prototype/constants";
-import { DISTRIBUTION_PARTY_ACCOUNTS } from "@/lib/prototype/distribution-party-accounts";
+import {
+  defaultPersonaIdForRole,
+  roleOptionForEmail,
+  ROLES,
+  STORAGE_PERSONA_KEY,
+  STORAGE_ROLE_KEY,
+} from "@/lib/prototype/constants";
+import { getDistributionPartyAccounts } from "@/lib/prototype/distribution-party-accounts";
 
 /**
  * Maps seeded login emails to prototype sidebar roles.
@@ -16,11 +22,8 @@ const EMAIL_TO_PROTOTYPE_ROLE: Record<string, RoleId> = {
   "abdulrahman@ejadah.dev": "section-supervisor",
   "osama@ejadah.dev": "case-specialist",
   "eman@ejadah.dev": "financial-officer",
+  "abdullah.abdulmane@ejadah.dev": "field-inspector",
 };
-
-for (const account of DISTRIBUTION_PARTY_ACCOUNTS) {
-  EMAIL_TO_PROTOTYPE_ROLE[account.email.trim().toLowerCase()] = account.roleId;
-}
 
 const DEFAULT_PROTOTYPE_ROLE: RoleId = "general-manager";
 
@@ -33,6 +36,9 @@ export function prototypeRoleForEmail(email: string): RoleId {
   const key = email.trim().toLowerCase();
   const mapped = EMAIL_TO_PROTOTYPE_ROLE[key];
   if (mapped && isPrototypeRole(mapped)) return mapped;
+  for (const account of getDistributionPartyAccounts()) {
+    if (account.email.trim().toLowerCase() === key) return account.roleId;
+  }
   return DEFAULT_PROTOTYPE_ROLE;
 }
 
@@ -42,4 +48,9 @@ export function applyPrototypeRoleForEmail(email: string): void {
   const role = prototypeRoleForEmail(email);
   if (!isPrototypeRole(role)) return;
   sessionStorage.setItem(STORAGE_ROLE_KEY, role);
+  const persona = roleOptionForEmail(email);
+  sessionStorage.setItem(
+    STORAGE_PERSONA_KEY,
+    persona?.id ?? defaultPersonaIdForRole(role),
+  );
 }

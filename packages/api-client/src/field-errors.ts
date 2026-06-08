@@ -1,16 +1,22 @@
+function toCamelCaseKey(key: string): string {
+  if (!key) return key;
+  return key.charAt(0).toLowerCase() + key.slice(1);
+}
+
 export function normalizeFieldErrors(
   raw?: Record<string, string | string[]>,
 ): Record<string, string> {
   if (!raw) return {};
   const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(raw)) {
+    const normalizedKey = toCamelCaseKey(key);
     if (typeof value === "string" && value.trim()) {
-      out[key] = value;
+      out[normalizedKey] = value;
       continue;
     }
     if (Array.isArray(value)) {
       const first = value.find((v) => typeof v === "string" && v.trim());
-      if (first) out[key] = first;
+      if (first) out[normalizedKey] = first;
     }
   }
   return out;

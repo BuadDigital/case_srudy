@@ -29,6 +29,7 @@ import { fetchOrganization } from "@/lib/users-org-api";
 import { fetchStaffUsers } from "@/lib/users-api";
 import { WORK_ORDERS_CHANGED_EVENT } from "@/lib/work-orders-api-config";
 import { prototypeKeys } from "@/lib/query/prototype-keys";
+import { usePrototype } from "@/contexts/PrototypeContext";
 import { useEffect } from "react";
 
 const STALE_MS = 60_000;
@@ -341,9 +342,11 @@ export function useCaseStudyInfoRolesQuery() {
 }
 
 export function useStaffUsersQuery() {
+  const { personaId, authReady } = usePrototype();
   return useQuery({
-    queryKey: prototypeKeys.staffUsers(),
+    queryKey: [...prototypeKeys.staffUsers(), personaId],
     queryFn: fetchStaffUsers,
+    enabled: authReady,
     ...queryDefaults,
   });
 }
@@ -362,3 +365,4 @@ export function setCaseStudyInfoRolesCache(
 ) {
   queryClient.setQueryData(prototypeKeys.caseStudyInfoRoles(), config);
 }
+

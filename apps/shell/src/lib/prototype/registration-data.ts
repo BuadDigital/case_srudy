@@ -1,9 +1,14 @@
 export type RegistrationSource = "hr" | "proc" | "crm";
 
-export const ORG: Record<string, { subs: string[] }> = {
-  "الإدارة التنفيذية": { subs: [] },
+export type OrgDeptDef = {
+  subs: string[];
+  execOnly?: boolean;
+};
+
+export const ORG: Record<string, OrgDeptDef> = {
+  "الإدارة التنفيذية": { subs: [], execOnly: true },
   "إدارة التقييم العقاري": {
-    subs: ["قسم دراسة الحالة", "قسم التقييم العقاري"],
+    subs: ["قسم تقييم الأفراد", "قسم تقييم المشاريع", "قسم دراسة الحالة"],
   },
   "الإدارة المالية": { subs: ["قسم المحاسبة"] },
   "إدارة الجودة": { subs: [] },
@@ -17,6 +22,17 @@ export const JOB_TITLES: Record<string, string[]> = {
     "أخصائي دراسة حالة",
     "مدخل بيانات",
   ],
+  "قسم تقييم الأفراد": [
+    "مقيم عقاري",
+    "معاين ميداني",
+    "منسق عمليات التقييم",
+  ],
+  "قسم تقييم المشاريع": [
+    "مقيم مشاريع",
+    "منسق تقييم المشاريع",
+    "أخصائي تقييم",
+  ],
+  "قسم المحاسبة": ["محاسب", "مدير محاسبة"],
 };
 
 export const EMP_TYPES = [
@@ -79,6 +95,12 @@ export const HR_HINTS = [
   "راجع ثم احفظ",
 ];
 
+export const ENTITY_SUBTITLES: Record<RegistrationSource, string> = {
+  hr: "entity_owner: HR · entity_type: employee",
+  proc: "entity_owner: PROCUREMENT · entity_type: provider_ind / provider_org",
+  crm: "entity_owner: CRM · entity_type: lead / client",
+};
+
 export const PROC_STEPS_IND = [
   "نوع مقدم الخدمة",
   "البيانات الأساسية",
@@ -129,7 +151,7 @@ export const PORTAL_CARDS: PortalCard[] = [
   {
     source: "proc",
     icon: "PROC",
-    dept: "المالية والعقود · PROC",
+    dept: "العقود والمشتريات · PROC",
     title: "تسجيل مقدم خدمة",
     desc: "لتسجيل الأفراد المستقلين والجهات الخارجية المزودة للخدمات والعقود",
     tags: ["فرد مستقل", "جهة / مؤسسة", "فرق تشغيلية", "فوترة"],
@@ -167,7 +189,7 @@ export const FLOW_META: Record<
   },
   proc: {
     flowClass: "reg-flow-proc",
-    dept: "المالية والعقود · PROC",
+    dept: "العقود والمشتريات · PROC",
     title: "تسجيل مقدم خدمة",
     desc: "يُسجَّل مقدم الخدمة ويُربط بعقد أو اتفاقية، والفوترة تكون على مستوى الفرد أو الجهة.",
     sideTypes: [

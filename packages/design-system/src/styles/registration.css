@@ -48,10 +48,10 @@
   margin-bottom: 2px;
 }
 .reg-flow-hr .reg-tb-flow {
-  color: var(--success);
+  color: var(--accent);
 }
 .reg-flow-proc .reg-tb-flow {
-  color: var(--info);
+  color: var(--primary-light);
 }
 .reg-flow-crm .reg-tb-flow {
   color: var(--orange);
@@ -493,11 +493,11 @@
 }
 .reg-flow-hr .reg-form-card-ico {
   background: var(--success-bg);
-  color: var(--success);
+  color: var(--accent-dark);
 }
 .reg-flow-proc .reg-form-card-ico {
   background: var(--info-bg);
-  color: var(--info);
+  color: var(--primary);
 }
 .reg-flow-crm .reg-form-card-ico {
   background: var(--orange-bg);
@@ -601,7 +601,12 @@
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
-  box-shadow: 0 0 0 2px rgba(41, 128, 185, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.reg-flow-hr .reg-type-pill.sel {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 .reg-type-pills--error .reg-type-pill {
   border-color: var(--danger);
@@ -1897,5 +1902,343 @@
   50% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* ── Registration flows (aligned with app shell) ── */
+.reg-flow-card {
+  margin-bottom: 16px;
+  overflow: hidden;
+  border-top: 3px solid var(--accent);
+}
+.reg-flow-card.reg-flow-proc {
+  border-top-color: var(--primary-light);
+}
+.reg-flow-card.reg-flow-crm {
+  border-top-color: var(--orange);
+}
+.reg-side--hr .reg-side-dept {
+  color: var(--accent);
+  opacity: 1;
+}
+.reg-side--proc .reg-side-dept {
+  color: var(--primary-light);
+  opacity: 1;
+}
+.reg-side--crm .reg-side-dept {
+  color: var(--orange);
+  opacity: 1;
+}
+.reg-side-user-type:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.78);
+}
+.reg-root--with-side .reg-layout {
+  display: flex;
+  align-items: stretch;
+  min-height: 480px;
+}
+.reg-side {
+  width: 234px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1rem 1.5rem;
+  color: #fff;
+  background: var(--sidebar);
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.08);
+}
+.reg-side-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-family: inherit;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  width: fit-content;
+  transition: all 0.15s;
+}
+.reg-side-back:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.reg-side-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  background: var(--accent);
+  color: #fff;
+}
+.reg-side--proc .reg-side-logo {
+  background: var(--primary-light);
+}
+.reg-side--crm .reg-side-logo {
+  background: var(--orange);
+}
+.reg-side-dept {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+.reg-side-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 0 0 0.5rem;
+  color: #fff;
+}
+.reg-side-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.6;
+  margin: 0 0 1.25rem;
+}
+.reg-side-users {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.reg-side-users-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+  margin-bottom: 0.45rem;
+}
+.reg-side-user-type {
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 0.25rem;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.58);
+  border-inline-end: 3px solid transparent;
+}
+.reg-flow-card--wizard .reg-main--wizard {
+  background: var(--surface);
+}
+.reg-flow-card--wizard .reg-wizard-scroll {
+  background: var(--surface);
+  padding: 0;
+  justify-content: stretch;
+}
+.reg-flow-card--wizard .reg-wizard-panel {
+  max-width: none;
+  max-height: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.reg-wizard-panel--wide {
+  max-width: none;
+}
+.reg-portal-wrap {
+  border-top: 3px solid var(--accent);
+}
+.reg-portal-wrap .card-body.reg-portal {
+  padding: 1.25rem 1rem 1.5rem;
+}
+.reg-portal-card--hr .reg-portal-card-ico {
+  background: var(--success-bg);
+  color: var(--accent-dark);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+.reg-portal-card--hr .reg-portal-card-dept {
+  color: var(--accent-dark);
+}
+.reg-portal-card--hr .reg-portal-tag {
+  background: var(--success-bg);
+  color: var(--accent-dark);
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+}
+.reg-portal-card--proc .reg-portal-card-ico {
+  background: var(--info-bg);
+  color: var(--primary);
+}
+.reg-portal-card--proc .reg-portal-card-dept {
+  color: var(--primary-light);
+}
+.reg-portal-card--proc .reg-portal-tag {
+  background: var(--info-bg);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary-light) 25%, var(--border));
+}
+.reg-portal-card--crm .reg-portal-card-ico {
+  background: var(--orange-bg);
+  color: var(--orange);
+}
+.reg-portal-card--crm .reg-portal-card-dept {
+  color: var(--orange);
+}
+.reg-portal-card--crm .reg-portal-tag {
+  background: var(--orange-bg);
+  color: var(--orange);
+  border-color: color-mix(in srgb, var(--orange) 25%, var(--border));
+}
+.reg-tb-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.reg-org-tree {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  margin-top: 10px;
+}
+.reg-org-tree-lbl {
+  font-size: 10.5px;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text3);
+}
+.reg-org-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 13px;
+  color: var(--text2);
+}
+.reg-org-node.hl {
+  font-weight: 700;
+  color: var(--primary);
+}
+.reg-flow-hr .reg-org-node.hl,
+.reg-flow-hr .reg-org-sub.hl {
+  color: var(--accent-dark);
+}
+.reg-org-sub {
+  margin-inline-start: 18px;
+  font-size: 12px;
+  color: var(--text3);
+  padding: 2px 0;
+}
+.reg-org-sub.hl {
+  font-weight: 600;
+}
+.reg-ops-unit {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.reg-ops-hd {
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.reg-ops-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--info-bg);
+  color: var(--info);
+  flex-shrink: 0;
+}
+.reg-ops-hd-title {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.reg-ops-body {
+  padding: 0.7rem 0.75rem;
+}
+.reg-ops-mem-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+.reg-ops-mem-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+.reg-add-ops-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px dashed var(--border2);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--info);
+}
+.reg-add-ops-btn:hover {
+  background: var(--info-bg);
+}
+.reg-info-box--warn {
+  border-right: 3px solid var(--warning);
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.reg-flow-hr .reg-step-circle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.reg-flow-hr .reg-step-label.active {
+  color: var(--accent-dark);
+}
+.reg-flow-proc .reg-step-circle.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.reg-flow-proc .reg-step-label.active {
+  color: var(--primary);
+}
+.reg-flow-crm .reg-step-circle.active {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+.reg-flow-crm .reg-step-label.active {
+  color: var(--orange);
+}
+@media (max-width: 900px) {
+  .reg-root--with-side .reg-layout {
+    flex-direction: column;
+  }
+  .reg-side {
+    width: 100%;
+    min-height: auto;
+  }
+  .reg-side-users {
+    margin-top: 1rem;
   }
 }

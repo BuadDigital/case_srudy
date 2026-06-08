@@ -1,12 +1,12 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using RealEstateEval.Api.Data;
-using RealEstateEval.Api.Models;
-using RealEstateEval.Api.Services;
+using System.IdentityModel.Tokens.Jwt;
+using RealEstateEval.Infrastructure;
+using RealEstateEval.Infrastructure.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
@@ -22,8 +22,6 @@ builder.Services.AddResponseCompression(options =>
     options.EnableForHttps = true;
 });
 
-// Full connection string override for local dev (avoids committing your DB password):
-// PowerShell: $env:REAL_ESTATE_EVAL_PG_CONNECTION_STRING = "Host=localhost;Port=5432;Database=realestate_eval_dev;Username=postgres;Password=YOUR_PASSWORD"
 var connectionString =
     Environment.GetEnvironmentVariable("REAL_ESTATE_EVAL_PG_CONNECTION_STRING")
     ?? builder.Configuration.GetConnectionString("DefaultConnection");
@@ -34,22 +32,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "Database connection missing. Set REAL_ESTATE_EVAL_PG_CONNECTION_STRING, or ConnectionStrings:DefaultConnection in appsettings / user secrets.");
 }
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
-builder.Services
-    .AddIdentity<ApplicationUser, IdentityRole>(options =>
-    {
-        options.User.RequireUniqueEmail = true;
-        // Aligned with registration wizards (min 6 chars in registration-utils.ts)
-        options.Password.RequiredLength = 6;
-        options.Password.RequireDigit = false;
-        options.Password.RequireLowercase = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireNonAlphanumeric = false;
-    })
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+builder.Services.AddInfrastructure(builder.Configuration, connectionString);
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
@@ -62,6 +45,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -72,6 +56,8 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey ?? "")),
             ClockSkew = TimeSpan.FromMinutes(1),
+            NameClaimType = JwtRegisteredClaimNames.Sub,
+            RoleClaimType = "role",
         };
     });
 
@@ -80,11 +66,6 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CanManageUsers", policy =>
         policy.RequireAuthenticatedUser());
 });
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<IUserRegistrationService, UserRegistrationService>();
-builder.Services.AddScoped<IWorkOrderService, WorkOrderService>();
-builder.Services.AddScoped<IWorkflowTaskService, WorkflowTaskService>();
-builder.Services.AddScoped<ICaseStudyFormService, CaseStudyFormService>();
 
 builder.Services.AddCors(options =>
 {
@@ -92,7 +73,6 @@ builder.Services.AddCors(options =>
     {
         if (builder.Environment.IsDevelopment())
         {
-            // Same Wi‑Fi demos: any host on the Next dev port (e.g. http://192.168.x.x:3000).
             policy
                 .SetIsOriginAllowed(origin =>
                 {

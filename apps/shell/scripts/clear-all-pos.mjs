@@ -1,11 +1,11 @@
 /**
- * Deletes all work orders from the API (dev/maintenance).
+ * Wipes all operational system data from the API (dev/maintenance).
  * Usage: node apps/shell/scripts/clear-all-pos.mjs
  * Env: API_URL (default http://localhost:5160)
  */
 const API = (process.env.API_URL ?? "http://localhost:5160").replace(/\/$/, "");
-const EMAIL = process.env.ADMIN_EMAIL ?? "admin@local.dev";
-const PASSWORD = process.env.ADMIN_PASSWORD ?? "Admin123!";
+const EMAIL = process.env.ADMIN_EMAIL ?? "s.salhy@gmail.com";
+const PASSWORD = process.env.ADMIN_PASSWORD ?? "sliman123";
 
 async function main() {
   const loginRes = await fetch(`${API}/api/auth/login`, {
@@ -24,35 +24,18 @@ async function main() {
   }
 
   const headers = { Authorization: `Bearer ${token}` };
-  const listRes = await fetch(`${API}/api/work-orders`, { headers });
-  if (!listRes.ok) {
-    console.error("List failed:", listRes.status, await listRes.text());
+  const resetRes = await fetch(`${API}/api/system/data`, {
+    method: "DELETE",
+    headers,
+  });
+  if (!resetRes.ok) {
+    console.error("Reset failed:", resetRes.status, await resetRes.text());
     process.exit(1);
   }
-  const items = await listRes.json();
-  if (!Array.isArray(items)) {
-    console.error("Unexpected list response");
-    process.exit(1);
-  }
-
-  let deleted = 0;
-  for (const item of items) {
-    const po = item.poNumber?.trim();
-    if (!po) continue;
-    const delRes = await fetch(
-      `${API}/api/work-orders/${encodeURIComponent(po)}`,
-      { method: "DELETE", headers },
-    );
-    if (delRes.ok || delRes.status === 204) {
-      deleted += 1;
-      console.log(`Deleted ${po}`);
-    } else {
-      console.warn(`Failed ${po}:`, delRes.status, await delRes.text());
-    }
-  }
-  console.log(`Done. Deleted ${deleted}/${items.length} work orders.`);
+  const result = await resetRes.json();
+  console.log("System reset complete:", result);
   console.log(
-    "In the browser: open System Tools as CDO and click «حذف جميع أوامر العمل» to clear localStorage, or run localStorage.clear() for PO keys only.",
+    "In the browser: System Tools → «مسح كل بيانات النظام» to clear eval* localStorage.",
   );
 }
 

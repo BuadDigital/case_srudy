@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { getAuthSession } from "@platform/auth-client";
 import type { PageId } from "@platform/types";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import {
@@ -8,10 +9,9 @@ import {
   filterTasksForDistribution,
   filterTasksForPrimaryData,
 } from "@/lib/prototype/active-transactions";
-import {
-  PARTY_TASK_PAGES,
-  filterTasksForPartyKind,
-} from "@/lib/prototype/party-task-pages";
+import { countGovernmentReviewOpenPos } from "@/lib/prototype/government-review-po";
+import { PARTY_TASK_PAGES } from "@/lib/prototype/party-task-pages";
+import { reviewerScopeForRole } from "@/lib/prototype/reviewer-coverage";
 import {
   tasksForPartyAssignee,
   tasksForRole,
@@ -31,7 +31,8 @@ function poRecordsMap(records: PoIntakeRecord[] | undefined) {
 
 /** Red sidebar counts for المعاملات النشطة (open work only). */
 export function useActiveTransactionNavBadges(): Partial<Record<PageId, number>> {
-  const { role } = usePrototype();
+  const { role, viewerEmail: personaEmail } = usePrototype();
+  const viewerEmail = personaEmail ?? getAuthSession()?.user.email ?? null;
   const { data: tasks } = useWorkflowTasksQuery();
   const { data: poRecords } = usePoRecordsQuery();
   const { data: pendingBourse } = usePendingBourseItemsQuery();
@@ -39,7 +40,7 @@ export function useActiveTransactionNavBadges(): Partial<Record<PageId, number>>
   return useMemo(() => {
     const poByNumber = poRecordsMap(poRecords);
     const mine = tasksForRole(role, tasks ?? []);
-    const partyMine = tasksForPartyAssignee(role, tasks ?? []);
+    const partyMine = tasksForPartyAssignee(role, tasks ?? [], undefined, viewerEmail);
 
     const primaryOpen = filterTasksForPrimaryData(mine, poByNumber).filter(
       (t) => t.status === "open" || t.status === "blocked",
@@ -63,12 +64,21 @@ export function useActiveTransactionNavBadges(): Partial<Record<PageId, number>>
 
     for (const def of Object.values(PARTY_TASK_PAGES)) {
       if (def.roleId !== role) continue;
-      const open = filterTasksForPartyKind(partyMine, def.kind).filter(
-        (t) => t.status === "open",
+      if (def.pageId === "government-review") {
+        const open = countGovernmentReviewOpenPos(
+          partyMine,
+          poByNumber,
+          reviewerScopeForRole(role),
+        );
+        if (open > 0) badges[def.pageId] = open;
+        continue;
+      }
+      const open = partyMine.filter(
+        (t) => t.kind === def.kind && t.status === "open",
       ).length;
       if (open > 0) badges[def.pageId] = open;
     }
 
     return badges;
-  }, [role, tasks, poRecords, pendingBourse]);
+  }, [role, viewerEmail, tasks, poRecords, pendingBourse]);
 }

@@ -79,7 +79,6 @@ export function PoIntakeModal({
           <RegField
             id="po_specialist_modal"
             label="اسم أخصائي الإسناد"
-            required
             value={form.assignmentSpecialist}
             error={form.fieldErrors.assignmentSpecialist}
             onChange={form.setAssignmentSpecialist}
@@ -87,7 +86,6 @@ export function PoIntakeModal({
           <RegField
             id="po_specialist_email_modal"
             label="إيميل أخصائي الإسناد"
-            required
             type="email"
             dir="ltr"
             value={form.assignmentSpecialistEmail}

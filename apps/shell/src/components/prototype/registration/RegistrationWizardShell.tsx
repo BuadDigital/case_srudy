@@ -2,9 +2,11 @@
 
 import type { ReactNode } from "react";
 import {
+  ENTITY_SUBTITLES,
   FLOW_META,
   type RegistrationSource,
 } from "@/lib/prototype/registration-data";
+import { RegistrationSidePanel } from "./RegistrationSidePanel";
 import { StepIndicator } from "./StepIndicator";
 import { REG_BACK, REG_PREV } from "./registration-labels";
 import { UNSAVED_CONFIRM_MSG } from "./registration-utils";
@@ -51,9 +53,13 @@ export function RegistrationWizardShell({
 
   return (
     <div
-      className={`reg-root ${meta.flowClass}${inWizard ? " reg-root--compact" : ""}`}
+      className={`card reg-root reg-flow-card ${meta.flowClass}${inWizard ? " reg-flow-card--wizard reg-root--with-side" : ""}`}
     >
       <div className="reg-layout">
+        {inWizard ? (
+          <RegistrationSidePanel source={source} onBack={handleBack} />
+        ) : null}
+
         <div className={`reg-main${inWizard ? " reg-main--wizard" : ""}`}>
           {!inWizard ? (
             <header className="reg-topbar">
@@ -74,24 +80,25 @@ export function RegistrationWizardShell({
 
           {inWizard ? (
             <div className="reg-wizard-scroll">
-              <div className="reg-wizard-panel">
+              <div className="reg-wizard-panel reg-wizard-panel--wide">
                 <header className="reg-topbar reg-topbar--panel">
                   <div className="reg-topbar-main">
-                    <button type="button" className="btn btn-sm" onClick={handleBack}>
-                      {REG_BACK}
-                    </button>
                     <div className="reg-topbar-titles">
-                      <div className="reg-tb-flow">{meta.title}</div>
+                      <div className="reg-tb-title">
+                        الخطوة {displayStep} من {steps.length} — {title}
+                      </div>
+                      <div className="reg-tb-sub" dir="ltr">
+                        {ENTITY_SUBTITLES[source]}
+                      </div>
                     </div>
                   </div>
-                  <span className="reg-step-badge">
-                    الخطوة {displayStep} من {steps.length}
-                  </span>
+                  <span className="reg-step-badge">الخطوة {displayStep}</span>
                 </header>
                 <StepIndicator steps={steps} current={step} />
                 {hint ? <p className="reg-step-hint">{hint}</p> : null}
                 <div className="reg-body reg-body--panel">{children}</div>
                 <footer className="reg-foot reg-foot--panel">
+                  <div className="reg-foot-hint">{hint}</div>
                   <div className="reg-foot-btns">
                     {showPrev ? (
                       <button type="button" className="btn" onClick={onPrev}>
@@ -122,5 +129,3 @@ export function RegistrationWizardShell({
     </div>
   );
 }
-
-

@@ -52,8 +52,8 @@ export type WorkOrderDto = {
   promulgationDate: string;
   receivedFromEnfathAt: string;
   receivedFromEnfathTime?: string;
-  assignmentSpecialist: string;
-  assignmentSpecialistEmail: string;
+  assignmentSpecialist?: string;
+  assignmentSpecialistEmail?: string;
   expectedPropertyCount: number;
   dueDateAt: string;
   createdAtUtc: string;
@@ -70,7 +70,7 @@ export type WorkOrderListItemDto = {
   promulgationDate: string;
   receivedFromEnfathAt: string;
   dueDateAt: string;
-  assignmentSpecialist: string;
+  assignmentSpecialist?: string;
 };
 
 export type CreateWorkOrderRequest = {
@@ -78,8 +78,8 @@ export type CreateWorkOrderRequest = {
   assignmentType: string;
   promulgationDate: string;
   receivedFromEnfathTime?: string;
-  assignmentSpecialist: string;
-  assignmentSpecialistEmail: string;
+  assignmentSpecialist?: string;
+  assignmentSpecialistEmail?: string;
   expectedPropertyCount: number;
   properties?: WorkOrderPropertyDto[];
 };
@@ -88,8 +88,8 @@ export type UpdateWorkOrderHeaderRequest = {
   assignmentType: string;
   promulgationDate: string;
   receivedFromEnfathTime?: string;
-  assignmentSpecialist: string;
-  assignmentSpecialistEmail: string;
+  assignmentSpecialist?: string;
+  assignmentSpecialistEmail?: string;
   expectedPropertyCount: number;
 };
 

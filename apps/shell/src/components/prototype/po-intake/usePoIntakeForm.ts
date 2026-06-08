@@ -98,16 +98,8 @@ export function usePoIntakeForm(onComplete: (record: PoIntakeRecord) => void) {
           poNumber,
           promulgationDate,
           assignmentType,
-          assignmentSpecialist,
-          assignmentSpecialistEmail,
         },
-        [
-          "poNumber",
-          "promulgationDate",
-          "assignmentType",
-          "assignmentSpecialist",
-          "assignmentSpecialistEmail",
-        ],
+        ["poNumber", "promulgationDate", "assignmentType"],
       ),
     );
     if (

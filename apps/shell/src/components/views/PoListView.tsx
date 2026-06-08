@@ -32,7 +32,11 @@ export function PoListView() {
   const showEdit = canEditPoHeader(role);
   const showDelete = canDeletePo(role);
   const showEye = canViewPoEye(role);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    kind: "success" | "error";
+  } | null>(null);
+  const [deletingPo, setDeletingPo] = useState<string | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
 
   useEffect(() => {
@@ -69,13 +73,18 @@ export function PoListView() {
     ) {
       return;
     }
+    setDeletingPo(poNumber);
     const result = await deletePoRecord(poNumber);
+    setDeletingPo(null);
     if (!result.ok) {
-      setToast(result.error);
+      setToast({ message: result.error, kind: "error" });
       return;
     }
     await queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
-    setToast(`تم حذف أمر العمل «${poNumber}» وعقاراته.`);
+    setToast({
+      message: `تم حذف أمر العمل «${poNumber}» وعقاراته.`,
+      kind: "success",
+    });
   }
 
   useEffect(() => {
@@ -99,8 +108,11 @@ export function PoListView() {
       ) : null}
 
       {toast ? (
-        <div className="note note-success reg-users-toast" role="status">
-          {toast}
+        <div
+          className={`note reg-users-toast ${toast.kind === "success" ? "note-success" : "note-warn"}`}
+          role="status"
+        >
+          {toast.message}
         </div>
       ) : null}
 
@@ -216,32 +228,34 @@ export function PoListView() {
                     </td>
                   ) : null}
                   {showEdit || showDelete ? (
-                  <td>
-                    <div
-                      style={{ display: "flex", gap: 4, flexWrap: "wrap" }}
+                    <td
+                      className="po-properties-cell-actions"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {showEdit ? (
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={() =>
-                            router.push(poHeaderEditPath(p.id))
-                          }
-                        >
-                          تعديل
-                        </button>
-                      ) : null}
-                      {showDelete ? (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-danger-outline"
-                          onClick={() => void handleDeletePo(p.id)}
-                        >
-                          حذف
-                        </button>
-                      ) : null}
-                    </div>
-                  </td>
+                      <div className="po-properties-row-actions">
+                        {showEdit ? (
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            onClick={() =>
+                              router.push(poHeaderEditPath(p.id))
+                            }
+                          >
+                            تعديل
+                          </button>
+                        ) : null}
+                        {showDelete ? (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-danger-outline"
+                            disabled={deletingPo === p.id}
+                            onClick={() => void handleDeletePo(p.id)}
+                          >
+                            {deletingPo === p.id ? "جاري الحذف…" : "حذف"}
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
                   ) : null}
                 </tr>
               ))

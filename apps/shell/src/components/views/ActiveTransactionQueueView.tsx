@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PoNumber } from "@/components/ui/PoNumber";
 import { RemainingTimeCell } from "@/components/ui/RemainingTimeCell";
+import { getAuthSession } from "@platform/auth-client";
 import { usePrototype } from "@/contexts/PrototypeContext";
 import type { RoleId } from "@platform/types";
 import {
@@ -81,7 +82,7 @@ export function ActiveTransactionQueueView({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const selectedId = searchParams.get("task");
-  const { role } = usePrototype();
+  const { role, viewerEmail: personaEmail } = usePrototype();
   const {
     data: tasks,
     refetch: refetchTasks,
@@ -130,10 +131,15 @@ export function ActiveTransactionQueueView({
 
   const mine = useMemo(() => {
     if (config.partyAssignee) {
-      return tasksForPartyAssignee(role, tasks ?? [], config.assigneeRole);
+      return tasksForPartyAssignee(
+        role,
+        tasks ?? [],
+        config.assigneeRole,
+        personaEmail ?? getAuthSession()?.user.email,
+      );
     }
     return tasksForRole(role, tasks ?? []);
-  }, [config.assigneeRole, config.partyAssignee, role, tasks]);
+  }, [config.assigneeRole, config.partyAssignee, personaEmail, role, tasks]);
 
   const listed = useMemo(
     () =>

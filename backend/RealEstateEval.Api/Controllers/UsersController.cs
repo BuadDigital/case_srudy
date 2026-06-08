@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using RealEstateEval.Api.Contracts;
-using RealEstateEval.Api.Models;
-using RealEstateEval.Api.Services;
+using RealEstateEval.Application.Abstractions;
+using RealEstateEval.Application.Contracts;
+using RealEstateEval.Domain;
 
 namespace RealEstateEval.Api.Controllers;
 
