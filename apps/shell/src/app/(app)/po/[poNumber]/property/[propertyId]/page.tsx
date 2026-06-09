@@ -1,5 +1,5 @@
-import { PoPropertyDetailPage } from "@/components/views/PoPropertyDetailPage";
-import { decodePoParam } from "@/lib/po-routes";
+import { PoPropertyDetailPage } from "@case-study/mfe";
+import { decodePoParam } from "@case-study/mfe";
 export default async function PoPropertyDetailRoutePage({
   params,
 }: {

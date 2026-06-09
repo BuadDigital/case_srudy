@@ -6,8 +6,8 @@ import {
   caseStudyAnswerKey,
   type CaseStudyFormAnswer,
   type CaseStudyQuestionSection,
-} from "@/lib/prototype/case-study-form-data";
-import type { CaseStudyFormDraft } from "@/lib/prototype/case-study-form-storage";
+} from "@case-study/mfe/lib/prototype/case-study-form-data";
+import type { CaseStudyFormDraft } from "@case-study/mfe/lib/prototype/case-study-form-storage";
 import {
   formatDateAr,
   formatPoDisplay,
@@ -16,8 +16,8 @@ import {
   formatPropertyTypeLine,
   type PoIntakeRecord,
   type PoPropertyIntake,
-} from "@/lib/prototype/po-intake-data";
-import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
+} from "@case-study/mfe";
+import type { WorkflowTask } from "@case-study/mfe";
 
 export type CaseStudyReportQuestionRow = {
   question: string;

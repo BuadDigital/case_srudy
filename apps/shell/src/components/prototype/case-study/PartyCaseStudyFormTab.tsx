@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { CaseStudyForm } from "@/components/prototype/case-study/CaseStudyForm";
 import { partyIdForRoleId } from "@/lib/prototype/case-study-info-roles-data";
-import { findPropertyForTask } from "@/lib/prototype/my-task-row";
-import type { PartyTaskPageDef } from "@/lib/prototype/party-task-pages";
-import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
+import { findPropertyForTask } from "@case-study/mfe";
+import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
+import type { WorkflowTask } from "@case-study/mfe";
 import {
   usePoRecordQuery,
   useWorkflowTasksQuery,
@@ -76,10 +76,6 @@ export function PartyCaseStudyFormTab({
 
   return (
     <div className="party-cs-form-tab">
-      <div className="note note-info party-cs-form-hint">
-        تظهر جميع أسئلة نموذج الدراسة. يمكنك الإجابة فقط على الأسئلة المسندة لدورك
-        في «علاقة المستخدم بالمعلومة»؛ الباقي للعرض فقط.
-      </div>
       <CaseStudyForm
         taskId={childTask.id}
         task={parentTask}

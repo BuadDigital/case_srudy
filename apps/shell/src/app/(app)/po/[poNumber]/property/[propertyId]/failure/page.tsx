@@ -1,5 +1,5 @@
-import { PoPropertyFailureRoute } from "@/components/views/po-routes/PoPropertyFailureRoute";
-import { decodePoParam } from "@/lib/po-routes";
+import { PoPropertyFailureRoute } from "@case-study/mfe";
+import { decodePoParam } from "@case-study/mfe";
 export default async function PoPropertyFailurePage({
   params,
 }: {

@@ -1,4 +1,4 @@
-import type { CaseStudyFormAnswer } from "@/lib/prototype/case-study-form-data";
+import type { CaseStudyFormAnswer } from "@case-study/mfe/lib/prototype/case-study-form-data";
 import {
   CASE_STUDY_INFO_PARTIES,
   CASE_STUDY_INFO_ROLE_TYPES,
@@ -8,8 +8,8 @@ import {
 } from "@/lib/prototype/case-study-info-roles-data";
 import type { CaseStudyInfoRolesMatrix } from "@/lib/prototype/case-study-info-roles-storage";
 import { partyRoleOnQuestion } from "@/lib/prototype/case-study-info-roles-storage";
-import { loadPartyCaseStudyFormDraft } from "@/lib/prototype/case-study-form-storage";
-import type { WorkflowTask, WorkflowTaskKind } from "@/lib/prototype/tasks-storage";
+import { loadPartyCaseStudyFormDraft } from "@case-study/mfe/lib/prototype/case-study-form-storage";
+import type { WorkflowTask, WorkflowTaskKind } from "@case-study/mfe";
 
 export type PartyQuestionContribution = {
   partyId: CaseStudyInfoPartyId | null;

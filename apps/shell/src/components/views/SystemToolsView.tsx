@@ -2,9 +2,9 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { clearAllSystemData } from "@/lib/prototype/clear-all-po-data";
-import { prototypeKeys } from "@/lib/query/prototype-keys";
+import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import {
   PO_ROLE_RULES,
   SYSTEM_TOOLS_FILTER_FIELDS,

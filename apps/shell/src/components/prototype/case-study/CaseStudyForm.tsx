@@ -1,32 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
-import { RegField } from "@/components/prototype/registration/FormFields";
+import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
+import { RegField } from "@platform/app-shared/registration/FormFields";
 import {
   CASE_STUDY_FORM_STEPS,
   CASE_STUDY_SECTION_QUESTIONS,
   CASE_STUDY_TABLE_HEADERS,
   caseStudyAnswerKey,
-  caseStudyFormSummary,
   type CaseStudyFormAnswer,
   type CaseStudyQuestionSection,
-} from "@/lib/prototype/case-study-form-data";
+} from "@case-study/mfe/lib/prototype/case-study-form-data";
 import { CaseStudyApprovalSection } from "@/components/prototype/case-study/CaseStudyApprovalSection";
 import { CaseStudyReportActions } from "@/components/prototype/case-study/CaseStudyReportActions";
 import {
   CASE_STUDY_INFO_ROLE_TYPES,
+  partyById,
   type CaseStudyInfoPartyId,
 } from "@/lib/prototype/case-study-info-roles-data";
 import {
   collectPartyAnswersByQuestion,
-  countPartyContributions,
   type PartyQuestionContribution,
 } from "@/lib/prototype/case-study-party-answers";
 import {
   canPartyAnswerQuestion,
-  loadCaseStudyInfoRolesConfig,
+  CASE_STUDY_INFO_ROLES_CHANGED_EVENT,
+  emptyCaseStudyInfoRolesConfig,
+  isPartyQuestionVisible,
 } from "@/lib/prototype/case-study-info-roles-storage";
+import { useCaseStudyInfoRolesQuery } from "@/lib/query/prototype-queries";
 import {
   emptyCaseStudyFormDraft,
   loadCaseStudyFormDraft,
@@ -35,13 +37,25 @@ import {
   savePartyCaseStudyFormDraft,
   type CaseStudyFormDraft,
   type CaseStudyMeterType,
-} from "@/lib/prototype/case-study-form-storage";
+} from "@case-study/mfe/lib/prototype/case-study-form-storage";
 import { buildCaseStudyReportModel } from "@/lib/prototype/case-study-report-model";
-import type { PoIntakeRecord, PoPropertyIntake } from "@/lib/prototype/po-intake-data";
-import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
+import type { PoIntakeRecord, PoPropertyIntake } from "@case-study/mfe";
+import type { WorkflowTask } from "@case-study/mfe";
 import { useWorkflowTasksQuery } from "@/lib/query/prototype-queries";
+import { EVALUATOR_SUBMISSION_CHANGED_EVENT } from "@/lib/prototype/evaluator/evaluator-submission-storage";
+
+/** Stable fallback — avoid calling emptyCaseStudyInfoRolesConfig() per render (infinite effect loop). */
+const DEFAULT_INFO_ROLES_CONFIG = emptyCaseStudyInfoRolesConfig();
 
 const STEP_AR_NUMS = ["١", "٢", "٣", "٤", "٥"] as const;
+
+const FORM_STEP_SECTIONS: CaseStudyQuestionSection[] = [
+  "deed",
+  "survey",
+  "comp",
+  "occ",
+  "extra",
+];
 
 function migrateFormStep(storedStep: number): number {
   const max = CASE_STUDY_FORM_STEPS.length - 1;
@@ -59,11 +73,13 @@ type Props = {
     "assignmentSpecialist" | "receivedFromEnfathAt" | "promulgationDate"
   > | null;
   requestDateSeed?: string;
-  /** أخصائي — نموذج كامل؛ طرف — كل الأسئلة مع تعطيل غير المسندة */
+  /** أخصائي — نموذج كامل؛ طرف — الأسئلة المسندة في المصفوفة فقط */
   variant?: "specialist" | "party";
   partyId?: CaseStudyInfoPartyId;
   partyChildTaskId?: string;
   parentFormTaskId?: string;
+  /** مقيم — إجابات استدلالية للأخصائي وليست نهائية في نموذج الدراسة */
+  partyAdvisory?: boolean;
 };
 
 function RemarksBlock({
@@ -175,6 +191,7 @@ function QuestionTable({
   answers,
   onAnswer,
   canEditKey,
+  visibleKey,
   partyByKey,
   specialistReview,
   onToggleReview,
@@ -184,6 +201,7 @@ function QuestionTable({
   answers: Record<string, CaseStudyFormAnswer | null>;
   onAnswer: (key: string, value: CaseStudyFormAnswer | null) => void;
   canEditKey?: (key: string) => boolean;
+  visibleKey?: (key: string) => boolean;
   partyByKey?: Record<string, PartyQuestionContribution[]>;
   specialistReview?: Record<string, boolean>;
   onToggleReview?: (key: string, approved: boolean) => void;
@@ -191,6 +209,17 @@ function QuestionTable({
 }) {
   const questions = CASE_STUDY_SECTION_QUESTIONS[section];
   const headers = CASE_STUDY_TABLE_HEADERS[section];
+  const visibleRows = questions
+    .map((q, i) => ({ q, i, key: caseStudyAnswerKey(section, i) }))
+    .filter((row) => (visibleKey ? visibleKey(row.key) : true));
+
+  if (visibleRows.length === 0) {
+    return (
+      <p className="po-properties-hint">
+        لا توجد أسئلة مسندة لدورك في هذا القسم.
+      </p>
+    );
+  }
 
   return (
     <div className="cs-form-table-wrap">
@@ -203,8 +232,7 @@ function QuestionTable({
           </tr>
         </thead>
         <tbody>
-          {questions.map((q, i) => {
-            const key = caseStudyAnswerKey(section, i);
+          {visibleRows.map(({ q, key }) => {
             const val = answers[key] ?? null;
             const editable = canEditKey ? canEditKey(key) : true;
             const partyItems = partyByKey?.[key] ?? [];
@@ -212,16 +240,10 @@ function QuestionTable({
             const answerLabel = (a: CaseStudyFormAnswer) =>
               a === "A" ? headers.colA : headers.colB;
             return (
-              <tr
-                key={key}
-                className={editable ? undefined : "cs-form-row--readonly"}
-              >
+              <tr key={key}>
                 <td className="question" colSpan={1}>
                   <div className="cs-form-question-cell">
                     <span className="cs-form-question-text">{q}</span>
-                    {!editable ? (
-                      <span className="cs-form-readonly-tag">عرض فقط</span>
-                    ) : null}
                     <PartyContributions
                       items={partyItems}
                       answerLabel={answerLabel}
@@ -346,6 +368,87 @@ function FormProgressRings({
   );
 }
 
+function CaseStudyMatrixBanner({
+  viewerPartyId,
+  isParty,
+  partyAdvisory,
+  partyContribCount,
+  onRefreshParty,
+}: {
+  viewerPartyId: CaseStudyInfoPartyId;
+  isParty: boolean;
+  partyAdvisory?: boolean;
+  partyContribCount: number;
+  onRefreshParty: () => void;
+}) {
+  const party = partyById(viewerPartyId);
+  return (
+    <div
+      className={`note note-info cs-form-matrix-banner${partyAdvisory ? " cs-form-matrix-banner--advisory" : ""}`}
+    >
+      {isParty ? (
+        <p className="cs-form-matrix-banner-text">
+          {partyAdvisory ? (
+            <>
+              الأسئلة أدناه <strong>استدلالية للأخصائي</strong> — تظهر فقط
+              المسندة لـ<strong>{party.name}</strong> في «علاقة المستخدم
+              بالمعلومة» ولا تُعتبر إجابة نهائية في نموذج الدراسة.
+            </>
+          ) : (
+            <>
+              تظهر هنا فقط الأسئلة المسندة لـ<strong>{party.name}</strong> في
+              «علاقة المستخدم بالمعلومة». الأسئلة التي دورك فيها «لا دور» لا
+              تُعرض.
+            </>
+          )}
+        </p>
+      ) : (
+        <>
+          <p className="cs-form-matrix-banner-text">
+            <strong>مسؤولية الأخصائي:</strong> تظهر الأسئلة المسندة لك في
+            المصفوفة فقط. راجع إجابات الأطراف على الأسئلة الظاهرة، ثم حدّد
+            إجابتك الرسمية واعتمدها حيث وُجدت مساهمات.
+          </p>
+          {partyContribCount > 0 ? (
+            <button
+              type="button"
+              className="btn btn-sm cs-form-refresh-party"
+              onClick={onRefreshParty}
+            >
+              تحديث إجابات الأطراف ({partyContribCount})
+            </button>
+          ) : (
+            <span className="cs-form-party-empty-hint">
+              لا توجد إجابات من الأطراف بعد على الأسئلة الظاهرة.
+            </span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SpecialistClosingCards({
+  reportModel,
+}: {
+  reportModel: ReturnType<typeof buildCaseStudyReportModel>;
+}) {
+  return (
+    <>
+      <RegistrationFormCard title="الاعتماد والتوقيع">
+        <CaseStudyApprovalSection approval={reportModel.approval} />
+      </RegistrationFormCard>
+      <RegistrationFormCard title="التقرير النهائي">
+        <p className="cs-form-report-hint">
+          يُعبّأ التقرير تلقائياً من إجابات النموذج وبيانات النظام (الصك، أمر
+          العمل، التاريخ، المعتمد).
+        </p>
+        <CaseStudyReportActions model={reportModel} />
+      </RegistrationFormCard>
+    </>
+  );
+}
+
 function buildSeed(
   task: WorkflowTask,
   property: PoPropertyIntake | null,
@@ -371,8 +474,10 @@ export function CaseStudyForm({
   partyId,
   partyChildTaskId,
   parentFormTaskId,
+  partyAdvisory = false,
 }: Props) {
   const isParty = variant === "party" && partyId && partyChildTaskId;
+  const viewerPartyId: CaseStudyInfoPartyId = isParty ? partyId! : "specA";
   const storageTaskId = isParty ? partyChildTaskId : taskId;
   const referenceTaskId = isParty
     ? (parentFormTaskId ?? task.id)
@@ -383,7 +488,10 @@ export function CaseStudyForm({
     [task, property, requestDateSeed],
   );
 
-  const [infoRoles] = useState(() => loadCaseStudyInfoRolesConfig());
+  const { data: infoRolesData, isFetched: infoRolesReady } =
+    useCaseStudyInfoRolesQuery();
+  const infoRoles = infoRolesData ?? DEFAULT_INFO_ROLES_CONFIG;
+  const infoRolesMatrix = infoRoles.matrix;
 
   const [draft, setDraft] = useState<CaseStudyFormDraft>(() =>
     emptyCaseStudyFormDraft(storageTaskId, seed),
@@ -397,14 +505,12 @@ export function CaseStudyForm({
   >({});
 
   useEffect(() => {
-    if (isParty || !hydrated) {
-      setPartyAnswersByKey({});
-      return;
-    }
+    if (isParty || !hydrated || !infoRolesReady) return;
+
     let cancelled = false;
     void collectPartyAnswersByQuestion(
       taskId,
-      infoRoles.matrix,
+      infoRolesMatrix,
       workflowTasks ?? [],
     ).then((result) => {
       if (!cancelled) setPartyAnswersByKey(result);
@@ -415,25 +521,38 @@ export function CaseStudyForm({
   }, [
     isParty,
     taskId,
-    infoRoles.matrix,
+    infoRolesMatrix,
     partyRevision,
     hydrated,
+    infoRolesReady,
     workflowTasks,
   ]);
 
-  const partyContribCount = useMemo(
-    () => countPartyContributions(partyAnswersByKey),
-    [partyAnswersByKey],
+  const isQuestionVisible = useCallback(
+    (key: string) =>
+      isPartyQuestionVisible(infoRolesMatrix, key, viewerPartyId),
+    [viewerPartyId, infoRolesMatrix],
   );
+
+  const partyContribCount = useMemo(() => {
+    if (isParty) return 0;
+    let n = 0;
+    for (const [key, items] of Object.entries(partyAnswersByKey)) {
+      if (isQuestionVisible(key)) n += items.length;
+    }
+    return n;
+  }, [isParty, partyAnswersByKey, isQuestionVisible]);
 
   useEffect(() => {
     if (isParty) return;
     const refresh = () => setPartyRevision((n) => n + 1);
     window.addEventListener("focus", refresh);
-    window.addEventListener("storage", refresh);
+    window.addEventListener(CASE_STUDY_INFO_ROLES_CHANGED_EVENT, refresh);
+    window.addEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, refresh);
     return () => {
       window.removeEventListener("focus", refresh);
-      window.removeEventListener("storage", refresh);
+      window.removeEventListener(CASE_STUDY_INFO_ROLES_CHANGED_EVENT, refresh);
+      window.removeEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, refresh);
     };
   }, [isParty]);
 
@@ -455,21 +574,37 @@ export function CaseStudyForm({
   );
 
   const canEditKey = useCallback(
-    (key: string) => {
-      if (!isParty || !partyId) return true;
-      return canPartyAnswerQuestion(infoRoles.matrix, key, partyId);
-    },
-    [isParty, partyId, infoRoles.matrix],
+    (key: string) =>
+      canPartyAnswerQuestion(infoRolesMatrix, key, viewerPartyId),
+    [viewerPartyId, infoRolesMatrix],
   );
 
-  const questionTableProps = isParty
-    ? { canEditKey }
-    : {
-        partyByKey: partyAnswersByKey,
-        specialistReview: draft.specialistReviewApproved ?? {},
-        onToggleReview: toggleSpecialistReview,
-        showSpecialistReview: true,
-      };
+  const sectionHasVisibleQuestions = useCallback(
+    (section: CaseStudyQuestionSection) =>
+      CASE_STUDY_SECTION_QUESTIONS[section].some((_, i) =>
+        isQuestionVisible(caseStudyAnswerKey(section, i)),
+      ),
+    [isQuestionVisible],
+  );
+
+  const visibleStepIndices = useMemo(() => {
+    return FORM_STEP_SECTIONS.map((section, i) =>
+      sectionHasVisibleQuestions(section) ? i : -1,
+    ).filter((i) => i >= 0);
+  }, [sectionHasVisibleQuestions]);
+
+  const questionTableProps = {
+    canEditKey,
+    visibleKey: isQuestionVisible,
+    ...(isParty
+      ? {}
+      : {
+          partyByKey: partyAnswersByKey,
+          specialistReview: draft.specialistReviewApproved ?? {},
+          onToggleReview: toggleSpecialistReview,
+          showSpecialistReview: true,
+        }),
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -544,10 +679,22 @@ export function CaseStudyForm({
     [canEditKey, isParty, partyChildTaskId],
   );
 
-  const summary = useMemo(
-    () => caseStudyFormSummary(draft.answers),
-    [draft.answers],
-  );
+  const summary = useMemo(() => {
+    let total = 0;
+    let answered = 0;
+    for (const section of FORM_STEP_SECTIONS) {
+      CASE_STUDY_SECTION_QUESTIONS[section].forEach((_, i) => {
+        const key = caseStudyAnswerKey(section, i);
+        if (!isQuestionVisible(key)) return;
+        total += 1;
+        const v = draft.answers[key];
+        if (v === "A" || v === "B") answered += 1;
+      });
+    }
+    const pending = total - answered;
+    const pct = total > 0 ? Math.round((answered / total) * 100) : 0;
+    return { total, answered, pending, pct };
+  }, [draft.answers, isQuestionVisible]);
 
   const reportModel = useMemo(
     () => buildCaseStudyReportModel(draft, property, task, poRecord),
@@ -561,6 +708,26 @@ export function CaseStudyForm({
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
+
+  const goAdjacentStep = (direction: -1 | 1) => {
+    const pool =
+      visibleStepIndices.length > 0
+        ? visibleStepIndices
+        : FORM_STEP_SECTIONS.map((_, i) => i);
+    const pos = pool.indexOf(draft.currentStep);
+    const nextPos = pos + direction;
+    if (nextPos >= 0 && nextPos < pool.length) {
+      goStep(pool[nextPos]);
+    }
+  };
+
+  useEffect(() => {
+    if (!hydrated || visibleStepIndices.length === 0) return;
+    if (!visibleStepIndices.includes(draft.currentStep)) {
+      goStep(visibleStepIndices[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snap step once when visible set changes
+  }, [hydrated, visibleStepIndices, draft.currentStep]);
 
   const patch = <K extends keyof CaseStudyFormDraft>(
     key: K,
@@ -599,209 +766,311 @@ export function CaseStudyForm({
     window.setTimeout(() => setSaveNotice(null), 5000);
   };
 
-  if (!hydrated) {
+  if (!hydrated || !infoRolesReady) {
     return <p className="po-properties-loading">جاري تحميل النموذج…</p>;
   }
 
+  if (visibleStepIndices.length === 0) {
+    const party = partyById(viewerPartyId);
+    return (
+      <div className="note note-warn cs-form-matrix-empty">
+        لا توجد أسئلة مسندة لـ<strong>{party.name}</strong> في «علاقة المستخدم
+        بالمعلومة». راجع الإعدادات في الشريط الجانبي.
+      </div>
+    );
+  }
+
   const step = draft.currentStep;
+  const navSteps = visibleStepIndices;
+  const isFirstVisibleStep = navSteps[0] === step;
+  const isLastVisibleStep = navSteps[navSteps.length - 1] === step;
+  const showStepFooterActions = !partyAdvisory;
+  const sectionCardTitle = (label: string) =>
+    partyAdvisory ? undefined : label;
+
+  const formFooterActions = (
+    <div className="cs-form-actions-end">
+      <button type="button" className="btn" onClick={saveDraft}>
+        حفظ مسودة
+      </button>
+      {isParty ? (
+        <button type="button" className="btn btn-primary" onClick={submitForm}>
+          حفظ إجاباتي
+        </button>
+      ) : (
+        <button type="button" className="btn btn-success" onClick={submitForm}>
+          رفع النموذج للنظام
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="cs-form">
-      <div className="cs-form-steps-row">
-        <nav className="cs-form-steps" aria-label="خطوات نموذج الدراسة">
-          {CASE_STUDY_FORM_STEPS.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              className={`cs-form-step${step === i ? " active" : ""}${i < step ? " done" : ""}`}
-              onClick={() => goStep(i)}
-            >
-              <span className="cs-form-step-num">{STEP_AR_NUMS[i]}</span>
-              {s.label}
-            </button>
-          ))}
-        </nav>
-        <FormProgressRings summary={summary} />
-      </div>
+    <div className={`cs-form${partyAdvisory ? " cs-form--party-advisory" : ""}`}>
+      {!partyAdvisory ? (
+        <div className="cs-form-steps-row">
+          <nav className="cs-form-steps" aria-label="خطوات نموذج الدراسة">
+            {navSteps.map((i) => {
+              const s = CASE_STUDY_FORM_STEPS[i];
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`cs-form-step${step === i ? " active" : ""}${i < step ? " done" : ""}`}
+                  onClick={() => goStep(i)}
+                >
+                  <span className="cs-form-step-num">{STEP_AR_NUMS[i]}</span>
+                  {s.label}
+                </button>
+              );
+            })}
+          </nav>
+          <FormProgressRings summary={summary} />
+        </div>
+      ) : null}
 
       {saveNotice ? (
         <div className="note note-success cs-form-notice">{saveNotice}</div>
       ) : null}
 
-      {!isParty ? (
-        <div className="note note-info cs-form-specialist-banner">
-          <strong>مسؤولية الأخصائي:</strong> جميع إجابات الأطراف تظهر أدناه
-          للمراجعة. حدّد إجابتك الرسمية في الأعمدة، ثم اعتمد بعد المراجعة حيث
-          وُجدت مساهمات. التقرير النهائي يعتمد على إجاباتك المعتمدة.
-          {partyContribCount > 0 ? (
-            <button
-              type="button"
-              className="btn btn-sm cs-form-refresh-party"
-              onClick={() => setPartyRevision((n) => n + 1)}
-            >
-              تحديث إجابات الأطراف ({partyContribCount})
-            </button>
-          ) : (
-            <span className="cs-form-party-empty-hint">
-              {" "}
-              — لا توجد إجابات من الأطراف بعد.
-            </span>
-          )}
-        </div>
-      ) : null}
+      <CaseStudyMatrixBanner
+        viewerPartyId={viewerPartyId}
+        isParty={!!isParty}
+        partyAdvisory={partyAdvisory}
+        partyContribCount={partyContribCount}
+        onRefreshParty={() => setPartyRevision((n) => n + 1)}
+      />
 
-      {step === 0 ? (
+      {step === 0 && sectionHasVisibleQuestions("deed") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title="بيانات الصك والعقار">
+          <RegistrationFormCard title={sectionCardTitle("بيانات الصك والعقار")}>
             <QuestionTable
               section="deed"
               answers={draft.answers}
               onAnswer={setAnswer}
               {...questionTableProps}
             />
-            <RemarksBlock
-              label="في حال وجود اختلاف في البيانات أعلاه يتم التوضيح في الملاحظات ادناه"
-              value={draft.deedRemarks}
-              onChange={(v) => patch("deedRemarks", v)}
-            />
+            {!isParty ? (
+              <RemarksBlock
+                label="في حال وجود اختلاف في البيانات أعلاه يتم التوضيح في الملاحظات ادناه"
+                value={draft.deedRemarks}
+                onChange={(v) => patch("deedRemarks", v)}
+              />
+            ) : null}
           </RegistrationFormCard>
+          {!isParty && isLastVisibleStep ? (
+            <SpecialistClosingCards reportModel={reportModel} />
+          ) : null}
           <div className="cs-form-actions">
             <span />
-            <button type="button" className="btn btn-primary" onClick={() => goStep(1)}>
-              التالي — الرفع المساحي ←
-            </button>
+            {isLastVisibleStep ? (
+              showStepFooterActions ? formFooterActions : null
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => goAdjacentStep(1)}
+              >
+                التالي — الرفع المساحي ←
+              </button>
+            )}
           </div>
         </section>
       ) : null}
 
-      {step === 1 ? (
+      {step === 1 && sectionHasVisibleQuestions("survey") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title="الرفع المساحي والطبيعة">
+          <RegistrationFormCard title={sectionCardTitle("الرفع المساحي والطبيعة")}>
             <QuestionTable
               section="survey"
               answers={draft.answers}
               onAnswer={setAnswer}
               {...questionTableProps}
             />
-            <RemarksBlock
-              label="في حال وجود اختلاف في البيانات أعلاه يتم التوضيح في الملاحظات ادناه"
-              value={draft.surveyRemarks}
-              onChange={(v) => patch("surveyRemarks", v)}
-            />
+            {!isParty ? (
+              <RemarksBlock
+                label="في حال وجود اختلاف في البيانات أعلاه يتم التوضيح في الملاحظات ادناه"
+                value={draft.surveyRemarks}
+                onChange={(v) => patch("surveyRemarks", v)}
+              />
+            ) : null}
           </RegistrationFormCard>
+          {!isParty && isLastVisibleStep ? (
+            <SpecialistClosingCards reportModel={reportModel} />
+          ) : null}
           <div className="cs-form-actions">
-            <button type="button" className="btn btn-outline" onClick={() => goStep(0)}>
-              → السابق
-            </button>
-            <button type="button" className="btn btn-primary" onClick={() => goStep(2)}>
-              التالي — مكونات العقار ←
-            </button>
+            {!isFirstVisibleStep ? (
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => goAdjacentStep(-1)}
+              >
+                → السابق
+              </button>
+            ) : (
+              <span />
+            )}
+            {isLastVisibleStep ? (
+              showStepFooterActions ? formFooterActions : null
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => goAdjacentStep(1)}
+              >
+                التالي — مكونات العقار ←
+              </button>
+            )}
           </div>
         </section>
       ) : null}
 
-      {step === 2 ? (
+      {step === 2 && sectionHasVisibleQuestions("comp") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title="مكونات العقار">
+          <RegistrationFormCard title={sectionCardTitle("مكونات العقار")}>
             <QuestionTable
               section="comp"
               answers={draft.answers}
               onAnswer={setAnswer}
               {...questionTableProps}
             />
-            <div className="cs-form-meter-inline">
-              <span className="cs-form-meter-label">عداد الكهرباء رقم (</span>
-              <input
-                className="cs-form-meter-num-inline"
-                placeholder="رقم"
-                aria-label="رقم العداد"
-                value={draft.meterNumber}
-                onChange={(e) => patch("meterNumber", e.target.value)}
-              />
-              <span className="cs-form-meter-label">)</span>
-              <span className="cs-form-meter-options">
-                {(
-                  [
-                    ["electronic", "إلكتروني"],
-                    ["analog", "مؤرشف"],
-                    ["none", "لا يوجد"],
-                  ] as const
-                ).map(([val, label]) => (
-                  <label key={val} className="cs-form-radio">
-                    <input
-                      type="radio"
-                      name={`meter-${taskId}`}
-                      checked={draft.meterType === val}
-                      onChange={() => {
-                        patch("meterType", val as CaseStudyMeterType);
-                        if (val === "none") patch("meterNumber", "");
-                      }}
-                    />
-                    {label}
-                  </label>
-                ))}
-              </span>
-            </div>
-            <RemarksBlock
-              label="ملاحظات"
-              value={draft.componentsRemarks}
-              onChange={(v) => patch("componentsRemarks", v)}
-              rows={2}
-            />
+            {!isParty ? (
+              <>
+                <div className="cs-form-meter-inline">
+                  <span className="cs-form-meter-label">عداد الكهرباء رقم (</span>
+                  <input
+                    className="cs-form-meter-num-inline"
+                    placeholder="رقم"
+                    aria-label="رقم العداد"
+                    value={draft.meterNumber}
+                    onChange={(e) => patch("meterNumber", e.target.value)}
+                  />
+                  <span className="cs-form-meter-label">)</span>
+                  <span className="cs-form-meter-options">
+                    {(
+                      [
+                        ["electronic", "إلكتروني"],
+                        ["analog", "مؤرشف"],
+                        ["none", "لا يوجد"],
+                      ] as const
+                    ).map(([val, label]) => (
+                      <label key={val} className="cs-form-radio">
+                        <input
+                          type="radio"
+                          name={`meter-${taskId}`}
+                          checked={draft.meterType === val}
+                          onChange={() => {
+                            patch("meterType", val as CaseStudyMeterType);
+                            if (val === "none") patch("meterNumber", "");
+                          }}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </span>
+                </div>
+                <RemarksBlock
+                  label="ملاحظات"
+                  value={draft.componentsRemarks}
+                  onChange={(v) => patch("componentsRemarks", v)}
+                  rows={2}
+                />
+              </>
+            ) : null}
           </RegistrationFormCard>
+          {!isParty && isLastVisibleStep ? (
+            <SpecialistClosingCards reportModel={reportModel} />
+          ) : null}
           <div className="cs-form-actions">
-            <button type="button" className="btn btn-outline" onClick={() => goStep(1)}>
-              → السابق
-            </button>
-            <button type="button" className="btn btn-primary" onClick={() => goStep(3)}>
-              التالي — الإشغال والإيجار ←
-            </button>
+            {!isFirstVisibleStep ? (
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => goAdjacentStep(-1)}
+              >
+                → السابق
+              </button>
+            ) : (
+              <span />
+            )}
+            {isLastVisibleStep ? (
+              showStepFooterActions ? formFooterActions : null
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => goAdjacentStep(1)}
+              >
+                التالي — الإشغال والإيجار ←
+              </button>
+            )}
           </div>
         </section>
       ) : null}
 
-      {step === 3 ? (
+      {step === 3 && sectionHasVisibleQuestions("occ") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title="الإشغال والإيجار">
+          <RegistrationFormCard title={sectionCardTitle("الإشغال والإيجار")}>
             <QuestionTable
               section="occ"
               answers={draft.answers}
               onAnswer={setAnswer}
               {...questionTableProps}
             />
-            <div className="cs-form-meter">
-              <RegField
-                id="cs-hoa"
-                label="قيمة اشتراك اتحاد الملاك"
-                type="number"
-                placeholder="القيمة"
-                value={draft.hoaFee}
-                onChange={(v) => patch("hoaFee", v)}
-                className="cs-form-hoa-field"
-              />
-              <span className="cs-form-hoa-unit">ريال سعودي</span>
-              <RemarksBlock
-                label="ملاحظات"
-                value={draft.occupancyRemarks}
-                onChange={(v) => patch("occupancyRemarks", v)}
-                rows={2}
-              />
-            </div>
+            {!isParty ? (
+              <div className="cs-form-meter">
+                <RegField
+                  id="cs-hoa"
+                  label="قيمة اشتراك اتحاد الملاك"
+                  type="number"
+                  placeholder="القيمة"
+                  value={draft.hoaFee}
+                  onChange={(v) => patch("hoaFee", v)}
+                  className="cs-form-hoa-field"
+                />
+                <span className="cs-form-hoa-unit">ريال سعودي</span>
+                <RemarksBlock
+                  label="ملاحظات"
+                  value={draft.occupancyRemarks}
+                  onChange={(v) => patch("occupancyRemarks", v)}
+                  rows={2}
+                />
+              </div>
+            ) : null}
           </RegistrationFormCard>
+          {!isParty && isLastVisibleStep ? (
+            <SpecialistClosingCards reportModel={reportModel} />
+          ) : null}
           <div className="cs-form-actions">
-            <button type="button" className="btn btn-outline" onClick={() => goStep(2)}>
-              → السابق
-            </button>
-            <button type="button" className="btn btn-primary" onClick={() => goStep(4)}>
-              التالي — ملاحظات إضافية ←
-            </button>
+            {!isFirstVisibleStep ? (
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => goAdjacentStep(-1)}
+              >
+                → السابق
+              </button>
+            ) : (
+              <span />
+            )}
+            {isLastVisibleStep ? (
+              showStepFooterActions ? formFooterActions : null
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => goAdjacentStep(1)}
+              >
+                التالي — ملاحظات إضافية ←
+              </button>
+            )}
           </div>
         </section>
       ) : null}
 
-      {step === 4 ? (
+      {step === 4 && sectionHasVisibleQuestions("extra") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title="ملاحظات إضافية">
+          <RegistrationFormCard title={sectionCardTitle("ملاحظات إضافية")}>
             <QuestionTable
               section="extra"
               answers={draft.answers}
@@ -810,48 +1079,22 @@ export function CaseStudyForm({
             />
           </RegistrationFormCard>
 
-          {!isParty ? (
-            <>
-              <RegistrationFormCard title="الاعتماد والتوقيع">
-                <CaseStudyApprovalSection approval={reportModel.approval} />
-              </RegistrationFormCard>
-
-              <RegistrationFormCard title="التقرير النهائي">
-                <p className="cs-form-report-hint">
-                  يُعبّأ التقرير تلقائياً من إجابات النموذج وبيانات النظام (الصك، أمر
-                  العمل، التاريخ، المعتمد).
-                </p>
-                <CaseStudyReportActions model={reportModel} />
-              </RegistrationFormCard>
-            </>
+          {!isParty && isLastVisibleStep ? (
+            <SpecialistClosingCards reportModel={reportModel} />
           ) : null}
-
           <div className="cs-form-actions">
-            <button type="button" className="btn btn-outline" onClick={() => goStep(3)}>
-              → السابق
-            </button>
-            <div className="cs-form-actions-end">
-              <button type="button" className="btn" onClick={saveDraft}>
-                حفظ مسودة
+            {!isFirstVisibleStep ? (
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => goAdjacentStep(-1)}
+              >
+                → السابق
               </button>
-              {!isParty ? (
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={submitForm}
-                >
-                  رفع النموذج للنظام
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={submitForm}
-                >
-                  حفظ إجاباتي
-                </button>
-              )}
-            </div>
+            ) : (
+              <span />
+            )}
+            {isLastVisibleStep ? (showStepFooterActions ? formFooterActions : null) : null}
           </div>
         </section>
       ) : null}

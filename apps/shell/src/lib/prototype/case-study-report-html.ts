@@ -1,7 +1,7 @@
 import {
   CASE_STUDY_SIGNATURE_IMAGE,
   CASE_STUDY_STAMP_IMAGE,
-} from "@/lib/prototype/case-study-form-data";
+} from "@case-study/mfe/lib/prototype/case-study-form-data";
 import type { CaseStudyReportModel } from "@/lib/prototype/case-study-report-model";
 
 export type CaseStudyReportPrintOptions = {

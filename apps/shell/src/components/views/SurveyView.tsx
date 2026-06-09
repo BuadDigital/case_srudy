@@ -1,8 +1,8 @@
 "use client";
 
-import { usePrototype } from "@/contexts/PrototypeContext";
-import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
-import { MOCK_SURVEY_OFFICES } from "@/lib/prototype/constants";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
+import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
+import { MOCK_SURVEY_OFFICES } from "@platform/app-shared/prototype/constants";
 
 export function SurveyView() {
   const { role } = usePrototype();

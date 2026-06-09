@@ -1,4 +1,4 @@
-import { decodePoParam, PO_PROPERTY_SEGMENT } from "@/lib/po-routes";
+import { decodePoParam, PO_PROPERTY_SEGMENT } from "@case-study/mfe";
 
 export type PoChrome = {
   breadcrumb: string;

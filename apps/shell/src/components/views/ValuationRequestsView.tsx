@@ -1,9 +1,9 @@
 "use client";
 
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
-import { MOCK_VR, type RoleId } from "@/lib/prototype/constants";
-import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
+import { MOCK_VR, type RoleId } from "@platform/app-shared/prototype/constants";
+import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 
 function isValuationMgr(role: RoleId) {
   return (

@@ -1,0 +1,143 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { PO_INTAKE_FLOW } from "../../lib/prototype/po-intake-data";
+import { StepIndicator } from "@platform/app-shared/registration/StepIndicator";
+import {
+  REG_BACK,
+  REG_PREV,
+} from "@platform/app-shared/registration/registration-labels";
+import { UNSAVED_CONFIRM_MSG } from "@platform/app-shared/registration/registration-utils";
+
+export function PoIntakeWizardShell({
+  steps,
+  step,
+  hint,
+  saving,
+  success,
+  showPrev,
+  nextLabel,
+  isDirty,
+  onBack,
+  onPrev,
+  onNext,
+  footerExtra,
+  flowTitle,
+  flowDept,
+  hideWizardChrome,
+  children,
+}: {
+  steps: readonly string[];
+  step: number;
+  hint: string;
+  saving?: boolean;
+  success?: boolean;
+  showPrev: boolean;
+  nextLabel: string;
+  isDirty?: boolean;
+  onBack: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  footerExtra?: ReactNode;
+  /** Override default PO intake title (e.g. property registration). */
+  flowTitle?: string;
+  flowDept?: string;
+  /** PO receive flow: form only — no dept/title/step chrome. */
+  hideWizardChrome?: boolean;
+  children: ReactNode;
+}) {
+  const meta = PO_INTAKE_FLOW;
+  const title = flowTitle ?? meta.title;
+  const dept = flowDept ?? meta.dept;
+  const inWizard = !success && step <= steps.length;
+  const displayStep = Math.min(step, steps.length);
+
+  function handleBack() {
+    if (isDirty && !window.confirm(UNSAVED_CONFIRM_MSG)) return;
+    onBack();
+  }
+
+  return (
+    <div
+      className={`reg-root ${meta.flowClass}${inWizard ? " reg-root--compact" : ""}`}
+    >
+      <div className="reg-layout">
+        <div
+          className={`reg-main${inWizard ? " reg-main--wizard" : ""}${success ? " reg-main--success" : ""}`}
+        >
+          {!inWizard ? (
+            <header className="reg-topbar">
+              <div className="reg-topbar-main">
+                <button type="button" className="btn btn-sm" onClick={handleBack}>
+                  {REG_BACK}
+                </button>
+                <div className="reg-topbar-titles">
+                  <div className="reg-tb-flow">{title}</div>
+                </div>
+              </div>
+              {success ? (
+                <span className="reg-step-badge done">مكتمل</span>
+              ) : null}
+            </header>
+          ) : null}
+
+          {inWizard ? (
+            <div className="reg-wizard-scroll">
+              <div className="reg-wizard-panel">
+                <header className="reg-topbar reg-topbar--panel">
+                  <div className="reg-topbar-main">
+                    <button type="button" className="btn btn-sm" onClick={handleBack}>
+                      {REG_BACK}
+                    </button>
+                    {hideWizardChrome ? null : (
+                      <div className="reg-topbar-titles">
+                        <div className="reg-tb-flow">{dept}</div>
+                        <div className="reg-tb-title">{title}</div>
+                      </div>
+                    )}
+                  </div>
+                  {hideWizardChrome ? null : (
+                    <span className="reg-step-badge">
+                      الخطوة {displayStep} من {steps.length}
+                    </span>
+                  )}
+                </header>
+                {hideWizardChrome ? null : (
+                  <StepIndicator steps={[...steps]} current={step} />
+                )}
+                {!hideWizardChrome && hint ? (
+                  <p className="reg-step-hint">{hint}</p>
+                ) : null}
+                <div className="reg-body reg-body--panel">{children}</div>
+                <footer className="reg-foot reg-foot--panel">
+                  {footerExtra}
+                  <div className="reg-foot-btns">
+                    {showPrev ? (
+                      <button type="button" className="btn" onClick={onPrev}>
+                        {REG_PREV}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      disabled={saving}
+                      onClick={onNext}
+                    >
+                      {saving ? "جارٍ الحفظ..." : nextLabel}
+                    </button>
+                  </div>
+                </footer>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`reg-body${success ? " reg-body--success" : ""}`}
+            >
+              {children}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

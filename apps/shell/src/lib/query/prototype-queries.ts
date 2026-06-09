@@ -7,42 +7,34 @@ import {
 } from "@tanstack/react-query";
 import type { PageId } from "@platform/types";
 import {
-  getPoRecord,
   loadPendingBourseItems,
   loadPoListRows,
-  loadPoRecords,
   loadPropertyListItems,
-} from "@/lib/prototype/po-intake-storage";
+} from "@case-study/mfe";
 import { loadCourtsCatalog } from "@/lib/prototype/courts-storage";
-import { loadFailures } from "@/lib/prototype/failures-storage";
+import { loadFailures } from "@case-study/mfe/lib/prototype/failures-storage";
 import {
+  CASE_STUDY_INFO_ROLES_CHANGED_EVENT,
   loadCaseStudyInfoRolesConfig,
   type CaseStudyInfoRolesConfig,
 } from "@/lib/prototype/case-study-info-roles-storage";
 import {
+  loadPoRecordsWithTaskSync,
   loadWorkflowTasks,
-  syncTasksFromPoRecords,
   TASKS_CHANGED_EVENT,
   TASKS_STORAGE_KEY,
-} from "@/lib/prototype/tasks-storage";
+  WORK_ORDERS_CHANGED_EVENT,
+} from "@case-study/mfe/query/case-study-queries";
 import { fetchOrganization } from "@/lib/users-org-api";
 import { fetchStaffUsers } from "@/lib/users-api";
-import { WORK_ORDERS_CHANGED_EVENT } from "@/lib/work-orders-api-config";
-import { prototypeKeys } from "@/lib/query/prototype-keys";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { useEffect } from "react";
 
 const STALE_MS = 60_000;
 const GC_MS = 10 * 60_000;
 
 const queryDefaults = { staleTime: STALE_MS, gcTime: GC_MS };
-
-/** Loads POs from API and keeps workflow task slots in sync. */
-export async function loadPoRecordsWithTaskSync() {
-  const records = await loadPoRecords();
-  await syncTasksFromPoRecords();
-  return records;
-}
 
 function prefetchOpts(queryClient: QueryClient) {
   return { staleTime: STALE_MS };
@@ -192,19 +184,6 @@ export function prefetchCorePrototypeData(queryClient: QueryClient): void {
   });
 }
 
-export function prefetchPoRecord(
-  queryClient: QueryClient,
-  poNumber: string,
-): void {
-  const n = poNumber.trim();
-  if (!n) return;
-  void queryClient.prefetchQuery({
-    queryKey: prototypeKeys.poRecord(n),
-    queryFn: () => getPoRecord(n),
-    ...prefetchOpts(queryClient),
-  });
-}
-
 export function usePrototypeDataSync(): void {
   const queryClient = useQueryClient();
 
@@ -246,10 +225,11 @@ export function usePrototypeDataSync(): void {
     window.addEventListener(WORK_ORDERS_CHANGED_EVENT, invalidateWorkOrders);
     window.addEventListener(TASKS_CHANGED_EVENT, invalidateTasks);
     window.addEventListener("focus", onFocus);
+    const onInfoRolesChanged = () => invalidateInfoRoles();
+
     const onStorage = (e: StorageEvent) => {
       if (e.key === "evalFailureRecords") invalidateFailures();
       if (e.key === TASKS_STORAGE_KEY) invalidateTasks();
-      if (e.key === "evalCaseStudyInfoRoles") invalidateInfoRoles();
       if (
         e.key?.startsWith("evalPo") ||
         e.key === "evalPoIntakeDraft"
@@ -258,72 +238,35 @@ export function usePrototypeDataSync(): void {
       }
     };
     window.addEventListener("storage", onStorage);
+    window.addEventListener(CASE_STUDY_INFO_ROLES_CHANGED_EVENT, onInfoRolesChanged);
 
     return () => {
       window.removeEventListener(WORK_ORDERS_CHANGED_EVENT, invalidateWorkOrders);
       window.removeEventListener(TASKS_CHANGED_EVENT, invalidateTasks);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener(
+        CASE_STUDY_INFO_ROLES_CHANGED_EVENT,
+        onInfoRolesChanged,
+      );
     };
   }, [queryClient]);
 }
 
-export function useWorkflowTasksQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.workflowTasks(),
-    queryFn: loadWorkflowTasks,
-    ...queryDefaults,
-  });
-}
-
-export function usePoRecordsQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.poRecords(),
-    queryFn: loadPoRecordsWithTaskSync,
-    ...queryDefaults,
-  });
-}
-
-export function usePendingBourseItemsQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.pendingBourseItems(),
-    queryFn: loadPendingBourseItems,
-    ...queryDefaults,
-  });
-}
-
-export function usePoListRowsQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.poListRows(),
-    queryFn: loadPoListRows,
-    ...queryDefaults,
-  });
-}
-
-export function usePropertyListItemsQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.propertyListItems(),
-    queryFn: loadPropertyListItems,
-    ...queryDefaults,
-  });
-}
-
-export function usePoRecordQuery(poNumber: string | null) {
-  return useQuery({
-    queryKey: prototypeKeys.poRecord(poNumber ?? ""),
-    queryFn: () => getPoRecord(poNumber!),
-    enabled: Boolean(poNumber),
-    ...queryDefaults,
-  });
-}
-
-export function useFailuresQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.failures(),
-    queryFn: loadFailures,
-    ...queryDefaults,
-  });
-}
+export {
+  loadPoRecordsWithTaskSync,
+  prefetchPoRecord,
+  TASKS_CHANGED_EVENT,
+  TASKS_STORAGE_KEY,
+  WORK_ORDERS_CHANGED_EVENT,
+  useFailuresQuery,
+  usePendingBourseItemsQuery,
+  usePoListRowsQuery,
+  usePoRecordQuery,
+  usePoRecordsQuery,
+  usePropertyListItemsQuery,
+  useWorkflowTasksQuery,
+} from "@case-study/mfe/query/case-study-queries";
 
 export function useCourtsCatalogQuery() {
   return useQuery({

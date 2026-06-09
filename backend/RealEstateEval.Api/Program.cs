@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,7 +7,6 @@ using RealEstateEval.Infrastructure;
 using RealEstateEval.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
@@ -101,7 +99,6 @@ if (!app.Environment.IsDevelopment())
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())

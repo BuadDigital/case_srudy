@@ -26,9 +26,9 @@ Different **roles** (مدير الإدارة, مشرف دراسة الحالة, 
 
 ```text
 apps/
-  shell/          ← the only app that runs today (Next.js 16)
+  shell/              ← host: login, layout, nav, not-ready pages (Next.js 16)
+  mfe-case-study/     ← logical MFE package (@case-study/mfe) — API-ready flows
   (future)
-  mfe-case-study/
   mfe-valuation/
   mfe-operations/
   mfe-financial/
@@ -48,10 +48,12 @@ Shared UI and auth live in **`packages/`** at the repo root (not inside `apps/`)
 
 | Package | Role |
 |---------|------|
+| `@platform/app-shared` | PrototypeContext, registration flows, shared nav/constants |
 | `@platform/design-system` | Styles (`prototype.css`), badges, shared look-and-feel |
 | `@platform/auth-client` | Session storage, auth gate |
 | `@platform/api-client` | API base URL (placeholder for real services) |
-| `@platform/types` | `PageId`, `RoleId`, navigation types |
+| `@platform/types` | `PageId`, `RoleId`, navigation types, `CASE_STUDY_READY_NAV` |
+| `@case-study/mfe` | API-ready PO + active-transaction views (imported by shell routes) |
 
 Run the shell from the **repository root**:
 
@@ -66,13 +68,17 @@ npm run dev
 
 ## Microfrontend plan (not finished yet)
 
-**Done:** phase **F0** — monorepo structure, one deploy, everything in `shell`.
+**Done:** phase **F0** — monorepo structure, one deploy.  
+**Done:** phase **F3** — `@case-study/mfe` owns the **API-ready** case-study path (PO + المعاملات النشطة ready tabs). Shared host UI lives in `@platform/app-shared`. Shell still hosts routes and layout (single deploy). **Module Federation (F5)** deferred until you need independent deploys.
 
-**Still to do:** split by **bounded context** so teams can ship independently:
+| Package | Routes / features moved out of `shell` |
+|---------|--------------------------------------|
+| **`@case-study/mfe`** | `/po/*`, `/active-primary-data`, `/bourse-inquiry`, `/active-distribution` |
+
+**Still to do:** split remaining domains and enable independent deploys:
 
 | Future app | Routes / features |
 |------------|-------------------|
-| **mfe-case-study** | dashboard (case KPIs), PO, properties, assignment, failures |
 | **mfe-valuation** | valuation-requests, field-form |
 | **mfe-operations** | survey, keys |
 | **mfe-financial** | financial |
@@ -141,7 +147,8 @@ Details: [ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](./ARCHITECTURE_MICRO
 ## Remaining work (frontend)
 
 - [ ] Per-role login (`@ejadah.dev` users) — role from server, not only the sidebar switcher
-- [ ] Create `mfe-*` apps and move routes out of `shell` (F2–F4)
+- [x] Create `mfe-case-study` + `@platform/app-shared` for API-ready flows (PO + primary data + bourse + distribution) — F3 complete (single deploy)
+- [ ] Create remaining `mfe-*` apps and move mock-only routes (F2, F4)
 - [ ] Module Federation + CI deploy per app (F5)
 - [ ] Replace mock data with `@platform/api-client` calls
 - [ ] PO/property detail; case study form (`requirements/case_study_form 2.html`); registration (`requirements/ejada-registration_1.html`) if in scope

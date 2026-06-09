@@ -1,3 +1,11 @@
+import {
+  getCaseStudyInfoRoles,
+  saveCaseStudyInfoRoles,
+} from "@platform/api-client";
+import {
+  apiErrorMessage,
+  caseStudyInfoRolesApiConfig,
+} from "@case-study/mfe";
 import type {
   CaseStudyInfoPartyId,
   CaseStudyInfoRoleType,
@@ -5,7 +13,7 @@ import type {
 import { CASE_STUDY_INFO_PARTIES } from "@/lib/prototype/case-study-info-roles-data";
 import { CASE_STUDY_QUESTION_CATALOG } from "@/lib/prototype/case-study-info-roles-data";
 
-const STORAGE_KEY = "evalCaseStudyInfoRoles";
+export const CASE_STUDY_INFO_ROLES_CHANGED_EVENT = "case-study-info-roles-changed";
 
 /** questionKey → partyId → role */
 export type CaseStudyInfoRolesMatrix = Record<
@@ -38,32 +46,74 @@ export function emptyCaseStudyInfoRolesConfig(): CaseStudyInfoRolesConfig {
   };
 }
 
-export function loadCaseStudyInfoRolesConfig(): CaseStudyInfoRolesConfig {
-  if (typeof window === "undefined") return emptyCaseStudyInfoRolesConfig();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return emptyCaseStudyInfoRolesConfig();
-    const parsed = JSON.parse(raw) as CaseStudyInfoRolesConfig;
-    const base = emptyCaseStudyInfoRolesConfig();
-    return {
-      matrix: { ...base.matrix, ...parsed.matrix },
-      notes: { ...base.notes, ...parsed.notes },
-      updatedAt: parsed.updatedAt ?? base.updatedAt,
-    };
-  } catch {
-    return emptyCaseStudyInfoRolesConfig();
+function mergeConfig(
+  partial: Pick<CaseStudyInfoRolesConfig, "matrix" | "notes" | "updatedAt">,
+): CaseStudyInfoRolesConfig {
+  const base = emptyCaseStudyInfoRolesConfig();
+  const matrix: CaseStudyInfoRolesMatrix = { ...base.matrix };
+
+  for (const [questionKey, parties] of Object.entries(partial.matrix ?? {})) {
+    if (!matrix[questionKey]) matrix[questionKey] = {};
+    for (const [partyId, role] of Object.entries(parties ?? {})) {
+      if (!role || role === "none") continue;
+      matrix[questionKey]![partyId as CaseStudyInfoPartyId] =
+        role as CaseStudyInfoRoleType;
+    }
+  }
+
+  return {
+    matrix,
+    notes: { ...base.notes, ...partial.notes },
+    updatedAt: partial.updatedAt ?? base.updatedAt,
+  };
+}
+
+export function notifyCaseStudyInfoRolesChanged(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(CASE_STUDY_INFO_ROLES_CHANGED_EVENT));
   }
 }
 
-export function saveCaseStudyInfoRolesConfig(
+export async function loadCaseStudyInfoRolesConfig(): Promise<CaseStudyInfoRolesConfig> {
+  const config = caseStudyInfoRolesApiConfig();
+  if (!config) return emptyCaseStudyInfoRolesConfig();
+
+  const result = await getCaseStudyInfoRoles(config);
+  if (!result.ok) {
+    console.warn(apiErrorMessage(result.kind, "Info roles API"));
+    return emptyCaseStudyInfoRolesConfig();
+  }
+
+  return mergeConfig({
+    matrix: result.config.matrix as CaseStudyInfoRolesMatrix,
+    notes: result.config.notes ?? {},
+    updatedAt: result.config.updatedAt,
+  });
+}
+
+export async function saveCaseStudyInfoRolesConfig(
   config: CaseStudyInfoRolesConfig,
-): void {
-  if (typeof window === "undefined") return;
-  const payload: CaseStudyInfoRolesConfig = {
-    ...config,
-    updatedAt: new Date().toISOString(),
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+): Promise<CaseStudyInfoRolesConfig | null> {
+  const apiConfig = caseStudyInfoRolesApiConfig();
+  if (!apiConfig) return null;
+
+  const result = await saveCaseStudyInfoRoles(apiConfig, {
+    matrix: config.matrix,
+    notes: config.notes,
+  });
+
+  if (!result.ok) {
+    console.warn(apiErrorMessage(result.kind, "Info roles API"));
+    return null;
+  }
+
+  const saved = mergeConfig({
+    matrix: result.config.matrix as CaseStudyInfoRolesMatrix,
+    notes: result.config.notes ?? {},
+    updatedAt: result.config.updatedAt,
+  });
+  notifyCaseStudyInfoRolesChanged();
+  return saved;
 }
 
 /** يمكن للطرف الإجابة إذا له دور غير «لا دور». */
@@ -74,6 +124,15 @@ export function canPartyAnswerQuestion(
 ): boolean {
   const role = matrix[questionKey]?.[partyId];
   return role === "primary" || role === "secondary" || role === "verify";
+}
+
+/** يُعرض السؤال للطرف فقط إذا لم يكن دوره «لا دور» (أو غير مُعرَّف). */
+export function isPartyQuestionVisible(
+  matrix: CaseStudyInfoRolesMatrix,
+  questionKey: string,
+  partyId: CaseStudyInfoPartyId,
+): boolean {
+  return canPartyAnswerQuestion(matrix, questionKey, partyId);
 }
 
 export function partyRoleOnQuestion(

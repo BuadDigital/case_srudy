@@ -36,6 +36,8 @@ const nextConfig: NextConfig = {
     ];
   },
   transpilePackages: [
+    "@case-study/mfe",
+    "@platform/app-shared",
     "@platform/api-client",
     "@platform/auth-client",
     "@platform/design-system",

@@ -200,6 +200,20 @@ a.nav-item{color:rgba(255,255,255,.48);}
 .po-properties-cell-actions{width:1%;white-space:nowrap;vertical-align:middle;}
 .po-properties-cell-view{width:1%;white-space:nowrap;vertical-align:middle;text-align:center;padding-inline:8px;}
 .po-properties-row-actions{display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end;}
+.po-col-more{width:2.5rem;}
+.po-properties-th-more{width:2.5rem;padding-inline:6px!important;}
+.po-properties-cell-more{width:2.5rem;padding-inline:4px!important;text-align:center;vertical-align:middle;}
+.row-more-wrap{position:relative;display:inline-flex;vertical-align:middle;justify-content:center;}
+.row-more-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+.row-more-btn:hover,.row-more-wrap--open .row-more-btn{background:var(--info-bg);border-color:var(--info);color:var(--info);}
+.row-more-menu{background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);padding:4px 0;}
+.row-more-item{display:block;width:100%;padding:8px 12px;border:none;background:transparent;text-align:start;font:inherit;font-size:12px;cursor:pointer;color:var(--text);white-space:nowrap;}
+.row-more-item:hover:not(:disabled){background:var(--surface2);}
+.row-more-item:disabled{opacity:.45;cursor:not-allowed;}
+.row-more-item--danger{color:var(--danger);}
+.tbl td.po-properties-cell-more,.tbl th.po-properties-th-more{cursor:default;width:2.75rem;padding-inline:8px!important;text-align:center;}
+.tbl tbody tr:hover td.po-properties-cell-more{background:var(--surface);}
+.tbl-po-list td.po-properties-cell-more,.tbl-po-list th.po-properties-th-more{width:2.75rem;}
 /* عقارات أمر العمل — أعمدة متوازنة بلا عمود فارغ */
 .po-properties-tbl--deed-list{table-layout:fixed;}
 .po-properties-tbl--deed-list .po-col-deed{width:10%;min-width:5.25rem;}
@@ -657,6 +671,9 @@ a.nav-item{color:rgba(255,255,255,.48);}
 .cs-form-cb--locked{opacity:.45;cursor:not-allowed;}
 .cs-form-cb--locked:hover{border-color:var(--border2);}
 .cs-form-specialist-banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px;line-height:1.55;}
+.cs-form-matrix-banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;line-height:1.55;margin-bottom:12px;}
+.cs-form-matrix-banner-text{margin:0;flex:1;min-width:min(100%,240px);}
+.cs-form-matrix-empty{line-height:1.6;}
 .cs-form-refresh-party{margin-right:auto;}
 .cs-form-party-empty-hint{font-size:11px;color:var(--text3);}
 .cs-form-question-cell{display:flex;flex-direction:column;gap:8px;}
@@ -695,3 +712,71 @@ a.nav-item{color:rgba(255,255,255,.48);}
 .wf-users-city-chip{padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:var(--surface2);font-size:11px;cursor:pointer;}
 .wf-users-city-chip.is-on{border-color:var(--primary);background:var(--primary-bg, rgba(59,130,246,.12));color:var(--primary);font-weight:600;}
 .wf-users-card-actions{margin-top:12px;display:flex;justify-content:flex-end;}
+
+/* Evaluator window (نافذة المقيم) */
+.evaluator-context-hint{margin:0 0 12px;font-size:11px;color:var(--text3);line-height:1.55;}
+.evaluator-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+@media (max-width:768px){.evaluator-context-grid{grid-template-columns:1fr;}}
+.evaluator-section-title{margin:0 0 10px;font-size:12px;font-weight:600;color:var(--primary);}
+.evaluator-advisory-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.evaluator-advisory-item{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:11px;}
+.evaluator-advisory-label{font-weight:600;color:var(--text);}
+.evaluator-advisory-assignee{margin-right:auto;color:var(--text3);font-size:10px;}
+.evaluator-checklist{display:flex;flex-direction:column;gap:12px;}
+.evaluator-q{padding:10px 0;border-bottom:1px solid var(--border);}
+.evaluator-q:last-child{border-bottom:none;}
+.evaluator-q-label{display:block;font-size:12px;color:var(--text);line-height:1.5;margin-bottom:6px;}
+.evaluator-conditional-block{border-top:1px dashed var(--border);padding-top:4px;}
+.evaluator-sub-fields{margin:8px 0 0 12px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+.evaluator-report-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;}
+.evaluator-report-name{font-size:12px;font-weight:500;color:var(--text);}
+.evaluator-price-display{font-weight:700;color:var(--primary);}
+.evaluator-advisory-checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.evaluator-advisory-checklist li{display:flex;justify-content:space-between;gap:12px;font-size:11px;padding:6px 0;border-bottom:1px dashed var(--border);}
+.evaluator-advisory-checklist li span{color:var(--text2);flex:1;}
+.evaluator-advisory-checklist li strong{color:var(--text);white-space:nowrap;}
+
+/* Appraiser upload tab — رفع التقييم */
+.appraiser-upload-tab{display:flex;flex-direction:column;gap:0;}
+.appraiser-upload-tab__questions{margin-top:4px;padding-top:20px;border-top:1px solid var(--border);}
+.cs-form--party-advisory{gap:16px;margin-top:0;}
+.cs-form--party-advisory .cs-form-panel .reg-form-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.04);}
+.cs-form--party-advisory .reg-form-card-body{padding:0;}
+.cs-form-matrix-banner--advisory{border-radius:10px;border:1px solid #BFDBFE;background:linear-gradient(135deg,#EFF6FF 0%,#F8FAFC 100%);padding:12px 14px;margin-bottom:0;}
+.evaluator-window{display:flex;flex-direction:column;gap:14px;}
+.evaluator-alert{border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.55;}
+.evaluator-alert--warn{background:var(--warning-bg,#FEF3C7);border:1px solid #FCD34D;color:#92400E;}
+.evaluator-alert--info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF;}
+.evaluator-upload-card{border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.05);}
+.evaluator-upload-card__hd{padding:16px 18px 12px;background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 100%);border-bottom:1px solid var(--border);}
+.evaluator-upload-card__title{margin:0;font-size:15px;font-weight:700;color:var(--primary);}
+.evaluator-upload-card__sub{margin:4px 0 0;font-size:11px;color:var(--text3);line-height:1.5;}
+.evaluator-upload-card__body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:16px;}
+.evaluator-field{display:flex;flex-direction:column;gap:6px;}
+.evaluator-field__label{font-size:12px;font-weight:600;color:var(--text2);}
+.evaluator-field__hint{font-size:11px;color:var(--text3);}
+.evaluator-field__error{font-size:11px;color:var(--danger,#DC2626);}
+.evaluator-field--error .evaluator-file-zone{border-color:var(--danger,#DC2626);}
+.evaluator-file-zone{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border:1.5px dashed var(--border2);border-radius:12px;background:var(--surface2);transition:border-color .2s,background .2s;}
+.evaluator-file-zone:not(.evaluator-file-zone--disabled):hover{border-color:var(--primary);background:#F8FAFF;}
+.evaluator-file-zone--done{border-style:solid;border-color:#86EFAC;background:#F0FDF4;}
+.evaluator-file-zone--disabled{opacity:.65;cursor:not-allowed;}
+.evaluator-file-zone__input{position:absolute;width:0;height:0;opacity:0;pointer-events:none;}
+.evaluator-file-zone__icon{width:44px;height:44px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--primary);flex-shrink:0;}
+.evaluator-file-zone--done .evaluator-file-zone__icon{background:var(--success,#16A34A);border-color:var(--success,#16A34A);color:#fff;}
+.evaluator-file-zone__text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:140px;font-size:11px;color:var(--text3);line-height:1.45;}
+.evaluator-file-zone__text strong{font-size:13px;color:var(--text);}
+.evaluator-file-zone__name{word-break:break-all;}
+.evaluator-file-zone__actions{display:flex;flex-wrap:wrap;gap:8px;margin-right:auto;}
+.evaluator-fields-row{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;}
+@media (min-width:520px){.evaluator-fields-row{grid-template-columns:minmax(0,280px);}}
+.evaluator-price-input{display:flex;align-items:stretch;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);}
+.evaluator-price-input .form-control{border:none;border-radius:0;flex:1;min-width:0;font-size:14px;font-weight:600;padding:10px 12px;}
+.evaluator-price-input .form-control:focus{box-shadow:none;outline:none;}
+.evaluator-price-input__unit{display:flex;align-items:center;padding:0 14px;background:var(--surface3);font-size:12px;font-weight:700;color:var(--text2);border-right:1px solid var(--border);white-space:nowrap;}
+.evaluator-notes-input{resize:vertical;min-height:88px;border-radius:10px;line-height:1.55;}
+.form-group.has-error .form-control{border-color:var(--danger);}
+.form-error{display:block;margin-top:4px;font-size:10px;color:var(--danger);}
+.badge-success{background:var(--success-bg);color:var(--success);}
+.appraiser-submitted-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.po-properties-title--section{font-size:15px;}

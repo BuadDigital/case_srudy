@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { PrototypeAppGate } from "@/components/PrototypeAppGate";
 import { AppShell } from "@/components/views/AppShell";
-import { PrototypeProvider } from "@/contexts/PrototypeContext";
+import { PrototypeProvider } from "@platform/app-shared/contexts/PrototypeContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 
 export default function AppSectionLayout({

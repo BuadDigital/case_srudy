@@ -4,7 +4,7 @@ import {
   CASE_STUDY_SECTION_QUESTIONS,
   caseStudyAnswerKey,
   type CaseStudyQuestionSection,
-} from "@/lib/prototype/case-study-form-data";
+} from "@case-study/mfe/lib/prototype/case-study-form-data";
 
 /** طرف في مصفوفة علاقة المستخدم بالمعلومة */
 export type CaseStudyInfoPartyId =

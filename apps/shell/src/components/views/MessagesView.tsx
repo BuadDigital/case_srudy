@@ -1,4 +1,4 @@
-import { MOCK_MESSAGES } from "@/lib/prototype/constants";
+import { MOCK_MESSAGES } from "@platform/app-shared/prototype/constants";
 
 export function MessagesView() {
   return (

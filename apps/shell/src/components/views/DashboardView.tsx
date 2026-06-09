@@ -4,15 +4,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useHasMounted } from "@/hooks/use-has-mounted";
-import { StatValue } from "@/components/ui/StatValue";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { StatValue } from "@case-study/mfe/components/ui/StatValue";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { StatusBadge } from "@platform/design-system";
 import {
   DASHBOARD_TEAM_ROWS,
   MOCK_VR,
   type TeamKind,
-} from "@/lib/prototype/constants";
-import { assignmentTypeBadgeClass } from "@/lib/prototype/po-intake-data";
+} from "@platform/app-shared/prototype/constants";
+import { assignmentTypeBadgeClass } from "@case-study/mfe";
 import {
   usePoListRowsQuery,
   usePropertyListItemsQuery,

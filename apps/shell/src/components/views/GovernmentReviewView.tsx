@@ -2,10 +2,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { InternalDelegationLetterPanel } from "@/components/government-review/InternalDelegationLetterPanel";
-import { PoNumber } from "@/components/ui/PoNumber";
-import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
+import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
+import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import { getAuthSession } from "@platform/auth-client";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import {
   buildGovernmentReviewPoRows,
   courtGroupsForPo,
@@ -14,19 +14,19 @@ import {
 import {
   delegationLetterForCourt,
   syncInternalDelegationLetters,
-} from "@/lib/prototype/internal-delegation-letters";
-import { partyTaskPageDef } from "@/lib/prototype/party-task-pages";
-import { PartyActiveTaskWork } from "@/components/views/PartyActiveTaskWork";
+} from "@case-study/mfe/lib/prototype/internal-delegation-letters";
+import { partyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
+import { PartyActiveTaskWorkPanel } from "@/components/views/PartyActiveTaskWorkPanel";
 import {
   taskDisplayPropertyLabel,
   type WorkflowTask,
-} from "@/lib/prototype/tasks-storage";
-import { formatPoDisplay } from "@/lib/prototype/po-intake-data";
+} from "@case-study/mfe";
+import { formatPoDisplay } from "@case-study/mfe";
 import {
   reviewerCoverageLabel,
   reviewerScopeForRole,
-} from "@/lib/prototype/reviewer-coverage";
-import { tasksForPartyAssignee } from "@/lib/prototype/tasks-storage";
+} from "@case-study/mfe/lib/prototype/reviewer-coverage";
+import { tasksForPartyAssignee } from "@case-study/mfe";
 import {
   usePoRecordsQuery,
   useWorkflowTasksQuery,
@@ -390,13 +390,13 @@ export function GovernmentReviewView() {
             className={`po-primary-data-panel-slot${panelOpen && (selectedRow || selectedTask) ? " is-open" : ""}`}
           >
             {panelOpen && selectedTask && def ? (
-              <PartyActiveTaskWork
+              <PartyActiveTaskWorkPanel
                 key={selectedTask.id}
                 def={def}
                 task={selectedTask}
-                onRefresh={refreshWork}
+                onRefreshAction={refreshWork}
                 layout="panel"
-                onClose={() => {
+                onCloseAction={() => {
                   if (selectedPo) {
                     router.replace(governmentReviewPoPath(selectedPo), {
                       scroll: false,

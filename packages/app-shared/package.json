@@ -1,0 +1,22 @@
+{
+  "name": "@platform/app-shared",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "dependencies": {
+    "@case-study/mfe": "*",
+    "@platform/api-client": "*",
+    "@platform/auth-client": "*",
+    "@platform/types": "*",
+    "@tanstack/react-query": "^5.100.11"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19",
+    "react-dom": ">=19"
+  }
+}

@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @platform/shell",
+    "typecheck:mfe-case-study": "npm run typecheck -w @case-study/mfe",
     "dev:local": "npm run dev:local -w @platform/shell",
     "dev:lan": "npm run dev:lan -w @platform/shell",
     "dev:stop": "npm run dev:stop -w @platform/shell",

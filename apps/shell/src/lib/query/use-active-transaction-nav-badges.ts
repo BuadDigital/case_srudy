@@ -3,20 +3,22 @@
 import { useMemo } from "react";
 import { getAuthSession } from "@platform/auth-client";
 import type { PageId } from "@platform/types";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import {
   filterTasksForCaseStudy,
+} from "@platform/app-shared/prototype/active-transactions";
+import {
   filterTasksForDistribution,
   filterTasksForPrimaryData,
-} from "@/lib/prototype/active-transactions";
+} from "@case-study/mfe";
 import { countGovernmentReviewOpenPos } from "@/lib/prototype/government-review-po";
-import { PARTY_TASK_PAGES } from "@/lib/prototype/party-task-pages";
-import { reviewerScopeForRole } from "@/lib/prototype/reviewer-coverage";
+import { PARTY_TASK_PAGES } from "@platform/app-shared/prototype/party-task-pages";
+import { reviewerScopeForRole } from "@case-study/mfe/lib/prototype/reviewer-coverage";
 import {
   tasksForPartyAssignee,
   tasksForRole,
-} from "@/lib/prototype/tasks-storage";
-import type { PoIntakeRecord } from "@/lib/prototype/po-intake-data";
+} from "@case-study/mfe";
+import type { PoIntakeRecord } from "@case-study/mfe";
 import {
   usePendingBourseItemsQuery,
   usePoRecordsQuery,

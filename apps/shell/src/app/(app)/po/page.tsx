@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { PoListView } from "@/components/views/PoListView";
+import { PoListView } from "@case-study/mfe";
 
 export default function PoPage() {
   return (

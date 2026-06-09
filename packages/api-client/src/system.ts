@@ -10,6 +10,7 @@ export type SystemResetResult = {
   workflowTasksDeleted: number;
   caseStudyFormsDeleted: number;
   courtCatalogEntriesDeleted: number;
+  caseStudyInfoRolesConfigsDeleted: number;
   registeredUsersDeleted: number;
 };
 
@@ -59,6 +60,7 @@ export async function resetSystemData(
       workflowTasksDeleted?: number;
       caseStudyFormsDeleted?: number;
       courtCatalogEntriesDeleted?: number;
+      caseStudyInfoRolesConfigsDeleted?: number;
       registeredUsersDeleted?: number;
     };
     return {
@@ -68,6 +70,8 @@ export async function resetSystemData(
         workflowTasksDeleted: data.workflowTasksDeleted ?? 0,
         caseStudyFormsDeleted: data.caseStudyFormsDeleted ?? 0,
         courtCatalogEntriesDeleted: data.courtCatalogEntriesDeleted ?? 0,
+        caseStudyInfoRolesConfigsDeleted:
+          data.caseStudyInfoRolesConfigsDeleted ?? 0,
         registeredUsersDeleted: data.registeredUsersDeleted ?? 0,
       },
     };

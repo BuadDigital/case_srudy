@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import {
   approveFailure,
   createFailure,
@@ -9,13 +9,13 @@ import {
   returnFailure,
   submitFailureForReview,
   type FailureRecord,
-} from "@/lib/prototype/failures-storage";
-import { StatValue } from "@/components/ui/StatValue";
+} from "@case-study/mfe/lib/prototype/failures-storage";
+import { StatValue } from "@case-study/mfe/components/ui/StatValue";
 import { useFailuresQuery } from "@/lib/query/prototype-queries";
 import { useQueryClient } from "@tanstack/react-query";
-import { prototypeKeys } from "@/lib/query/prototype-keys";
-import { formatDateAr, formatPoDisplay } from "@/lib/prototype/po-intake-data";
-import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
+import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
+import { formatDateAr, formatPoDisplay } from "@case-study/mfe";
+import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 import type { RoleId } from "@platform/types";
 
 function isCaseEditor(role: RoleId) {
@@ -190,83 +190,5 @@ export function FailuresView() {
         ))
       )}
     </>
-  );
-}
-
-/** يُستدعى من شاشة العقارات لتسجيل تعذر جديد */
-export function FailureReportForm({
-  poNumber,
-  propertyId,
-  deedNumber,
-  specialist,
-  onDone,
-  onCancel,
-}: {
-  poNumber: string;
-  propertyId: string;
-  deedNumber: string;
-  specialist: string;
-  onDone: () => void;
-  onCancel: () => void;
-}) {
-  const [title, setTitle] = useState("");
-  const [note, setNote] = useState("");
-
-  function handleSubmit() {
-    if (!title.trim() || !note.trim()) return;
-    createFailure({
-      poNumber,
-      propertyId,
-      deedNumber,
-      title,
-      internalNote: note,
-      specialist,
-    });
-    onDone();
-  }
-
-  return (
-    <div className="card" style={{ marginBottom: 16 }}>
-      <div className="card-header">
-        <span className="card-title">تسجيل تعذر — {deedNumber || poNumber}</span>
-      </div>
-      <div style={{ padding: 16 }}>
-        <div className="reg-fg-full" style={{ marginBottom: 10 }}>
-          <label className="reg-fl" htmlFor="fail_title">
-            عنوان التعذر *
-          </label>
-          <input
-            id="fail_title"
-            className="reg-fi"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-        <div className="reg-fg-full" style={{ marginBottom: 12 }}>
-          <label className="reg-fl" htmlFor="fail_note">
-            وصف داخلي *
-          </label>
-          <textarea
-            id="fail_note"
-            className="form-control"
-            rows={3}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            style={{ width: "100%", fontSize: 12 }}
-          />
-        </div>
-        <p className="reg-field-hint" style={{ marginBottom: 12 }}>
-          يُضبط حالة الصك إلى «قيد التحقق» حتى يعتمد المشرف التعذر.
-        </p>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" className="btn btn-primary btn-sm" onClick={handleSubmit}>
-            حفظ مسودة داخلية
-          </button>
-          <button type="button" className="btn btn-sm" onClick={onCancel}>
-            إلغاء
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

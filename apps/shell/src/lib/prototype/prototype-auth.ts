@@ -10,9 +10,9 @@ import {
   STORAGE_PERSONA_KEY,
   STORAGE_ROLE_KEY,
   ROLES,
-} from "@/lib/prototype/constants";
+} from "@platform/app-shared/prototype/constants";
 import type { RoleId } from "@platform/types";
-import { partyAccountByEmail } from "@/lib/prototype/distribution-party-accounts";
+import { partyAccountByEmail } from "@case-study/mfe";
 
 type LoginResponse = {
   token: string;

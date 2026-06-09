@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { NavIcon } from "@/components/views/NavIcon";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import {
   prefetchPoRecord,
   prefetchPrototypePage,
@@ -19,40 +19,40 @@ import {
   personaLabelName,
   ROLE_OPTIONS,
   ROLES,
-} from "@/lib/prototype/constants";
+} from "@platform/app-shared/prototype/constants";
 import {
   ACTIVE_TRANSACTIONS_GROUP,
   ACTIVE_TRANSACTIONS_GROUP_ICON,
   activeTransactionNavForRole,
   type ActiveTransactionNavItem,
   isInActiveTransactionsSection,
-} from "@/lib/prototype/active-transactions";
+} from "@platform/app-shared/prototype/active-transactions";
 import {
   SETTINGS_GROUP,
   SETTINGS_GROUP_ICON,
   settingsNavForRole,
   type SettingsNavItem,
   isInSettingsSection,
-} from "@/lib/prototype/settings-nav";
+} from "@platform/app-shared/prototype/settings-nav";
 import {
   SYSTEM_FIELDS_GROUP,
   SYSTEM_FIELDS_GROUP_ICON,
   systemFieldsNavForRole,
   type SystemFieldsNavItem,
   isInSystemFieldsSection,
-} from "@/lib/prototype/system-fields-nav";
-import { isPartyTaskPage } from "@/lib/prototype/party-task-pages";
-import { decodeTaskParam, isPartyTaskWorkPath } from "@/lib/my-task-routes";
-import { findPropertyForTask } from "@/lib/prototype/my-task-row";
+} from "@platform/app-shared/prototype/system-fields-nav";
+import { isPartyTaskPage } from "@platform/app-shared/prototype/party-task-pages";
+import { decodeTaskParam, isPartyTaskWorkPath } from "@case-study/mfe";
+import { findPropertyForTask } from "@case-study/mfe";
 import {
   formatPropertyDeedDisplay,
-} from "@/lib/prototype/po-intake-data";
+} from "@case-study/mfe";
 import { resolvePoChrome } from "@/lib/po-chrome";
 import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
-import { pagesForPrototypeRole } from "@/lib/prototype/prototype-role-access";
-import { ActiveTransactionsSituationBar } from "@/components/prototype/active-transactions/ActiveTransactionsSituationBar";
+import { pagesForPrototypeRole } from "@platform/app-shared/prototype/prototype-role-access";
+import { ActiveTransactionsSituationBar } from "@case-study/mfe";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
-import { PoNumber } from "@/components/ui/PoNumber";
+import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
 
 /** Must match `group` on every entry in ROLE_OPTIONS (constants.ts). */
 const GROUP_ORDER = [

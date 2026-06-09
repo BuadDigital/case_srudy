@@ -1,6 +1,6 @@
 # Project Progress — Ejada Internal (نظام إجادة الداخلي)
 
-**Last updated:** 8 June 2026 (backend ↔ frontend alignment matrix, layers, HR seeding, prototype auth)  
+**Last updated:** 9 June 2026 (F3 microfrontend split complete — single deploy)  
 **Repo:** [BuadDigital/case_srudy](https://github.com/BuadDigital/case_srudy) · branch `main`
 **Audience:** Project manager and developers — single handoff document.
 
@@ -50,21 +50,26 @@ Three separate concepts; **do not merge** in UI labels or data models.
 
 ```
 property_study/
-├── apps/shell/              # Next.js 16 app (@platform/shell) — main UI
-├── apps/plan/               # Frontend planning notes (FRONTEND.md)
+├── apps/
+│   ├── shell/               # Next.js 16 host (@platform/shell) — login, layout, nav, mock routes
+│   ├── mfe-case-study/      # @case-study/mfe — API-ready PO + المعاملات النشطة (F3)
+│   └── plan/                # Frontend planning notes (FRONTEND.md)
 ├── backend/
 │   ├── RealEstateEval.Api/  # ASP.NET Core 10 API
 │   └── plan/                # Backend infra notes (LOCAL_INFRA.md)
 ├── packages/
+│   ├── app-shared/          # @platform/app-shared — PrototypeContext, registration, shared nav/constants
 │   ├── api-client/          # fetch wrappers (auth, users, work-orders, courts, workflow-tasks, case-study-forms)
 │   ├── auth-client/         # JWT session + AppAuthGate
 │   ├── design-system/       # prototype.css, registration.css, StatusBadge
-│   └── types/               # PageId, RoleId, user/org DTO types
+│   └── types/               # PageId, RoleId, user/org DTO types, CASE_STUDY_READY_NAV
 ├── infra/                   # docker-compose (Postgres + observability stack)
 ├── docs/                    # This file + DATABASE_OVERVIEW + PM review + credentials
 ├── requirements/            # HTML prototypes (reference)
 └── package.json             # npm workspaces root scripts
 ```
+
+**Frontend F3 (9 Jun 2026):** API-ready flows live in `@case-study/mfe`; shell re-exports routes and runs `npm run dev` / `npm run build` as one app. Module Federation (F5) deferred until independent deploy is needed.
 
 ---
 

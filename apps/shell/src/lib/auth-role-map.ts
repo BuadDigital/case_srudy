@@ -5,8 +5,8 @@ import {
   ROLES,
   STORAGE_PERSONA_KEY,
   STORAGE_ROLE_KEY,
-} from "@/lib/prototype/constants";
-import { getDistributionPartyAccounts } from "@/lib/prototype/distribution-party-accounts";
+} from "@platform/app-shared/prototype/constants";
+import { getDistributionPartyAccounts } from "@case-study/mfe";
 
 /**
  * Maps seeded login emails to prototype sidebar roles.

@@ -1,8 +1,8 @@
 "use client";
 
-import { usePrototype } from "@/contexts/PrototypeContext";
-import { MOCK_PROPERTIES } from "@/lib/prototype/constants";
-import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
+import { MOCK_PROPERTIES } from "@platform/app-shared/prototype/constants";
+import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 
 export function KeysView() {
   const { role } = usePrototype();

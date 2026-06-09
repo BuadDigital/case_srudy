@@ -1,13 +1,13 @@
-import type { PoIntakeRecord } from "@/lib/prototype/po-intake-data";
-import { poPrimaryDataReadiness } from "@/lib/prototype/po-primary-data-readiness";
+import type { PoIntakeRecord } from "@case-study/mfe";
+import { poPrimaryDataReadiness } from "@case-study/mfe";
 import {
   courtCityFromName,
   poCitiesForReviewerScope,
   poInReviewerScope,
   propertyCourtCity,
   type ReviewerScope,
-} from "@/lib/prototype/reviewer-coverage";
-import type { WorkflowTask } from "@/lib/prototype/tasks-storage";
+} from "@case-study/mfe/lib/prototype/reviewer-coverage";
+import type { WorkflowTask } from "@case-study/mfe";
 
 export type GovernmentReviewPoRow = {
   poNumber: string;

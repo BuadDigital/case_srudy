@@ -5,6 +5,10 @@ export type {
   RoleId,
 } from "./navigation";
 export { isPageId, isRoleId } from "./navigation";
+export {
+  CASE_STUDY_READY_NAV,
+  type CaseStudyReadyNavItem,
+} from "./case-study-nav";
 export type {
   OrgDepartment,
   OrgPerson,

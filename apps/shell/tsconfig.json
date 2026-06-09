@@ -9,7 +9,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@case-study/mfe": ["../mfe-case-study/src/index.ts"],
+      "@case-study/mfe/*": ["../mfe-case-study/src/*"],
+      "@platform/app-shared": ["../../packages/app-shared/src/index.ts"],
+      "@platform/app-shared/*": ["../../packages/app-shared/src/*"],
+      "@platform/shell/prototype-auth": ["./src/lib/prototype/prototype-auth.ts"]
     }
   },
   "include": [

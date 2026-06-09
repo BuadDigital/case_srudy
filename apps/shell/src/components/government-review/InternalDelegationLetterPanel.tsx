@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
-import type { InternalDelegationLetter } from "@/lib/prototype/internal-delegation-letters";
-import { updateDelegationLetterSelection } from "@/lib/prototype/internal-delegation-letters";
-import { printInternalDelegationLetter } from "@/lib/prototype/internal-delegation-letter-html";
-import { poPrimaryDataReadiness } from "@/lib/prototype/po-primary-data-readiness";
+import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
+import type { InternalDelegationLetter } from "@case-study/mfe/lib/prototype/internal-delegation-letters";
+import { updateDelegationLetterSelection } from "@case-study/mfe/lib/prototype/internal-delegation-letters";
+import { printInternalDelegationLetter } from "@case-study/mfe/lib/prototype/internal-delegation-letter-html";
+import { poPrimaryDataReadiness } from "@case-study/mfe";
 import {
   formatPropertyDeedDisplay,
   type PoIntakeRecord,
-} from "@/lib/prototype/po-intake-data";
+} from "@case-study/mfe";
 
 type Props = {
   letter: InternalDelegationLetter;

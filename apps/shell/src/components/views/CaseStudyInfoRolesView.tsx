@@ -14,6 +14,7 @@ import {
   saveCaseStudyInfoRolesConfig,
   type CaseStudyInfoRolesConfig,
 } from "@/lib/prototype/case-study-info-roles-storage";
+import { apiErrorMessage } from "@case-study/mfe";
 import {
   setCaseStudyInfoRolesCache,
   useCaseStudyInfoRolesQuery,
@@ -55,11 +56,20 @@ export function CaseStudyInfoRolesView() {
   );
   const [activeSec, setActiveSec] = useState(CASE_STUDY_INFO_SECTIONS[0]?.id);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const persist = useCallback(
-    (next: CaseStudyInfoRolesConfig) => {
-      saveCaseStudyInfoRolesConfig(next);
-      setCaseStudyInfoRolesCache(queryClient, next);
+    async (next: CaseStudyInfoRolesConfig) => {
+      setSaving(true);
+      setSaveError(null);
+      const saved = await saveCaseStudyInfoRolesConfig(next);
+      setSaving(false);
+      if (!saved) {
+        setSaveError(apiErrorMessage("server", "تعذّر حفظ المصفوفة"));
+        return;
+      }
+      setCaseStudyInfoRolesCache(queryClient, saved);
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2500);
     },
@@ -102,8 +112,14 @@ export function CaseStudyInfoRolesView() {
           </p>
         </div>
         <div className="csir-hero-actions">
+          {saving ? (
+            <span className="note note-info csir-saved">جاري الحفظ…</span>
+          ) : null}
           {saved ? (
             <span className="note note-success csir-saved">تم الحفظ</span>
+          ) : null}
+          {saveError ? (
+            <span className="note note-warn csir-saved">{saveError}</span>
           ) : null}
           <button
             type="button"

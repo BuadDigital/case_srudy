@@ -1,6 +1,6 @@
 "use client";
 import { CaseStudyWorkspaceView } from "@/components/views/CaseStudyWorkspaceView";
-import { decodeTaskParam } from "@/lib/my-task-routes";
+import { decodeTaskParam } from "@case-study/mfe";
 import { use } from "react";
 
 export default function CaseStudyWorkspacePage({

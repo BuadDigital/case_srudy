@@ -1,10 +1,10 @@
 import { resetSystemData } from "@platform/api-client";
-import { TASKS_CHANGED_EVENT, TASKS_STORAGE_KEY } from "@/lib/prototype/tasks-storage";
-import { STORAGE_ROLE_KEY } from "@/lib/prototype/constants";
+import { TASKS_CHANGED_EVENT, TASKS_STORAGE_KEY } from "@case-study/mfe";
+import { STORAGE_ROLE_KEY } from "@platform/app-shared/prototype/constants";
 import {
   notifyWorkOrdersChanged,
   workOrdersApiConfig,
-} from "@/lib/work-orders-api-config";
+} from "@case-study/mfe";
 
 const EVAL_STORAGE_PREFIX = "eval";
 

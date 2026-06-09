@@ -338,6 +338,28 @@ namespace RealEstateEval.Infrastructure.Data.Migrations
                     b.ToTable("CaseStudyForms", (string)null);
                 });
 
+            modelBuilder.Entity("RealEstateEval.Domain.CaseStudyInfoRolesConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MatrixJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("NotesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CaseStudyInfoRolesConfigs", (string)null);
+                });
+
             modelBuilder.Entity("RealEstateEval.Domain.CourtCatalogEntry", b =>
                 {
                     b.Property<Guid>("Id")

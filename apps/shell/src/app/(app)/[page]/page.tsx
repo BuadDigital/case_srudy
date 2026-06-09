@@ -2,15 +2,15 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { ActiveCaseStudyView } from "@/components/views/ActiveCaseStudyView";
-import { ActiveDistributionView } from "@/components/views/ActiveDistributionView";
-import { MyTasksView } from "@/components/views/MyTasksView";
-import { BourseInquiryView } from "@/components/views/BourseInquiryView";
+import { ActiveDistributionView } from "@case-study/mfe";
+import { MyTasksView } from "@case-study/mfe";
+import { BourseInquiryView } from "@case-study/mfe";
 import { CourtsView } from "@/components/views/CourtsView";
 import { DashboardView } from "@/components/views/DashboardView";
 import { FailuresView } from "@/components/views/FailuresView";
 import { FieldFormView } from "@/components/views/FieldFormView";
 import { PartyActiveTaskView } from "@/components/views/PartyActiveTaskView";
-import { PARTY_TASK_PAGE_IDS } from "@/lib/prototype/party-task-pages";
+import { PARTY_TASK_PAGE_IDS } from "@platform/app-shared/prototype/party-task-pages";
 import { FinancialView } from "@/components/views/FinancialView";
 import { KeysView } from "@/components/views/KeysView";
 import { KpiView } from "@/components/views/KpiView";
@@ -21,7 +21,7 @@ import { ValuationRequestsView } from "@/components/views/ValuationRequestsView"
 import { SystemToolsView } from "@/components/views/SystemToolsView";
 import { CaseStudyInfoRolesView } from "@/components/views/CaseStudyInfoRolesView";
 import { GovernmentReviewView } from "@/components/views/GovernmentReviewView";
-import { VALID_PAGE_IDS } from "@/lib/prototype/constants";
+import { VALID_PAGE_IDS } from "@platform/app-shared/prototype/constants";
 import type { PageId } from "@platform/types";
 
 const VIEWS: Partial<Record<PageId, ReactNode>> = {

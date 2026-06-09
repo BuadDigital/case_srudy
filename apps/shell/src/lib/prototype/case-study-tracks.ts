@@ -4,13 +4,13 @@ import {
   getFieldInspectors,
   getGovernmentAuditors,
   getValuators,
-} from "@/lib/prototype/distribution-parties";
+} from "@case-study/mfe";
 import {
   migrateDistribution,
   type TaskDistributionDraft,
   type WorkflowTask,
   type WorkflowTaskKind,
-} from "@/lib/prototype/tasks-storage";
+} from "@case-study/mfe";
 
 export type CaseStudyTrackState = "new" | "progress" | "done";
 

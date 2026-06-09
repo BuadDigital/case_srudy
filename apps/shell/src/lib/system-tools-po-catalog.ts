@@ -12,7 +12,7 @@ import {
   DEED_STATUS_OPTIONS,
   PROPERTY_CLASSIFICATIONS,
   RESTRICTIONS_PRESENT_OPTIONS,
-} from "@/lib/prototype/po-intake-data";
+} from "@case-study/mfe";
 
 const COURT_CITY_CHOICES = Object.keys(COURTS_BY_CITY);
 

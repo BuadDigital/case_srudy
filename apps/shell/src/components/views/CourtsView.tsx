@@ -1,17 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePrototype } from "@/contexts/PrototypeContext";
-import { CITY_OPTIONS } from "@/lib/prototype/po-intake-data";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
+import { CITY_OPTIONS } from "@case-study/mfe";
 import {
   saveCourtsCatalog,
   type CourtCatalogEntry,
 } from "@/lib/prototype/courts-storage";
 import { useCourtsCatalogQuery } from "@/lib/query/prototype-queries";
 import { useQueryClient } from "@tanstack/react-query";
-import { prototypeKeys } from "@/lib/query/prototype-keys";
-import { canManageCourts } from "@/lib/prototype/po-roles";
-import { RegField, RegSelect } from "@/components/prototype/registration/FormFields";
+import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
+import { canManageCourts } from "@case-study/mfe";
+import { RegField, RegSelect } from "@platform/app-shared/registration/FormFields";
 
 function newCourtId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {

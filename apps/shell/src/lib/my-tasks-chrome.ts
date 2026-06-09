@@ -1,5 +1,5 @@
-import { decodeTaskParam } from "@/lib/my-task-routes";
-import { partyTaskPageDef } from "@/lib/prototype/party-task-pages";
+import { decodeTaskParam } from "@case-study/mfe";
+import { partyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import type { PageId } from "@platform/types";
 
 export type MyTasksChrome = {

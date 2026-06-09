@@ -6,10 +6,7 @@ namespace RealEstateEval.Infrastructure.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options): base(options) {}
 
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<HrEmployeeProfile> HrEmployeeProfiles => Set<HrEmployeeProfile>();
@@ -21,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CourtCatalogEntry> CourtCatalogEntries => Set<CourtCatalogEntry>();
     public DbSet<WorkflowTask> WorkflowTasks => Set<WorkflowTask>();
     public DbSet<CaseStudyForm> CaseStudyForms => Set<CaseStudyForm>();
+    public DbSet<CaseStudyInfoRolesConfig> CaseStudyInfoRolesConfigs => Set<CaseStudyInfoRolesConfig>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -146,6 +144,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasIndex(x => new { x.PoNumber, x.PropertyOrdinal });
             e.HasIndex(x => x.PropertyId);
             e.HasIndex(x => x.ParentTaskId);
+        });
+
+        builder.Entity<CaseStudyInfoRolesConfig>(e =>
+        {
+            e.ToTable("CaseStudyInfoRolesConfigs");
+            e.Property(x => x.MatrixJson).HasColumnType("jsonb");
+            e.Property(x => x.NotesJson).HasColumnType("jsonb");
         });
 
         builder.Entity<CaseStudyForm>(e =>

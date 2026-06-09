@@ -1,10 +1,11 @@
-import { PoPropertiesPage } from "@/components/views/PoPropertiesPage";
-import { decodePoParam } from "@/lib/po-routes";
+import { PoPropertiesPageClient } from "@/components/po/PoPropertiesPageClient";
+import { decodePoParam } from "@case-study/mfe";
+
 export default async function PoPropertiesListPage({
   params,
 }: {
   params: Promise<{ poNumber: string }>;
 }) {
   const { poNumber } = await params;
-  return <PoPropertiesPage poNumber={decodePoParam(poNumber)} />;
+  return <PoPropertiesPageClient poNumber={decodePoParam(poNumber)} />;
 }

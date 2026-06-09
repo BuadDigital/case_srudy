@@ -1,0 +1,59 @@
+import type { RowMoreMenuItem } from "@case-study/mfe/components/ui/RowMoreMenu";
+import { openInternalDelegationLetterPlaceholder } from "@case-study/mfe/lib/prototype/internal-delegation-letter-placeholder";
+import { getPropertyFailure } from "@case-study/mfe/lib/prototype/failures-storage";
+import type { PoPropertyIntake } from "./po-intake-data";
+import {
+  poPropertyEditPath,
+  poPropertyFailurePath,
+  poPropertyPath,
+} from "../po-routes";
+
+export type PoPropertyRowMoreContext = {
+  poNumber: string;
+  property: PoPropertyIntake;
+  showEdit: boolean;
+  router: { push: (href: string) => void };
+  refresh: () => void;
+};
+
+export function buildPoPropertiesRowMoreItems(
+  ctx: PoPropertyRowMoreContext,
+): RowMoreMenuItem[] {
+  const po = ctx.poNumber.trim();
+  const propertyId = ctx.property.id;
+  const items: RowMoreMenuItem[] = [
+    {
+      id: "property-detail",
+      label: "تفاصيل العقار",
+      onClick: () => ctx.router.push(poPropertyPath(po, propertyId)),
+    },
+    {
+      id: "delegation-letter",
+      label: "خطاب التفويض الداخلي",
+      onClick: () =>
+        openInternalDelegationLetterPlaceholder({
+          poNumber: po,
+          propertyId,
+        }),
+    },
+  ];
+
+  if (ctx.showEdit) {
+    items.push({
+      id: "property-edit",
+      label: "تعديل العقار",
+      onClick: () => ctx.router.push(poPropertyEditPath(po, propertyId)),
+    });
+    if (!getPropertyFailure(po, propertyId)) {
+      items.push({
+        id: "property-failure",
+        label: "تسجيل تعذر",
+        danger: true,
+        onClick: () =>
+          ctx.router.push(poPropertyFailurePath(po, propertyId)),
+      });
+    }
+  }
+
+  return items;
+}

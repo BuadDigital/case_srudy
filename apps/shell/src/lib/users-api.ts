@@ -9,46 +9,19 @@ import {
 } from "@platform/api-client";
 import { getAuthSession } from "@platform/auth-client";
 import type { RegistrationPayload, UserListItem } from "@platform/types";
-import type { StaffUser } from "@/lib/prototype/constants";
-import type { RegistrationSource } from "@/lib/prototype/registration-data";
+import type { StaffUser } from "@platform/app-shared/prototype/constants";
+import type { RegistrationSource } from "@platform/app-shared/prototype/registration-data";
+import {
+  contractTypeToStaffType,
+  userListItemToStaff,
+} from "@platform/app-shared/users/user-mappers";
+
+export { contractTypeToStaffType, userListItemToStaff };
 
 function apiConfig(): UsersApiConfig | null {
   const session = getAuthSession();
   if (!session?.token) return null;
   return { token: session.token, baseUrl: getApiBase() };
-}
-
-export function contractTypeToStaffType(
-  t: UserListItem["contractType"],
-): StaffUser["type"] {
-  if (t === "Internal") return "internal";
-  if (t === "Freelance") return "freelance";
-  return "external";
-}
-
-export function userListItemToStaff(u: UserListItem): StaffUser {
-  return {
-    id: u.id,
-    name: u.displayName,
-    role: u.jobTitle,
-    email: u.email,
-    userName: u.userName,
-    type: contractTypeToStaffType(u.contractType),
-    source:
-      u.registrationSource === "Hr"
-        ? "hr"
-        : u.registrationSource === "Proc"
-          ? "proc"
-          : "crm",
-    phone: u.phoneNumber,
-    createdAt: u.createdAtUtc,
-    systemRoles: u.systemRoles ?? [],
-    details: (u.details ?? []).map((d) => ({
-      section: d.section,
-      label: d.label,
-      value: d.value,
-    })),
-  };
 }
 
 export type FetchStaffUsersResult = {

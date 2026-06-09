@@ -4,25 +4,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { CaseStudyForm } from "@/components/prototype/case-study/CaseStudyForm";
-import { RegistrationFormCard } from "@/components/prototype/registration/RegistrationFormCard";
-import { PoNumber } from "@/components/ui/PoNumber";
-import { usePrototype } from "@/contexts/PrototypeContext";
-import { activeCaseStudyPath } from "@/lib/my-task-routes";
+import { EvaluatorAdvisoryPanel } from "@/components/prototype/evaluator/EvaluatorAdvisoryPanel";
+import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
+import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
+import { activeCaseStudyPath } from "@case-study/mfe";
 import {
   buildCaseStudyTracks,
   caseStudyTrackBadgeClass,
   caseStudyTrackBadgeLabel,
   type CaseStudyTrack,
 } from "@/lib/prototype/case-study-tracks";
-import { findPropertyForTask } from "@/lib/prototype/my-task-row";
+import { findPropertyForTask } from "@case-study/mfe";
 import {
   formatDateAr,
   formatPoDisplay,
   formatPropertyDeedDisplay,
   formatPropertyTypeLine,
-} from "@/lib/prototype/po-intake-data";
-import { tasksForRole, type WorkflowTask } from "@/lib/prototype/tasks-storage";
-import { isSuperAdmin } from "@/lib/prototype/prototype-role-access";
+} from "@case-study/mfe";
+import { tasksForRole, type WorkflowTask } from "@case-study/mfe";
+import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 import {
   usePoRecordQuery,
   useWorkflowTasksQuery,
@@ -254,11 +255,22 @@ export function CaseStudyWorkspaceView({ taskId }: { taskId: string }) {
           ) : null}
 
           {tab === "parties" ? (
-            <RegistrationFormCard title="حالة المسارات">
-              {tracks.map((tr) => (
-                <TrackRow key={tr.id} track={tr} />
-              ))}
-            </RegistrationFormCard>
+            <>
+              <RegistrationFormCard title="حالة المسارات">
+                {tracks.map((tr) => (
+                  <TrackRow key={tr.id} track={tr} />
+                ))}
+              </RegistrationFormCard>
+              {property?.id ? (
+                <div style={{ marginTop: 16 }}>
+                  <EvaluatorAdvisoryPanel
+                    parentTask={task}
+                    propertyId={property.id}
+                    tasks={tasks ?? []}
+                  />
+                </div>
+              ) : null}
+            </>
           ) : null}
           {tab === "form" ? (
             <CaseStudyForm

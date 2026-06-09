@@ -2,15 +2,15 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RegistrationPortal } from "@/components/prototype/registration/RegistrationPortal";
-import { RegisterUserFlow } from "@/components/prototype/registration/RegisterUserFlow";
-import type { StaffUser } from "@/lib/prototype/constants";
-import type { RegistrationSource } from "@/lib/prototype/registration-data";
+import { RegistrationPortal } from "@platform/app-shared/registration/RegistrationPortal";
+import { RegisterUserFlow } from "@platform/app-shared/registration/RegisterUserFlow";
+import type { StaffUser } from "@platform/app-shared/prototype/constants";
+import type { RegistrationSource } from "@platform/app-shared/prototype/registration-data";
 import { submitRegistration } from "@/lib/users-api";
-import { prototypeKeys } from "@/lib/query/prototype-keys";
+import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import { UsersOrganizationView } from "@/components/views/users/UsersOrganizationView";
 import { useStaffUsersQuery } from "@/lib/query/prototype-queries";
-import { usePrototype } from "@/contexts/PrototypeContext";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 
 type UsersMode = "list" | "portal" | "register";
 

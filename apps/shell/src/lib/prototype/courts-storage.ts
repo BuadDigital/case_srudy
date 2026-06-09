@@ -1,9 +1,9 @@
 import { listCourts, replaceCourtsCatalog } from "@platform/api-client";
-import { COURTS_BY_CITY } from "@/lib/prototype/po-intake-data";
+import { COURTS_BY_CITY } from "@case-study/mfe";
 import {
   apiErrorMessage,
   courtsApiConfig,
-} from "@/lib/work-orders-api-config";
+} from "@case-study/mfe";
 
 export type CourtCatalogEntry = {
   id: string;

@@ -1,5 +1,5 @@
-import { PoHeaderEditRoute } from "@/components/views/po-routes/PoHeaderEditRoute";
-import { decodePoParam } from "@/lib/po-routes";
+import { PoHeaderEditRoute } from "@case-study/mfe";
+import { decodePoParam } from "@case-study/mfe";
 export default async function PoHeaderEditPage({
   params,
 }: {

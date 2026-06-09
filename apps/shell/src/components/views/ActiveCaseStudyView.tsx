@@ -5,14 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   ActiveTransactionQueueView,
   type ActiveTransactionQueueConfig,
-} from "@/components/views/ActiveTransactionQueueView";
+} from "@case-study/mfe";
 import {
   activeCaseStudyPath,
   caseStudyTaskPath,
   caseStudyWorkspacePath,
   decodeTaskParam,
-} from "@/lib/my-task-routes";
-import { filterTasksForCaseStudy } from "@/lib/prototype/active-transactions";
+} from "@case-study/mfe";
+import { filterTasksForCaseStudy } from "@platform/app-shared/prototype/active-transactions";
 
 const CASE_STUDY_QUEUE: ActiveTransactionQueueConfig = {
   pageTitle: "دراسة حالة العقارات",
