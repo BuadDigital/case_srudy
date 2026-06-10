@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@case-study/mfe": "*",
+    "@dashboard/mfe": "*",
+    "@failures/mfe": "*",
+    "@settings/mfe": "*",
     "@platform/app-shared": "*",
     "@platform/api-client": "*",
     "@platform/auth-client": "*",

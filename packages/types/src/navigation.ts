@@ -23,6 +23,7 @@ export type PageId =
   | "kpi"
   | "users"
   | "courts"
+  | "failure-types"
   | "system-tools"
   | "case-study-info-roles";
 
@@ -105,6 +106,7 @@ export function isPageId(value: string): value is PageId {
     value === "kpi" ||
     value === "users" ||
     value === "courts" ||
+    value === "failure-types" ||
     value === "system-tools" ||
     value === "case-study-info-roles"
   );

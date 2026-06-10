@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@settings/mfe": ["./src/index.ts"],
+      "@settings/mfe/*": ["./src/*"],
+      "@case-study/mfe": ["../mfe-case-study/src/index.ts"],
+      "@case-study/mfe/*": ["../mfe-case-study/src/*"],
+      "@platform/app-shared": ["../../packages/app-shared/src/index.ts"],
+      "@platform/app-shared/*": ["../../packages/app-shared/src/*"],
+      "@platform/types": ["../../packages/types/src/index.ts"],
+      "@platform/types/*": ["../../packages/types/src/*"],
+      "@platform/api-client": ["../../packages/api-client/src/index.ts"],
+      "@platform/api-client/*": ["../../packages/api-client/src/*"],
+      "@platform/auth-client": ["../../packages/auth-client/src/index.ts"],
+      "@platform/auth-client/*": ["../../packages/auth-client/src/*"],
+      "@platform/design-system": ["../../packages/design-system/src/index.ts"],
+      "@platform/design-system/*": ["../../packages/design-system/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

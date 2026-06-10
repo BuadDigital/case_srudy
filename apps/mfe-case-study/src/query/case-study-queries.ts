@@ -10,7 +10,6 @@ import {
   loadPropertyListItems,
 } from "../lib/prototype/po-intake-storage";
 import { loadWorkflowTasks, syncTasksFromPoRecords } from "../lib/prototype/tasks-storage";
-import { loadFailures } from "../lib/prototype/failures-storage";
 
 export { loadWorkflowTasks };
 export { WORK_ORDERS_CHANGED_EVENT } from "../lib/work-orders-api-config";
@@ -86,10 +85,3 @@ export function usePoRecordQuery(poNumber: string | null) {
   });
 }
 
-export function useFailuresQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.failures(),
-    queryFn: loadFailures,
-    ...queryDefaults,
-  });
-}

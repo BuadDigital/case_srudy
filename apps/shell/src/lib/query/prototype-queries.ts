@@ -1,23 +1,24 @@
 "use client";
 
-import {
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { PageId } from "@platform/types";
 import {
   loadPendingBourseItems,
   loadPoListRows,
   loadPropertyListItems,
 } from "@case-study/mfe";
-import { loadCourtsCatalog } from "@/lib/prototype/courts-storage";
-import { loadFailures } from "@case-study/mfe/lib/prototype/failures-storage";
+import {
+  FAILURES_CHANGED_EVENT,
+  FAILURES_STORAGE_KEY,
+  loadFailures,
+} from "@failures/mfe";
 import {
   CASE_STUDY_INFO_ROLES_CHANGED_EVENT,
   loadCaseStudyInfoRolesConfig,
-  type CaseStudyInfoRolesConfig,
-} from "@/lib/prototype/case-study-info-roles-storage";
+  loadCourtsCatalog,
+  fetchOrganization,
+  fetchStaffUsers,
+} from "@settings/mfe";
 import {
   loadPoRecordsWithTaskSync,
   loadWorkflowTasks,
@@ -25,10 +26,7 @@ import {
   TASKS_STORAGE_KEY,
   WORK_ORDERS_CHANGED_EVENT,
 } from "@case-study/mfe/query/case-study-queries";
-import { fetchOrganization } from "@/lib/users-org-api";
-import { fetchStaffUsers } from "@/lib/users-api";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
-import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { useEffect } from "react";
 
 const STALE_MS = 60_000;
@@ -227,8 +225,10 @@ export function usePrototypeDataSync(): void {
     window.addEventListener("focus", onFocus);
     const onInfoRolesChanged = () => invalidateInfoRoles();
 
+    const onFailuresChanged = () => invalidateFailures();
+
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "evalFailureRecords") invalidateFailures();
+      if (e.key === FAILURES_STORAGE_KEY) invalidateFailures();
       if (e.key === TASKS_STORAGE_KEY) invalidateTasks();
       if (
         e.key?.startsWith("evalPo") ||
@@ -238,6 +238,7 @@ export function usePrototypeDataSync(): void {
       }
     };
     window.addEventListener("storage", onStorage);
+    window.addEventListener(FAILURES_CHANGED_EVENT, onFailuresChanged);
     window.addEventListener(CASE_STUDY_INFO_ROLES_CHANGED_EVENT, onInfoRolesChanged);
 
     return () => {
@@ -245,6 +246,7 @@ export function usePrototypeDataSync(): void {
       window.removeEventListener(TASKS_CHANGED_EVENT, invalidateTasks);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener(FAILURES_CHANGED_EVENT, onFailuresChanged);
       window.removeEventListener(
         CASE_STUDY_INFO_ROLES_CHANGED_EVENT,
         onInfoRolesChanged,
@@ -259,7 +261,6 @@ export {
   TASKS_CHANGED_EVENT,
   TASKS_STORAGE_KEY,
   WORK_ORDERS_CHANGED_EVENT,
-  useFailuresQuery,
   usePendingBourseItemsQuery,
   usePoListRowsQuery,
   usePoRecordQuery,
@@ -268,44 +269,13 @@ export {
   useWorkflowTasksQuery,
 } from "@case-study/mfe/query/case-study-queries";
 
-export function useCourtsCatalogQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.courtsCatalog(),
-    queryFn: loadCourtsCatalog,
-    ...queryDefaults,
-  });
-}
+export {
+  useCourtsCatalogQuery,
+  useCaseStudyInfoRolesQuery,
+  useStaffUsersQuery,
+  useOrganizationQuery,
+  setCaseStudyInfoRolesCache,
+} from "@settings/mfe/query/settings-queries";
 
-export function useCaseStudyInfoRolesQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.caseStudyInfoRoles(),
-    queryFn: loadCaseStudyInfoRolesConfig,
-    ...queryDefaults,
-  });
-}
-
-export function useStaffUsersQuery() {
-  const { personaId, authReady } = usePrototype();
-  return useQuery({
-    queryKey: [...prototypeKeys.staffUsers(), personaId],
-    queryFn: fetchStaffUsers,
-    enabled: authReady,
-    ...queryDefaults,
-  });
-}
-
-export function useOrganizationQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.organization(),
-    queryFn: fetchOrganization,
-    ...queryDefaults,
-  });
-}
-
-export function setCaseStudyInfoRolesCache(
-  queryClient: QueryClient,
-  config: CaseStudyInfoRolesConfig,
-) {
-  queryClient.setQueryData(prototypeKeys.caseStudyInfoRoles(), config);
-}
+export { useFailuresQuery } from "@failures/mfe/query/failures-queries";
 

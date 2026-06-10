@@ -106,3 +106,5 @@ export {
   type CaseStudyInfoRolesResult,
   type SaveCaseStudyInfoRolesRequest,
 } from "./case-study-info-roles";
+
+export { type FailuresApiConfig } from "./failures";

@@ -27,7 +27,11 @@ import {
   type PoPropertyRowMoreContext,
 } from "../lib/prototype/po-properties-row-menu";
 import { usePoRecordQuery } from "@case-study/mfe/query/case-study-queries";
-import { canEditProperty, canViewPoEye } from "../lib/prototype/po-roles";
+import {
+  canEditProperty,
+  canRaisePropertyFailure,
+  canViewPoEye,
+} from "../lib/prototype/po-roles";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import type { PoPropertyIntake } from "../lib/prototype/po-intake-data";
 
@@ -66,8 +70,10 @@ export function PoPropertiesPage({
   const router = useRouter();
   const { role } = usePrototype();
   const showEdit = canEditProperty(role);
+  const showFailureRaise = canRaisePropertyFailure(role);
   const showEye = canViewPoEye(role);
-  const showRowMenu = showEye || showEdit || Boolean(buildPropertyRowMoreItems);
+  const showRowMenu =
+    showEye || showEdit || showFailureRaise || Boolean(buildPropertyRowMoreItems);
   const [menuRevision, setMenuRevision] = useState(0);
   const bumpMenu = useCallback(() => setMenuRevision((n) => n + 1), []);
 
@@ -80,6 +86,7 @@ export function PoPropertiesPage({
         poNumber,
         property,
         showEdit,
+        showFailureRaise,
         router,
         refresh: bumpMenu,
       };
@@ -95,6 +102,7 @@ export function PoPropertiesPage({
     [
       poNumber,
       showEdit,
+      showFailureRaise,
       router,
       bumpMenu,
       buildPropertyRowMoreItems,

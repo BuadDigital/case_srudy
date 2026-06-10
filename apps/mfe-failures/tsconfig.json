@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@failures/mfe": ["./src/index.ts"],
+      "@failures/mfe/*": ["./src/*"],
+      "@case-study/mfe": ["../mfe-case-study/src/index.ts"],
+      "@case-study/mfe/*": ["../mfe-case-study/src/*"],
+      "@platform/api-client": ["../../packages/api-client/src/index.ts"],
+      "@platform/api-client/*": ["../../packages/api-client/src/*"],
+      "@platform/app-shared": ["../../packages/app-shared/src/index.ts"],
+      "@platform/app-shared/*": ["../../packages/app-shared/src/*"],
+      "@platform/types": ["../../packages/types/src/index.ts"],
+      "@platform/types/*": ["../../packages/types/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

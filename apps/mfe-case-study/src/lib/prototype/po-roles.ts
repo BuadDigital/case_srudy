@@ -26,14 +26,15 @@ export function isPoViewOnly(role: RoleId): boolean {
   return !isSuperAdmin(role) && role === "general-manager";
 }
 
-export function canManageCourts(role: RoleId): boolean {
-  return isSuperAdmin(role) || role === "section-supervisor";
-}
-
 export function canDeletePo(role: RoleId): boolean {
   return isSuperAdmin(role) || role === "section-supervisor";
 }
 
 export function canDeleteProperty(role: RoleId): boolean {
   return isSuperAdmin(role) || role === "section-supervisor";
+}
+
+/** §5 — المشرف والأخصائي يمكنهم رفع تعذر من شاشة العقار. */
+export function canRaisePropertyFailure(role: RoleId): boolean {
+  return canEditProperty(role) || canEditPoHeader(role);
 }

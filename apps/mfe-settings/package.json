@@ -1,0 +1,31 @@
+{
+  "name": "@settings/mfe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Settings microfrontend — إدارة المستخدمين، جميع حقول النظام، المحاكم، علاقة المستخدم بالمعلومة",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes": "./src/routes.ts",
+    "./query/settings-queries": "./src/query/settings-queries.ts",
+    "./lib/*": "./src/lib/*",
+    "./views/*": "./src/views/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@case-study/mfe": "*",
+    "@platform/app-shared": "*",
+    "@platform/api-client": "*",
+    "@platform/auth-client": "*",
+    "@platform/design-system": "*",
+    "@platform/types": "*",
+    "@tanstack/react-query": "^5.100.11"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19",
+    "react-dom": ">=19"
+  }
+}

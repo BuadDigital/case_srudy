@@ -247,34 +247,45 @@ Report vulnerabilities to the project owner / security contact internally — do
 
 The platform is evolving from a **single shell app + auth API** toward **microfrontends** and **domain microservices**.
 
-### Current structure (phase F0 — done)
+### Current structure (F3 — logical MFEs, single deploy)
 
 ```text
-project1_study_case/
+property_study/
 ├── apps/
-│   └── shell/                 # Next.js host — all screens today
+│   ├── shell/                 # Next.js host — login, layout, nav, unsplit screens
+│   ├── mfe-case-study/        # @case-study/mfe — PO + المعاملات النشطة (API)
+│   ├── mfe-failures/          # @failures/mfe — إدارة التعذرات (localStorage until API)
+│   └── mfe-settings/          # @settings/mfe — users, courts, info-roles, system-tools
 ├── packages/
+│   ├── app-shared/            # PrototypeContext, registration, nav/constants
 │   ├── design-system/         # prototype.css, badges
 │   ├── auth-client/           # session, AppAuthGate
-│   ├── api-client/            # getApiBase + users/work-orders/courts fetch helpers
+│   ├── api-client/            # auth, users, work-orders, courts, workflow-tasks, …
 │   └── types/                 # PageId, RoleId, nav types
 ├── backend/
-│   └── RealEstateEval.Api/    # Identity + JWT (monolith for now)
+│   └── RealEstateEval.Api/    # ASP.NET monolith (domain APIs growing)
 ├── infra/                     # Docker Compose, Prometheus, Fluent Bit, …
 ├── docs/                      # Architecture, LOCAL_INFRA, demo credentials
 └── requirements/              # HTML prototypes (reference only)
 ```
 
-### Target microfrontends (planned)
+### Microfrontend packages (today)
 
-| MFE | Routes |
-|-----|--------|
-| **shell** | Login, layout, nav, auth |
-| **mfe-case-study** | dashboard, PO, properties, assignment, failures |
+| Package | Routes / scope |
+|---------|----------------|
+| **shell** | Login, layout, nav, case-study form, party queues, mock pages |
+| **@case-study/mfe** | `/po/*`, active transactions, bourse, distribution, active case study |
+| **@failures/mfe** | `/failures`, PO property failure form (localStorage prototype) |
+| **@settings/mfe** | `/users`, `/courts`, `/case-study-info-roles`, `/system-tools` |
+
+**Still to split (when APIs exist):**
+
+| Future MFE | Routes |
+|------------|--------|
 | **mfe-valuation** | valuation-requests, field-form |
 | **mfe-operations** | survey, keys |
 | **mfe-financial** | financial |
-| **mfe-platform** | users, messages, kpi |
+| **mfe-platform** | messages, kpi |
 
 ### Target backend (planned)
 
@@ -471,13 +482,14 @@ Use this checklist to see what exists **today** vs what is only planned.
 
 | Area | Included? | Notes |
 |------|-----------|--------|
-| **All main UI screens** | ✅ | Mock data in `apps/shell/src/lib/prototype/constants.ts` |
+| **All main UI screens** | ✅ | Nav/roles in `packages/app-shared`; some screens still mock |
 | **Login + JWT** | ✅ | Needs API + Postgres running |
 | **Security (Identity, JWT, auth gate, password policy)** | ✅ | See [Security Features](#-security-features) |
 | **Role switcher (demo)** | ✅ | Sidebar dropdown — **not** real server-side security yet |
 | **Add user (إدارة المستخدمين)** | ✅ | API (`POST /api/users/hr|proc|crm`) + registration wizards |
 | **Monorepo F0** | ✅ | `apps/shell` + `packages/*` |
-| **Microfrontends (F2–F5)** | ❌ | Only documented; not built |
+| **Logical MFEs (F3)** | ✅ | `@case-study/mfe`, `@failures/mfe`, `@settings/mfe` — single deploy |
+| **Module Federation (F5)** | ❌ | Independent deploy URLs not wired yet |
 | **Domain APIs** (PO, properties, courts, users) | ✅ | `RealEstateEval.Api` — see `docs/progress.md` |
 | **Per-role `@ejadah.dev` login** | ❌ | Draft in `docs/DEMO_ROLE_CREDENTIALS.txt` |
 | **Docker platform stack** | ✅ | Postgres, RabbitMQ, Redis, Jaeger, Prometheus, Grafana, ES, Kibana, Fluent Bit |
@@ -550,16 +562,17 @@ docker compose -f infra/docker-compose.yml down
 
 | You want to… | Edit this |
 |--------------|-----------|
-| Change labels, nav, mock tables | `apps/shell/src/lib/prototype/constants.ts` |
-| Change a screen layout | `apps/shell/src/components/views/*View.tsx` |
+| Change labels, nav, mock tables | `packages/app-shared/src/prototype/constants.ts` |
+| Change a case-study / failures / settings screen | `apps/mfe-case-study/`, `apps/mfe-failures/`, `apps/mfe-settings/` |
+| Change a shell-only screen | `apps/shell/src/components/views/*View.tsx` |
 | Map URL → screen | `apps/shell/src/app/(app)/[page]/page.tsx` |
 | Login page | `apps/shell/src/app/login/page.tsx` |
 | Sidebar / layout / logout | `apps/shell/src/components/views/AppShell.tsx` |
-| Role switcher behavior | `apps/shell/src/contexts/PrototypeContext.tsx` |
+| Role switcher behavior | `packages/app-shared/src/contexts/PrototypeContext.tsx` |
 | Shared styles / badges | `packages/design-system/` |
 | Auth session helpers | `packages/auth-client/` |
 | API base URL | `packages/api-client/` + `NEXT_PUBLIC_API_URL` |
-| User registration / staff list | `apps/shell/src/lib/users-api.ts` + `components/prototype/registration/` |
+| User registration / staff list | `@settings/mfe` + `@platform/app-shared/registration/` |
 | Backend login / users | `backend/RealEstateEval.Api/` |
 | Docker / observability | `infra/docker-compose.yml`, `docs/LOCAL_INFRA.md` |
 

@@ -1,11 +1,12 @@
 import {
   loadPartyCaseStudyFormDraft,
   savePartyCaseStudyFormDraft,
-} from "@case-study/mfe/lib/prototype/case-study-form-storage";
+} from "@case-study/mfe";
 import {
   loadEvaluatorSubmission,
   submitEvaluatorSubmission,
 } from "./evaluator-submission-storage";
+import { clearEvaluatorRecall } from "./evaluator-recall-storage";
 import type { EvaluatorSubmission } from "./evaluator-window-data";
 
 /** يرسل تقييم المقيم + إجابات الاستدلال لأخصائي دراسة الحالة. */
@@ -14,6 +15,8 @@ export async function finalizeAppraiserSubmission(
 ): Promise<EvaluatorSubmission | null> {
   const submitted = submitEvaluatorSubmission(appraisalTaskId);
   if (!submitted) return null;
+
+  clearEvaluatorRecall(appraisalTaskId);
 
   const partyDraft = await loadPartyCaseStudyFormDraft(appraisalTaskId);
   if (partyDraft) {

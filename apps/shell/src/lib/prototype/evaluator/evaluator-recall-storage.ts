@@ -60,6 +60,14 @@ export function recallStatusLabel(status: EvaluatorRecallStatus): string {
   return "رُفض الاستدعاء";
 }
 
+export function clearEvaluatorRecall(taskId: string): void {
+  const items = loadAll();
+  const next = items.filter((r) => r.taskId !== taskId);
+  if (next.length === items.length) return;
+  saveAll(next);
+  notifyEvaluatorRecallChanged();
+}
+
 export function requestEvaluatorRecall(input: {
   taskId: string;
   poNumber: string;

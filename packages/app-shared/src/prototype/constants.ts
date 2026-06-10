@@ -93,6 +93,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "kpi",
       "users",
       "courts",
+      "failure-types",
       "case-study-info-roles",
     ],
   },
@@ -111,6 +112,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
       "active-case-study",
       "keys",
       "failures",
+      "failure-types",
       "messages",
     ],
   },
@@ -208,7 +210,6 @@ export const NAV: NavItem[] = [
     label: "إدارة التعذرات",
     icon: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
     grp: null,
-    badge: "5",
   },
   {
     id: "valuation-requests",
@@ -279,6 +280,7 @@ export const PAGE_TITLES: Record<PageId, string> = {
   kpi: "مؤشرات الأداء",
   users: "إدارة المستخدمين",
   courts: "المحاكم و الدوائر",
+  "failure-types": "أنواع التعذرات",
   "system-tools": "ادوات النظام",
   "case-study-info-roles": "علاقة المستخدم بالمعلومة",
 };
@@ -307,6 +309,7 @@ export const PAGE_BREADCRUMB: Record<PageId, string> = {
   kpi: "الإدارة",
   users: "الإدارة",
   courts: "جميع حقول النظام / المحاكم و الدوائر",
+  "failure-types": "جميع حقول النظام / أنواع التعذرات",
   "system-tools": "جميع حقول النظام / ادوات النظام",
   "case-study-info-roles": "جميع حقول النظام / علاقة المستخدم بالمعلومة",
 };

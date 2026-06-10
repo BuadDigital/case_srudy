@@ -25,17 +25,11 @@ export function filterAppraiserSubmittedTasks(
   });
 }
 
-/** قائمة المقيم: مهام قيد العمل + مُرسَلة للأخصائي (غير مكتملة). */
+/** قائمة المقيم: مهام قيد العمل فقط (المُرسَلة للأخصائي تُدار من عقارات أمر العمل). */
 export function filterAppraiserListedTasks(
   tasks: WorkflowTask[],
 ): WorkflowTask[] {
-  return tasks.filter((t) => {
-    if (t.kind !== "property-appraisal") return false;
-    if (t.status === "completed") return false;
-    if (isVisibleInAppraiserQueue(t.id, t.status)) return true;
-    const sub = loadEvaluatorSubmission(t.id);
-    return sub?.status === "submitted";
-  });
+  return filterAppraiserQueueTasks(tasks);
 }
 
 export function canAppraiserOpenTask(taskId: string, taskStatus: string): boolean {

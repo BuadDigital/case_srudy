@@ -497,6 +497,22 @@ export async function escalateTaskForObstruction(
   return dtoToTask(result.data);
 }
 
+export async function resolveObstructionForProperty(
+  poNumber: string,
+  propertyId: string,
+): Promise<WorkflowTask | null> {
+  const list = await loadWorkflowTasks();
+  const task = list.find(
+    (t) =>
+      t.kind === "case-study-property" &&
+      t.poNumber === poNumber &&
+      t.propertyId === propertyId &&
+      t.phase === "obstruction",
+  );
+  if (!task) return null;
+  return resolveTaskObstruction(task.id, task);
+}
+
 export async function resolveTaskObstruction(
   taskId: string,
   task?: WorkflowTask,

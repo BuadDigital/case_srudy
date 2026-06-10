@@ -146,23 +146,3 @@ export function isEvaluatorFormLocked(status: EvaluatorSubmissionStatus): boolea
   return status === "submitted" || status === "completed";
 }
 
-export function mergeChecklist(
-  prev: EvaluatorChecklistAnswers,
-  patch: Partial<EvaluatorChecklistAnswers>,
-): EvaluatorChecklistAnswers {
-  const next = { ...prev, ...patch };
-  if (patch.q_shared_deed === false) {
-    next.shared_deed_scope = null;
-    next.shared_deed_percentage = "";
-  }
-  if (patch.shared_deed_scope === "full") {
-    next.shared_deed_percentage = "";
-  }
-  if (patch.q_lease_exists === false) {
-    next.q_lease_active = null;
-  }
-  if (patch.q_technical_notes_exists === false) {
-    next.technical_notes_text = "";
-  }
-  return next;
-}

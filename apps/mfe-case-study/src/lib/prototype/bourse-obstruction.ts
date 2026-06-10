@@ -1,4 +1,4 @@
-import { reportBourseObstructionToSupervisor } from "@case-study/mfe/lib/prototype/failures-storage";
+import { reportBourseObstructionToSupervisor } from "@failures/mfe";
 import type { BourseDeedVitality } from "./po-intake-data";
 
 export function validateBourseObstructionReason(

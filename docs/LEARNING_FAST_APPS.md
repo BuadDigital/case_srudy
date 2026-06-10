@@ -122,7 +122,7 @@ Before optimizing randomly, set **targets** per layer:
 | Hooks + prefetch | `apps/shell/src/lib/query/prototype-queries.ts` | `staleTime` 60s, `gcTime` 10m |
 | Boot warm cache | `apps/shell/src/providers/QueryProvider.tsx` | `prefetchCorePrototypeData` |
 | Hover + route prefetch | `apps/shell/src/components/views/AppShell.tsx` | Intent-based prefetch |
-| PO hover | `apps/shell/src/components/ui/PoNumber.tsx` | `prefetchPoRecord` |
+| PO hover | `@case-study/mfe/components/ui/PoNumber.tsx` | `prefetchPoRecord` |
 | Honest stats | `apps/shell/src/components/ui/StatValue.tsx` | No flash of `0` |
 | Pending tables | `packages/design-system/.../prototype.css` | `data-pending` |
 | Invalidation | `usePrototypeDataSync()` | Events + `storage` + focus |

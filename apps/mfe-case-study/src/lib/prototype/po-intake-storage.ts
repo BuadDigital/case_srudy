@@ -8,7 +8,7 @@ import {
   contactsForApi,
   propertyHasIncompleteContact,
 } from "../domain/po-intake/property-validation";
-import { getPropertyFailure, deleteFailuresForPo } from "@case-study/mfe/lib/prototype/failures-storage";
+import { deleteFailuresForPo, getPropertyFailure } from "@failures/mfe";
 import {
   advanceTaskAfterBourseForProperty,
   advanceTaskAfterEnfath,

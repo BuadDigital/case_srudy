@@ -703,7 +703,7 @@ The migration is **architecturally complete** when:
 | UI prototype | `requirment/system_prototype_4.html` |
 | Shell app | `apps/shell/` |
 | Current pages map | `apps/shell/src/app/(app)/[page]/page.tsx` |
-| Nav / roles / mocks | `apps/shell/src/lib/prototype/constants.ts` |
+| Nav / roles / mocks | `packages/app-shared/src/prototype/constants.ts` |
 | Shared packages | `packages/design-system`, `packages/auth-client`, `packages/api-client`, `packages/types` |
 | Current API | `backend/RealEstateEval.Api/` |
 

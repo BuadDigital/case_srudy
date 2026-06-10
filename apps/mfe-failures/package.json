@@ -1,0 +1,31 @@
+{
+  "name": "@failures/mfe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Failures microfrontend — إدارة التعذرات (failure records + PO property failure reports)",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes": "./src/routes.ts",
+    "./query/failures-queries": "./src/query/failures-queries.ts",
+    "./query/failure-types-queries": "./src/query/failure-types-queries.ts",
+    "./lib/*": "./src/lib/*",
+    "./views/*": "./src/views/*",
+    "./components/*": "./src/components/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@case-study/mfe": "*",
+    "@platform/api-client": "*",
+    "@platform/app-shared": "*",
+    "@platform/types": "*",
+    "@tanstack/react-query": "^5.100.11"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19",
+    "react-dom": ">=19"
+  }
+}

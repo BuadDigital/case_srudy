@@ -1,0 +1,60 @@
+"use client";
+
+import {
+  useQuery,
+  type QueryClient,
+} from "@tanstack/react-query";
+import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
+import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
+import { loadCourtsCatalog } from "../lib/prototype/courts-storage";
+import {
+  loadCaseStudyInfoRolesConfig,
+  type CaseStudyInfoRolesConfig,
+} from "../lib/prototype/case-study-info-roles-storage";
+import { fetchStaffUsers } from "../lib/users-api";
+import { fetchOrganization } from "../lib/users-org-api";
+
+const STALE_MS = 60_000;
+const GC_MS = 10 * 60_000;
+const queryDefaults = { staleTime: STALE_MS, gcTime: GC_MS };
+
+export function useCourtsCatalogQuery() {
+  return useQuery({
+    queryKey: prototypeKeys.courtsCatalog(),
+    queryFn: loadCourtsCatalog,
+    ...queryDefaults,
+  });
+}
+
+export function useCaseStudyInfoRolesQuery() {
+  return useQuery({
+    queryKey: prototypeKeys.caseStudyInfoRoles(),
+    queryFn: loadCaseStudyInfoRolesConfig,
+    ...queryDefaults,
+  });
+}
+
+export function useStaffUsersQuery() {
+  const { personaId, authReady } = usePrototype();
+  return useQuery({
+    queryKey: [...prototypeKeys.staffUsers(), personaId],
+    queryFn: fetchStaffUsers,
+    enabled: authReady,
+    ...queryDefaults,
+  });
+}
+
+export function useOrganizationQuery() {
+  return useQuery({
+    queryKey: prototypeKeys.organization(),
+    queryFn: fetchOrganization,
+    ...queryDefaults,
+  });
+}
+
+export function setCaseStudyInfoRolesCache(
+  queryClient: QueryClient,
+  config: CaseStudyInfoRolesConfig,
+) {
+  queryClient.setQueryData(prototypeKeys.caseStudyInfoRoles(), config);
+}

@@ -65,8 +65,8 @@ Without API + login, PO and user screens cannot load persisted data (client retu
 
 After login, reviewers can switch among **11 demo personas** (CDO, general manager, case specialist, etc.). This:
 
-- Shows/hides sidebar modules per role (`ROLES` in `apps/shell/src/lib/prototype/constants.ts`)
-- Gates PO actions (`apps/shell/src/lib/prototype/po-roles.ts`)
+- Shows/hides sidebar modules per role (`ROLES` in `packages/app-shared/src/prototype/constants.ts`)
+- Gates PO actions (`@case-study/mfe` `po-roles.ts`)
 - Does **not** change the JWT or server-side authorization on work orders (any authenticated user can call work-order APIs today)
 
 **Implication for analysis:** UX permission tests use the **role dropdown**, not separate user accounts per role (unless you create users in DB and extend backend policies later).
@@ -128,7 +128,7 @@ Properties are accessed **per PO** only (`/po/{poNumber}/property`). For active-
 
 ## 5. Role × module access (navigation)
 
-Roles are defined in `apps/shell/src/lib/prototype/constants.ts`. “✓” = menu item visible; “—” = hidden (locked in sidebar).
+Roles are defined in `packages/app-shared/src/prototype/constants.ts`. “✓” = menu item visible; “—” = hidden (locked in sidebar).
 
 | Module | CDO / GM | Section supervisor | Ops coordinator | Case specialist | Report preparer | Court delegate | Valuation coord. | Appraiser | Field inspector | Financial |
 |--------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|

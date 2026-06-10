@@ -7,6 +7,7 @@ import type { RowMoreMenuItem } from "@case-study/mfe/components/ui/RowMoreMenu"
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { buildAppraiserRecallMenuItems } from "@/lib/prototype/evaluator/appraiser-recall-menu-items";
 import { EVALUATOR_RECALL_CHANGED_EVENT } from "@/lib/prototype/evaluator/evaluator-recall-storage";
+import { EVALUATOR_SUBMISSION_CHANGED_EVENT } from "@/lib/prototype/evaluator/evaluator-submission-storage";
 import { useWorkflowTasksQuery } from "@/lib/query/prototype-queries";
 
 export function PoPropertiesPageClient({ poNumber }: { poNumber: string }) {
@@ -17,8 +18,11 @@ export function PoPropertiesPageClient({ poNumber }: { poNumber: string }) {
     if (role !== "real-estate-appraiser") return;
     const handler = () => void refetch();
     window.addEventListener(EVALUATOR_RECALL_CHANGED_EVENT, handler);
-    return () =>
+    window.addEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, handler);
+    return () => {
       window.removeEventListener(EVALUATOR_RECALL_CHANGED_EVENT, handler);
+      window.removeEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, handler);
+    };
   }, [role, refetch]);
 
   const buildPropertyRowMoreItems = useCallback(

@@ -52,6 +52,7 @@ import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
 import { pagesForPrototypeRole } from "@platform/app-shared/prototype/prototype-role-access";
 import { ActiveTransactionsSituationBar } from "@case-study/mfe";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
+import { useFailuresNavBadge } from "@/lib/query/use-failures-nav-badge";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
 
 /** Must match `group` on every entry in ROLE_OPTIONS (constants.ts). */
@@ -368,6 +369,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const showActiveTransactionsGroup = activeTransactionItems.length > 0;
   const activeTxBadges = useActiveTransactionNavBadges();
+  const failuresNavBadge = useFailuresNavBadge();
   const insertActiveTxAfterPo = rolePages.includes("po");
 
   const prefetchPage = useMemo(
@@ -539,6 +541,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         (item.id === "po" && inPoSection)
                       }
                       onPrefetch={prefetchPage}
+                      badgeCount={
+                        item.id === "failures" ? failuresNavBadge : undefined
+                      }
                     />,
                   ];
                   const shouldInsertActiveTx =

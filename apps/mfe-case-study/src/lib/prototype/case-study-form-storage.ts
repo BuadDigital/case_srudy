@@ -1,5 +1,5 @@
-import type { CaseStudyFormAnswer } from "@case-study/mfe/lib/prototype/case-study-form-data";
-import { todayIsoDate } from "@case-study/mfe/lib/prototype/case-study-form-data";
+import type { CaseStudyFormAnswer } from "./case-study-form-data";
+import { todayIsoDate } from "./case-study-form-data";
 import type { CaseStudyFormDto } from "@platform/api-client";
 import {
   getCaseStudyForm,
@@ -7,7 +7,7 @@ import {
   saveCaseStudyForm,
   savePartyCaseStudyForm,
 } from "@platform/api-client";
-import { workOrdersApiConfig } from "@case-study/mfe";
+import { workOrdersApiConfig } from "../work-orders-api-config";
 
 export type CaseStudyFormStatus = "new" | "draft" | "submitted";
 

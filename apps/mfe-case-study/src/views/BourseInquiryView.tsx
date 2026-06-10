@@ -22,10 +22,8 @@ import {
   findPropertyInRecord,
 } from "../lib/prototype/po-intake-storage";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
-import {
-  useFailuresQuery,
-  usePendingBourseItemsQuery,
-} from "@case-study/mfe/query/case-study-queries";
+import { useFailuresQuery } from "@failures/mfe/query/failures-queries";
+import { usePendingBourseItemsQuery } from "../query/case-study-queries";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import {
   hasFieldErrors,
@@ -53,7 +51,11 @@ export function BourseInquiryView() {
       (f) =>
         f.poNumber === item.poNumber && f.propertyId === item.propertyId,
     );
-    return !failure || failure.status === "returned";
+    return (
+      !failure ||
+      failure.status === "returned" ||
+      failure.status === "resolved"
+    );
   });
   const loading = !isFetched;
   const [selected, setSelected] = useState<PendingBoursePropertyDto | null>(null);

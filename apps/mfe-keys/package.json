@@ -1,0 +1,31 @@
+{
+  "name": "@keys/mfe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Keys microfrontend — إدارة المفاتيح (court key custody; not government-review)",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes": "./src/routes.ts",
+    "./query/keys-queries": "./src/query/keys-queries.ts",
+    "./lib/*": "./src/lib/*",
+    "./views/*": "./src/views/*",
+    "./components/*": "./src/components/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@platform/api-client": "*",
+    "@platform/app-shared": "*",
+    "@platform/auth-client": "*",
+    "@platform/design-system": "*",
+    "@platform/types": "*",
+    "@tanstack/react-query": "^5.100.11"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19",
+    "react-dom": ">=19"
+  }
+}

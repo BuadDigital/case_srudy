@@ -4,8 +4,6 @@ import {
   poPropertyPath,
 } from "@case-study/mfe/lib/po-routes";
 import type { WorkflowTask } from "@case-study/mfe/lib/prototype/tasks-storage";
-import { buildAppraiserRecallMenuItems } from "@/lib/prototype/evaluator/appraiser-recall-menu-items";
-import { loadEvaluatorSubmission } from "@/lib/prototype/evaluator/evaluator-submission-storage";
 
 export function buildAppraiserQueueRowMoreItems(options: {
   task: WorkflowTask;
@@ -14,20 +12,17 @@ export function buildAppraiserQueueRowMoreItems(options: {
   router: { push: (href: string) => void };
   refreshQueue: () => void;
 }): RowMoreMenuItem[] {
+  void options.refreshQueue;
   const po = options.task.poNumber.trim();
   const propertyId = options.propertyId?.trim();
-  const submission = loadEvaluatorSubmission(options.task.id);
-  const isSubmitted = submission?.status === "submitted";
 
-  const items: RowMoreMenuItem[] = [];
-
-  if (!isSubmitted) {
-    items.push({
+  const items: RowMoreMenuItem[] = [
+    {
       id: "open",
       label: "فتح المعاملة",
       onClick: options.openTask,
-    });
-  }
+    },
+  ];
 
   if (po) {
     items.push({
@@ -43,10 +38,6 @@ export function buildAppraiserQueueRowMoreItems(options: {
       label: "تفاصيل العقار",
       onClick: () => options.router.push(poPropertyPath(po, propertyId)),
     });
-  }
-
-  if (isSubmitted) {
-    items.push(...buildAppraiserRecallMenuItems(options.task, options.refreshQueue));
   }
 
   return items;

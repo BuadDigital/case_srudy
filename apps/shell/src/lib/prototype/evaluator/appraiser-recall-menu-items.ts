@@ -11,31 +11,10 @@ export function buildAppraiserRecallMenuItems(
   refresh: () => void,
 ): RowMoreMenuItem[] {
   const submission = loadEvaluatorSubmission(task.id);
-  const isSubmitted = submission?.status === "submitted";
-  if (!isSubmitted) return [];
+  if (submission?.status !== "submitted") return [];
 
   const recall = getEvaluatorRecall(task.id);
-  if (!recall || recall.status === "rejected") {
-    return [
-      {
-        id: "recall",
-        label: "استدعاء المعاملة",
-        onClick: () => {
-          const reason = window.prompt("سبب طلب الاستدعاء (اختياري):", "");
-          if (reason === null) return;
-          requestEvaluatorRecall({
-            taskId: task.id,
-            poNumber: task.poNumber,
-            propertyId: task.propertyId ?? "",
-            reason,
-          });
-          refresh();
-        },
-      },
-    ];
-  }
-
-  if (recall.status === "pending") {
+  if (recall?.status === "pending") {
     return [
       {
         id: "recall-pending",
@@ -46,5 +25,21 @@ export function buildAppraiserRecallMenuItems(
     ];
   }
 
-  return [];
+  return [
+    {
+      id: "recall",
+      label: "استدعاء المعاملة",
+      onClick: () => {
+        const reason = window.prompt("سبب طلب الاستدعاء (اختياري):", "");
+        if (reason === null) return;
+        requestEvaluatorRecall({
+          taskId: task.id,
+          poNumber: task.poNumber,
+          propertyId: task.propertyId ?? "",
+          reason,
+        });
+        refresh();
+      },
+    },
+  ];
 }

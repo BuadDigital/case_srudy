@@ -26,14 +26,20 @@ Different **roles** (مدير الإدارة, مشرف دراسة الحالة, 
 
 ```text
 apps/
-  shell/              ← host: login, layout, nav, not-ready pages (Next.js 16)
-  mfe-case-study/     ← logical MFE package (@case-study/mfe) — API-ready flows
+  shell/              ← host: login, layout, nav, not-yet-split pages (Next.js 16)
+  mfe-case-study/     ← @case-study/mfe — PO + المعاملات النشطة (API-ready)
+  mfe-failures/       ← @failures/mfe — إدارة التعذرات (localStorage until API)
+  mfe-settings/       ← @settings/mfe — الإعدادات + جميع حقول النظام (API)
+  mfe-dashboard/        ← @dashboard/mfe — لوحة التحكم (split from case-study)
+  mfe-survey/           ← @survey/mfe — الرفع المساحي (/survey)
+  mfe-keys/             ← @keys/mfe — إدارة المفاتيح
+  mfe-financial/        ← @financial/mfe — التقارير المالية
+  mfe-kpi/              ← @kpi/mfe — مؤشرات الأداء
   (future)
-  mfe-valuation/
-  mfe-operations/
-  mfe-financial/
-  mfe-platform/
+  mfe-valuation/        ← valuation-requests, field-form
 ```
+
+**Architecture (platform domains — not implemented yet):** [MFE_PLATFORM_DOMAINS.md](./MFE_PLATFORM_DOMAINS.md)
 
 ### `shell` (host)
 
@@ -42,7 +48,7 @@ The **shell** is the application users open in the browser:
 - **Login** and session (`/login`)
 - **Layout**: sidebar, top bar, breadcrumbs, branding
 - **All feature pages** under dynamic routes (e.g. `/dashboard`, `/properties`, `/users`)
-- **Prototype helpers**: role switcher (demo), mock lists in `shell/src/lib/prototype/`
+- **Prototype helpers**: role switcher (demo) in `@platform/app-shared`; case-study libs in MFE packages
 
 Shared UI and auth live in **`packages/`** at the repo root (not inside `apps/`):
 
@@ -53,7 +59,9 @@ Shared UI and auth live in **`packages/`** at the repo root (not inside `apps/`)
 | `@platform/auth-client` | Session storage, auth gate |
 | `@platform/api-client` | API base URL (placeholder for real services) |
 | `@platform/types` | `PageId`, `RoleId`, navigation types, `CASE_STUDY_READY_NAV` |
-| `@case-study/mfe` | API-ready PO + active-transaction views (imported by shell routes) |
+| `@case-study/mfe` | API-ready PO + active-transaction views |
+| `@failures/mfe` | إدارة التعذرات — repository + localStorage prototype |
+| `@settings/mfe` | users, courts, info-roles, system-tools |
 
 Run the shell from the **repository root**:
 
@@ -69,22 +77,34 @@ npm run dev
 ## Microfrontend plan (not finished yet)
 
 **Done:** phase **F0** — monorepo structure, one deploy.  
-**Done:** phase **F3** — `@case-study/mfe` owns the **API-ready** case-study path (PO + المعاملات النشطة ready tabs). Shared host UI lives in `@platform/app-shared`. Shell still hosts routes and layout (single deploy). **Module Federation (F5)** deferred until you need independent deploys.
+**Done:** phase **F3** — logical MFE packages; shell hosts routes and layout (single deploy). **Module Federation (F5)** deferred until independent deploy is needed.
 
-| Package | Routes / features moved out of `shell` |
-|---------|--------------------------------------|
-| **`@case-study/mfe`** | `/po/*`, `/active-primary-data`, `/bourse-inquiry`, `/active-distribution` |
+| Package | Routes / features |
+|---------|-------------------|
+| **`@case-study/mfe`** | `/po/*`, `/active-primary-data`, `/bourse-inquiry`, `/active-distribution`, `/active-case-study` |
+| **`@failures/mfe`** | `/failures`, PO property failure form — **localStorage** until backend exists |
+| **`@settings/mfe`** | `/users`, `/courts`, `/case-study-info-roles`, `/system-tools` |
 
-**Still to do:** split remaining domains and enable independent deploys:
+**Still in shell:** evaluator, messages, valuation-requests, field-form, and mock views until F4 move.
+
+**Planned platform MFEs (architecture only — see [MFE_PLATFORM_DOMAINS.md](./MFE_PLATFORM_DOMAINS.md)):**
+
+| Package | Route | Notes |
+|---------|-------|-------|
+| **`@dashboard/mfe`** | `/dashboard` | Move **out of** `@case-study/mfe`; PO stats via `api-client`, not case-study |
+| **`@survey/mfe`** | `/survey` | Office-level survey admin — **not** `/active-survey` (party queue stays in case-study) |
+| **`@keys/mfe`** | `/keys` | Key custody — separate from government-review in case-study |
+| **`@financial/mfe`** | `/financial` | Financial reports |
+| **`@kpi/mfe`** | `/kpi` | Performance indicators |
+
+**Still to split later:**
 
 | Future app | Routes / features |
 |------------|-------------------|
 | **mfe-valuation** | valuation-requests, field-form |
-| **mfe-operations** | survey, keys |
-| **mfe-financial** | financial |
-| **mfe-platform** | users, messages, kpi |
+| **mfe-messages** (or platform) | messages |
 
-The shell will remain the **host** (login, nav, loading remotes). **Module Federation** and separate deploy URLs come in a later phase (F5). Until then, do not expect extra folders under `apps/` beyond `shell`.
+The shell remains the **host** (login, nav). Separate deploy URLs come in phase F5.
 
 ---
 

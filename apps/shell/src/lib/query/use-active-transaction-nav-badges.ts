@@ -11,7 +11,7 @@ import {
   filterTasksForDistribution,
   filterTasksForPrimaryData,
 } from "@case-study/mfe";
-import { countGovernmentReviewOpenPos } from "@/lib/prototype/government-review-po";
+import { countGovernmentReviewOpenPos } from "@case-study/mfe";
 import { PARTY_TASK_PAGES } from "@platform/app-shared/prototype/party-task-pages";
 import { reviewerScopeForRole } from "@case-study/mfe/lib/prototype/reviewer-coverage";
 import {

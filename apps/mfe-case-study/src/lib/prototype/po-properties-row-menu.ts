@@ -1,6 +1,6 @@
 import type { RowMoreMenuItem } from "@case-study/mfe/components/ui/RowMoreMenu";
 import { openInternalDelegationLetterPlaceholder } from "@case-study/mfe/lib/prototype/internal-delegation-letter-placeholder";
-import { getPropertyFailure } from "@case-study/mfe/lib/prototype/failures-storage";
+import { getPropertyFailure } from "@failures/mfe";
 import type { PoPropertyIntake } from "./po-intake-data";
 import {
   poPropertyEditPath,
@@ -12,6 +12,7 @@ export type PoPropertyRowMoreContext = {
   poNumber: string;
   property: PoPropertyIntake;
   showEdit: boolean;
+  showFailureRaise: boolean;
   router: { push: (href: string) => void };
   refresh: () => void;
 };
@@ -44,15 +45,15 @@ export function buildPoPropertiesRowMoreItems(
       label: "تعديل العقار",
       onClick: () => ctx.router.push(poPropertyEditPath(po, propertyId)),
     });
-    if (!getPropertyFailure(po, propertyId)) {
-      items.push({
-        id: "property-failure",
-        label: "تسجيل تعذر",
-        danger: true,
-        onClick: () =>
-          ctx.router.push(poPropertyFailurePath(po, propertyId)),
-      });
-    }
+  }
+
+  if (ctx.showFailureRaise && !getPropertyFailure(po, propertyId)) {
+    items.push({
+      id: "property-failure",
+      label: "تسجيل تعذر",
+      danger: true,
+      onClick: () => ctx.router.push(poPropertyFailurePath(po, propertyId)),
+    });
   }
 
   return items;

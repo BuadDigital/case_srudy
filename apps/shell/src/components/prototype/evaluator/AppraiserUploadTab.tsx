@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { CaseStudyForm } from "@/components/prototype/case-study/CaseStudyForm";
+import { CaseStudyForm } from "@case-study/mfe";
 import {
   EvaluatorWindow,
 } from "@/components/prototype/evaluator/EvaluatorWindow";
 import type { EvaluatorWindowHostRefObject } from "@/lib/prototype/evaluator/evaluator-window-host";
-import { partyIdForRoleId } from "@/lib/prototype/case-study-info-roles-data";
+import { partyIdForRoleId } from "@settings/mfe";
 import { findPropertyForTask } from "@case-study/mfe";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import type { WorkflowTask } from "@case-study/mfe";
