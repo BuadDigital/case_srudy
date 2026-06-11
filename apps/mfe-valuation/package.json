@@ -1,0 +1,26 @@
+{
+  "name": "@valuation/mfe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Valuation microfrontend — طلبات التقييم (/valuation-requests)",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes": "./src/routes.ts",
+    "./views/*": "./src/views/*",
+    "./components/*": "./src/components/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@platform/app-shared": "*",
+    "@platform/design-system": "*",
+    "@platform/types": "*"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19",
+    "react-dom": ">=19"
+  }
+}

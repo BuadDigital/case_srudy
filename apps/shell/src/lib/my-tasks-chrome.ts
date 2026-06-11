@@ -20,6 +20,17 @@ export function resolveMyTasksChrome(
   const parts = pathname.split("/").filter(Boolean);
   const page = parts[0] as PageId | undefined;
 
+  if (page === "active-survey" && parts[1]) {
+    const party = partyTaskPageDef("active-survey");
+    if (party) {
+      decodeTaskParam(parts[1]);
+      return {
+        breadcrumb: `دراسة الحالة / المعاملات النشطة / ${party.breadcrumbTitle} / تنفيذ المهمة`,
+        title: party.workTitle,
+      };
+    }
+  }
+
   if (page && taskId) {
     const party = partyTaskPageDef(page);
     if (party) {

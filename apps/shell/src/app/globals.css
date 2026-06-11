@@ -1,35 +1,53 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #0f3460;
-  --primary-mid: #1a5276;
-  --primary-light: #2e86c1;
-  --accent: #1abc9c;
-  --accent-dark: #148f77;
-  --sidebar: #0a2138;
+  /* HTML design tokens (docs/property_detail.html) */
+  --bg: #f7f8fa;
+  --teal: #1d9e75;
+  --teal-light: #e1f5ee;
+  --teal-text: #0f6e56;
+  --amber: #ef9f27;
+  --amber-light: #faeeda;
+  --amber-text: #854f0b;
+  --red: #e24b4a;
+  --red-light: #fcebeb;
+  --red-text: #a32d2d;
+  --blue: #378add;
+  --blue-light: #e6f1fb;
+  --blue-text: #185fa5;
+  --topbar-h: 52px;
+  --sidebar-w: 200px;
+
+  /* Semantic aliases used across the app */
+  --primary: var(--teal);
+  --primary-mid: #188f69;
+  --primary-light: var(--blue);
+  --accent: var(--teal);
+  --accent-dark: var(--teal-text);
+  --sidebar: #1a2232;
   --surface: #ffffff;
-  --surface2: #f4f7fb;
-  --surface3: #eaf0f8;
-  --border: #d5e3f0;
-  --border2: #bdd0e8;
-  --text: #1a2b3c;
-  --text2: #4a6272;
-  --text3: #8fa8bc;
-  --success: #1abc9c;
-  --success-bg: #d5f5ef;
-  --warning: #f39c12;
-  --warning-bg: #fef3d7;
-  --danger: #e74c3c;
-  --danger-bg: #fadbd8;
-  --info: #2980b9;
-  --info-bg: #d6eaf8;
+  --surface2: #f2f4f7;
+  --surface3: #eaedf2;
+  --border: rgba(0, 0, 0, 0.08);
+  --border2: rgba(0, 0, 0, 0.14);
+  --text: #111827;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --success: var(--teal-text);
+  --success-bg: var(--teal-light);
+  --warning: var(--amber-text);
+  --warning-bg: var(--amber-light);
+  --danger: var(--red-text);
+  --danger-bg: var(--red-light);
+  --info: var(--blue-text);
+  --info-bg: var(--blue-light);
   --purple: #8e44ad;
   --purple-bg: #ebd9f7;
   --orange: #d35400;
   --orange-bg: #fae5d3;
   --radius: 8px;
-  --radius-lg: 14px;
-  --shadow: 0 1px 4px rgba(15, 52, 96, 0.08);
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 @theme inline {
@@ -39,9 +57,9 @@
 body {
   min-height: 100%;
   min-height: 100svh;
-  background: var(--surface2);
+  background: var(--bg);
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Login — stable layout (not tied to Tailwind utility load order after leaving the app shell) */

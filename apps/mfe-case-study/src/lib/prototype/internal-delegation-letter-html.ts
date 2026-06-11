@@ -1,5 +1,6 @@
 import type { InternalDelegationLetter } from "./internal-delegation-letters";
 import {
+  formatDateAr,
   formatPoDisplay,
   formatPropertyDeedDisplay,
   type PoIntakeRecord,
@@ -45,7 +46,7 @@ export function printInternalDelegationLetter(
     <div><strong>المدينة:</strong> ${letter.city || "—"}</div>
     <div><strong>المحكمة:</strong> ${letter.court}</div>
     <div><strong>الدائرة:</strong> ${letter.circuit}</div>
-    <div><strong>التاريخ:</strong> ${new Date().toLocaleDateString("ar-SA")}</div>
+    <div><strong>التاريخ:</strong> <span dir="ltr">${formatDateAr(new Date().toISOString().slice(0, 10))}</span></div>
   </div>
   <p>يُفوَّض المراجع الحكومي بزيارة المحكمة المذكورة أعلاه لاستكمال إجراءات المراجعة وجمع المفاتيح للعقارات التالية:</p>
   <table>

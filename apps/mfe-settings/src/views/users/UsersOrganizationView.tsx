@@ -37,16 +37,18 @@ function PersonCard({
 
 function DepartmentCard({ dept }: { dept: OrgDepartment }) {
   return (
-    <section className="users-org-dept card" style={{ marginBottom: 12 }}>
-      <div className="card-header">
-        <span className="card-title">{dept.title}</span>
+    <section className="users-org-dept page-shell">
+      <header className="po-subpage-hd">
+        <div className="po-subpage-titles">
+          <h2 className="po-subpage-title">{dept.title}</h2>
+        </div>
         {dept.isActive ? (
           <span className="badge b-done">مفعّل</span>
         ) : (
           <span className="badge b-prog">مرحلة مستقبلية</span>
         )}
-      </div>
-      <div className="card-body">
+      </header>
+      <div className="page-gutter" style={{ paddingBottom: 16 }}>
         <p className="users-org-dept-desc">{dept.description}</p>
         {dept.admin ? (
           <PersonCard person={dept.admin} />
@@ -79,29 +81,29 @@ export function UsersOrganizationView() {
         </div>
       ) : null}
 
-      <div className="card" style={{ marginBottom: 12 }}>
-        <div className="card-header">
-          <span className="card-title">مسؤول التحول الرقمي (CDO)</span>
+      <article className="page-shell">
+        <header className="po-subpage-hd">
+          <div className="po-subpage-titles">
+            <h2 className="po-subpage-title">مسؤول التحول الرقمي (CDO)</h2>
+          </div>
           <span className="badge b-cancel">اطلاع فقط</span>
-        </div>
-        <div className="card-body" data-pending={isPending}>
+        </header>
+        <div className="page-gutter" style={{ paddingBottom: 16 }} data-pending={isPending}>
           {overview?.cdo ? (
             <PersonCard person={overview.cdo} badge="USR-001" />
           ) : !isPending ? (
             <p className="users-org-empty">—</p>
           ) : null}
         </div>
-      </div>
+      </article>
 
-      <div className="users-org-tree-label">الإدارات الفرعية</div>
+      <div className="users-org-tree-label page-gutter">الإدارات الفرعية</div>
       {isPending && !overview ? (
-        <div className="card">
-          <div className="card-body">
-            <p style={{ margin: 0, color: "var(--text3)", fontSize: 12 }}>
-              جاري التحميل…
-            </p>
-          </div>
-        </div>
+        <article className="page-shell">
+          <p className="page-gutter" style={{ margin: 0, paddingBlock: 16, color: "var(--text3)", fontSize: 12 }}>
+            جاري التحميل…
+          </p>
+        </article>
       ) : (
         overview?.departments.map((dept) => (
           <DepartmentCard key={dept.code} dept={dept} />

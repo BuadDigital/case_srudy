@@ -38,15 +38,17 @@ function LoadRow({
 
 export function TeamCurrentLoadCard() {
   return (
-    <div className="card" style={{ marginBottom: 0 }}>
-      <div className="card-header">
-        <span className="card-title">حمل الفريق الحالي</span>
-      </div>
+    <article className="page-shell">
+      <header className="po-subpage-hd">
+        <div className="po-subpage-titles">
+          <h2 className="po-subpage-title">حمل الفريق الحالي</h2>
+        </div>
+      </header>
       <div className="card-body">
         {TEAM_LOAD_SPECIALISTS.map(([n, r, v, m, c]) => (
           <LoadRow key={n} name={n} roleLabel={r} value={v} max={m} barClass={c} />
         ))}
       </div>
-    </div>
+    </article>
   );
 }

@@ -11,6 +11,7 @@ export type PageId =
   | "survey"
   | "keys"
   | "failures"
+  | "suspended-transactions"
   | "valuation-requests"
   | "field-form"
   | "property-inspection"
@@ -94,6 +95,7 @@ export function isPageId(value: string): value is PageId {
     value === "survey" ||
     value === "keys" ||
     value === "failures" ||
+    value === "suspended-transactions" ||
     value === "valuation-requests" ||
     value === "field-form" ||
     value === "property-inspection" ||

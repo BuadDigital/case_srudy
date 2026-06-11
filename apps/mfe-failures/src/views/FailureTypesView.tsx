@@ -75,7 +75,11 @@ export function FailureTypesView() {
   }
 
   if (!catalog) {
-    return <p className="po-properties-loading">جاري التحميل…</p>;
+    return (
+      <p className="po-properties-loading page-gutter" style={{ paddingTop: 16 }}>
+        جاري التحميل…
+      </p>
+    );
   }
 
   const sortedCategories = [...catalog.categories].sort(
@@ -84,29 +88,27 @@ export function FailureTypesView() {
 
   return (
     <>
-      {toast ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
-          {toast}
-        </div>
-      ) : null}
+      {toast ? <div className="note note-success">{toast}</div> : null}
 
       {!canEdit ? (
-        <div className="note note-info" style={{ marginBottom: 12 }}>
+        <div className="note note-info">
           وضع الاطلاع — صلاحية التعديل للمشرف ومسؤول النظام.
         </div>
       ) : null}
 
-      <div className="note note-warn" style={{ marginBottom: 16 }}>
+      <div className="note note-warn">
         القائمة مبدئية وقابلة للتوسع — تُضاف أنواع جديدة دون الحاجة لتعديل في الكود
         (§4 وثيقة التعذرات).
       </div>
 
       {canEdit ? (
-        <div className="card" style={{ marginBottom: 20, padding: 16 }}>
-          <div className="card-title" style={{ marginBottom: 12 }}>
-            إضافة نوع تعذر
-          </div>
-          <div className="reg-form-grid" style={{ marginBottom: 12 }}>
+        <article className="page-shell">
+          <header className="po-subpage-hd">
+            <div className="po-subpage-titles">
+              <h2 className="po-subpage-title">إضافة نوع تعذر</h2>
+            </div>
+          </header>
+          <div className="reg-form-grid page-gutter" style={{ paddingBottom: 12 }}>
             <RegSelect
               id="failure_type_category"
               label="التصنيف"
@@ -130,7 +132,7 @@ export function FailureTypesView() {
               onChange={setDescription}
             />
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="page-gutter" style={{ display: "flex", gap: 8, paddingBottom: 16 }}>
             <button
               type="button"
               className="btn btn-primary btn-sm"
@@ -146,7 +148,7 @@ export function FailureTypesView() {
               استعادة القائمة الافتراضية
             </button>
           </div>
-        </div>
+        </article>
       ) : null}
 
       {sortedCategories.map((category) => {
@@ -154,11 +156,13 @@ export function FailureTypesView() {
           .filter((t) => t.categoryId === category.id)
           .sort((a, b) => a.order - b.order);
         return (
-          <div key={category.id} className="card" style={{ marginBottom: 12 }}>
-            <div className="card-header">
-              <span className="card-title">{category.label}</span>
-            </div>
-            <div style={{ padding: 12 }}>
+          <article key={category.id} className="page-shell">
+            <header className="po-subpage-hd">
+              <div className="po-subpage-titles">
+                <h2 className="po-subpage-title">{category.label}</h2>
+              </div>
+            </header>
+            <div className="page-gutter" style={{ paddingBlock: 12 }}>
               {types.length === 0 ? (
                 <p style={{ color: "var(--text3)", fontSize: 13 }}>لا أنواع.</p>
               ) : (
@@ -203,7 +207,7 @@ export function FailureTypesView() {
                 ))
               )}
             </div>
-          </div>
+          </article>
         );
       })}
     </>

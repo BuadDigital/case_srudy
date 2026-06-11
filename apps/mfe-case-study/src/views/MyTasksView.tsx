@@ -22,6 +22,7 @@ import {
 
 const PRIMARY_DATA_QUEUE: ActiveTransactionQueueConfig = {
   pageTitle: "البيانات الأولية",
+  hidePageTitle: true,
   emptyLine: "لا توجد معاملات في «البيانات الأولية».",
   emptyHint:
     "تُنشأ خانات البيانات الأولية عند تسجيل أمر عمل بعدد العقارات المتوقع.",

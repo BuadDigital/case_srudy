@@ -28,6 +28,17 @@ export function poPropertyPath(poNumber: string, propertyId: string): string {
   return `${poPropertiesPath(poNumber)}/${encodeURIComponent(propertyId)}`;
 }
 
+export function poPropertyDetailPath(
+  poNumber: string,
+  propertyId: string,
+  tab?: string,
+): string {
+  const base = poPropertyPath(poNumber, propertyId);
+  const t = tab?.trim();
+  if (!t) return base;
+  return `${base}?tab=${encodeURIComponent(t)}`;
+}
+
 export function poPropertyEditPath(poNumber: string, propertyId: string): string {
   return `${poPropertyPath(poNumber, propertyId)}/edit`;
 }

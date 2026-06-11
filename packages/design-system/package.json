@@ -5,6 +5,7 @@
   "sideEffects": ["**/*.css"],
   "exports": {
     ".": "./src/index.ts",
+    "./tokens.css": "./src/styles/tokens.css",
     "./prototype.css": "./src/styles/prototype.css",
     "./registration.css": "./src/styles/registration.css"
   },

@@ -12,6 +12,7 @@ export type FailuresRepository = {
   upgradeFailureToInternal(id: string): FailureRecord | null;
   submitFailureForReview(id: string): FailureRecord | null;
   resolveFailure(id: string, input: ResolveFailureInput): FailureRecord | null;
+  suspendFailure(id: string, note: string): FailureRecord | null;
   approveFailure(id: string, finalNote: string): FailureRecord | null;
   returnFailure(id: string, finalNote: string): FailureRecord | null;
   deleteFailuresForPo(poNumber: string): void;
@@ -53,6 +54,13 @@ export function resolveFailure(
   input: ResolveFailureInput,
 ): FailureRecord | null {
   return getFailuresRepository().resolveFailure(id, input);
+}
+
+export function suspendFailure(
+  id: string,
+  note: string,
+): FailureRecord | null {
+  return getFailuresRepository().suspendFailure(id, note);
 }
 
 export function submitFailureForReview(id: string): FailureRecord | null {

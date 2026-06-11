@@ -24,6 +24,10 @@ import type {
   PartyAppraisalExtensions,
   PartyEvaluatorWorkHostRef,
 } from "../lib/party-appraisal-extensions";
+import type {
+  PartyEngineeringSurveyExtensions,
+  PartyEngineeringSurveyWorkHostRef,
+} from "../lib/party-engineering-survey-extensions";
 import { FailureRaisePanel } from "@failures/mfe";
 import { failureRaiserRoleForParty } from "@failures/mfe/lib/failure-party-roles";
 import { usePoRecordQuery } from "../query/case-study-queries";
@@ -75,28 +79,6 @@ function GenericPartyWorkBody({ def }: { def: PartyTaskPageDef }) {
     );
   }
 
-  if (def.kind === "engineering-survey") {
-    return (
-      <RegistrationFormCard title="تقرير الرفع المساحي">
-        <div className="form-group">
-          <label className="form-label" htmlFor="survey-ref">
-            رقم التقرير / المرجع
-          </label>
-          <input id="survey-ref" className="form-control" placeholder="CAD-…" />
-        </div>
-        <div className="form-group">
-          <span className="form-label">مرفقات الرفع</span>
-          <div className="photo-grid">
-            {["مخطط", "صور", "+"].map((l) => (
-              <button key={l} type="button" className="photo-ph">
-                📎<span>{l}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </RegistrationFormCard>
-    );
-  }
   return null;
 }
 
@@ -139,12 +121,14 @@ export function PartyActiveTaskWork({
   hostRef,
   layout = "panel",
   appraisalExtensions,
+  engineeringSurveyExtensions,
 }: {
   def: PartyTaskPageDef;
   task: WorkflowTask;
   hostRef: PartyActiveTaskWorkHostRefObject;
   layout?: "page" | "panel";
   appraisalExtensions?: PartyAppraisalExtensions;
+  engineeringSurveyExtensions?: PartyEngineeringSurveyExtensions;
 }) {
   const router = useRouter();
 
@@ -166,16 +150,26 @@ export function PartyActiveTaskWork({
   const [saving, setSaving] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [workTab, setWorkTab] = useState<"task" | "case-study">("task");
-  const evaluatorHostRef = useRef<PartyEvaluatorWorkHostRef>({});
-  evaluatorHostRef.current.onSubmitted = refresh;
-  evaluatorHostRef.current.onSavingChange = setSaving;
 
   const isAppraisal = def.kind === "property-appraisal";
+  const isEngineeringSurvey = def.kind === "engineering-survey";
+
+  const evaluatorHostRef = useRef<PartyEvaluatorWorkHostRef>({});
+  const surveyHostRef = useRef<PartyEngineeringSurveyWorkHostRef>({});
+  evaluatorHostRef.current.onSubmitted = refresh;
+  evaluatorHostRef.current.onSavingChange = setSaving;
+  surveyHostRef.current.onSubmitted = refresh;
+  surveyHostRef.current.onSavingChange = setSaving;
 
   const evaluatorLocked = useMemo(() => {
     if (!appraisalExtensions) return false;
     return appraisalExtensions.isEvaluatorLocked(task.id, saving);
   }, [appraisalExtensions, task.id, saving]);
+
+  const surveyLocked = useMemo(() => {
+    if (!engineeringSurveyExtensions) return false;
+    return engineeringSurveyExtensions.isSurveyLocked(task.id, saving);
+  }, [engineeringSurveyExtensions, task.id, saving]);
 
   const { deedLabel, location } = useMemo(() => {
     const property = record?.properties.find((p) => p.id === task.propertyId);
@@ -212,6 +206,21 @@ export function PartyActiveTaskWork({
     }
     setSaving(true);
     const ok = (await evaluatorHostRef.current.submit?.()) ?? false;
+    setSaving(false);
+    if (ok) {
+      setSubmitSuccess(true);
+      refresh();
+      window.setTimeout(() => exit(), 1800);
+    }
+  }
+
+  async function submitSurvey() {
+    if (surveyLocked) {
+      exit();
+      return;
+    }
+    setSaving(true);
+    const ok = (await surveyHostRef.current.submit?.()) ?? false;
     setSaving(false);
     if (ok) {
       setSubmitSuccess(true);
@@ -303,6 +312,63 @@ export function PartyActiveTaskWork({
           })
         ) : (
           <p className="po-properties-loading">جاري تحميل نموذج التقييم…</p>
+        )}
+        <PartyTaskFailureRaise
+          def={def}
+          task={task}
+          deedNumber={deedLabel}
+          onSubmitted={refresh}
+        />
+      </TaskWorkChrome>
+    );
+  }
+
+  if (isEngineeringSurvey) {
+    if (submitSuccess) {
+      return (
+        <TaskWorkChrome
+          layout={layout}
+          title={`${def.workTitle} — ${deedLabel}`}
+          subtitle={`${def.assigneeSubtitle} · ${formatPoDisplay(task.poNumber)} · ${location}`}
+          deedBadge={deedLabel}
+          onClose={exit}
+          onSave={exit}
+          saveLabel="رجوع للقائمة"
+          showFooter
+        >
+          <RegistrationFormCard title="تم الإرسال">
+            <div className="note note-success">{def.completeMessage}</div>
+          </RegistrationFormCard>
+        </TaskWorkChrome>
+      );
+    }
+
+    return (
+      <TaskWorkChrome
+        layout={layout}
+        title={`${def.workTitle} — ${deedLabel}`}
+        subtitle={`${def.assigneeSubtitle} · ${formatPoDisplay(task.poNumber)} · ${location}`}
+        deedBadge={deedLabel}
+        saving={saving}
+        onClose={exit}
+        onSave={submitSurvey}
+        saveLabel={
+          saving
+            ? "جاري الإرسال…"
+            : surveyLocked
+              ? "رجوع"
+              : def.saveLabel
+        }
+        showFooter
+      >
+        {engineeringSurveyExtensions ? (
+          engineeringSurveyExtensions.renderSurveyWork({
+            def,
+            childTask: task,
+            hostRef: surveyHostRef,
+          })
+        ) : (
+          <p className="po-properties-loading">جاري تحميل نموذج الرفع المساحي…</p>
         )}
         <PartyTaskFailureRaise
           def={def}

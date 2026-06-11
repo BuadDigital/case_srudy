@@ -1,6 +1,6 @@
 # Architecture — platform domain MFEs (dashboard, survey, keys, financial, KPI)
 
-**Status:** **F4a scaffold complete** — five packages exist under `apps/mfe-*`. Views still live in shell / `@case-study/mfe` until F4b wiring.
+**Status:** **F4b complete** — platform domain views (`DashboardView`, `SurveyView`, `KeysView`, `FinancialView`, `KpiView`, `MessagesView`, `ValuationRequestsView`) live in their domain packages and are wired in shell `[page]/page.tsx`. **F4c cleanup:** delete orphan shell view copies; decouple dashboard queries from `@case-study/mfe`.
 
 **Goal:** split five shell/mock domains into **independent logical MFE packages**, and **remove the dashboard from `@case-study/mfe`** so case-study owns transaction workflows only.
 
@@ -74,13 +74,15 @@ Party queues: property-inspection, property-appraisal, valuation-coordination,
 
 ## 4. Current location of shell views (migration source)
 
-| View | Shell path today | Target MFE |
-|------|------------------|------------|
-| `DashboardView` | `mfe-case-study` | `@dashboard/mfe` |
-| `SurveyView` | `shell/components/views/SurveyView.tsx` | `@survey/mfe` |
-| `KeysView` | `shell/components/views/KeysView.tsx` | `@keys/mfe` |
-| `FinancialView` | `shell/components/views/FinancialView.tsx` | `@financial/mfe` |
-| `KpiView` | `shell/components/views/KpiView.tsx` | `@kpi/mfe` |
+| View | Current location | Status |
+|------|------------------|--------|
+| `DashboardView` | `@dashboard/mfe` | ✓ moved from `@case-study/mfe` |
+| `SurveyView` | `@survey/mfe` | ✓ |
+| `KeysView` | `@keys/mfe` | ✓ |
+| `FinancialView` | `@financial/mfe` | ✓ |
+| `KpiView` | `@kpi/mfe` | ✓ |
+
+Orphan copies may remain under `apps/shell/src/components/views/` until cleanup — shell imports use `@*/mfe` only.
 
 ---
 
@@ -160,27 +162,9 @@ apps/mfe-{domain}/
 
 ---
 
-## 7. Shell integration contract (future implementation)
+## 7. Shell integration contract (implemented for F4b)
 
-The host keeps a single dynamic route. Each MFE registers its `PageId` in `routes.ts`.
-
-```tsx
-// apps/shell/src/app/(app)/[page]/page.tsx  (future)
-import { DashboardView } from "@dashboard/mfe";
-import { SurveyView } from "@survey/mfe";
-import { KeysView } from "@keys/mfe";
-import { FinancialView } from "@financial/mfe";
-import { KpiView } from "@kpi/mfe";
-
-const VIEWS = {
-  dashboard: <DashboardView />,
-  survey: <SurveyView />,
-  keys: <KeysView />,
-  financial: <FinancialView />,
-  kpi: <KpiView />,
-  // …existing MFEs…
-};
-```
+The host keeps a single dynamic route. Each MFE registers its `PageId` in `routes.ts`. Platform views are imported from `@dashboard/mfe`, `@survey/mfe`, `@keys/mfe`, `@financial/mfe`, and `@kpi/mfe` in `apps/shell/src/app/(app)/[page]/page.tsx`.
 
 **Nav / badges:** `packages/app-shared` keeps `NAV_ITEMS`, `PAGE_LABELS`, role → pages matrix. MFEs do not own navigation config.
 
@@ -246,11 +230,12 @@ apps/
 ## 11. Checklist before first code move
 
 - [x] Confirm `active-survey` stays in `@case-study/mfe` (party queue)
-- [ ] Confirm dashboard PO queries use `api-client`, not `@case-study/mfe` imports (F4b)
+- [ ] Confirm dashboard PO queries use `api-client`, not `@case-study/mfe` imports (F4c — `dashboard-queries.ts` still re-exports case-study hooks)
 - [x] Five workspace packages: `mfe-dashboard`, `mfe-survey`, `mfe-keys`, `mfe-financial`, `mfe-kpi`
 - [x] Shell `tsconfig` paths for all five `@*/mfe` packages
 - [x] Root `typecheck:mfe-*` scripts
-- [ ] Wire shell `[page]/page.tsx` to new MFE views (F4b)
-- [ ] Move real view code from shell / case-study (F4b)
+- [x] Wire shell `[page]/page.tsx` to survey / keys / financial / KPI MFE views (F4b Batch 1)
+- [x] Move `SurveyView`, `KeysView`, `FinancialView`, `KpiView` from shell (F4b Batch 1)
+- [x] Wire dashboard from `@dashboard/mfe`; move `DashboardView` out of `@case-study/mfe` (F4b Batch 2)
 
 **Related:** [FRONTEND.md](./FRONTEND.md) · [ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](../../docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md)

@@ -30,9 +30,9 @@ function SummaryPanel({
 }) {
   return (
     <div
-      className={`card sys-tools-summary-card${card.visible ? "" : " sys-tools-summary-card--hidden"}`}
+      className={`po-subpage-panel sys-tools-summary-card${card.visible ? "" : " sys-tools-summary-card--hidden"}`}
     >
-      <div className="card-body sys-tools-summary-body">
+      <div className="sys-tools-summary-body">
         <button
           type="button"
           className={`sys-tools-summary-head-btn${expanded ? " is-open" : ""}`}
@@ -133,11 +133,13 @@ export function SystemToolsView() {
   return (
     <div className="sys-tools-layout">
       {isSuperAdmin ? (
-        <div className="card" style={{ marginBottom: 12, gridColumn: "1 / -1" }}>
-          <div className="card-header">
-            <span className="card-title">صيانة النظام (CDO)</span>
-          </div>
-          <div className="card-body">
+        <article className="page-shell" style={{ gridColumn: "1 / -1" }}>
+          <header className="po-subpage-hd">
+            <div className="po-subpage-titles">
+              <h2 className="po-subpage-title">صيانة النظام (CDO)</h2>
+            </div>
+          </header>
+          <div className="page-gutter" style={{ paddingBottom: 16 }}>
             <p className="sys-tools-main-hint" style={{ marginBottom: 12 }}>
               يمسح كل بيانات التشغيل من قاعدة البيانات: أوامر العمل
               والعقارات، البيانات الأولية، مهام سير العمل، نماذج الدراسة،
@@ -164,16 +166,18 @@ export function SystemToolsView() {
               </div>
             ) : null}
           </div>
-        </div>
+        </article>
       ) : null}
-      <div className="card sys-tools-main-card">
-        <div className="card-header">
-          <span className="card-title">{SYSTEM_TOOLS_MODULE_TITLE}</span>
+      <article className="page-shell sys-tools-main-card">
+        <header className="po-subpage-hd">
+          <div className="po-subpage-titles">
+            <h2 className="po-subpage-title">{SYSTEM_TOOLS_MODULE_TITLE}</h2>
+          </div>
           <span className="badge b-int">
             شاشات مطابقة: {visibleCount}/{summaryCards.length}
           </span>
-        </div>
-        <div className="card-body">
+        </header>
+        <div className="page-gutter" style={{ paddingBottom: 16 }}>
           <p className="sys-tools-main-hint">
             فهرس توثيقي لشاشات PO — للمراجعة والاختبار، وليس إحصاءات تشغيل من
             قاعدة البيانات. اختر فلاتراً ثم «تطبيق» لتضييق البطاقات على اليسار،
@@ -257,7 +261,7 @@ export function SystemToolsView() {
             </button>
           </div>
         </div>
-      </div>
+      </article>
 
       <aside className="sys-tools-summary-rail" aria-label="ملخص الشاشات">
         {summaryCards.map((card) => (

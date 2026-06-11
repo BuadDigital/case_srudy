@@ -167,12 +167,14 @@ function UsersStaffListView({
     <>
       <UsersToast message={toast} />
 
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">
-            {usersTitleForSource(preferredSource)}
-            {dataReady ? ` (${staff.length})` : null}
-          </span>
+      <article className="page-shell">
+        <header className="po-subpage-hd">
+          <div className="po-subpage-titles">
+            <h2 className="po-subpage-title">
+              {usersTitleForSource(preferredSource)}
+              {dataReady ? ` (${staff.length})` : null}
+            </h2>
+          </div>
           {!viewOnly ? (
             <button
               type="button"
@@ -191,9 +193,9 @@ function UsersStaffListView({
           ) : (
             <span className="badge b-cancel">اطلاع فقط</span>
           )}
-        </div>
+        </header>
         {loadError ? (
-          <div className="note note-danger" style={{ margin: "0 0 12px" }}>
+          <div className="note note-danger page-gutter" style={{ marginBottom: 12 }}>
             {loadError}
           </div>
         ) : null}
@@ -258,7 +260,7 @@ function UsersStaffListView({
             ) : null}
           </tbody>
         </table>
-      </div>
+      </article>
     </>
   );
 }

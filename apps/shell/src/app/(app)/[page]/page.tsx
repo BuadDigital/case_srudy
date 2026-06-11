@@ -8,23 +8,24 @@ import {
   FieldFormView,
   GovernmentReviewView,
   MyTasksView,
+  SuspendedTransactionsView,
 } from "@case-study/mfe";
 import { DashboardView } from "@dashboard/mfe";
 import { FailureTypesView, FailuresView } from "@failures/mfe";
+import { FinancialView } from "@financial/mfe";
+import { KeysView } from "@keys/mfe";
+import { KpiView } from "@kpi/mfe";
 import {
   CaseStudyInfoRolesView,
   CourtsView,
   SystemToolsView,
   UsersView,
 } from "@settings/mfe";
+import { MessagesView } from "@messages/mfe";
+import { SurveyView } from "@survey/mfe";
+import { ValuationRequestsView } from "@valuation/mfe";
 import { PartyActiveTaskViewHost } from "@/components/party-tasks/PartyActiveTaskViewHost";
 import { PARTY_TASK_PAGE_IDS } from "@platform/app-shared/prototype/party-task-pages";
-import { FinancialView } from "@/components/views/FinancialView";
-import { KeysView } from "@/components/views/KeysView";
-import { KpiView } from "@/components/views/KpiView";
-import { MessagesView } from "@/components/views/MessagesView";
-import { SurveyView } from "@/components/views/SurveyView";
-import { ValuationRequestsView } from "@/components/views/ValuationRequestsView";
 import { VALID_PAGE_IDS } from "@platform/app-shared/prototype/constants";
 import type { PageId } from "@platform/types";
 
@@ -67,6 +68,7 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   survey: <SurveyView />,
   keys: <KeysView />,
   failures: <FailuresView />,
+  "suspended-transactions": <SuspendedTransactionsView />,
   "valuation-requests": <ValuationRequestsView />,
   "field-form": <FieldFormView />,
   ...Object.fromEntries(

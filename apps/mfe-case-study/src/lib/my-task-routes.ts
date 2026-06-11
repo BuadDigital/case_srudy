@@ -34,6 +34,16 @@ export function partyTaskTaskPath(pageId: PageId, taskId: string): string {
   return `/${pageId}?task=${encodeURIComponent(taskId)}`;
 }
 
+/** Full-page workspace for المكتب الهندسي (الرفع المساحي). */
+export function activeSurveyWorkspacePath(taskId: string): string {
+  return `/active-survey/${encodeURIComponent(taskId)}`;
+}
+
+export function isActiveSurveyWorkspacePath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[0] === "active-survey" && parts.length >= 2;
+}
+
 /** @deprecated Use partyTaskPath("property-inspection") */
 export function propertyInspectionPath(): string {
   return partyTaskPath("property-inspection");

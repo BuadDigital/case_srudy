@@ -2,15 +2,19 @@
 
 import type { MutableRefObject, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
 import { RemainingTimeCell } from "@case-study/mfe/components/ui/RemainingTimeCell";
 import { RowMoreMenu } from "@case-study/mfe/components/ui/RowMoreMenu";
 import type { RowMoreMenuItem } from "@case-study/mfe/components/ui/RowMoreMenu";
+import { PartyAssigneeCell } from "../components/ui/PartyAssigneeCell";
 import { buildActiveQueueRowMoreItems } from "../lib/prototype/active-queue-row-menu";
+import { buildCaseStudyPartyAssignees } from "../lib/prototype/case-study-tracks";
 import { getAuthSession } from "@platform/auth-client";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import type { RoleId } from "@platform/types";
+import { poPropertyDetailPath } from "../lib/po-routes";
 import {
   buildDistributionTableRow,
   buildPrimaryDataTableRow,
@@ -18,6 +22,7 @@ import {
   findPropertyForTask,
 } from "../lib/prototype/my-task-row";
 import type { PoIntakeRecord } from "../lib/prototype/po-intake-data";
+import { isTaskOnSuspendedProperty } from "../lib/prototype/suspended-transactions-storage";
 import {
   tasksForPartyAssignee,
   tasksForRole,
@@ -30,7 +35,10 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 
-export type ActiveTransactionQueueTableLayout = "primary-data" | "distribution";
+export type ActiveTransactionQueueTableLayout =
+  | "primary-data"
+  | "distribution"
+  | "case-study";
 
 export type ActiveTransactionQueueConfig = {
   pageTitle: string;
@@ -66,6 +74,8 @@ export type ActiveTransactionQueueConfig = {
   statusColumnLabel?: string;
   /** Re-bump queue when these window events fire. */
   refreshOnWindowEvents?: string[];
+  /** Stats / filters above the queue table (e.g. engineering office dashboard). */
+  renderQueueHeader?: (listed: WorkflowTask[]) => ReactNode;
 };
 
 export type ActiveQueueRowMoreContext = {
@@ -177,7 +187,11 @@ export function ActiveTransactionQueueView({
     () =>
       config
         .filterListed(mine, poByNumber)
-        .filter((t) => t.status === "open" || t.status === "blocked")
+        .filter(
+          (t) =>
+            (t.status === "open" || t.status === "blocked") &&
+            !isTaskOnSuspendedProperty(t),
+        )
         .sort((a, b) => compareQueueTasksOldestFirst(a, b, poByNumber)),
     [config, mine, poByNumber],
   );
@@ -280,6 +294,24 @@ export function ActiveTransactionQueueView({
     }
   }, [selectedId, selectedTask, isLoading, listed, closePanel, tasks]);
 
+  const isDistributionTable =
+    config.tableLayout === "distribution" ||
+    config.tableLayout === "case-study";
+  const showPartyColumns = config.tableLayout === "case-study";
+
+  const handleDistributionRowClick = useCallback(
+    (task: WorkflowTask, propertyId: string | undefined) => {
+      if (showPartyColumns && propertyId) {
+        router.push(
+          poPropertyDetailPath(task.poNumber, propertyId, "basic"),
+        );
+        return;
+      }
+      handleRowClick(task.id);
+    },
+    [showPartyColumns, router, handleRowClick],
+  );
+
   const hasRail = !useFullPage && !isLoading && listed.length > 0 && renderPanel;
   const layoutClass = [
     "po-primary-data-layout",
@@ -290,7 +322,7 @@ export function ActiveTransactionQueueView({
     .join(" ");
 
   return (
-    <div className="po-properties-page po-primary-data-page">
+    <div className="po-properties-page pd-page">
       <div className={layoutClass}>
         <article className="po-properties-shell po-properties-shell--compact po-bourse-queue-box">
           <header className="po-properties-hero po-properties-hero--compact po-bourse-queue-hero">
@@ -311,6 +343,10 @@ export function ActiveTransactionQueueView({
             </div>
           </header>
 
+          {config.renderQueueHeader && !isLoading && listed.length > 0
+            ? config.renderQueueHeader(listed)
+            : null}
+
           {isLoading ? (
             <p className="po-properties-loading">جاري تحميل المعاملات…</p>
           ) : listed.length === 0 ? (
@@ -323,11 +359,11 @@ export function ActiveTransactionQueueView({
           ) : (
             <>
               <div
-                className={`po-properties-tbl-wrap${config.tableLayout === "distribution" ? " po-properties-tbl-wrap--scroll" : ""}`}
+                className={`po-properties-tbl-wrap${isDistributionTable ? " po-properties-tbl-wrap--scroll" : ""}`}
               >
-                {config.tableLayout === "distribution" ? (
+                {isDistributionTable ? (
                   <table
-                    className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--distribution"
+                    className={`tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--distribution${showPartyColumns ? " po-properties-tbl--case-study" : ""}`}
                     data-pending={isLoading}
                   >
                     <colgroup>
@@ -338,6 +374,14 @@ export function ActiveTransactionQueueView({
                       <col className="po-dist-col-type" />
                       <col className="po-dist-col-class" />
                       <col className="po-dist-col-area" />
+                      {showPartyColumns ? (
+                        <>
+                          <col className="po-dist-col-party" />
+                          <col className="po-dist-col-party" />
+                          <col className="po-dist-col-party" />
+                          <col className="po-dist-col-party" />
+                        </>
+                      ) : null}
                       <col className="po-col-more" />
                     </colgroup>
                     <thead>
@@ -349,6 +393,14 @@ export function ActiveTransactionQueueView({
                         <th className="po-pd-th-center">نوع العقار</th>
                         <th className="po-pd-th-center">التصنيف</th>
                         <th className="po-pd-th-center">المساحة</th>
+                        {showPartyColumns ? (
+                          <>
+                            <th className="po-pd-th-center">المعاين</th>
+                            <th className="po-pd-th-center">المراجع الحكومي</th>
+                            <th className="po-pd-th-center">المقيم</th>
+                            <th className="po-pd-th-center">المكتب الهندسي</th>
+                          </>
+                        ) : null}
                         <th className="po-properties-th-more" aria-label="المزيد" />
                       </tr>
                     </thead>
@@ -361,18 +413,38 @@ export function ActiveTransactionQueueView({
                           property,
                           record,
                         );
+                        const parties = showPartyColumns
+                          ? buildCaseStudyPartyAssignees(task, tasks ?? [])
+                          : [];
                         const active = selectedId === task.id;
                         const moreItems = resolveRowMoreItems(task, property?.id);
                         return (
                           <tr
                             key={task.id}
                             className={`po-properties-row${active ? " po-bourse-row-active" : ""}`}
-                            onClick={() => handleRowClick(task.id)}
+                            onClick={() =>
+                              handleDistributionRowClick(task, property?.id)
+                            }
                           >
                             <td className="po-pd-td-center">
-                              <span className="id-cell po-num-ltr">
-                                {row.deedLabel}
-                              </span>
+                              {property?.id ? (
+                                <Link
+                                  href={poPropertyDetailPath(
+                                    task.poNumber,
+                                    property.id,
+                                    "basic",
+                                  )}
+                                  dir="ltr"
+                                  className="id-cell po-num-ltr po-num-link"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {row.deedLabel}
+                                </Link>
+                              ) : (
+                                <span className="id-cell po-num-ltr">
+                                  {row.deedLabel}
+                                </span>
+                              )}
                             </td>
                             <td className="po-properties-cell-muted po-pd-td-center">
                               <PoNumber value={task.poNumber} link />
@@ -392,6 +464,16 @@ export function ActiveTransactionQueueView({
                             <td className="po-properties-cell-muted po-pd-td-center">
                               {row.area}
                             </td>
+                            {showPartyColumns
+                              ? parties.map((party) => (
+                                  <td
+                                    key={party.trackId}
+                                    className="po-properties-cell-muted po-pd-td-center"
+                                  >
+                                    <PartyAssigneeCell party={party} />
+                                  </td>
+                                ))
+                              : null}
                             <td className="po-properties-cell-more">
                               <RowMoreMenu items={moreItems} />
                             </td>

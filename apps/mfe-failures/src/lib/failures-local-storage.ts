@@ -177,11 +177,33 @@ export const localFailuresRepository = {
   submitFailureForReview(id: string): FailureRecord | null {
     const list = readFailures();
     const idx = list.findIndex((f) => f.id === id);
-    const status = list[idx]?.status;
+    const item = list[idx];
+    const status = item?.status;
     if (idx < 0 || (status !== "internal" && status !== "returned")) return null;
     const next = {
-      ...list[idx],
+      ...item,
       status: "review" as const,
+      updatedAt: new Date().toISOString(),
+    };
+    list[idx] = next;
+    writeFailures(list);
+    void escalateTaskForObstruction(
+      item.poNumber,
+      item.propertyId,
+      item.title.trim() || item.internalNote.trim(),
+    );
+    return next;
+  },
+
+  suspendFailure(id: string, note: string): FailureRecord | null {
+    const list = readFailures();
+    const idx = list.findIndex((f) => f.id === id);
+    if (idx < 0 || list[idx].status !== "review") return null;
+    const item = list[idx];
+    const next: FailureRecord = {
+      ...item,
+      status: "suspended",
+      finalNote: note.trim(),
       updatedAt: new Date().toISOString(),
     };
     list[idx] = next;
@@ -272,7 +294,8 @@ export const localFailuresRepository = {
 
 export function failureStatusLabel(status: FailureStatus): string {
   if (status === "internal") return "مسودة داخلية";
-  if (status === "review") return "قيد المراجعة";
+  if (status === "review") return "عند مشرف دراسة الحالة";
+  if (status === "suspended") return "معلقة";
   if (status === "approved") return "معتمد";
   if (status === "resolved") return "تم الحل";
   return "معاد للأخصائي";

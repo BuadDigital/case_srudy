@@ -46,11 +46,17 @@ import { decodeTaskParam, isPartyTaskWorkPath } from "@case-study/mfe";
 import { findPropertyForTask } from "@case-study/mfe";
 import {
   formatPropertyDeedDisplay,
+  PoListTopbarActions,
+  PoPropertyDetailTopbarActions,
+  PO_PROPERTY_SEGMENT,
+  decodePoParam,
 } from "@case-study/mfe";
+import { AppBreadcrumb } from "@/components/views/AppBreadcrumb";
 import { resolvePoChrome } from "@/lib/po-chrome";
 import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
 import { pagesForPrototypeRole } from "@platform/app-shared/prototype/prototype-role-access";
 import { ActiveTransactionsSituationBar } from "@case-study/mfe";
+import { EngineeringSurveySituationBar } from "@engineering-office/mfe";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
 import { useFailuresNavBadge } from "@/lib/query/use-failures-nav-badge";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
@@ -120,8 +126,9 @@ function NavRow({
     badgeCount != null && badgeCount > 0
       ? String(badgeCount)
       : item.badge;
+  const badgeTeal = item.id === "po";
   const badge = badgeValue ? (
-    <span className="nav-badge">{badgeValue}</span>
+    <span className={`nav-badge${badgeTeal ? " teal" : ""}`}>{badgeValue}</span>
   ) : null;
   return (
     <Link
@@ -131,7 +138,7 @@ function NavRow({
       onMouseEnter={() => onPrefetch(item.id)}
       onFocus={() => onPrefetch(item.id)}
     >
-      <NavIcon d={item.icon} size={13} />
+      <NavIcon d={item.icon} size={16} />
       <span>{item.label}</span>
       {badge}
     </Link>
@@ -246,7 +253,7 @@ function ActiveTransactionsNavDropdown({
         aria-controls="nav-active-transactions"
         onClick={() => setOpen((v) => !v)}
       >
-        <NavIcon d={ACTIVE_TRANSACTIONS_GROUP_ICON} size={13} />
+        <NavIcon d={ACTIVE_TRANSACTIONS_GROUP_ICON} size={16} />
         <span>{ACTIVE_TRANSACTIONS_GROUP}</span>
         <NavDropdownChevron />
       </button>
@@ -310,7 +317,7 @@ function FooterNavDropdown({
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
       >
-        <NavIcon d={groupIcon} size={13} />
+        <NavIcon d={groupIcon} size={16} />
         <span>{groupLabel}</span>
         <NavDropdownChevron />
       </button>
@@ -388,7 +395,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const searchParams = useSearchParams();
   const onCaseStudyWorkspace = pathname?.startsWith("/case-study/") ?? false;
+  const onActiveSurveyWorkspace =
+    (pathname?.startsWith("/active-survey/") &&
+      pathname.split("/").filter(Boolean).length >= 2) ??
+    false;
   const caseStudyTaskId = onCaseStudyWorkspace
+    ? pathname.split("/").filter(Boolean)[1] ?? null
+    : null;
+  const activeSurveyTaskId = onActiveSurveyWorkspace
     ? pathname.split("/").filter(Boolean)[1] ?? null
     : null;
 
@@ -420,9 +434,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return prop.deedNumber.trim();
   }, [caseStudyTask, caseStudyPo]);
 
+  const poPropertyDetailContext = useMemo(() => {
+    if (!pathname) return null;
+    const parts = pathname.split("/").filter(Boolean);
+    if (
+      parts[0] !== "po" ||
+      parts[2] !== PO_PROPERTY_SEGMENT ||
+      parts.length !== 4 ||
+      parts[3] === "new"
+    ) {
+      return null;
+    }
+    return {
+      poNumber: decodePoParam(parts[1]),
+      propertyId: decodePoParam(parts[3]),
+    };
+  }, [pathname]);
+
+  const { data: poPropertyDetailRecord } = usePoRecordQuery(
+    poPropertyDetailContext?.poNumber ?? null,
+  );
+
+  const poPropertyDeedLabel = useMemo(() => {
+    if (!poPropertyDetailContext || !poPropertyDetailRecord) return undefined;
+    const property = poPropertyDetailRecord.properties.find(
+      (p) => p.id === poPropertyDetailContext.propertyId,
+    );
+    if (!property) return undefined;
+    const formatted = formatPropertyDeedDisplay(property);
+    if (formatted && formatted !== "—") return formatted;
+    return property.deedNumber.trim() || undefined;
+  }, [poPropertyDetailContext, poPropertyDetailRecord]);
+
   const poChrome = useMemo(
-    () => (pathname ? resolvePoChrome(pathname) : null),
-    [pathname],
+    () =>
+      pathname
+        ? resolvePoChrome(pathname, { deedLabel: poPropertyDeedLabel })
+        : null,
+    [pathname, poPropertyDeedLabel],
   );
   const taskQuery = searchParams.get("task");
   const myTasksChrome = useMemo(
@@ -434,10 +483,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               currentPage === "active-distribution" ||
               currentPage === "active-case-study" ||
               onCaseStudyWorkspace ||
+              onActiveSurveyWorkspace ||
               isPartyTaskPage(currentPage)
               ? onCaseStudyWorkspace
                 ? caseStudyTaskId
-                : taskQuery
+                : onActiveSurveyWorkspace
+                  ? activeSurveyTaskId
+                  : taskQuery
               : null,
             onCaseStudyWorkspace
               ? { deedLabel: caseStudyDeedLabel }
@@ -449,7 +501,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       currentPage,
       taskQuery,
       onCaseStudyWorkspace,
+      onActiveSurveyWorkspace,
       caseStudyTaskId,
+      activeSurveyTaskId,
       caseStudyDeedLabel,
     ],
   );
@@ -457,11 +511,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const onTaskWork =
     (currentPage === "active-primary-data" && Boolean(taskQuery)) ||
     (currentPage === "active-distribution" && Boolean(taskQuery)) ||
+    onActiveSurveyWorkspace ||
     (pathname ? isPartyTaskWorkPath(pathname) && Boolean(taskQuery) : false);
 
   const showActiveTransactionsSituation =
     isInActiveTransactionsSection(currentPage, onTaskWork) ||
-    onCaseStudyWorkspace;
+    onCaseStudyWorkspace ||
+    onActiveSurveyWorkspace;
 
   const def = ROLES[role];
   /** يطابق «تبديل الدور» — اسم الشخصية وليس displayName من تسجيل الدخول */
@@ -480,28 +536,65 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   let activeTransactionsInserted = false;
 
+  const onPoPropertyDetail = Boolean(poChrome?.propertyDetail);
+  const onPoList = pathname === "/po";
+  const breadcrumbSegments =
+    poChrome?.segments ??
+    (myTasksChrome?.breadcrumb
+      ? myTasksChrome.breadcrumb
+          .split(" / ")
+          .map((label) => ({ label: label.trim() }))
+          .filter((s) => s.label)
+      : PAGE_BREADCRUMB[currentPage]
+        ? PAGE_BREADCRUMB[currentPage]
+            .split(" / ")
+            .map((label) => ({ label: label.trim() }))
+            .filter((s) => s.label)
+        : undefined);
+
+  const resolvedPageTitle =
+    poChrome?.title ??
+    myTasksChrome?.title ??
+    PAGE_TITLES[currentPage] ??
+    "";
+
+  const displayBreadcrumbSegments = (() => {
+    if (onPoPropertyDetail || !breadcrumbSegments?.length) {
+      return breadcrumbSegments ?? [];
+    }
+    const lastLabel =
+      breadcrumbSegments[breadcrumbSegments.length - 1]!.label.trim();
+    const titleTrimmed = resolvedPageTitle.trim();
+    if (!poChrome?.titlePo && titleTrimmed && titleTrimmed === lastLabel) {
+      return breadcrumbSegments.slice(0, -1);
+    }
+    return breadcrumbSegments;
+  })();
+
   return (
     <div id="app">
       <div id="sidebar">
         <div className="sb-brand">
-          <div className="sb-brand-row">
-            <div className="sb-icon">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-                aria-hidden
-              >
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9,22 9,12 15,12 15,22" />
-              </svg>
-            </div>
-            <h1>نظام إجادة الداخلي</h1>
+          <div className="sb-brand-icon" aria-hidden>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 21h18" />
+              <path d="M9 8h1" />
+              <path d="M9 12h1" />
+              <path d="M9 16h1" />
+              <path d="M14 8h1" />
+              <path d="M14 12h1" />
+              <path d="M14 16h1" />
+              <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+            </svg>
           </div>
-          <p>دراسة الحالة</p>
+          <span className="sb-brand-title">إجادة للتقييم</span>
         </div>
         <div className="sb-role">
           <div className="sb-role-lbl">تبديل الدور</div>
@@ -613,34 +706,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div id="main">
         <div id="topbar">
           <div className="tb-left">
-            <div className="tb-breadcrumb" id="tb-bc">
-              {poChrome?.breadcrumb ??
-                myTasksChrome?.breadcrumb ??
-                PAGE_BREADCRUMB[currentPage] ??
-                ""}
-            </div>
-            {(() => {
-              const pageTitle =
-                poChrome?.title ??
-                myTasksChrome?.title ??
-                PAGE_TITLES[currentPage] ??
-                "";
-              if (!pageTitle && !poChrome?.titlePo) return null;
-              return (
-                <div className="tb-title" id="page-title">
-                  {poChrome?.titlePo ? (
-                    <span className="po-heading-with-num">
-                      <span className="po-heading-ar">{poChrome.title}</span>
-                      <PoNumber value={poChrome.titlePo} />
-                    </span>
-                  ) : (
-                    pageTitle
-                  )}
-                </div>
-              );
-            })()}
+            <AppBreadcrumb segments={displayBreadcrumbSegments} />
+            {!onPoPropertyDetail
+              ? (() => {
+                  if (!resolvedPageTitle && !poChrome?.titlePo) return null;
+                  return (
+                    <div className="tb-title" id="page-title">
+                      {poChrome?.titlePo ? (
+                        <span className="po-heading-with-num">
+                          <span className="po-heading-ar">{poChrome.title}</span>
+                          <PoNumber value={poChrome.titlePo} />
+                        </span>
+                      ) : (
+                        resolvedPageTitle
+                      )}
+                    </div>
+                  );
+                })()
+              : null}
           </div>
           <div className="tb-right">
+            {onPoList ? <PoListTopbarActions /> : null}
+            {poChrome?.propertyDetail ? (
+              <PoPropertyDetailTopbarActions
+                poNumber={poChrome.propertyDetail.poNumber}
+                propertyId={poChrome.propertyDetail.propertyId}
+              />
+            ) : null}
             <div className="user-chip">
               <div
                 className="avatar"
@@ -660,9 +752,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-        <div id="content">
+        <div id="content" className="content content--flush">
           {showActiveTransactionsSituation ? (
-            <ActiveTransactionsSituationBar />
+            currentPage === "active-survey" || onActiveSurveyWorkspace ? (
+              <EngineeringSurveySituationBar />
+            ) : (
+              <ActiveTransactionsSituationBar />
+            )
           ) : null}
           {children}
         </div>

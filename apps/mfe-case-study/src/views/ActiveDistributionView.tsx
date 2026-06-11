@@ -13,6 +13,7 @@ import { filterTasksForDistribution } from "@case-study/mfe/lib/prototype/transa
 
 const DISTRIBUTION_QUEUE: ActiveTransactionQueueConfig = {
   pageTitle: "توزيع المعاملات",
+  hidePageTitle: true,
   tableLayout: "distribution",
   emptyLine: "لا توجد معاملات بانتظار التوزيع.",
   emptyHint:

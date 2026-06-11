@@ -1,7 +1,8 @@
 "use client";
 
 import { PartyActiveTaskView } from "@case-study/mfe";
-import { partyAppraisalExtensions } from "@/lib/prototype/party-appraisal-extensions";
+import { partyEngineeringSurveyExtensions } from "@engineering-office/mfe";
+import { partyAppraisalExtensions } from "@evaluator/mfe";
 import type { PageId } from "@platform/types";
 
 export function PartyActiveTaskViewHost({ pageId }: { pageId: PageId }) {
@@ -9,6 +10,7 @@ export function PartyActiveTaskViewHost({ pageId }: { pageId: PageId }) {
     <PartyActiveTaskView
       pageId={pageId}
       appraisalExtensions={partyAppraisalExtensions}
+      engineeringSurveyExtensions={partyEngineeringSurveyExtensions}
     />
   );
 }

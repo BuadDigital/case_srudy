@@ -468,16 +468,23 @@ export function isPastDue(dueIso: string): boolean {
   return due < today;
 }
 
+/** DD/MM/YYYY with Western digits (0-9) for Arabic UI. */
 export function formatDateAr(iso: string): string {
   if (!iso) return "—";
-  const d = new Date(`${iso}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("ar-SA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    calendar: "gregory",
-  });
+  const day = iso.trim().slice(0, 10);
+  const parts = day.split("-").map(Number);
+  if (parts.length === 3 && !parts.some((n) => Number.isNaN(n))) {
+    const [y, m, d] = parts;
+    const dd = String(d).padStart(2, "0");
+    const mm = String(m).padStart(2, "0");
+    return `${dd}/${mm}/${y}`;
+  }
+  const parsed = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const y = parsed.getFullYear();
+  return `${dd}/${mm}/${y}`;
 }
 
 export function assignmentTypeBadgeClass(type: string): string {

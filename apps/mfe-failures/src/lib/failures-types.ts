@@ -3,7 +3,8 @@ export type FailureStatus =
   | "review"
   | "approved"
   | "returned"
-  | "resolved";
+  | "resolved"
+  | "suspended";
 
 /** احتمال تعذر — warning only; تعذر داخلي — stops work on the property. */
 export type FailureSeverity = "suspected" | "internal";
@@ -55,7 +56,7 @@ export type BourseObstructionInput = {
 };
 
 export function isActiveFailureStatus(status: FailureStatus): boolean {
-  return status !== "resolved";
+  return status !== "resolved" && status !== "suspended";
 }
 
 /** Open failures for sidebar badge and stats (not approved / resolved). */

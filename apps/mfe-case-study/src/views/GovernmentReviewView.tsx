@@ -76,7 +76,7 @@ function GovernmentReviewPoPanel({
   );
 
   return (
-    <div className="card po-bourse-form-panel po-primary-data-form-panel">
+    <div className="po-bourse-form-panel po-primary-data-form-panel">
       <div className="card-body">
         <div
           style={{
@@ -289,7 +289,7 @@ export function GovernmentReviewView() {
     .join(" ");
 
   return (
-    <div className="po-properties-page po-primary-data-page">
+    <div className="po-properties-page pd-page">
       <div className={layoutClass}>
         <article className="po-properties-shell po-properties-shell--compact po-bourse-queue-box">
           <header className="po-properties-hero po-properties-hero--compact po-bourse-queue-hero">

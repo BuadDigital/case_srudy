@@ -2,7 +2,7 @@
 
 The **`apps/`** folder holds the **browser applications** for **نظام إجادة الداخلي** (internal Ejada platform): a case-study and real-estate evaluation workspace. The UI is **Arabic, RTL**, and mirrors flows in [`requirements/`](../requirements/) (HTML prototypes and forms).
 
-The repo uses a **microfrontend-ready monorepo**. Today there is one live app (`apps/shell`); later, domains will split into separate deployable apps that the shell loads.
+The repo uses a **microfrontend-ready monorepo**: one **Next.js shell** (`apps/shell`) hosts routing and layout; feature screens live in **`apps/mfe-*` library packages** imported by the shell (single deploy until Module Federation).
 
 **See also:** [Project README](../README.md) (security, full stack, how to run everything) · [Architecture](./ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) · [Local infra](./LOCAL_INFRA.md)
 
@@ -26,29 +26,33 @@ Different **roles** (مدير الإدارة, مشرف دراسة الحالة, 
 
 ```text
 apps/
-  shell/              ← host: login, layout, nav, not-yet-split pages (Next.js 16)
-  mfe-case-study/     ← @case-study/mfe — PO + المعاملات النشطة (API-ready)
+  shell/              ← host: login, layout, nav, PO sub-routes, party-task host (Next.js 16)
+  mfe-evaluator/      ← @evaluator/mfe — مقيم عقاري (property-appraisal queue, advisory, recall)
+  mfe-case-study/     ← @case-study/mfe — PO + المعاملات النشطة + party queues (API-ready)
+  mfe-dashboard/      ← @dashboard/mfe — لوحة التحكم
+  mfe-survey/         ← @survey/mfe — الرفع المساحي (/survey)
+  mfe-keys/           ← @keys/mfe — إدارة المفاتيح
+  mfe-financial/      ← @financial/mfe — التقارير المالية
+  mfe-kpi/            ← @kpi/mfe — مؤشرات الأداء
   mfe-failures/       ← @failures/mfe — إدارة التعذرات (localStorage until API)
   mfe-settings/       ← @settings/mfe — الإعدادات + جميع حقول النظام (API)
-  mfe-dashboard/        ← @dashboard/mfe — لوحة التحكم (split from case-study)
-  mfe-survey/           ← @survey/mfe — الرفع المساحي (/survey)
-  mfe-keys/             ← @keys/mfe — إدارة المفاتيح
-  mfe-financial/        ← @financial/mfe — التقارير المالية
-  mfe-kpi/              ← @kpi/mfe — مؤشرات الأداء
-  (future)
-  mfe-valuation/        ← valuation-requests, field-form
+  mfe-valuation/      ← @valuation/mfe — طلبات التقييم (/valuation-requests)
+  mfe-messages/       ← @messages/mfe — المراسلة (/messages)
 ```
 
-**Architecture (platform domains — not implemented yet):** [MFE_PLATFORM_DOMAINS.md](./MFE_PLATFORM_DOMAINS.md)
+**Platform domain split (F4b):** [MFE_PLATFORM_DOMAINS.md](./MFE_PLATFORM_DOMAINS.md)
 
 ### `shell` (host)
 
 The **shell** is the application users open in the browser:
 
 - **Login** and session (`/login`)
-- **Layout**: sidebar, top bar, breadcrumbs, branding
-- **All feature pages** under dynamic routes (e.g. `/dashboard`, `/properties`, `/users`)
-- **Prototype helpers**: role switcher (demo) in `@platform/app-shared`; case-study libs in MFE packages
+- **Layout**: sidebar, top bar, breadcrumbs, branding (`AppShell`)
+- **Dynamic `[page]` router** — imports views from `@*/mfe` packages (see table below)
+- **PO sub-routes** under `/po/*` (property create/edit, case-study workspace, failure form)
+- **Party-task host** (`PartyActiveTaskViewHost`) — wires `@evaluator/mfe` extensions into `@case-study/mfe` party queues
+- **Evaluator adapters** — `case-study/[taskId]` advisory panel + PO recall menu import `@evaluator/mfe`
+- **Orphan view copies** under `shell/src/components/views/` (legacy `*View.tsx` files) — safe to delete once verified unused
 
 Shared UI and auth live in **`packages/`** at the repo root (not inside `apps/`):
 
@@ -59,9 +63,17 @@ Shared UI and auth live in **`packages/`** at the repo root (not inside `apps/`)
 | `@platform/auth-client` | Session storage, auth gate |
 | `@platform/api-client` | API base URL (placeholder for real services) |
 | `@platform/types` | `PageId`, `RoleId`, navigation types, `CASE_STUDY_READY_NAV` |
-| `@case-study/mfe` | API-ready PO + active-transaction views |
+| `@case-study/mfe` | PO + active transactions, party queues, field-form, government-review |
+| `@evaluator/mfe` | مقيم عقاري — upload, advisory panel, recall (localStorage prototype) |
+| `@dashboard/mfe` | لوحة التحكم |
+| `@survey/mfe` | الرفع المساحي (`/survey`) |
+| `@keys/mfe` | إدارة المفاتيح |
+| `@financial/mfe` | التقارير المالية |
+| `@kpi/mfe` | مؤشرات الأداء |
 | `@failures/mfe` | إدارة التعذرات — repository + localStorage prototype |
 | `@settings/mfe` | users, courts, info-roles, system-tools |
+| `@valuation/mfe` | `/valuation-requests` |
+| `@messages/mfe` | `/messages` |
 
 Run the shell from the **repository root**:
 
@@ -74,37 +86,30 @@ npm run dev
 
 ---
 
-## Microfrontend plan (not finished yet)
+## Microfrontend plan
 
-**Done:** phase **F0** — monorepo structure, one deploy.  
-**Done:** phase **F3** — logical MFE packages; shell hosts routes and layout (single deploy). **Module Federation (F5)** deferred until independent deploy is needed.
+**Done:** **F0** — monorepo structure, one deploy.  
+**Done:** **F3** — logical MFE packages; shell hosts routes and layout (single deploy).  
+**Done:** **F4b** — platform domain packages wired in `[page]/page.tsx` (dashboard, survey, keys, financial, KPI).  
+**Done:** **F4c** (partial) — `@evaluator/mfe` extracted; dashboard queries use direct `useQuery` + loaders (still depend on case-study storage until reporting API).  
+**Deferred:** **F5** Module Federation until independent deploy is needed.
 
 | Package | Routes / features |
 |---------|-------------------|
-| **`@case-study/mfe`** | `/po/*`, `/active-primary-data`, `/bourse-inquiry`, `/active-distribution`, `/active-case-study` |
-| **`@failures/mfe`** | `/failures`, PO property failure form — **localStorage** until backend exists |
+| **`@dashboard/mfe`** | `/dashboard` |
+| **`@survey/mfe`** | `/survey` — office-level survey admin (**not** `/active-survey` party queue) |
+| **`@keys/mfe`** | `/keys` |
+| **`@financial/mfe`** | `/financial` |
+| **`@kpi/mfe`** | `/kpi` |
+| **`@case-study/mfe`** | `/po/*`, `/active-primary-data`, `/bourse-inquiry`, `/active-distribution`, `/active-case-study`, `/field-form`, party queues |
+| **`@failures/mfe`** | `/failures`, `/failure-types`, PO property failure form — **localStorage** until backend exists |
 | **`@settings/mfe`** | `/users`, `/courts`, `/case-study-info-roles`, `/system-tools` |
+| **`@valuation/mfe`** | `/valuation-requests` |
+| **`@messages/mfe`** | `/messages` |
 
-**Still in shell:** evaluator, messages, valuation-requests, field-form, and mock views until F4 move.
+**Remains in shell only:** login, layout/nav (`AppShell`), PO Next.js pages, evaluator prototype, `PartyActiveTaskViewHost`.
 
-**Planned platform MFEs (architecture only — see [MFE_PLATFORM_DOMAINS.md](./MFE_PLATFORM_DOMAINS.md)):**
-
-| Package | Route | Notes |
-|---------|-------|-------|
-| **`@dashboard/mfe`** | `/dashboard` | Move **out of** `@case-study/mfe`; PO stats via `api-client`, not case-study |
-| **`@survey/mfe`** | `/survey` | Office-level survey admin — **not** `/active-survey` (party queue stays in case-study) |
-| **`@keys/mfe`** | `/keys` | Key custody — separate from government-review in case-study |
-| **`@financial/mfe`** | `/financial` | Financial reports |
-| **`@kpi/mfe`** | `/kpi` | Performance indicators |
-
-**Still to split later:**
-
-| Future app | Routes / features |
-|------------|-------------------|
-| **mfe-valuation** | valuation-requests, field-form |
-| **mfe-messages** (or platform) | messages |
-
-The shell remains the **host** (login, nav). Separate deploy URLs come in phase F5.
+The shell remains the **host**. Separate deploy URLs come in phase F5.
 
 ---
 
@@ -168,7 +173,9 @@ Details: [ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](./ARCHITECTURE_MICRO
 
 - [ ] Per-role login (`@ejadah.dev` users) — role from server, not only the sidebar switcher
 - [x] Create `mfe-case-study` + `@platform/app-shared` for API-ready flows (PO + primary data + bourse + distribution) — F3 complete (single deploy)
-- [ ] Create remaining `mfe-*` apps and move mock-only routes (F2, F4)
+- [x] Platform domain MFEs (`dashboard`, `survey`, `keys`, `financial`, `kpi`) — F4b complete
+- [x] Wire `@valuation/mfe` and `@messages/mfe` in shell `[page]/page.tsx`
+- [ ] Remove orphaned shell view copies (`SurveyView`, `KeysView`, `FinancialView`, `KpiView`, `MessagesView`, `ValuationRequestsView`)
 - [ ] Module Federation + CI deploy per app (F5)
 - [ ] Replace mock data with `@platform/api-client` calls
 - [ ] PO/property detail; case study form (`requirements/case_study_form 2.html`); registration (`requirements/ejada-registration_1.html`) if in scope

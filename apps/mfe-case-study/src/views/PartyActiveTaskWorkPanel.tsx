@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { PartyActiveTaskWork } from "./PartyActiveTaskWork";
 import type { PartyActiveTaskWorkHostRef } from "../lib/party-active-task-work-host";
 import type { PartyAppraisalExtensions } from "../lib/party-appraisal-extensions";
+import type { PartyEngineeringSurveyExtensions } from "../lib/party-engineering-survey-extensions";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import type { WorkflowTask } from "../lib/prototype/tasks-storage";
 
@@ -15,6 +16,7 @@ export function PartyActiveTaskWorkPanel({
   onRefreshAction,
   onCloseAction,
   appraisalExtensions,
+  engineeringSurveyExtensions,
 }: {
   def: PartyTaskPageDef;
   task: WorkflowTask;
@@ -22,6 +24,7 @@ export function PartyActiveTaskWorkPanel({
   onRefreshAction: () => void;
   onCloseAction?: () => void;
   appraisalExtensions?: PartyAppraisalExtensions;
+  engineeringSurveyExtensions?: PartyEngineeringSurveyExtensions;
 }) {
   const hostRef = useRef<PartyActiveTaskWorkHostRef>({});
   hostRef.current.onRefresh = onRefreshAction;
@@ -34,6 +37,7 @@ export function PartyActiveTaskWorkPanel({
       hostRef={hostRef}
       layout={layout}
       appraisalExtensions={appraisalExtensions}
+      engineeringSurveyExtensions={engineeringSurveyExtensions}
     />
   );
 }

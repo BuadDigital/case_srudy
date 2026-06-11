@@ -4,25 +4,18 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
+import { ROLES } from "@platform/app-shared/prototype/constants";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 import type { RoleId } from "@platform/types";
 import { StatValue } from "@case-study/mfe";
 import { formatDateAr, formatPoDisplay } from "@case-study/mfe";
 import { poPropertyPath } from "@case-study/mfe/lib/po-routes";
+import { suspendPropertyTransaction } from "@case-study/mfe/lib/prototype/suspend-property-transaction";
 import { usePoRecordsQuery } from "@case-study/mfe/query/case-study-queries";
 import { failureProblemTypeLabel } from "../lib/failure-types-data";
-import {
-  approveFailure,
-  resolveFailure,
-  returnFailure,
-  submitFailureForReview,
-  upgradeFailureToInternal,
-} from "../lib/failures-repository";
-import {
-  failureSeverityLabel,
-  failureStatusLabel,
-} from "../lib/failures-local-storage";
+import { approveFailure, resolveFailure, returnFailure, submitFailureForReview, upgradeFailureToInternal } from "../lib/failures-repository";
+import { failureSeverityLabel, failureStatusLabel } from "../lib/failures-local-storage";
 import { countOpenFailures, isActiveFailureStatus } from "../lib/failures-types";
 import { useFailuresQuery } from "../query/failures-queries";
 
@@ -41,10 +34,8 @@ export function FailuresView() {
   const { role } = usePrototype();
   const ce = isCaseEditor(role);
   const ca = isSupervisor(role);
-
   const { data: items = [], isFetched, refetch } = useFailuresQuery();
   const { data: poRecords = [] } = usePoRecordsQuery();
-
   const assignmentSpecialistByPo = useMemo(() => {
     const map = new Map<string, string>();
     for (const record of poRecords) {
@@ -61,6 +52,12 @@ export function FailuresView() {
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: prototypeKeys.failures() });
+    void queryClient.invalidateQueries({
+      queryKey: prototypeKeys.suspendedTransactions(),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: prototypeKeys.workflowTasks(),
+    });
     void refetch();
   }, [queryClient, refetch]);
 
@@ -73,12 +70,14 @@ export function FailuresView() {
   }, [items]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      const aActive = isActiveFailureStatus(a.status);
-      const bActive = isActiveFailureStatus(b.status);
-      if (aActive !== bActive) return aActive ? -1 : 1;
-      return b.updatedAt.localeCompare(a.updatedAt);
-    });
+    return [...items]
+      .filter((f) => f.status !== "suspended")
+      .sort((a, b) => {
+        const aActive = isActiveFailureStatus(a.status);
+        const bActive = isActiveFailureStatus(b.status);
+        if (aActive !== bActive) return aActive ? -1 : 1;
+        return b.updatedAt.localeCompare(a.updatedAt);
+      });
   }, [items]);
 
   function handleSubmit(id: string) {
@@ -99,6 +98,17 @@ export function FailuresView() {
   function handleReturn(id: string) {
     returnFailure(id, supervisorNote[id] ?? "");
     refresh();
+  }
+
+  async function handleSuspend(id: string) {
+    const failure = items.find((f) => f.id === id);
+    if (!failure) return;
+    const ok = await suspendPropertyTransaction({
+      failure,
+      supervisorNote: supervisorNote[id] ?? "",
+      suspendedBy: ROLES[role]?.name ?? "مشرف",
+    });
+    if (ok) refresh();
   }
 
   function handleResolve(id: string) {
@@ -131,7 +141,7 @@ export function FailuresView() {
           <StatValue value={isFetched ? stats.open : undefined} />
         </div>
         <div className="stat-card warn">
-          <div className="stat-label">قيد المراجعة</div>
+          <div className="stat-label">عند مشرف دراسة الحالة</div>
           <StatValue value={isFetched ? stats.review : undefined} />
         </div>
         <div className="stat-card green">
@@ -158,19 +168,21 @@ export function FailuresView() {
         </div>
       ) : null}
       {ca ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
+        <div className="note note-success">
           مسار التعذر: رفع (احتمال / داخلي) → معالجة الأخصائي → مراجعة المشرف
-          مع أخصائي الإسناد → تعذر نهائي أو تم الحل.
+          مع أخصائي الإسناد → اعتماد التعذر أو تعليق المعاملة.
         </div>
       ) : null}
 
       {sortedItems.length === 0 ? (
-        <div
-          className="card"
-          style={{ padding: 24, textAlign: "center", color: "var(--text3)" }}
-        >
-          لا توجد تعذرات — سجّل تعذراً من شاشة العقارات.
-        </div>
+        <article className="page-shell">
+          <p
+            className="page-gutter"
+            style={{ paddingBlock: 24, textAlign: "center", color: "var(--text3)" }}
+          >
+            لا توجد تعذرات — سجّل تعذراً من شاشة العقارات.
+          </p>
+        </article>
       ) : (
         sortedItems.map((f) => {
           const active = isActiveFailureStatus(f.status);
@@ -180,8 +192,7 @@ export function FailuresView() {
             active &&
             (f.status === "internal" || f.status === "returned");
           const canSupervisorAct = ca && active && f.status === "review";
-          const canResolve =
-            (canSpecialistAct || canSupervisorAct) && f.status !== "approved";
+          const canResolve = canSpecialistAct && f.status !== "approved";
           const draft = resolveDraft[f.id] ?? { reason: "", instructions: "" };
 
           return (
@@ -214,7 +225,9 @@ export function FailuresView() {
                     {failureStatusLabel(f.status)}
                   </span>
                   <span style={{ fontSize: 11, color: "var(--text3)" }}>
-                    {formatDateAr(f.updatedAt.slice(0, 10))}
+                    <bdi dir="ltr" className="po-property-detail-ltr-val">
+                      {formatDateAr(f.updatedAt.slice(0, 10))}
+                    </bdi>
                   </span>
                 </div>
               </div>
@@ -289,7 +302,7 @@ export function FailuresView() {
                       className="btn btn-sm btn-primary"
                       onClick={() => handleSubmit(f.id)}
                     >
-                      إرسال للمراجعة
+                      تصعيد على المشرف
                     </button>
                   )}
                   {canResolve ? (
@@ -331,7 +344,7 @@ export function FailuresView() {
                       className="btn btn-sm btn-success"
                       onClick={() => handleApprove(f.id)}
                     >
-                      اعتماد نهائي (تعذر)
+                      اعتماد التعذر
                     </button>
                     <button
                       type="button"
@@ -342,16 +355,16 @@ export function FailuresView() {
                     </button>
                     <button
                       type="button"
-                      className="btn btn-sm"
-                      onClick={() => toggleResolve(f.id)}
+                      className="btn btn-sm btn-accent"
+                      onClick={() => void handleSuspend(f.id)}
                     >
-                      {resolveOpen[f.id] ? "إلغاء الحل" : "تم الحل"}
+                      تعليق المعاملة
                     </button>
                   </div>
                 </div>
               ) : null}
 
-              {resolveOpen[f.id] && canResolve ? (
+              {resolveOpen[f.id] && canResolve && !canSupervisorAct ? (
                 <div
                   style={{
                     marginTop: 10,

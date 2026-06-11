@@ -154,3 +154,47 @@ export function caseStudyTrackBadgeLabel(state: CaseStudyTrackState): string {
   return "جديد";
 }
 
+export type CaseStudyPartyAssignee = {
+  trackId: string;
+  shortLabel: string;
+  enabled: boolean;
+  name: string;
+  state: CaseStudyTrackState;
+  progressPct: number;
+};
+
+const CASE_STUDY_PARTY_DEFS = [
+  { trackId: "inspection", shortLabel: "المعاين" },
+  { trackId: "government", shortLabel: "المراجع الحكومي" },
+  { trackId: "appraisal", shortLabel: "المقيم" },
+  { trackId: "survey", shortLabel: "المكتب الهندسي" },
+] as const;
+
+/** Party columns for دراسة حالة العقارات queue table. */
+export function buildCaseStudyPartyAssignees(
+  parent: WorkflowTask,
+  allTasks: WorkflowTask[],
+): CaseStudyPartyAssignee[] {
+  const tracks = buildCaseStudyTracks(parent, allTasks);
+  const distribution = migrateDistribution(parent.distribution);
+
+  return CASE_STUDY_PARTY_DEFS.map((def) => {
+    const track = tracks.find((t) => t.id === def.trackId);
+    const enabled =
+      def.trackId === "inspection" || def.trackId === "appraisal"
+        ? distribution.valuationDepartment
+        : def.trackId === "government"
+          ? distribution.governmentAuditor
+          : distribution.engineeringOffice;
+
+    return {
+      trackId: def.trackId,
+      shortLabel: def.shortLabel,
+      enabled,
+      name: track?.assigneeName ?? "—",
+      state: track?.state ?? "new",
+      progressPct: track?.progressPct ?? 0,
+    };
+  });
+}
+

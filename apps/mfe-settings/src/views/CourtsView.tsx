@@ -116,11 +116,13 @@ export function CourtsView() {
           عرض فقط — إدارة القائمة للمشرف.
         </div>
       ) : (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="card-header">
-            <span className="card-title">إضافة محكمة / دائرة</span>
-          </div>
-          <div className="reg-fg2" style={{ padding: "0 16px 16px" }}>
+        <article className="page-shell" style={{ marginBottom: 0 }}>
+          <header className="po-subpage-hd">
+            <div className="po-subpage-titles">
+              <h2 className="po-subpage-title">إضافة محكمة / دائرة</h2>
+            </div>
+          </header>
+          <div className="reg-fg2 page-gutter" style={{ paddingBottom: 16 }}>
             <RegSelect
               id="court_city"
               label="المدينة"
@@ -150,20 +152,22 @@ export function CourtsView() {
               </button>
             </div>
           </div>
-        </div>
+        </article>
       )}
 
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">قائمة المحاكم والدوائر</span>
-        </div>
+      <article className="page-shell">
+        <header className="po-subpage-hd">
+          <div className="po-subpage-titles">
+            <h2 className="po-subpage-title">قائمة المحاكم والدوائر</h2>
+          </div>
+        </header>
         {grouped.length === 0 ? (
-          <p style={{ padding: 16, color: "var(--text3)", fontSize: 12 }}>
+          <p className="page-gutter" style={{ paddingBottom: 16, color: "var(--text3)", fontSize: 12 }}>
             لا توجد محاكم — يبدأ النظام بقائمة افتراضية عند أول فتح.
           </p>
         ) : (
           grouped.map(({ city: c, rows }) => (
-            <div key={c} style={{ padding: "12px 16px", borderTop: "1px solid var(--border)" }}>
+            <div key={c} className="page-gutter" style={{ paddingBlock: 12, borderTop: "1px solid var(--border)" }}>
               <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>{c}</div>
               {rows.map((row) => (
                 <div key={row.id} style={{ marginBottom: 10 }}>
@@ -214,7 +218,7 @@ export function CourtsView() {
             </div>
           ))
         )}
-      </div>
+      </article>
     </>
   );
 }

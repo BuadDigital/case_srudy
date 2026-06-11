@@ -5,7 +5,7 @@ import {
   CaseStudyWorkspaceView,
   decodeTaskParam,
 } from "@case-study/mfe";
-import { EvaluatorAdvisoryPanel } from "@/components/prototype/evaluator/EvaluatorAdvisoryPanel";
+import { EvaluatorAdvisoryPanel } from "@evaluator/mfe";
 
 export default function CaseStudyWorkspacePage({
   params,

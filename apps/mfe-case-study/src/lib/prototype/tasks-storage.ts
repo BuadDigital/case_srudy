@@ -497,6 +497,32 @@ export async function escalateTaskForObstruction(
   return dtoToTask(result.data);
 }
 
+/** Pause all open work on a property — SLA timer keeps running elsewhere. */
+export async function suspendWorkflowTasksForProperty(
+  poNumber: string,
+  propertyId: string,
+  reason: string,
+): Promise<void> {
+  const n = poNumber.trim();
+  const list = await loadWorkflowTasks();
+  const related = list.filter(
+    (t) =>
+      t.poNumber.trim() === n &&
+      t.propertyId === propertyId &&
+      t.status !== "completed",
+  );
+  const config = workOrdersApiConfig();
+  if (!config) return;
+  const note = reason.trim() || "معاملة معلقة";
+  for (const task of related) {
+    await patchWorkflowTask(config, task.id, {
+      status: "blocked",
+      obstructionReason: note,
+    });
+  }
+  notifyTasksChanged();
+}
+
 export async function resolveObstructionForProperty(
   poNumber: string,
   propertyId: string,

@@ -84,21 +84,19 @@ export function DashboardView() {
         </div>
       </div>
 
-      {showTeamLoad ? (
-        <div style={{ marginBottom: 16 }}>
-          <TeamCurrentLoadCard />
-        </div>
-      ) : null}
+      {showTeamLoad ? <TeamCurrentLoadCard /> : null}
 
       {mgr ? (
-        <div className="grid-2" style={{ marginBottom: 16 }}>
-          <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-header">
-              <span className="card-title">أوامر العمل النشطة</span>
+        <div className="grid-2">
+          <article className="page-shell">
+            <header className="po-subpage-hd">
+              <div className="po-subpage-titles">
+                <h2 className="po-subpage-title">أوامر العمل النشطة</h2>
+              </div>
               <Link href="/po" className="btn btn-sm">
                 عرض الكل
               </Link>
-            </div>
+            </header>
             <table
               className="tbl"
               data-pending={poReady ? undefined : "true"}
@@ -160,14 +158,16 @@ export function DashboardView() {
                   : null}
               </tbody>
             </table>
-          </div>
-          <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-header">
-              <span className="card-title">طلبات التقييم الأخيرة</span>
+          </article>
+          <article className="page-shell">
+            <header className="po-subpage-hd">
+              <div className="po-subpage-titles">
+                <h2 className="po-subpage-title">طلبات التقييم الأخيرة</h2>
+              </div>
               <Link href="/valuation-requests" className="btn btn-sm">
                 عرض الكل
               </Link>
-            </div>
+            </header>
             <table className="tbl">
               <thead>
                 <tr>
@@ -190,7 +190,7 @@ export function DashboardView() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </article>
         </div>
       ) : null}
 

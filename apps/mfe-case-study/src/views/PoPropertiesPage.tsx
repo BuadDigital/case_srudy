@@ -26,6 +26,7 @@ import {
   buildPoPropertiesRowMoreItems,
   type PoPropertyRowMoreContext,
 } from "../lib/prototype/po-properties-row-menu";
+import { formatDeliveryRemainingLabel } from "../lib/prototype/my-task-row";
 import { usePoRecordQuery } from "@case-study/mfe/query/case-study-queries";
 import {
   canEditProperty,
@@ -37,6 +38,24 @@ import type { PoPropertyIntake } from "../lib/prototype/po-intake-data";
 
 function deedLabel(property: PoPropertyIntake): string {
   return property.deedNumber.trim() || "—";
+}
+
+function isDueSoon(iso: string): boolean {
+  if (!iso) return false;
+  const due = new Date(iso.slice(0, 10));
+  const now = new Date();
+  const diff = due.getTime() - now.getTime();
+  return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
+}
+
+/** DD/MM/YYYY plus HH:mm when present in ISO or a separate time field. */
+function formatDateTimeAr(iso: string, separateTime?: string): string {
+  if (!iso) return "—";
+  const date = formatDateAr(iso);
+  const extra = separateTime?.trim();
+  if (extra) return `${date} ${extra}`;
+  const timeMatch = iso.trim().match(/T(\d{2}:\d{2})/);
+  return timeMatch ? `${date} ${timeMatch[1]}` : date;
 }
 
 function BackIcon() {
@@ -112,7 +131,7 @@ export function PoPropertiesPage({
 
   if (isPending && !record) {
     return (
-      <div className="po-properties-page">
+      <div className="po-properties-page pd-page">
         <p className="po-properties-loading">جاري التحميل…</p>
       </div>
     );
@@ -120,7 +139,7 @@ export function PoPropertiesPage({
 
   if (!record) {
     return (
-      <div className="po-properties-page">
+      <div className="po-properties-page pd-page">
         <div className="note note-warn">
           لم يُعثر على أمر العمل.
           <div className="po-properties-empty-actions">
@@ -136,68 +155,96 @@ export function PoPropertiesPage({
   const showDecree = requiresAssignmentDecree(record.assignmentType);
   const priorByDeed = new Map<string, string>();
   const count = record.properties.length;
+  const expected = record.expectedPropertyCount ?? count;
+  const dueUrgent = record.dueDateAt
+    ? isPastDue(record.dueDateAt) || isDueSoon(record.dueDateAt)
+    : false;
 
   return (
-    <div className="po-properties-page">
+    <div className="po-properties-page pd-page">
       <article className="po-properties-shell">
-        <header className="po-properties-hero">
-          <div className="po-properties-hero-main">
-            <Link href={poListPath()} className="po-properties-back">
-              <BackIcon />
-              <span>أوامر العمل</span>
-            </Link>
-            <h1 className="po-properties-title">
-              <span>عقارات</span>
-              <PoNumber value={record.poNumber} className="po-properties-title-num" />
-            </h1>
-            <div className="po-properties-meta">
-              <span
-                className={`badge ${assignmentTypeBadgeClass(record.assignmentType)}`}
+        <header className="po-properties-hero po-properties-hero--meta">
+          <div className="po-properties-hero-top">
+            <div className="po-properties-hero-main">
+              <Link href={poListPath()} className="po-properties-back">
+                <BackIcon />
+                <span>أوامر العمل</span>
+              </Link>
+              <h1 className="po-properties-title">
+                <span>عقارات</span>
+                <PoNumber value={record.poNumber} className="po-properties-title-num" />
+              </h1>
+              <div className="po-properties-meta">
+                <span
+                  className={`badge ${assignmentTypeBadgeClass(record.assignmentType)}`}
+                >
+                  {record.assignmentType}
+                </span>
+                <span className="po-properties-meta-sep" aria-hidden>
+                  ·
+                </span>
+                <span className="po-properties-meta-count">
+                  {count} من {expected}{" "}
+                  {expected === 1 ? "عقار" : "عقارات"}
+                </span>
+              </div>
+            </div>
+            {showEdit ? (
+              <button
+                type="button"
+                className="btn btn-sm btn-primary po-properties-add"
+                onClick={() => router.push(poPropertyNewPath(poNumber))}
               >
-                {record.assignmentType}
-              </span>
-              <span className="po-properties-meta-sep" aria-hidden>
-                ·
-              </span>
-              <span className="po-properties-meta-count">
-                {count} من {record.expectedPropertyCount ?? count}{" "}
-                {record.expectedPropertyCount === 1 ? "عقار" : "عقارات"}
-              </span>
+                + إضافة عقار
+              </button>
+            ) : null}
+          </div>
+
+          <div className="pd-meta-strip" aria-label="ملخص أمر العمل">
+            <div className="pd-meta-item">
+              <div className="pd-meta-label">اسم الأخصائي</div>
+              <div className="pd-meta-val">
+                {record.assignmentSpecialist.trim() || "—"}
+              </div>
+            </div>
+            <div className="pd-meta-item">
+              <div className="pd-meta-label">استلام إنفاذ</div>
+              <div className="pd-meta-val">
+                {record.receivedFromEnfathAt ? (
+                  <bdi dir="ltr" className="po-property-detail-ltr-val">
+                    {formatDateTimeAr(
+                      record.receivedFromEnfathAt,
+                      record.receivedFromEnfathTime,
+                    )}
+                  </bdi>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div className="pd-meta-item">
+              <div className="pd-meta-label">تاريخ الاستحقاق</div>
+              <div
+                className={`pd-meta-val${dueUrgent ? " pd-meta-val--urgent" : ""}`}
+              >
+                {record.dueDateAt ? (
+                  <bdi dir="ltr" className="po-property-detail-ltr-val">
+                    {formatDateTimeAr(record.dueDateAt)}
+                  </bdi>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div className="pd-meta-item">
+              <div className="pd-meta-label">المتبقي للتسليم</div>
+              <div
+                className={`pd-meta-val${dueUrgent ? " pd-meta-val--urgent" : ""}`}
+              >
+                {formatDeliveryRemainingLabel(record.dueDateAt)}
+              </div>
             </div>
           </div>
-          <div className="po-properties-hero-stats" aria-label="ملخص أمر العمل">
-            <div className="po-properties-stat">
-              <span className="po-properties-stat-lbl">الأخصائي</span>
-              <span className="po-properties-stat-val" title={record.assignmentSpecialist}>
-                {record.assignmentSpecialist || "—"}
-              </span>
-            </div>
-            <div className="po-properties-stat">
-              <span className="po-properties-stat-lbl">تاريخ الاستحقاق</span>
-              <span
-                className={`po-properties-stat-val po-properties-stat-val--due${record.dueDateAt && isPastDue(record.dueDateAt) ? " po-properties-stat-val--warn" : ""}`}
-              >
-                {record.dueDateAt ? formatDateAr(record.dueDateAt) : "—"}
-              </span>
-            </div>
-            <div className="po-properties-stat">
-              <span className="po-properties-stat-lbl">استلام إنفاذ</span>
-              <span className="po-properties-stat-val">
-                {record.receivedFromEnfathAt
-                  ? formatDateAr(record.receivedFromEnfathAt)
-                  : "—"}
-              </span>
-            </div>
-          </div>
-          {showEdit ? (
-            <button
-              type="button"
-              className="btn btn-sm btn-primary po-properties-add"
-              onClick={() => router.push(poPropertyNewPath(poNumber))}
-            >
-              + إضافة عقار
-            </button>
-          ) : null}
         </header>
 
         {count === 0 ? (

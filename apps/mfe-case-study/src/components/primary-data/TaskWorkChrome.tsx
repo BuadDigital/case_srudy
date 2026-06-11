@@ -30,7 +30,7 @@ export function TaskWorkChrome({
 }) {
   if (layout === "panel") {
     return (
-      <div className="card po-bourse-form-panel po-primary-data-form-panel">
+      <div className="po-bourse-form-panel po-primary-data-form-panel">
         <div className="card-body">
           {children}
           {showFooter && variant !== "detail" ? (

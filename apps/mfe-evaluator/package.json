@@ -1,0 +1,30 @@
+{
+  "name": "@evaluator/mfe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evaluator microfrontend — مقيم عقاري (property appraisal upload, advisory, recall)",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes": "./src/routes.ts",
+    "./query/evaluator-queries": "./src/query/evaluator-queries.ts",
+    "./lib/*": "./src/lib/*",
+    "./components/*": "./src/components/*",
+    "./extensions/*": "./src/extensions/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@case-study/mfe": "*",
+    "@platform/app-shared": "*",
+    "@platform/types": "*",
+    "@settings/mfe": "*",
+    "@tanstack/react-query": "^5.100.11"
+  },
+  "peerDependencies": {
+    "next": ">=16",
+    "react": ">=19",
+    "react-dom": ">=19"
+  }
+}

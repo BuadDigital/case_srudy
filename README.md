@@ -247,15 +247,22 @@ Report vulnerabilities to the project owner / security contact internally — do
 
 The platform is evolving from a **single shell app + auth API** toward **microfrontends** and **domain microservices**.
 
-### Current structure (F3 — logical MFEs, single deploy)
+### Current structure (F3 + F4b — logical MFEs, single deploy)
 
 ```text
 property_study/
 ├── apps/
-│   ├── shell/                 # Next.js host — login, layout, nav, unsplit screens
+│   ├── shell/                 # Next.js host — login, layout, nav, PO routes, evaluator
 │   ├── mfe-case-study/        # @case-study/mfe — PO + المعاملات النشطة (API)
+│   ├── mfe-dashboard/         # @dashboard/mfe — لوحة التحكم
+│   ├── mfe-survey/              # @survey/mfe — الرفع المساحي
+│   ├── mfe-keys/                # @keys/mfe — إدارة المفاتيح
+│   ├── mfe-financial/           # @financial/mfe — التقارير المالية
+│   ├── mfe-kpi/                 # @kpi/mfe — مؤشرات الأداء
 │   ├── mfe-failures/          # @failures/mfe — إدارة التعذرات (localStorage until API)
-│   └── mfe-settings/          # @settings/mfe — users, courts, info-roles, system-tools
+│   ├── mfe-settings/          # @settings/mfe — users, courts, info-roles, system-tools
+│   ├── mfe-valuation/         # @valuation/mfe — طلبات التقييم
+│   └── mfe-messages/            # @messages/mfe — المراسلة
 ├── packages/
 │   ├── app-shared/            # PrototypeContext, registration, nav/constants
 │   ├── design-system/         # prototype.css, badges
@@ -273,19 +280,17 @@ property_study/
 
 | Package | Routes / scope |
 |---------|----------------|
-| **shell** | Login, layout, nav, case-study form, party queues, mock pages |
-| **@case-study/mfe** | `/po/*`, active transactions, bourse, distribution, active case study |
-| **@failures/mfe** | `/failures`, PO property failure form (localStorage prototype) |
+| **shell** | Login, layout, nav, PO sub-routes, evaluator, party-task host |
+| **@dashboard/mfe** | `/dashboard` |
+| **@survey/mfe** | `/survey` |
+| **@keys/mfe** | `/keys` |
+| **@financial/mfe** | `/financial` |
+| **@kpi/mfe** | `/kpi` |
+| **@case-study/mfe** | `/po/*`, active transactions, bourse, distribution, active case study, field-form, party queues |
+| **@failures/mfe** | `/failures`, `/failure-types`, PO property failure form (localStorage prototype) |
 | **@settings/mfe** | `/users`, `/courts`, `/case-study-info-roles`, `/system-tools` |
-
-**Still to split (when APIs exist):**
-
-| Future MFE | Routes |
-|------------|--------|
-| **mfe-valuation** | valuation-requests, field-form |
-| **mfe-operations** | survey, keys |
-| **mfe-financial** | financial |
-| **mfe-platform** | messages, kpi |
+| **@valuation/mfe** | `/valuation-requests` |
+| **@messages/mfe** | `/messages` |
 
 ### Target backend (planned)
 
@@ -488,7 +493,7 @@ Use this checklist to see what exists **today** vs what is only planned.
 | **Role switcher (demo)** | ✅ | Sidebar dropdown — **not** real server-side security yet |
 | **Add user (إدارة المستخدمين)** | ✅ | API (`POST /api/users/hr|proc|crm`) + registration wizards |
 | **Monorepo F0** | ✅ | `apps/shell` + `packages/*` |
-| **Logical MFEs (F3)** | ✅ | `@case-study/mfe`, `@failures/mfe`, `@settings/mfe` — single deploy |
+| **Logical MFEs (F3 + F4b)** | ✅ | Case-study, failures, settings + platform domains (dashboard, survey, keys, financial, KPI) — single deploy |
 | **Module Federation (F5)** | ❌ | Independent deploy URLs not wired yet |
 | **Domain APIs** (PO, properties, courts, users) | ✅ | `RealEstateEval.Api` — see `docs/progress.md` |
 | **Per-role `@ejadah.dev` login** | ❌ | Draft in `docs/DEMO_ROLE_CREDENTIALS.txt` |
@@ -564,7 +569,9 @@ docker compose -f infra/docker-compose.yml down
 |--------------|-----------|
 | Change labels, nav, mock tables | `packages/app-shared/src/prototype/constants.ts` |
 | Change a case-study / failures / settings screen | `apps/mfe-case-study/`, `apps/mfe-failures/`, `apps/mfe-settings/` |
-| Change a shell-only screen | `apps/shell/src/components/views/*View.tsx` |
+| Change dashboard / survey / keys / financial / KPI | `apps/mfe-dashboard/`, `apps/mfe-survey/`, `apps/mfe-keys/`, `apps/mfe-financial/`, `apps/mfe-kpi/` |
+| Change messages / valuation-requests | `apps/mfe-messages/`, `apps/mfe-valuation/` |
+| Change a shell-only screen | `apps/shell/src/components/views/AppShell.tsx`, `NavIcon.tsx` (orphan `*View.tsx` copies pending cleanup) |
 | Map URL → screen | `apps/shell/src/app/(app)/[page]/page.tsx` |
 | Login page | `apps/shell/src/app/login/page.tsx` |
 | Sidebar / layout / logout | `apps/shell/src/components/views/AppShell.tsx` |
@@ -689,20 +696,6 @@ Phase 6            Module Federation + separate deploys per MFE
 | [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md) | Full architecture & phases |
 | [docs/LOCAL_INFRA.md](docs/LOCAL_INFRA.md) | Docker services, URLs, troubleshooting |
 | [docs/DEMO_ROLE_CREDENTIALS.txt](docs/DEMO_ROLE_CREDENTIALS.txt) | Draft `@ejadah.dev` demo accounts |
-
----
-
-## 🤝 Contributing
-
-1. Fork or branch from the team repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit changes with a clear message
-4. Run `npm run lint` and `npm run build` (frontend) / `dotnet build` (API)
-5. Open a Pull Request for review
-
-Align UI changes with prototypes in `requirements/` and architecture in `docs/`.
-
----
 
 <div align="center">
   <p>Built for internal real-estate evaluation & case study — Ejada</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { CaseStudyForm } from "../components/case-study/CaseStudyForm";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
@@ -105,13 +105,17 @@ export function CaseStudyWorkspaceView({
   ) => ReactNode;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { role } = usePrototype();
   const {
     data: tasks,
     isFetched: tasksFetched,
     isPending: tasksPending,
   } = useWorkflowTasksQuery();
-  const [tab, setTab] = useState<TabId>("info");
+  const initialTab = searchParams.get("tab");
+  const [tab, setTab] = useState<TabId>(() =>
+    TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : "info",
+  );
 
   const task = useMemo((): WorkflowTask | null => {
     return tasks?.find((t) => t.id === taskId) ?? null;
@@ -175,7 +179,7 @@ export function CaseStudyWorkspaceView({
   }
 
   return (
-    <div className="po-properties-page case-study-workspace">
+    <div className="po-properties-page pd-page case-study-workspace">
       <article className="po-properties-shell">
         <header className="po-properties-hero po-properties-hero--compact case-study-workspace-hero">
           <div className="po-properties-hero-main">

@@ -1,19 +1,47 @@
-import { decodePoParam, PO_PROPERTY_SEGMENT } from "@case-study/mfe";
+import {
+  decodePoParam,
+  formatPoDisplay,
+  PO_PROPERTY_SEGMENT,
+  poListPath,
+  poPropertiesPath,
+} from "@case-study/mfe";
+import type { BreadcrumbSegment } from "./breadcrumb";
 
 export type PoChrome = {
-  breadcrumb: string;
+  segments: BreadcrumbSegment[];
   title: string;
   /** When set, top bar renders `title` + isolated LTR PO number (RTL-safe). */
   titlePo?: string;
+  /** Property detail route — drives topbar actions and hides page title. */
+  propertyDetail?: { poNumber: string; propertyId: string };
 };
 
-export function resolvePoChrome(pathname: string): PoChrome | null {
+export type PoChromeOptions = {
+  /** Deed number crumb label (e.g. `10`) for property detail. */
+  deedLabel?: string;
+};
+
+function poTrailBase(poNumber: string): BreadcrumbSegment[] {
+  return [
+    { label: "دراسة الحالة" },
+    { label: "أوامر العمل", href: poListPath() },
+    { label: formatPoDisplay(poNumber), href: poPropertiesPath(poNumber) },
+  ];
+}
+
+export function resolvePoChrome(
+  pathname: string,
+  options?: PoChromeOptions,
+): PoChrome | null {
   const parts = pathname.split("/").filter(Boolean);
   if (parts[0] !== "po") return null;
 
   if (parts.length === 1) {
     return {
-      breadcrumb: "دراسة الحالة / أوامر العمل",
+      segments: [
+        { label: "دراسة الحالة" },
+        { label: "أوامر العمل", current: true },
+      ],
       title: "",
     };
   }
@@ -22,7 +50,10 @@ export function resolvePoChrome(pathname: string): PoChrome | null {
 
   if (parts[2] === "edit") {
     return {
-      breadcrumb: `دراسة الحالة / أوامر العمل / ${poNumber} / تعديل`,
+      segments: [
+        ...poTrailBase(poNumber),
+        { label: "تعديل", current: true },
+      ],
       title: "تعديل أمر العمل —",
       titlePo: poNumber,
     };
@@ -30,50 +61,76 @@ export function resolvePoChrome(pathname: string): PoChrome | null {
 
   if (parts[2] !== PO_PROPERTY_SEGMENT) {
     return {
-      breadcrumb: "دراسة الحالة / أوامر العمل",
+      segments: [
+        { label: "دراسة الحالة" },
+        { label: "أوامر العمل", current: true },
+      ],
       title: "أوامر العمل",
     };
   }
 
   if (parts.length === 3) {
     return {
-      breadcrumb: `دراسة الحالة / أوامر العمل / ${poNumber} / العقارات`,
-      title: "عقارات",
-      titlePo: poNumber,
+      segments: [
+        ...poTrailBase(poNumber),
+        { label: "العقارات", current: true },
+      ],
+      title: "",
     };
   }
 
   if (parts[3] === "new") {
     return {
-      breadcrumb: `دراسة الحالة / أوامر العمل / ${poNumber} / إضافة عقار`,
+      segments: [
+        ...poTrailBase(poNumber),
+        { label: "إضافة عقار", current: true },
+      ],
       title: "إضافة عقار —",
       titlePo: poNumber,
     };
   }
 
+  const propertyId = decodePoParam(parts[3]);
+
   if (parts[4] === "edit") {
     return {
-      breadcrumb: `دراسة الحالة / أوامر العمل / ${poNumber} / تعديل عقار`,
+      segments: [
+        ...poTrailBase(poNumber),
+        { label: "تعديل عقار", current: true },
+      ],
       title: "تعديل العقار",
     };
   }
 
   if (parts[4] === "failure") {
     return {
-      breadcrumb: `دراسة الحالة / أوامر العمل / ${poNumber} / تعذر`,
+      segments: [
+        ...poTrailBase(poNumber),
+        { label: "تعذر", current: true },
+      ],
       title: "تسجيل تعذر",
     };
   }
 
   if (parts.length === 4) {
+    const deed = options?.deedLabel?.trim();
+    const segments: BreadcrumbSegment[] = [...poTrailBase(poNumber)];
+    if (deed) {
+      const ltr = !/[\u0600-\u06FF]/.test(deed);
+      segments.push({ label: deed, current: true, ltr });
+    }
     return {
-      breadcrumb: `دراسة الحالة / أوامر العمل / ${poNumber} / تفاصيل العقار`,
-      title: "تفاصيل الصك / العقار",
+      segments,
+      title: "",
+      propertyDetail: { poNumber, propertyId },
     };
   }
 
   return {
-    breadcrumb: "دراسة الحالة / أوامر العمل",
+    segments: [
+      { label: "دراسة الحالة" },
+      { label: "أوامر العمل", current: true },
+    ],
     title: "أوامر العمل",
   };
 }

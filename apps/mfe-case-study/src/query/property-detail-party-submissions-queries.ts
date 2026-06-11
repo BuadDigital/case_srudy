@@ -1,0 +1,59 @@
+"use client";
+
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
+import { EVALUATOR_SUBMISSION_CHANGED_EVENT } from "../lib/case-study-evaluator-events";
+import {
+  loadPropertyDetailPartySubmissions,
+  type PropertyDetailPartySubmissionsMap,
+} from "../lib/prototype/property-detail-party-submissions";
+import type { WorkflowTask } from "../lib/prototype/tasks-storage";
+import { TASKS_CHANGED_EVENT } from "./case-study-queries";
+
+const STALE_MS = 60_000;
+const GC_MS = 10 * 60_000;
+
+export function propertyDetailPartySubmissionsQueryKey(parentTaskId: string) {
+  return prototypeKeys.propertyDetailPartySubmissions(parentTaskId);
+}
+
+/** Fetches every party-role submission as one unit (parallel API + prototype reads). */
+export function usePropertyDetailPartySubmissionsQuery(input: {
+  parentTask: WorkflowTask | null;
+  allTasks: WorkflowTask[];
+  coordinatorName: string;
+  enabled?: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const parentTaskId = input.parentTask?.id ?? "";
+  const enabled = input.enabled ?? true;
+
+  useEffect(() => {
+    if (!enabled) return;
+    const invalidate = () => {
+      void queryClient.invalidateQueries({
+        queryKey: propertyDetailPartySubmissionsQueryKey(parentTaskId),
+      });
+    };
+    window.addEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, invalidate);
+    window.addEventListener(TASKS_CHANGED_EVENT, invalidate);
+    return () => {
+      window.removeEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, invalidate);
+      window.removeEventListener(TASKS_CHANGED_EVENT, invalidate);
+    };
+  }, [enabled, parentTaskId, queryClient]);
+
+  return useQuery<PropertyDetailPartySubmissionsMap>({
+    queryKey: propertyDetailPartySubmissionsQueryKey(parentTaskId || "none"),
+    queryFn: () =>
+      loadPropertyDetailPartySubmissions({
+        parentTask: input.parentTask,
+        allTasks: input.allTasks,
+        coordinatorName: input.coordinatorName,
+      }),
+    enabled,
+    staleTime: STALE_MS,
+    gcTime: GC_MS,
+  });
+}

@@ -201,7 +201,7 @@ export function BourseInquiryView() {
     : "po-bourse-inquiry-layout po-bourse-inquiry-layout--solo";
 
   return (
-    <div className="po-bourse-inquiry-page">
+    <div className="po-bourse-inquiry-page pd-page">
       <div className="note note-info po-bourse-intro">
         <strong>مسار العمل:</strong> اختر صكاً من قائمة الانتظار، أكمل المدينة
         والتصنيف ونوع العقار وبيانات الحدود من البورصة، ثم احفظ — يُزال الصك
@@ -320,7 +320,7 @@ export function BourseInquiryView() {
         </article>
 
         {selected ? (
-          <div className="card po-bourse-form-panel">
+          <div className="po-bourse-form-panel">
             <div className="card-header">
               <span className="card-title">
                 بيانات البورصة
