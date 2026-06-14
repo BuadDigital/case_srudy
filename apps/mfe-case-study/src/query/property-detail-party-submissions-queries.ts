@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import { EVALUATOR_SUBMISSION_CHANGED_EVENT } from "../lib/case-study-evaluator-events";
+import { ENGINEERING_SURVEY_SUBMISSION_CHANGED_EVENT } from "../lib/case-study-engineering-survey-events";
 import {
   loadPropertyDetailPartySubmissions,
   type PropertyDetailPartySubmissionsMap,
@@ -37,9 +38,14 @@ export function usePropertyDetailPartySubmissionsQuery(input: {
       });
     };
     window.addEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, invalidate);
+    window.addEventListener(ENGINEERING_SURVEY_SUBMISSION_CHANGED_EVENT, invalidate);
     window.addEventListener(TASKS_CHANGED_EVENT, invalidate);
     return () => {
       window.removeEventListener(EVALUATOR_SUBMISSION_CHANGED_EVENT, invalidate);
+      window.removeEventListener(
+        ENGINEERING_SURVEY_SUBMISSION_CHANGED_EVENT,
+        invalidate,
+      );
       window.removeEventListener(TASKS_CHANGED_EVENT, invalidate);
     };
   }, [enabled, parentTaskId, queryClient]);

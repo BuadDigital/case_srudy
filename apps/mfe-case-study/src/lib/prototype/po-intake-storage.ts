@@ -34,6 +34,12 @@ import {
   workOrderExists,
 } from "@platform/api-client";
 import {
+  loadPoListRows,
+  loadPropertyListItems,
+  type PropertyListItem,
+} from "@platform/app-shared/prototype/work-orders-read";
+export { loadPoListRows, loadPropertyListItems, type PropertyListItem };
+import {
   apiErrorMessage,
   notifyWorkOrdersChanged,
   resolveApiError,
@@ -189,30 +195,14 @@ export function propertyToBourseRequest(
   };
 }
 
-function listItemToPoRow(item: {
-  poNumber: string;
-  assignmentType: string;
-  propertyCount: number;
-  expectedPropertyCount: number;
-  completedCount: number;
-  status: string;
-  receivedFromEnfathAt: string;
-  dueDateAt: string;
-  assignmentSpecialist?: string;
-}): PoRow {
-  return {
-    id: item.poNumber,
-    type: item.assignmentType || "—",
-    count: item.expectedPropertyCount || item.propertyCount || 0,
-    done: item.completedCount,
-    status: poListStatusForAssignmentType(
-      item.assignmentType,
-      item.status === "done" ? "done" : "progress",
-    ),
-    date: item.receivedFromEnfathAt,
-    dueDate: item.dueDateAt,
-    specialist: item.assignmentSpecialist?.trim() || "—",
-  };
+function priorSurveyWaived(
+  prop: PoPropertyIntake,
+  priorByDeed: Map<string, string>,
+): boolean {
+  if (!classificationRequiresSurvey(prop.classification)) return true;
+  const n = prop.deedNumber.trim();
+  if (!n) return false;
+  return priorByDeed.has(n);
 }
 
 export async function loadPoRecords(): Promise<PoIntakeRecord[]> {
@@ -286,16 +276,6 @@ export function poRecordToListRow(record: PoIntakeRecord): PoRow {
   };
 }
 
-function priorSurveyWaived(
-  prop: PoPropertyIntake,
-  priorByDeed: Map<string, string>,
-): boolean {
-  if (!classificationRequiresSurvey(prop.classification)) return true;
-  const n = prop.deedNumber.trim();
-  if (!n) return false;
-  return priorByDeed.has(n);
-}
-
 export async function findPriorDeedFull(
   deedNumber: string,
   excludePo?: string,
@@ -305,14 +285,6 @@ export async function findPriorDeedFull(
   const result = await findPriorDeed(config, deedNumber, excludePo);
   if (!result.ok || !result.data) return null;
   return result.data;
-}
-
-export async function loadPoListRows(): Promise<PoRow[]> {
-  const config = workOrdersApiConfig();
-  if (!config) return [];
-  const result = await listWorkOrders(config);
-  if (!result.ok) return [];
-  return result.data.map(listItemToPoRow);
 }
 
 function propertyRowId(poNumber: string, prop: PoPropertyIntake): string {
@@ -410,32 +382,6 @@ export async function completePropertyBourse(
 export async function loadPropertyRows(): Promise<PropertyRow[]> {
   const items = await loadPropertyListItems();
   return items.map(({ row }) => row);
-}
-
-export type PropertyListItem = {
-  row: PropertyRow;
-  poNumber: string;
-  propertyId: string;
-};
-
-export async function loadPropertyListItems(): Promise<PropertyListItem[]> {
-  const records = await loadPoRecords();
-  const priorByDeed = new Map<string, string>();
-  for (const record of records) {
-    for (const prop of record.properties) {
-      if (prop.identifierType === "deed" && prop.deedNumber.trim()) {
-        priorByDeed.set(prop.deedNumber.trim(), record.poNumber);
-      }
-    }
-  }
-
-  return records.flatMap((record) =>
-    record.properties.map((prop) => ({
-      row: poPropertyToPropertyRow(record, prop, priorByDeed),
-      poNumber: record.poNumber,
-      propertyId: prop.id,
-    })),
-  );
 }
 
 export async function getPoRecord(

@@ -3,6 +3,7 @@
 import type { PartyAppraisalExtensions } from "@case-study/mfe";
 import type { PoIntakeRecord } from "@case-study/mfe";
 import type { WorkflowTask } from "@case-study/mfe";
+import { propertyAppraisalWorkspacePath } from "@case-study/mfe/lib/my-task-routes";
 import { AppraiserUploadTab } from "../components/evaluator/AppraiserUploadTab";
 import { buildAppraiserQueueRowMoreItems } from "../lib/evaluator/appraiser-queue-row-menu";
 import {
@@ -24,10 +25,11 @@ export const partyAppraisalExtensions: PartyAppraisalExtensions = {
 
     return {
       ...base,
+      hidePageTitle: true,
       emptyHint:
         "بعد الإرسال للأخصائي تختفي المعاملة من هنا — لاستدعائها افتح «عقارات أمر العمل» ثم ⋮ على الصك.",
-      tableHint:
-        "⋮ — فتح المعاملة · عقارات أمر العمل · تفاصيل العقار.",
+      tableHint: "اضغط الصف لفتح مهمة التقييم في صفحة مستقلة.",
+      fullPageTaskPath: propertyAppraisalWorkspacePath,
       statusColumnLabel: "الحالة",
       filterListed: (mine: WorkflowTask[], poByNumber: Map<string, PoIntakeRecord>) =>
         filterAppraiserListedTasks(baseFilter(mine, poByNumber)),

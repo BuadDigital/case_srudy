@@ -5,6 +5,7 @@ import {
   CaseStudyWorkspaceView,
   decodeTaskParam,
 } from "@case-study/mfe";
+import { EngineeringSurveyAdvisoryPanel } from "@engineering-office/mfe";
 import { EvaluatorAdvisoryPanel } from "@evaluator/mfe";
 
 export default function CaseStudyWorkspacePage({
@@ -18,7 +19,12 @@ export default function CaseStudyWorkspacePage({
       taskId={decodeTaskParam(taskId)}
       renderPartiesExtras={({ task, property, tasks }) =>
         property?.id ? (
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+            <EngineeringSurveyAdvisoryPanel
+              parentTask={task}
+              propertyId={property.id}
+              tasks={tasks}
+            />
             <EvaluatorAdvisoryPanel
               parentTask={task}
               propertyId={property.id}

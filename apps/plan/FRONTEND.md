@@ -91,7 +91,8 @@ npm run dev
 **Done:** **F0** — monorepo structure, one deploy.  
 **Done:** **F3** — logical MFE packages; shell hosts routes and layout (single deploy).  
 **Done:** **F4b** — platform domain packages wired in `[page]/page.tsx` (dashboard, survey, keys, financial, KPI).  
-**Done:** **F4c** (partial) — `@evaluator/mfe` extracted; dashboard queries use direct `useQuery` + loaders (still depend on case-study storage until reporting API).  
+**Done:** **F4c** — dashboard PO/property queries use `@platform/app-shared/prototype/work-orders-read` + `api-client` (zero `@case-study/mfe` imports in `@dashboard/mfe`).  
+**Done:** **F4d** — shell `prototype-queries` imports shared loaders from `app-shared`; `usePropertyListItemsQuery` re-exported from `@dashboard/mfe`; settings `workOrdersApiConfig` from `app-shared`.  
 **Deferred:** **F5** Module Federation until independent deploy is needed.
 
 | Package | Routes / features |

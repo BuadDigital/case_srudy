@@ -12,14 +12,26 @@ import {
 import {
   activeSurveyWorkspacePath,
   decodeTaskParam,
+  governmentReviewWorkspacePath,
   partyTaskPath,
   partyTaskTaskPath,
+  propertyAppraisalWorkspacePath,
+  propertyInspectionWorkspacePath,
+  valuationCoordinationWorkspacePath,
 } from "../lib/my-task-routes";
 import type { PageId } from "@platform/types";
 import type { PoIntakeRecord } from "../lib/prototype/po-intake-data";
 import type { WorkflowTask } from "../lib/prototype/tasks-storage";
 import type { PartyAppraisalExtensions } from "../lib/party-appraisal-extensions";
 import type { PartyEngineeringSurveyExtensions } from "../lib/party-engineering-survey-extensions";
+import {
+  GOVERNMENT_REVIEW_SUBMISSION_CHANGED_EVENT,
+} from "../lib/prototype/government-review-work-storage";
+import { governmentReviewTaskStatusBadge } from "../lib/prototype/government-review-work-queue";
+import {
+  VALUATION_COORDINATION_SUBMISSION_CHANGED_EVENT,
+} from "../lib/prototype/valuation-coordination-work-storage";
+import { valuationCoordinationTaskStatusBadge } from "../lib/prototype/valuation-coordination-work-queue";
 
 function queueConfig(
   def: PartyTaskPageDef,
@@ -52,6 +64,40 @@ function queueConfig(
     return engineeringSurveyExtensions.patchQueueConfig(base, def);
   }
 
+  if (def.kind === "field-inspection") {
+    return {
+      ...base,
+      hidePageTitle: true,
+      tableHint: "اضغط الصف لفتح نموذج المعاينة في صفحة مستقلة.",
+      fullPageTaskPath: propertyInspectionWorkspacePath,
+    };
+  }
+
+  if (def.kind === "government-review") {
+    return {
+      ...base,
+      hidePageTitle: true,
+      tableHint: "اضغط الصف لفتح مهمة المراجعة في صفحة مستقلة.",
+      fullPageTaskPath: governmentReviewWorkspacePath,
+      statusColumnLabel: "الحالة",
+      getTaskStatusBadge: (task) => governmentReviewTaskStatusBadge(task.id),
+      refreshOnWindowEvents: [GOVERNMENT_REVIEW_SUBMISSION_CHANGED_EVENT],
+    };
+  }
+
+  if (def.kind === "valuation-coordination") {
+    return {
+      ...base,
+      hidePageTitle: true,
+      tableHint: "اضغط الصف لفتح مهمة الاستلام في صفحة مستقلة.",
+      fullPageTaskPath: valuationCoordinationWorkspacePath,
+      statusColumnLabel: "الحالة",
+      getTaskStatusBadge: (task) =>
+        valuationCoordinationTaskStatusBadge(task.id),
+      refreshOnWindowEvents: [VALUATION_COORDINATION_SUBMISSION_CHANGED_EVENT],
+    };
+  }
+
   return base;
 }
 
@@ -70,13 +116,56 @@ export function PartyActiveTaskView({
   const legacyTask = searchParams.get("task");
 
   useEffect(() => {
-    if (def?.kind !== "engineering-survey" || !legacyTask) return;
-    router.replace(activeSurveyWorkspacePath(decodeTaskParam(legacyTask)));
+    if (!legacyTask) return;
+    const taskId = decodeTaskParam(legacyTask);
+    if (def?.kind === "engineering-survey") {
+      router.replace(activeSurveyWorkspacePath(taskId));
+      return;
+    }
+    if (def?.kind === "property-appraisal") {
+      router.replace(propertyAppraisalWorkspacePath(taskId));
+      return;
+    }
+    if (def?.kind === "field-inspection") {
+      router.replace(propertyInspectionWorkspacePath(taskId));
+      return;
+    }
+    if (def?.kind === "government-review") {
+      router.replace(governmentReviewWorkspacePath(taskId));
+      return;
+    }
+    if (def?.kind === "valuation-coordination") {
+      router.replace(valuationCoordinationWorkspacePath(taskId));
+    }
   }, [def?.kind, legacyTask, router]);
 
   if (def?.kind === "engineering-survey" && legacyTask) {
     return (
       <p className="po-properties-loading">جاري فتح مهمة الرفع المساحي…</p>
+    );
+  }
+
+  if (def?.kind === "property-appraisal" && legacyTask) {
+    return (
+      <p className="po-properties-loading">جاري فتح مهمة التقييم…</p>
+    );
+  }
+
+  if (def?.kind === "field-inspection" && legacyTask) {
+    return (
+      <p className="po-properties-loading">جاري فتح مهمة المعاينة…</p>
+    );
+  }
+
+  if (def?.kind === "government-review" && legacyTask) {
+    return (
+      <p className="po-properties-loading">جاري فتح مهمة المراجعة…</p>
+    );
+  }
+
+  if (def?.kind === "valuation-coordination" && legacyTask) {
+    return (
+      <p className="po-properties-loading">جاري فتح مهمة الاستلام…</p>
     );
   }
 

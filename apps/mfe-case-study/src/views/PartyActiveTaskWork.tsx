@@ -1,11 +1,21 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { PartyCaseStudyFormTab } from "../components/case-study/PartyCaseStudyFormTab";
+import {
+  GovernmentReviewWorkBody,
+  type GovernmentReviewWorkHostRef,
+} from "../components/government-review/GovernmentReviewWorkBody";
 import { TaskWorkChrome } from "../components/primary-data/TaskWorkChrome";
+import {
+  ValuationCoordinationWorkBody,
+  type ValuationCoordinationWorkHostRef,
+} from "../components/valuation-coordination/ValuationCoordinationWorkBody";
 import { FieldFormView } from "./FieldFormView";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
+import { isGovernmentReviewLocked } from "../lib/prototype/government-review-work-queue";
+import { isValuationCoordinationLocked } from "../lib/prototype/valuation-coordination-work-queue";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import { partyTaskPath } from "../lib/my-task-routes";
 import {
@@ -31,56 +41,6 @@ import type {
 import { FailureRaisePanel } from "@failures/mfe";
 import { failureRaiserRoleForParty } from "@failures/mfe/lib/failure-party-roles";
 import { usePoRecordQuery } from "../query/case-study-queries";
-
-function GenericPartyWorkBody({ def }: { def: PartyTaskPageDef }) {
-  if (def.kind === "government-review") {
-    return (
-      <RegistrationFormCard title="زيارة المحكمة وجمع المفاتيح">
-        <div className="form-group">
-          <span className="form-label">حالة الزيارة</span>
-          <div className="radio-group">
-            {["تمت الزيارة", "بانتظار الموعد", "تعذر الوصول"].map((o) => (
-              <label key={o} className="radio-opt">
-                <input type="radio" name="gov-visit" /> {o}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="gov-keys">
-            المفاتيح المستلمة
-          </label>
-          <textarea
-            id="gov-keys"
-            className="form-control"
-            rows={2}
-            placeholder="وصف المفاتيح أو سبب التعذر…"
-          />
-        </div>
-      </RegistrationFormCard>
-    );
-  }
-
-  if (def.kind === "valuation-coordination") {
-    return (
-      <RegistrationFormCard title="استلام في قسم التقييم">
-        <div className="form-group">
-          <label className="form-label" htmlFor="vc-note">
-            ملاحظات الاستلام
-          </label>
-          <textarea
-            id="vc-note"
-            className="form-control"
-            rows={3}
-            placeholder="تأكيد استلام المعاملة وتوزيعها على المعاين والمقيم…"
-          />
-        </div>
-      </RegistrationFormCard>
-    );
-  }
-
-  return null;
-}
 
 const PARTY_FAILURE_RAISE_KINDS = new Set([
   "field-inspection",
@@ -153,13 +113,23 @@ export function PartyActiveTaskWork({
 
   const isAppraisal = def.kind === "property-appraisal";
   const isEngineeringSurvey = def.kind === "engineering-survey";
+  const isGovernmentReview = def.kind === "government-review";
+  const isValuationCoordination = def.kind === "valuation-coordination";
+  const usesStructuredWorkForm =
+    isGovernmentReview || isValuationCoordination;
 
   const evaluatorHostRef = useRef<PartyEvaluatorWorkHostRef>({});
   const surveyHostRef = useRef<PartyEngineeringSurveyWorkHostRef>({});
+  const governmentHostRef = useRef<GovernmentReviewWorkHostRef>({});
+  const coordinationHostRef = useRef<ValuationCoordinationWorkHostRef>({});
   evaluatorHostRef.current.onSubmitted = refresh;
   evaluatorHostRef.current.onSavingChange = setSaving;
   surveyHostRef.current.onSubmitted = refresh;
   surveyHostRef.current.onSavingChange = setSaving;
+  governmentHostRef.current.onSubmitted = refresh;
+  governmentHostRef.current.onSavingChange = setSaving;
+  coordinationHostRef.current.onSubmitted = refresh;
+  coordinationHostRef.current.onSavingChange = setSaving;
 
   const evaluatorLocked = useMemo(() => {
     if (!appraisalExtensions) return false;
@@ -170,6 +140,16 @@ export function PartyActiveTaskWork({
     if (!engineeringSurveyExtensions) return false;
     return engineeringSurveyExtensions.isSurveyLocked(task.id, saving);
   }, [engineeringSurveyExtensions, task.id, saving]);
+
+  const governmentLocked = useMemo(
+    () => isGovernmentReviewLocked(task.id),
+    [task.id],
+  );
+
+  const coordinationLocked = useMemo(
+    () => isValuationCoordinationLocked(task.id),
+    [task.id],
+  );
 
   const { deedLabel, location } = useMemo(() => {
     const property = record?.properties.find((p) => p.id === task.propertyId);
@@ -190,6 +170,32 @@ export function PartyActiveTaskWork({
       location: "—",
     };
   }, [record, task]);
+
+  async function submitStructuredWork(
+    locked: boolean,
+    hostRef: RefObject<{ submit?: () => Promise<boolean> } | null>,
+  ) {
+    if (locked) {
+      exit();
+      return;
+    }
+    setSaving(true);
+    const ok = (await hostRef.current?.submit?.()) ?? false;
+    setSaving(false);
+    if (ok) {
+      setSubmitSuccess(true);
+      refresh();
+      window.setTimeout(() => exit(), 1800);
+    }
+  }
+
+  async function submitGovernmentReview() {
+    await submitStructuredWork(governmentLocked, governmentHostRef);
+  }
+
+  async function submitValuationCoordination() {
+    await submitStructuredWork(coordinationLocked, coordinationHostRef);
+  }
 
   async function submitWork() {
     setSaving(true);
@@ -323,6 +329,94 @@ export function PartyActiveTaskWork({
     );
   }
 
+  if (usesStructuredWorkForm) {
+    const locked = isGovernmentReview ? governmentLocked : coordinationLocked;
+    const onSave = isGovernmentReview
+      ? submitGovernmentReview
+      : submitValuationCoordination;
+
+    if (submitSuccess) {
+      return (
+        <TaskWorkChrome
+          layout={layout}
+          title={`${def.workTitle} — ${deedLabel}`}
+          subtitle={`${def.assigneeSubtitle} · ${formatPoDisplay(task.poNumber)} · ${location}`}
+          deedBadge={deedLabel}
+          onClose={exit}
+          onSave={exit}
+          saveLabel="رجوع للقائمة"
+          showFooter
+        >
+          <RegistrationFormCard title="تم الإرسال">
+            <div className="note note-success">{def.completeMessage}</div>
+          </RegistrationFormCard>
+        </TaskWorkChrome>
+      );
+    }
+
+    return (
+      <TaskWorkChrome
+        layout={layout}
+        title={`${def.workTitle} — ${deedLabel}`}
+        subtitle={`${def.assigneeSubtitle} · ${formatPoDisplay(task.poNumber)} · ${location}`}
+        deedBadge={deedLabel}
+        saving={saving}
+        onClose={exit}
+        onSave={onSave}
+        saveLabel={
+          saving ? "جاري الإرسال…" : locked ? "رجوع" : def.saveLabel
+        }
+        showFooter
+      >
+        <nav className="case-study-tabs party-work-tabs" aria-label="أقسام المهمة">
+          <button
+            type="button"
+            className={`case-study-tab${workTab === "task" ? " active" : ""}`}
+            onClick={() => setWorkTab("task")}
+          >
+            {def.workTitle}
+          </button>
+          <button
+            type="button"
+            className={`case-study-tab${workTab === "case-study" ? " active" : ""}`}
+            onClick={() => setWorkTab("case-study")}
+          >
+            نموذج الدراسة
+          </button>
+        </nav>
+
+        {workTab === "task" ? (
+          <>
+            <div className="note note-info" style={{ marginBottom: 12 }}>
+              {def.workIntro}
+            </div>
+            {isGovernmentReview ? (
+              <GovernmentReviewWorkBody
+                def={def}
+                task={task}
+                hostRef={governmentHostRef}
+              />
+            ) : (
+              <ValuationCoordinationWorkBody
+                def={def}
+                task={task}
+                hostRef={coordinationHostRef}
+              />
+            )}
+            <PartyTaskFailureRaise
+              def={def}
+              task={task}
+              deedNumber={deedLabel}
+              onSubmitted={refresh}
+            />
+          </>
+        ) : (
+          <PartyCaseStudyFormTab def={def} childTask={task} />
+        )}
+      </TaskWorkChrome>
+    );
+  }
+
   if (isEngineeringSurvey) {
     if (submitSuccess) {
       return (
@@ -413,11 +507,7 @@ export function PartyActiveTaskWork({
           <div className="note note-info" style={{ marginBottom: 12 }}>
             {def.workIntro}
           </div>
-          {def.useFieldForm ? (
-            <FieldFormView embedded />
-          ) : (
-            <GenericPartyWorkBody def={def} />
-          )}
+          {def.useFieldForm ? <FieldFormView embedded /> : null}
           <PartyTaskFailureRaise
             def={def}
             task={task}

@@ -2,12 +2,11 @@
 
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
+import { loadPoListRows } from "@platform/app-shared/prototype/work-orders-read";
 import {
   getPoRecord,
   loadPendingBourseItems,
-  loadPoListRows,
   loadPoRecords,
-  loadPropertyListItems,
 } from "../lib/prototype/po-intake-storage";
 import { loadWorkflowTasks, syncTasksFromPoRecords } from "../lib/prototype/tasks-storage";
 
@@ -64,14 +63,6 @@ export function usePoListRowsQuery() {
   return useQuery({
     queryKey: prototypeKeys.poListRows(),
     queryFn: loadPoListRows,
-    ...queryDefaults,
-  });
-}
-
-export function usePropertyListItemsQuery() {
-  return useQuery({
-    queryKey: prototypeKeys.propertyListItems(),
-    queryFn: loadPropertyListItems,
     ...queryDefaults,
   });
 }

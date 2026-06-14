@@ -4,9 +4,11 @@ import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { PageId } from "@platform/types";
 import {
   loadPendingBourseItems,
+} from "@case-study/mfe";
+import {
   loadPoListRows,
   loadPropertyListItems,
-} from "@case-study/mfe";
+} from "@platform/app-shared/prototype/work-orders-read";
 import {
   FAILURES_CHANGED_EVENT,
   FAILURES_STORAGE_KEY,
@@ -265,9 +267,10 @@ export {
   usePoListRowsQuery,
   usePoRecordQuery,
   usePoRecordsQuery,
-  usePropertyListItemsQuery,
   useWorkflowTasksQuery,
 } from "@case-study/mfe/query/case-study-queries";
+
+export { usePropertyListItemsQuery } from "@dashboard/mfe/query/dashboard-queries";
 
 export {
   useCourtsCatalogQuery,

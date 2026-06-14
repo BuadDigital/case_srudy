@@ -4,7 +4,7 @@ import { STORAGE_ROLE_KEY } from "@platform/app-shared/prototype/constants";
 import {
   notifyWorkOrdersChanged,
   workOrdersApiConfig,
-} from "@case-study/mfe";
+} from "@platform/app-shared/prototype/work-orders-api-config";
 
 const EVAL_STORAGE_PREFIX = "eval";
 

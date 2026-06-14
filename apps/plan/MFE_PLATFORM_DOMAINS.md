@@ -1,6 +1,6 @@
 # Architecture — platform domain MFEs (dashboard, survey, keys, financial, KPI)
 
-**Status:** **F4b complete** — platform domain views (`DashboardView`, `SurveyView`, `KeysView`, `FinancialView`, `KpiView`, `MessagesView`, `ValuationRequestsView`) live in their domain packages and are wired in shell `[page]/page.tsx`. **F4c cleanup:** delete orphan shell view copies; decouple dashboard queries from `@case-study/mfe`.
+**Status:** **F4c/F4d complete** — dashboard PO/property reads use `@platform/app-shared/prototype/work-orders-read` + `api-client` (not `@case-study/mfe`). Shell re-exports dashboard query hooks; platform views import from domain MFEs only.
 
 **Goal:** split five shell/mock domains into **independent logical MFE packages**, and **remove the dashboard from `@case-study/mfe`** so case-study owns transaction workflows only.
 
@@ -230,7 +230,7 @@ apps/
 ## 11. Checklist before first code move
 
 - [x] Confirm `active-survey` stays in `@case-study/mfe` (party queue)
-- [ ] Confirm dashboard PO queries use `api-client`, not `@case-study/mfe` imports (F4c — `dashboard-queries.ts` still re-exports case-study hooks)
+- [x] Confirm dashboard PO queries use `api-client` + `app-shared/work-orders-read`, not `@case-study/mfe` imports (F4c)
 - [x] Five workspace packages: `mfe-dashboard`, `mfe-survey`, `mfe-keys`, `mfe-financial`, `mfe-kpi`
 - [x] Shell `tsconfig` paths for all five `@*/mfe` packages
 - [x] Root `typecheck:mfe-*` scripts

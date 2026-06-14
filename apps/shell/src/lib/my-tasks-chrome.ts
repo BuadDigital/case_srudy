@@ -31,6 +31,50 @@ export function resolveMyTasksChrome(
     }
   }
 
+  if (page === "property-appraisal" && parts[1]) {
+    const party = partyTaskPageDef("property-appraisal");
+    if (party) {
+      decodeTaskParam(parts[1]);
+      return {
+        breadcrumb: `دراسة الحالة / المعاملات النشطة / ${party.breadcrumbTitle} / تنفيذ المهمة`,
+        title: party.workTitle,
+      };
+    }
+  }
+
+  if (page === "property-inspection" && parts[1]) {
+    const party = partyTaskPageDef("property-inspection");
+    if (party) {
+      decodeTaskParam(parts[1]);
+      return {
+        breadcrumb: `دراسة الحالة / المعاملات النشطة / ${party.breadcrumbTitle} / تنفيذ المهمة`,
+        title: party.workTitle,
+      };
+    }
+  }
+
+  if (page === "government-review" && parts[1]) {
+    const party = partyTaskPageDef("government-review");
+    if (party) {
+      decodeTaskParam(parts[1]);
+      return {
+        breadcrumb: `دراسة الحالة / المعاملات النشطة / ${party.breadcrumbTitle} / تنفيذ المهمة`,
+        title: party.workTitle,
+      };
+    }
+  }
+
+  if (page === "valuation-coordination" && parts[1]) {
+    const party = partyTaskPageDef("valuation-coordination");
+    if (party) {
+      decodeTaskParam(parts[1]);
+      return {
+        breadcrumb: `دراسة الحالة / المعاملات النشطة / ${party.breadcrumbTitle} / تنفيذ المهمة`,
+        title: party.workTitle,
+      };
+    }
+  }
+
   if (page && taskId) {
     const party = partyTaskPageDef(page);
     if (party) {

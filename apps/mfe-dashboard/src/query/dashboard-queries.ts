@@ -5,7 +5,7 @@ import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import {
   loadPoListRows,
   loadPropertyListItems,
-} from "@case-study/mfe/lib/prototype/po-intake-storage";
+} from "@platform/app-shared/prototype/work-orders-read";
 
 const STALE_MS = 60_000;
 const GC_MS = 10 * 60_000;

@@ -44,6 +44,46 @@ export function isActiveSurveyWorkspacePath(pathname: string): boolean {
   return parts[0] === "active-survey" && parts.length >= 2;
 }
 
+/** Full-page workspace for المقيم العقاري (تقييم العقار). */
+export function propertyAppraisalWorkspacePath(taskId: string): string {
+  return `/property-appraisal/${encodeURIComponent(taskId)}`;
+}
+
+export function isPropertyAppraisalWorkspacePath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[0] === "property-appraisal" && parts.length >= 2;
+}
+
+/** Full-page workspace for المعاين الميداني (معاينة العقار). */
+export function propertyInspectionWorkspacePath(taskId: string): string {
+  return `/property-inspection/${encodeURIComponent(taskId)}`;
+}
+
+export function isPropertyInspectionWorkspacePath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[0] === "property-inspection" && parts.length >= 2;
+}
+
+/** Full-page workspace for المراجع الحكومي (المراجعة الحكومية). */
+export function governmentReviewWorkspacePath(taskId: string): string {
+  return `/government-review/${encodeURIComponent(taskId)}`;
+}
+
+export function isGovernmentReviewWorkspacePath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[0] === "government-review" && parts.length >= 2;
+}
+
+/** Full-page workspace for منسق التقييم (استلام التقييم). */
+export function valuationCoordinationWorkspacePath(taskId: string): string {
+  return `/valuation-coordination/${encodeURIComponent(taskId)}`;
+}
+
+export function isValuationCoordinationWorkspacePath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[0] === "valuation-coordination" && parts.length >= 2;
+}
+
 /** @deprecated Use partyTaskPath("property-inspection") */
 export function propertyInspectionPath(): string {
   return partyTaskPath("property-inspection");

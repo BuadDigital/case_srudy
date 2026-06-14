@@ -25,6 +25,33 @@ import { formatDateAr } from "./po-intake-data";
 /** Must match `evaluator-submission-storage` in @evaluator/mfe (no circular import). */
 const EVALUATOR_STORAGE_PREFIX = "evalEvaluatorSubmission:";
 
+/** Must match `engineering-survey-submission-storage` in @engineering-office/mfe (no circular import). */
+const ENGINEERING_SURVEY_STORAGE_PREFIX = "evalEngineeringSurveySubmission:";
+
+/** Must match `government-review-work-storage` (no circular import). */
+const GOVERNMENT_REVIEW_STORAGE_PREFIX = "evalGovernmentReviewSubmission:";
+
+/** Must match `valuation-coordination-work-storage` (no circular import). */
+const VALUATION_COORDINATION_STORAGE_PREFIX =
+  "evalValuationCoordinationSubmission:";
+
+/** Must match `ENGINEERING_SURVEY_CHECKLIST_ITEMS` in engineering-survey-data (no circular import). */
+const ENGINEERING_SURVEY_CHECKLIST_LABELS = [
+  "هل الصك مطابق للرفع المساحي (الأطوال والمساحة)",
+  "هل تم الوقوف على الموقع من قِبل طالب التنفيذ وتوقيع إقرار صحة الاستدلال على الموقع",
+  "هل يوجد اختلاف في رقم القطعة / المخطط / البلوك / اسم الحي / اسم المدينة للمستكشف",
+  "هل يوجد اختلاف في مساحة / أطوال الصك عن الطبيعة",
+  "هل يوجد شوارع محتزلة / شطفات على الأصل في المخطط ولم يذكر في الصك",
+  "هل يوجد تداخل في الصك أو أجزاء مشتركة ظاهرياً",
+  "هل ذُكر الاستخدام حسب الصك",
+  "هل الموقع أرض فضاء",
+  "هل يوجد غرفة كهرباء داخل / خارج حدود الموقع",
+  "هل يوجد صناديق خدمات كهربائية / اتصالات / أخرى داخل أو خارج حدود العقار",
+  "هل تم تطبيق جميع التعليمات الصادرة في الرفع المساحي",
+  "هل يوجد أسوار داخلية وخارجية بمحيط المبنى القائم بالموقع",
+  "هل يوجد اختلاف في الحدود / الصك أو الأفادة من المستكشف",
+] as const;
+
 const ROLE_CHILD_KIND: Partial<
   Record<PropertyDetailPartyRoleKey, WorkflowTaskKind>
 > = {
@@ -60,6 +87,53 @@ type EvaluatorSubmissionSnapshot = {
   reportFileName: string | null;
   submittedAtUtc: string | null;
   checklist: EvaluatorChecklist;
+};
+
+type EngineeringSurveyChecklistAnswer = "yes" | "no" | null;
+
+type EngineeringSurveyChecklistRow = {
+  answer: EngineeringSurveyChecklistAnswer;
+  note: string;
+};
+
+type EngineeringSurveySubmissionSnapshot = {
+  status: "draft" | "submitted" | "reopened";
+  latitude: string;
+  longitude: string;
+  surveyReportFileName: string;
+  siteLetterFileName: string;
+  siteConfirmed: boolean;
+  checklist: EngineeringSurveyChecklistRow[];
+  returnNote?: string;
+  updatedAtUtc: string;
+  submittedAtUtc?: string;
+};
+
+type GovernmentReviewSubmissionSnapshot = {
+  status: "draft" | "submitted";
+  visitStatus: "completed" | "scheduled" | "blocked" | "";
+  visitDate: string;
+  courtName: string;
+  keysStatus: "received" | "pending" | "not_required" | "";
+  keysDescription: string;
+  accessBlockReason: string;
+  reviewNotes: string;
+  submittedAtUtc: string | null;
+  updatedAtUtc: string;
+};
+
+type ValuationCoordinationSubmissionSnapshot = {
+  status: "draft" | "submitted";
+  receiptConfirmed: boolean;
+  receiptDate: string;
+  inspectorName: string;
+  appraiserName: string;
+  priority: "normal" | "urgent";
+  coordinationNotes: string;
+  inspectorInstructions: string;
+  appraiserInstructions: string;
+  submittedAtUtc: string | null;
+  updatedAtUtc: string;
 };
 
 function formStatusLabel(status: CaseStudyFormStatus): string {
@@ -151,12 +225,69 @@ function loadEvaluatorSubmissionSnapshot(
   }
 }
 
+function loadEngineeringSurveySubmissionSnapshot(
+  taskId: string,
+): EngineeringSurveySubmissionSnapshot | null {
+  if (typeof window === "undefined" || !taskId) return null;
+  try {
+    const raw = localStorage.getItem(`${ENGINEERING_SURVEY_STORAGE_PREFIX}${taskId}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as EngineeringSurveySubmissionSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+function loadGovernmentReviewSubmissionSnapshot(
+  taskId: string,
+): GovernmentReviewSubmissionSnapshot | null {
+  if (typeof window === "undefined" || !taskId) return null;
+  try {
+    const raw = localStorage.getItem(`${GOVERNMENT_REVIEW_STORAGE_PREFIX}${taskId}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as GovernmentReviewSubmissionSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+function loadValuationCoordinationSubmissionSnapshot(
+  taskId: string,
+): ValuationCoordinationSubmissionSnapshot | null {
+  if (typeof window === "undefined" || !taskId) return null;
+  try {
+    const raw = localStorage.getItem(
+      `${VALUATION_COORDINATION_STORAGE_PREFIX}${taskId}`,
+    );
+    if (!raw) return null;
+    return JSON.parse(raw) as ValuationCoordinationSubmissionSnapshot;
+  } catch {
+    return null;
+  }
+}
+
 function evaluatorStatusLabel(status: string): string {
   if (status === "draft") return "مسودة";
   if (status === "submitted") return "مُرسَل للأخصائي";
   if (status === "reopened") return "مُعاد للتعديل";
   if (status === "completed") return "مكتمل";
   return status;
+}
+
+function engineeringSurveyStatusLabel(
+  status: EngineeringSurveySubmissionSnapshot["status"],
+): string {
+  if (status === "submitted") return "مُرسَل";
+  if (status === "reopened") return "مُعاد للتصحيح";
+  return "قيد العمل";
+}
+
+function engineeringSurveyAnswerLabel(
+  value: EngineeringSurveyChecklistAnswer,
+): string {
+  if (value === "yes") return "نعم";
+  if (value === "no") return "لا";
+  return "—";
 }
 
 function checklistAnswerLabel(value: boolean | null): string {
@@ -216,6 +347,136 @@ function evaluatorChecklistRows(
   }
 
   return rows;
+}
+
+function engineeringSurveyChecklistRows(
+  checklist: EngineeringSurveyChecklistRow[],
+): PartyAnswerRow[] {
+  const rows: PartyAnswerRow[] = [];
+  checklist.forEach((row, index) => {
+    const label =
+      ENGINEERING_SURVEY_CHECKLIST_LABELS[index] ?? `بند ${index + 1}`;
+    if (row.answer === "yes" || row.answer === "no") {
+      rows.push({
+        question: label,
+        answer: engineeringSurveyAnswerLabel(row.answer),
+      });
+    }
+  });
+  return rows;
+}
+
+function engineeringSurveyChecklistRemarks(
+  checklist: EngineeringSurveyChecklistRow[],
+): { label: string; value: string }[] {
+  const remarks: { label: string; value: string }[] = [];
+  checklist.forEach((row, index) => {
+    const note = row.note.trim();
+    if (!note) return;
+    const label =
+      ENGINEERING_SURVEY_CHECKLIST_LABELS[index] ?? `بند ${index + 1}`;
+    remarks.push({ label, value: note });
+  });
+  return remarks;
+}
+
+function formatCoordsDisplay(lat: string, lng: string): string {
+  const latTrim = lat.trim();
+  const lngTrim = lng.trim();
+  if (!latTrim && !lngTrim) return "";
+  if (latTrim && lngTrim) return `${latTrim}، ${lngTrim}`;
+  return latTrim || lngTrim;
+}
+
+function buildFromEngineeringSurvey(
+  submission: EngineeringSurveySubmissionSnapshot,
+  childTask?: WorkflowTask | null,
+): PropertyDetailPartySubmission {
+  const answers = engineeringSurveyChecklistRows(submission.checklist);
+  const checklistRemarks = engineeringSurveyChecklistRemarks(submission.checklist);
+  const coords = formatCoordsDisplay(submission.latitude, submission.longitude);
+
+  const fields: PropertyDetailPartySubmission["fields"] = [
+    {
+      label: "حالة الرفع المساحي",
+      value: engineeringSurveyStatusLabel(submission.status),
+    },
+  ];
+
+  if (coords) {
+    fields.push({ label: "الإحداثيات", value: coords, ltr: true });
+  }
+  if (submission.surveyReportFileName.trim()) {
+    fields.push({
+      label: "تقرير الرفع المساحي",
+      value: submission.surveyReportFileName.trim(),
+    });
+  }
+  if (submission.siteLetterFileName.trim()) {
+    fields.push({
+      label: "خطاب الموقع",
+      value: submission.siteLetterFileName.trim(),
+    });
+  }
+  if (submission.siteConfirmed) {
+    fields.push({ label: "إقرار الموقع", value: "مُوقَّع" });
+  }
+  if (submission.submittedAtUtc) {
+    fields.push({
+      label: "تاريخ الإرسال",
+      value: formatDateAr(submission.submittedAtUtc.slice(0, 10)),
+      ltr: true,
+    });
+  }
+  if (submission.updatedAtUtc) {
+    fields.push({
+      label: "آخر تحديث",
+      value: formatDateAr(submission.updatedAtUtc.slice(0, 10)),
+      ltr: true,
+    });
+  }
+  if (childTask) {
+    fields.push({
+      label: "حالة المهمة",
+      value: workflowStatusLabel(childTask.status),
+    });
+  }
+
+  const answeredCount = submission.checklist.filter(
+    (row) => row.answer === "yes" || row.answer === "no",
+  ).length;
+  if (answeredCount > 0) {
+    fields.splice(1, 0, {
+      label: "البنود المكتملة",
+      value: `${answeredCount} / ${ENGINEERING_SURVEY_CHECKLIST_LABELS.length}`,
+    });
+  }
+
+  const returnNote = submission.returnNote?.trim() ?? "";
+  const remarks = returnNote
+    ? [{ label: "ملاحظة الإرجاع", value: returnNote }, ...checklistRemarks]
+    : checklistRemarks;
+
+  const hasData =
+    submission.status !== "draft" ||
+    Boolean(coords) ||
+    Boolean(submission.surveyReportFileName.trim()) ||
+    Boolean(submission.siteLetterFileName.trim()) ||
+    answers.length > 0 ||
+    remarks.length > 0;
+
+  return {
+    roleKey: "survey",
+    hasData,
+    emptyReason: hasData ? undefined : "لم يُقدَّم بعد",
+    statusLabel: engineeringSurveyStatusLabel(submission.status),
+    taskStatusLabel: childTask
+      ? workflowStatusLabel(childTask.status)
+      : undefined,
+    fields,
+    answers,
+    remarks,
+  };
 }
 
 function formatPriceDisplay(raw: string): string {
@@ -334,6 +595,191 @@ function buildFromEvaluator(
   };
 }
 
+function buildFromGovernmentReview(
+  submission: GovernmentReviewSubmissionSnapshot,
+  childTask?: WorkflowTask | null,
+): PropertyDetailPartySubmission {
+  const visitLabels: Record<string, string> = {
+    completed: "تمت الزيارة",
+    scheduled: "بانتظار الموعد",
+    blocked: "تعذر الوصول",
+  };
+  const keysLabels: Record<string, string> = {
+    received: "تم استلام المفاتيح",
+    pending: "لم تُسلَّم بعد",
+    not_required: "غير مطلوبة",
+  };
+
+  const fields: PropertyDetailPartySubmission["fields"] = [
+    {
+      label: "حالة المراجعة",
+      value: submission.status === "submitted" ? "مُرسَل" : "قيد العمل",
+    },
+  ];
+
+  if (submission.visitStatus) {
+    fields.push({
+      label: "حالة الزيارة",
+      value: visitLabels[submission.visitStatus] ?? submission.visitStatus,
+    });
+  }
+  if (submission.visitDate.trim()) {
+    fields.push({
+      label: "تاريخ الزيارة",
+      value: formatDateAr(submission.visitDate),
+      ltr: true,
+    });
+  }
+  if (submission.courtName.trim()) {
+    fields.push({ label: "المحكمة", value: submission.courtName.trim() });
+  }
+  if (submission.keysStatus) {
+    fields.push({
+      label: "حالة المفاتيح",
+      value: keysLabels[submission.keysStatus] ?? submission.keysStatus,
+    });
+  }
+  if (submission.submittedAtUtc) {
+    fields.push({
+      label: "تاريخ الإرسال",
+      value: formatDateAr(submission.submittedAtUtc.slice(0, 10)),
+      ltr: true,
+    });
+  }
+  if (childTask) {
+    fields.push({
+      label: "حالة المهمة",
+      value: workflowStatusLabel(childTask.status),
+    });
+  }
+
+  const remarks: PropertyDetailPartySubmission["remarks"] = [];
+  if (submission.keysDescription.trim()) {
+    remarks.push({
+      label: "المفاتيح / موقع الحفظ",
+      value: submission.keysDescription.trim(),
+    });
+  }
+  if (submission.accessBlockReason.trim()) {
+    remarks.push({
+      label: "سبب التعذر / المتابعة",
+      value: submission.accessBlockReason.trim(),
+    });
+  }
+  if (submission.reviewNotes.trim()) {
+    remarks.push({
+      label: "ملاحظات المراجعة",
+      value: submission.reviewNotes.trim(),
+    });
+  }
+
+  const hasData =
+    submission.status !== "draft" ||
+    Boolean(submission.visitStatus) ||
+    Boolean(submission.keysStatus) ||
+    remarks.length > 0;
+
+  return {
+    roleKey: "government",
+    hasData,
+    emptyReason: hasData ? undefined : "لم يُقدَّم بعد",
+    statusLabel: submission.status === "submitted" ? "مُرسَل" : "مسودة",
+    taskStatusLabel: childTask
+      ? workflowStatusLabel(childTask.status)
+      : undefined,
+    fields,
+    answers: [],
+    remarks,
+  };
+}
+
+function buildFromValuationCoordination(
+  submission: ValuationCoordinationSubmissionSnapshot,
+  childTask?: WorkflowTask | null,
+): PropertyDetailPartySubmission {
+  const fields: PropertyDetailPartySubmission["fields"] = [
+    {
+      label: "حالة الاستلام",
+      value: submission.status === "submitted" ? "مُستلَم" : "قيد التنسيق",
+    },
+  ];
+
+  if (submission.receiptDate.trim()) {
+    fields.push({
+      label: "تاريخ الاستلام",
+      value: formatDateAr(submission.receiptDate),
+      ltr: true,
+    });
+  }
+  if (submission.inspectorName.trim()) {
+    fields.push({
+      label: "المعاين الميداني",
+      value: submission.inspectorName.trim(),
+    });
+  }
+  if (submission.appraiserName.trim()) {
+    fields.push({
+      label: "المقيم العقاري",
+      value: submission.appraiserName.trim(),
+    });
+  }
+  fields.push({
+    label: "الأولوية",
+    value: submission.priority === "urgent" ? "عاجلة" : "عادية",
+  });
+  if (submission.submittedAtUtc) {
+    fields.push({
+      label: "تاريخ التأكيد",
+      value: formatDateAr(submission.submittedAtUtc.slice(0, 10)),
+      ltr: true,
+    });
+  }
+  if (childTask) {
+    fields.push({
+      label: "حالة المهمة",
+      value: workflowStatusLabel(childTask.status),
+    });
+  }
+
+  const remarks: PropertyDetailPartySubmission["remarks"] = [];
+  if (submission.coordinationNotes.trim()) {
+    remarks.push({
+      label: "ملاحظات التنسيق",
+      value: submission.coordinationNotes.trim(),
+    });
+  }
+  if (submission.inspectorInstructions.trim()) {
+    remarks.push({
+      label: "تعليمات للمعاين",
+      value: submission.inspectorInstructions.trim(),
+    });
+  }
+  if (submission.appraiserInstructions.trim()) {
+    remarks.push({
+      label: "تعليمات للمقيم",
+      value: submission.appraiserInstructions.trim(),
+    });
+  }
+
+  const hasData =
+    submission.status !== "draft" ||
+    submission.receiptConfirmed ||
+    remarks.length > 0;
+
+  return {
+    roleKey: "coordinator",
+    hasData,
+    emptyReason: hasData ? undefined : "لم يُقدَّم بعد",
+    statusLabel: submission.status === "submitted" ? "مُستلَم" : "مسودة",
+    taskStatusLabel: childTask
+      ? workflowStatusLabel(childTask.status)
+      : undefined,
+    fields,
+    answers: [],
+    remarks,
+  };
+}
+
 function buildCoordinatorSubmission(
   parentTask: WorkflowTask | null,
   allTasks: WorkflowTask[],
@@ -434,6 +880,13 @@ export async function loadPropertyDetailPartySubmission(input: {
   const { roleKey, parentTask, allTasks, coordinatorName = "" } = input;
 
   if (roleKey === "coordinator") {
+    const child = childForRole(parentTask, allTasks, "coordinator");
+    if (child) {
+      const submission = loadValuationCoordinationSubmissionSnapshot(child.id);
+      if (submission) {
+        return buildFromValuationCoordination(submission, child);
+      }
+    }
     return buildCoordinatorSubmission(parentTask, allTasks, coordinatorName);
   }
 
@@ -460,6 +913,22 @@ export async function loadPropertyDetailPartySubmission(input: {
       return emptySubmission(roleKey, "لم يُقدَّم بعد");
     }
     return buildFromEvaluator(submission);
+  }
+
+  if (roleKey === "survey") {
+    const submission = loadEngineeringSurveySubmissionSnapshot(child.id);
+    if (!submission) {
+      return emptySubmission(roleKey, "لم يُقدَّم بعد");
+    }
+    return buildFromEngineeringSurvey(submission, child);
+  }
+
+  if (roleKey === "government") {
+    const submission = loadGovernmentReviewSubmissionSnapshot(child.id);
+    if (!submission) {
+      return emptySubmission(roleKey, "لم يُقدَّم بعد");
+    }
+    return buildFromGovernmentReview(submission, child);
   }
 
   const draft = await loadPartyCaseStudyFormDraft(child.id);

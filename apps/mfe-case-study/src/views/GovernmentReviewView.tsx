@@ -17,11 +17,13 @@ import {
   syncInternalDelegationLetters,
 } from "../lib/prototype/internal-delegation-letters";
 import { partyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
-import { PartyActiveTaskWorkPanel } from "./PartyActiveTaskWorkPanel";
+import {
+  decodeTaskParam,
+  governmentReviewWorkspacePath,
+} from "../lib/my-task-routes";
 import {
   taskDisplayPropertyLabel,
   tasksForPartyAssignee,
-  type WorkflowTask,
 } from "../lib/prototype/tasks-storage";
 import { formatPoDisplay } from "../lib/prototype/po-intake-data";
 import {
@@ -35,14 +37,6 @@ import {
 
 function governmentReviewPoPath(poNumber: string): string {
   return `/government-review?po=${encodeURIComponent(poNumber)}`;
-}
-
-function governmentReviewTaskPath(poNumber: string, taskId: string): string {
-  const q = new URLSearchParams({
-    po: poNumber.trim(),
-    task: taskId,
-  });
-  return `/government-review?${q.toString()}`;
 }
 
 function GovernmentReviewPoPanel({
@@ -196,8 +190,13 @@ export function GovernmentReviewView() {
   const [panelOpen, setPanelOpen] = useState(() => Boolean(selectedPo));
 
   useEffect(() => {
-    setPanelOpen(Boolean(selectedPo || selectedTaskId));
-  }, [selectedPo, selectedTaskId]);
+    if (!selectedTaskId) return;
+    router.replace(governmentReviewWorkspacePath(decodeTaskParam(selectedTaskId)));
+  }, [selectedTaskId, router]);
+
+  useEffect(() => {
+    setPanelOpen(Boolean(selectedPo));
+  }, [selectedPo]);
 
   const poByNumber = useMemo(() => {
     const map = new Map<string, (typeof poRecords)[number]>();
@@ -229,13 +228,6 @@ export function GovernmentReviewView() {
     [rows, selectedPo],
   );
 
-  const selectedTask = useMemo((): WorkflowTask | null => {
-    if (!selectedTaskId) return null;
-    const fromRow = selectedRow?.tasks.find((t) => t.id === selectedTaskId);
-    if (fromRow) return fromRow;
-    return mine.find((t) => t.id === selectedTaskId) ?? null;
-  }, [selectedTaskId, selectedRow, mine]);
-
   const closePanel = useCallback(() => {
     router.replace("/government-review", { scroll: false });
   }, [router]);
@@ -249,9 +241,8 @@ export function GovernmentReviewView() {
   );
 
   const openTask = useCallback(
-    (poNumber: string, taskId: string) => {
-      setPanelOpen(true);
-      router.replace(governmentReviewTaskPath(poNumber, taskId), { scroll: false });
+    (_poNumber: string, taskId: string) => {
+      router.push(governmentReviewWorkspacePath(taskId));
     },
     [router],
   );
@@ -277,16 +268,22 @@ export function GovernmentReviewView() {
     void refetchTasks();
   }, [refetchTasks]);
 
-  const hasRail = !queueReady ? false : rows.length > 0 || Boolean(selectedTask);
+  const hasRail = !queueReady ? false : rows.length > 0;
   const layoutClass = [
     "po-primary-data-layout",
     hasRail ? "po-primary-data-layout--has-rail" : "",
-    panelOpen && hasRail && (selectedRow || selectedTask)
+    panelOpen && hasRail && selectedRow
       ? "po-primary-data-layout--panel-open"
       : "",
   ]
     .filter(Boolean)
     .join(" ");
+
+  if (selectedTaskId) {
+    return (
+      <p className="po-properties-loading">جاري فتح مهمة المراجعة…</p>
+    );
+  }
 
   return (
     <div className="po-properties-page pd-page">
@@ -378,8 +375,8 @@ export function GovernmentReviewView() {
                 </table>
               </div>
               <p className="po-properties-hint po-bourse-queue-hint">
-                اضغط صف أمر العمل لفتح مهام المراجعة وخطابات التفويض — اضغط
-                مرة أخرى للإغلاق.
+                اضغط صف أمر العمل لفتح مهام المراجعة وخطابات التفويض — اختر
+                مهمة عقار لفتحها في صفحة مستقلة.
               </p>
             </>
           )}
@@ -388,26 +385,9 @@ export function GovernmentReviewView() {
         {hasRail ? (
           <div
             id="government-review-panel"
-            className={`po-primary-data-panel-slot${panelOpen && (selectedRow || selectedTask) ? " is-open" : ""}`}
+            className={`po-primary-data-panel-slot${panelOpen && selectedRow ? " is-open" : ""}`}
           >
-            {panelOpen && selectedTask && def ? (
-              <PartyActiveTaskWorkPanel
-                key={selectedTask.id}
-                def={def}
-                task={selectedTask}
-                onRefreshAction={refreshWork}
-                layout="panel"
-                onCloseAction={() => {
-                  if (selectedPo) {
-                    router.replace(governmentReviewPoPath(selectedPo), {
-                      scroll: false,
-                    });
-                    return;
-                  }
-                  closePanel();
-                }}
-              />
-            ) : panelOpen && selectedRow ? (
+            {panelOpen && selectedRow ? (
               <GovernmentReviewPoPanel
                 row={selectedRow}
                 onClose={closePanel}

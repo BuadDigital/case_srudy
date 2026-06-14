@@ -13,7 +13,7 @@ import {
   MOCK_VR,
   type TeamKind,
 } from "@platform/app-shared/prototype/constants";
-import { assignmentTypeBadgeClass } from "@case-study/mfe/lib/prototype/po-intake-data";
+import { assignmentTypeBadgeClass } from "../lib/po-display";
 import {
   usePoListRowsQuery,
   usePropertyListItemsQuery,

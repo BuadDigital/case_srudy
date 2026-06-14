@@ -399,10 +399,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     (pathname?.startsWith("/active-survey/") &&
       pathname.split("/").filter(Boolean).length >= 2) ??
     false;
+  const onPropertyAppraisalWorkspace =
+    (pathname?.startsWith("/property-appraisal/") &&
+      pathname.split("/").filter(Boolean).length >= 2) ??
+    false;
+  const onPropertyInspectionWorkspace =
+    (pathname?.startsWith("/property-inspection/") &&
+      pathname.split("/").filter(Boolean).length >= 2) ??
+    false;
+  const onGovernmentReviewWorkspace =
+    (pathname?.startsWith("/government-review/") &&
+      pathname.split("/").filter(Boolean).length >= 2) ??
+    false;
+  const onValuationCoordinationWorkspace =
+    (pathname?.startsWith("/valuation-coordination/") &&
+      pathname.split("/").filter(Boolean).length >= 2) ??
+    false;
   const caseStudyTaskId = onCaseStudyWorkspace
     ? pathname.split("/").filter(Boolean)[1] ?? null
     : null;
   const activeSurveyTaskId = onActiveSurveyWorkspace
+    ? pathname.split("/").filter(Boolean)[1] ?? null
+    : null;
+  const propertyAppraisalTaskId = onPropertyAppraisalWorkspace
+    ? pathname.split("/").filter(Boolean)[1] ?? null
+    : null;
+  const propertyInspectionTaskId = onPropertyInspectionWorkspace
+    ? pathname.split("/").filter(Boolean)[1] ?? null
+    : null;
+  const governmentReviewTaskId = onGovernmentReviewWorkspace
+    ? pathname.split("/").filter(Boolean)[1] ?? null
+    : null;
+  const valuationCoordinationTaskId = onValuationCoordinationWorkspace
     ? pathname.split("/").filter(Boolean)[1] ?? null
     : null;
 
@@ -484,12 +512,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               currentPage === "active-case-study" ||
               onCaseStudyWorkspace ||
               onActiveSurveyWorkspace ||
+              onPropertyAppraisalWorkspace ||
+              onPropertyInspectionWorkspace ||
+              onGovernmentReviewWorkspace ||
+              onValuationCoordinationWorkspace ||
               isPartyTaskPage(currentPage)
               ? onCaseStudyWorkspace
                 ? caseStudyTaskId
                 : onActiveSurveyWorkspace
                   ? activeSurveyTaskId
-                  : taskQuery
+                  : onPropertyAppraisalWorkspace
+                    ? propertyAppraisalTaskId
+                    : onPropertyInspectionWorkspace
+                      ? propertyInspectionTaskId
+                      : onGovernmentReviewWorkspace
+                        ? governmentReviewTaskId
+                        : onValuationCoordinationWorkspace
+                          ? valuationCoordinationTaskId
+                          : taskQuery
               : null,
             onCaseStudyWorkspace
               ? { deedLabel: caseStudyDeedLabel }
@@ -502,8 +542,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       taskQuery,
       onCaseStudyWorkspace,
       onActiveSurveyWorkspace,
+      onPropertyAppraisalWorkspace,
+      onPropertyInspectionWorkspace,
+      onGovernmentReviewWorkspace,
+      onValuationCoordinationWorkspace,
       caseStudyTaskId,
       activeSurveyTaskId,
+      propertyAppraisalTaskId,
+      propertyInspectionTaskId,
+      governmentReviewTaskId,
+      valuationCoordinationTaskId,
       caseStudyDeedLabel,
     ],
   );
@@ -512,12 +560,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     (currentPage === "active-primary-data" && Boolean(taskQuery)) ||
     (currentPage === "active-distribution" && Boolean(taskQuery)) ||
     onActiveSurveyWorkspace ||
+    onPropertyAppraisalWorkspace ||
+    onPropertyInspectionWorkspace ||
+    onGovernmentReviewWorkspace ||
+    onValuationCoordinationWorkspace ||
     (pathname ? isPartyTaskWorkPath(pathname) && Boolean(taskQuery) : false);
 
   const showActiveTransactionsSituation =
     isInActiveTransactionsSection(currentPage, onTaskWork) ||
     onCaseStudyWorkspace ||
-    onActiveSurveyWorkspace;
+    onActiveSurveyWorkspace ||
+    onPropertyAppraisalWorkspace ||
+    onPropertyInspectionWorkspace ||
+    onGovernmentReviewWorkspace ||
+    onValuationCoordinationWorkspace;
 
   const def = ROLES[role];
   /** يطابق «تبديل الدور» — اسم الشخصية وليس displayName من تسجيل الدخول */
