@@ -207,6 +207,11 @@ public class WorkOrderService : IWorkOrderService
                 .ToListAsync(cancellationToken);
             if (forms.Count > 0)
                 _db.CaseStudyForms.RemoveRange(forms);
+            var partySubs = await _db.PartyTaskSubmissions
+                .Where(s => s.PoNumber == n || taskIds.Contains(s.WorkflowTaskId))
+                .ToListAsync(cancellationToken);
+            if (partySubs.Count > 0)
+                _db.PartyTaskSubmissions.RemoveRange(partySubs);
             _db.WorkflowTasks.RemoveRange(tasks);
         }
         else

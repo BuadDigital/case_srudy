@@ -106,23 +106,6 @@ function ListIcon() {
   );
 }
 
-function RefreshIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-      <path d="M21 3v6h-6" />
-    </svg>
-  );
-}
-
 function GridIcon() {
   return (
     <svg
@@ -155,23 +138,6 @@ function SortIcon() {
       aria-hidden
     >
       <path d="M8 9l4-4 4 4M8 15l4 4 4-4" />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
-      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }
@@ -238,7 +204,7 @@ export function PoListView() {
     router.replace("/po", { scroll: false });
   }, [showIntake, searchParams, router]);
 
-  const { data: rows, isFetching, refetch } = usePoListRowsQuery();
+  const { data: rows } = usePoListRowsQuery();
   const list = useMemo(() => rows ?? [], [rows]);
   const statsReady = rows !== undefined;
 
@@ -335,11 +301,6 @@ export function PoListView() {
     });
   }
 
-  async function handleRefresh() {
-    await queryClient.invalidateQueries({ queryKey: prototypeKeys.all });
-    await refetch();
-  }
-
   useEffect(() => {
     if (!toast) return;
     const t = window.setTimeout(() => setToast(null), 5000);
@@ -373,17 +334,6 @@ export function PoListView() {
         <div className="po-list-body page-body">
           <div className="po-list-hd page-hd">
             <h1 className="page-title">أوامر العمل الواردة من إنفاذ</h1>
-            <div className="page-hd-actions">
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => void handleRefresh()}
-                disabled={isFetching}
-              >
-                <RefreshIcon />
-                تحديث
-              </button>
-            </div>
           </div>
 
           <div className="po-list-stats stats-row">
@@ -600,16 +550,6 @@ export function PoListView() {
                               className="row-actions"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <button
-                                type="button"
-                                className="icon-btn"
-                                title="عرض التفاصيل"
-                                onClick={() =>
-                                  router.push(poPropertiesPath(p.id))
-                                }
-                              >
-                                <EyeIcon />
-                              </button>
                               {showEdit ? (
                                 <button
                                   type="button"

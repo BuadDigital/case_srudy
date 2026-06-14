@@ -52,7 +52,7 @@ The **shell** is the application users open in the browser:
 - **PO sub-routes** under `/po/*` (property create/edit, case-study workspace, failure form)
 - **Party-task host** (`PartyActiveTaskViewHost`) — wires `@evaluator/mfe` extensions into `@case-study/mfe` party queues
 - **Evaluator adapters** — `case-study/[taskId]` advisory panel + PO recall menu import `@evaluator/mfe`
-- **Orphan view copies** under `shell/src/components/views/` (legacy `*View.tsx` files) — safe to delete once verified unused
+- **Layout only** under `shell/src/components/views/` — `AppShell`, `AppBreadcrumb`, `NavIcon` (platform views live in `@*/mfe`)
 
 Shared UI and auth live in **`packages/`** at the repo root (not inside `apps/`):
 
@@ -176,7 +176,7 @@ Details: [ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](./ARCHITECTURE_MICRO
 - [x] Create `mfe-case-study` + `@platform/app-shared` for API-ready flows (PO + primary data + bourse + distribution) — F3 complete (single deploy)
 - [x] Platform domain MFEs (`dashboard`, `survey`, `keys`, `financial`, `kpi`) — F4b complete
 - [x] Wire `@valuation/mfe` and `@messages/mfe` in shell `[page]/page.tsx`
-- [ ] Remove orphaned shell view copies (`SurveyView`, `KeysView`, `FinancialView`, `KpiView`, `MessagesView`, `ValuationRequestsView`)
+- [x] Remove orphaned shell view copies (`SurveyView`, `KeysView`, `FinancialView`, `KpiView`, `MessagesView`, `ValuationRequestsView`) — F4c complete
 - [ ] Module Federation + CI deploy per app (F5)
 - [ ] Replace mock data with `@platform/api-client` calls
 - [ ] PO/property detail; case study form (`requirements/case_study_form 2.html`); registration (`requirements/ejada-registration_1.html`) if in scope

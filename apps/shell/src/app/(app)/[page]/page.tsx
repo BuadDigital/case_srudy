@@ -5,7 +5,7 @@ import {
   ActiveCaseStudyView,
   ActiveDistributionView,
   BourseInquiryView,
-  FieldFormView,
+  FieldFormDemoView,
   GovernmentReviewView,
   MyTasksView,
   SuspendedTransactionsView,
@@ -70,7 +70,7 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   failures: <FailuresView />,
   "suspended-transactions": <SuspendedTransactionsView />,
   "valuation-requests": <ValuationRequestsView />,
-  "field-form": <FieldFormView />,
+  "field-form": <FieldFormDemoView />,
   ...Object.fromEntries(
     PARTY_TASK_PAGE_IDS.filter((pageId) => pageId !== "government-review").map(
       (pageId) => [

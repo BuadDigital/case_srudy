@@ -1,0 +1,95 @@
+import {
+  getPartyTaskSubmission,
+  reopenPartyTaskSubmission,
+  savePartyTaskSubmission,
+  submitPartyTaskSubmission,
+  type PartyTaskSubmissionDto,
+} from "@platform/api-client";
+import { workOrdersApiConfig } from "@platform/app-shared/prototype/work-orders-api-config";
+
+/** In-memory cache keyed by workflow task id — queue filters read synchronously. */
+const submissionCache = new Map<string, PartyTaskSubmissionDto>();
+
+export function getCachedPartySubmission(
+  taskId: string,
+): PartyTaskSubmissionDto | null {
+  return submissionCache.get(taskId) ?? null;
+}
+
+export function setCachedPartySubmission(
+  dto: PartyTaskSubmissionDto | null,
+  taskId: string,
+): void {
+  if (dto) submissionCache.set(taskId, dto);
+  else submissionCache.delete(taskId);
+}
+
+export async function fetchPartySubmission(
+  taskId: string,
+): Promise<PartyTaskSubmissionDto | null> {
+  const config = workOrdersApiConfig();
+  if (!config) return getCachedPartySubmission(taskId);
+  const result = await getPartyTaskSubmission(config, taskId);
+  if (result.ok) {
+    setCachedPartySubmission(result.data, taskId);
+    return result.data;
+  }
+  if (result.kind === "not_found") {
+    setCachedPartySubmission(null, taskId);
+    return null;
+  }
+  return getCachedPartySubmission(taskId);
+}
+
+export async function persistPartySubmissionPayload(
+  taskId: string,
+  payload: Record<string, unknown>,
+): Promise<PartyTaskSubmissionDto | null> {
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await savePartyTaskSubmission(config, taskId, payload);
+  if (!result.ok) return null;
+  setCachedPartySubmission(result.data, taskId);
+  return result.data;
+}
+
+export async function submitPartySubmission(
+  taskId: string,
+): Promise<PartyTaskSubmissionDto | null> {
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await submitPartyTaskSubmission(config, taskId);
+  if (!result.ok) return null;
+  setCachedPartySubmission(result.data, taskId);
+  return result.data;
+}
+
+export async function reopenPartySubmission(
+  taskId: string,
+  returnNote: string,
+): Promise<PartyTaskSubmissionDto | null> {
+  const config = workOrdersApiConfig();
+  if (!config) return null;
+  const result = await reopenPartyTaskSubmission(config, taskId, returnNote);
+  if (!result.ok) return null;
+  setCachedPartySubmission(result.data, taskId);
+  return result.data;
+}
+
+export function payloadFromDto<T extends Record<string, unknown>>(
+  dto: PartyTaskSubmissionDto,
+): T {
+  return dto.payload as T;
+}
+
+export async function prefetchPartySubmissionsForTasks(
+  taskIds: string[],
+): Promise<void> {
+  const config = workOrdersApiConfig();
+  if (!config) return;
+  await Promise.all(
+    taskIds.map(async (taskId) => {
+      await fetchPartySubmission(taskId);
+    }),
+  );
+}

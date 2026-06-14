@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import type { WorkflowTask } from "@case-study/mfe";
 import { findSurveyChildForParent } from "../lib/engineering-survey-task";
+import type { EngineeringSurveySubmission } from "../lib/engineering-survey-data";
 import {
   ENGINEERING_SURVEY_SUBMISSION_CHANGED_EVENT,
   engineeringSurveyStatusLabel,
-  loadEngineeringSurveySubmission,
+  loadEngineeringSurveySubmissionAsync,
   reopenEngineeringSurveySubmission,
 } from "../lib/engineering-survey-submission-storage";
 
@@ -34,6 +35,10 @@ export function EngineeringSurveyAdvisoryPanel({
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnNote, setReturnNote] = useState("");
   const [returnError, setReturnError] = useState<string | null>(null);
+  const [submission, setSubmission] = useState<EngineeringSurveySubmission | null>(
+    null,
+  );
+  const [loadingSubmission, setLoadingSubmission] = useState(false);
 
   useEffect(() => {
     const refresh = () => setRefreshKey((k) => k + 1);
@@ -51,9 +56,26 @@ export function EngineeringSurveyAdvisoryPanel({
     [parentTask.id, propertyId, tasks, refreshKey],
   );
 
-  const submission = useMemo(() => {
-    if (!surveyTask) return null;
-    return loadEngineeringSurveySubmission(surveyTask.id);
+  useEffect(() => {
+    if (!surveyTask) {
+      setSubmission(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingSubmission(true);
+    void loadEngineeringSurveySubmissionAsync({
+      taskId: surveyTask.id,
+      propertyId: surveyTask.propertyId,
+      poNumber: surveyTask.poNumber,
+    }).then((loaded) => {
+      if (!cancelled) {
+        setSubmission(loaded);
+        setLoadingSubmission(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [surveyTask, refreshKey]);
 
   if (!surveyTask) {
@@ -62,6 +84,14 @@ export function EngineeringSurveyAdvisoryPanel({
         <p className="po-properties-hint">
           لم تُسند مهمة الرفع المساحي بعد لهذا العقار.
         </p>
+      </RegistrationFormCard>
+    );
+  }
+
+  if (loadingSubmission) {
+    return (
+      <RegistrationFormCard title="بيانات المكتب الهندسي (استرشادي)">
+        <p className="po-properties-hint">جاري تحميل بيانات الرفع المساحي…</p>
       </RegistrationFormCard>
     );
   }
@@ -76,14 +106,22 @@ export function EngineeringSurveyAdvisoryPanel({
     );
   }
 
-  function handleReturnForCorrection() {
+  async function handleReturnForCorrection() {
     if (!surveyTask) return;
     const trimmed = returnNote.trim();
     if (!trimmed) {
       setReturnError("يجب إدخال سبب الإرجاع للتصحيح");
       return;
     }
-    reopenEngineeringSurveySubmission(surveyTask.id, trimmed);
+    const reopened = await reopenEngineeringSurveySubmission(
+      surveyTask.id,
+      trimmed,
+    );
+    if (!reopened) {
+      setReturnError("تعذّر إعادة الرفع للتصحيح — حاول لاحقاً");
+      return;
+    }
+    setSubmission(reopened);
     setReturnOpen(false);
     setReturnNote("");
     setReturnError(null);
@@ -152,7 +190,9 @@ export function EngineeringSurveyAdvisoryPanel({
                 <button
                   type="button"
                   className="btn btn-sm btn-primary"
-                  onClick={handleReturnForCorrection}
+                  onClick={() => {
+                    void handleReturnForCorrection();
+                  }}
                 >
                   تأكيد الإرجاع
                 </button>

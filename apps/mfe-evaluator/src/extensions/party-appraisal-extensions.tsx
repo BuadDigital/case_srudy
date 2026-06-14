@@ -16,6 +16,7 @@ import {
   EVALUATOR_SUBMISSION_CHANGED_EVENT,
   isEvaluatorFormLocked,
   loadEvaluatorSubmission,
+  prefetchEvaluatorSubmissions,
 } from "../lib/evaluator/evaluator-submission-storage";
 import type { EvaluatorWindowHostRefObject } from "../lib/evaluator/evaluator-window-host";
 
@@ -31,8 +32,11 @@ export const partyAppraisalExtensions: PartyAppraisalExtensions = {
       tableHint: "اضغط الصف لفتح مهمة التقييم في صفحة مستقلة.",
       fullPageTaskPath: propertyAppraisalWorkspacePath,
       statusColumnLabel: "الحالة",
-      filterListed: (mine: WorkflowTask[], poByNumber: Map<string, PoIntakeRecord>) =>
-        filterAppraiserListedTasks(baseFilter(mine, poByNumber)),
+      filterListed: (mine: WorkflowTask[], poByNumber: Map<string, PoIntakeRecord>) => {
+        const listed = filterAppraiserListedTasks(baseFilter(mine, poByNumber));
+        void prefetchEvaluatorSubmissions(listed.map((t) => t.id));
+        return listed;
+      },
       buildRowMoreItems: (ctx) => buildAppraiserQueueRowMoreItems(ctx),
       canOpenTask: (task) => canAppraiserOpenTask(task.id, task.status),
       getTaskStatusBadge: (task) => appraiserTaskStatusBadge(task.id),

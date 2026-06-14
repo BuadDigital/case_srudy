@@ -1,3 +1,14 @@
+import { notifyTasksChanged } from "@case-study/mfe/lib/prototype/tasks-storage";
+import {
+  fetchPartySubmission,
+  getCachedPartySubmission,
+  payloadFromDto,
+  persistPartySubmissionPayload,
+  prefetchPartySubmissionsForTasks,
+  reopenPartySubmission,
+  setCachedPartySubmission,
+  submitPartySubmission,
+} from "@platform/app-shared/prototype/party-submission-api";
 import {
   createEngineeringSurveyDraft,
   type EngineeringSurveyChecklistRow,
@@ -9,8 +20,6 @@ import {
   shouldUseJeddahDefaultCoords,
 } from "./jeddah-default-coords";
 
-const STORAGE_PREFIX = "evalEngineeringSurveySubmission:";
-
 export const ENGINEERING_SURVEY_SUBMISSION_CHANGED_EVENT =
   "engineering-survey-submission-changed";
 
@@ -20,67 +29,108 @@ function notifyChanged(): void {
   }
 }
 
-function storageKey(taskId: string): string {
-  return `${STORAGE_PREFIX}${taskId}`;
+function dtoToSubmission(
+  dto: ReturnType<typeof getCachedPartySubmission>,
+): EngineeringSurveySubmission | null {
+  if (!dto) return null;
+  const payload = payloadFromDto<EngineeringSurveySubmission>(dto);
+  return {
+    ...payload,
+    taskId: dto.taskId,
+    propertyId: payload.propertyId ?? dto.propertyId ?? "",
+    poNumber: payload.poNumber ?? dto.poNumber ?? "",
+    status: (dto.status as EngineeringSurveySubmissionStatus) ?? payload.status,
+    returnNote: dto.returnNote ?? payload.returnNote,
+    submittedAtUtc: dto.submittedAtUtc ?? payload.submittedAtUtc,
+    updatedAtUtc: dto.updatedAtUtc ?? payload.updatedAtUtc,
+  };
 }
 
+function submissionToPayload(
+  submission: EngineeringSurveySubmission,
+): Record<string, unknown> {
+  return { ...submission };
+}
+
+/** Sync read from in-memory cache (for queue badges/filters). */
 export function loadEngineeringSurveySubmission(
   taskId: string,
 ): EngineeringSurveySubmission | null {
-  if (typeof window === "undefined" || !taskId) return null;
-  try {
-    const raw = localStorage.getItem(storageKey(taskId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as EngineeringSurveySubmission;
-    if (!parsed.checklist?.length) {
-      return createEngineeringSurveyDraft({
-        taskId: parsed.taskId,
-        propertyId: parsed.propertyId,
-        poNumber: parsed.poNumber,
-      });
-    }
-    if (
-      parsed.status !== "submitted" &&
-      shouldUseJeddahDefaultCoords(parsed.latitude, parsed.longitude)
-    ) {
-      const defaults = jeddahDefaultCoords();
-      const updated = { ...parsed, ...defaults };
-      saveEngineeringSurveySubmission(updated);
-      return updated;
-    }
-    return parsed;
-  } catch {
-    return null;
+  return dtoToSubmission(getCachedPartySubmission(taskId));
+}
+
+export async function fetchEngineeringSurveySubmission(
+  taskId: string,
+): Promise<EngineeringSurveySubmission | null> {
+  const dto = await fetchPartySubmission(taskId);
+  let sub = dtoToSubmission(dto);
+  if (!sub) return null;
+
+  if (!sub.checklist?.length) {
+    sub = createEngineeringSurveyDraft({
+      taskId: sub.taskId,
+      propertyId: sub.propertyId,
+      poNumber: sub.poNumber,
+    });
   }
+  if (
+    sub.status !== "submitted" &&
+    shouldUseJeddahDefaultCoords(sub.latitude, sub.longitude)
+  ) {
+    const defaults = jeddahDefaultCoords();
+    sub = { ...sub, ...defaults };
+    await saveEngineeringSurveySubmission(sub);
+  }
+  return sub;
 }
 
-export function saveEngineeringSurveySubmission(
+/** Load from API; creates draft when missing (for advisory panels). */
+export async function loadEngineeringSurveySubmissionAsync(input: {
+  taskId: string;
+  propertyId?: string;
+  poNumber?: string;
+}): Promise<EngineeringSurveySubmission | null> {
+  const cached = loadEngineeringSurveySubmission(input.taskId);
+  if (cached) return cached;
+  const fetched = await fetchEngineeringSurveySubmission(input.taskId);
+  if (fetched) return fetched;
+  if (!input.propertyId || !input.poNumber) return null;
+  return getOrCreateEngineeringSurveyDraft({
+    taskId: input.taskId,
+    propertyId: input.propertyId,
+    poNumber: input.poNumber,
+  });
+}
+
+export async function saveEngineeringSurveySubmission(
   submission: EngineeringSurveySubmission,
-): void {
-  if (typeof window === "undefined" || !submission.taskId) return;
-  localStorage.setItem(
-    storageKey(submission.taskId),
-    JSON.stringify({
-      ...submission,
-      updatedAtUtc: new Date().toISOString(),
-    }),
-  );
+): Promise<EngineeringSurveySubmission | null> {
+  if (!submission.taskId) return null;
+  const existingDto = getCachedPartySubmission(submission.taskId);
+  const payload: Record<string, unknown> = {
+    ...(existingDto?.payload ?? {}),
+    ...submissionToPayload(submission),
+    updatedAtUtc: new Date().toISOString(),
+  };
+  const dto = await persistPartySubmissionPayload(submission.taskId, payload);
+  if (!dto) return null;
   notifyChanged();
+  return dtoToSubmission(dto);
 }
 
-export function getOrCreateEngineeringSurveyDraft(input: {
+export async function getOrCreateEngineeringSurveyDraft(input: {
   taskId: string;
   propertyId: string;
   poNumber: string;
-}): EngineeringSurveySubmission {
-  const existing = loadEngineeringSurveySubmission(input.taskId);
+}): Promise<EngineeringSurveySubmission> {
+  const existing = await fetchEngineeringSurveySubmission(input.taskId);
   if (existing) return existing;
   const draft = createEngineeringSurveyDraft(input);
-  saveEngineeringSurveySubmission(draft);
-  return draft;
+  const saved = await saveEngineeringSurveySubmission(draft);
+  return saved ?? draft;
 }
 
-export function updateEngineeringSurveyDraft(
+export async function updateEngineeringSurveyDraft(
   taskId: string,
   patch: Partial<
     Pick<
@@ -94,7 +144,7 @@ export function updateEngineeringSurveyDraft(
       | "returnNote"
     >
   >,
-): EngineeringSurveySubmission | null {
+): Promise<EngineeringSurveySubmission | null> {
   const current = loadEngineeringSurveySubmission(taskId);
   if (!current || current.status === "submitted") return current;
 
@@ -105,41 +155,43 @@ export function updateEngineeringSurveyDraft(
     status: current.status === "reopened" ? "reopened" : "draft",
     updatedAtUtc: new Date().toISOString(),
   };
-  saveEngineeringSurveySubmission(next);
-  return next;
+  return saveEngineeringSurveySubmission(next);
 }
 
-export function submitEngineeringSurveySubmission(
+export async function submitEngineeringSurveySubmission(
   taskId: string,
-): EngineeringSurveySubmission | null {
+): Promise<EngineeringSurveySubmission | null> {
   const current = loadEngineeringSurveySubmission(taskId);
   if (!current || current.status === "submitted") return current;
 
-  const next: EngineeringSurveySubmission = {
+  await saveEngineeringSurveySubmission({
     ...current,
-    status: "submitted",
-    submittedAtUtc: new Date().toISOString(),
+    status: "draft",
     updatedAtUtc: new Date().toISOString(),
-  };
-  saveEngineeringSurveySubmission(next);
-  return next;
+  });
+
+  const dto = await submitPartySubmission(taskId);
+  if (!dto) return loadEngineeringSurveySubmission(taskId);
+  notifyChanged();
+  notifyTasksChanged();
+  return dtoToSubmission(dto);
 }
 
-export function reopenEngineeringSurveySubmission(
+export async function reopenEngineeringSurveySubmission(
   taskId: string,
   returnNote: string,
-): EngineeringSurveySubmission | null {
-  const current = loadEngineeringSurveySubmission(taskId);
-  if (!current) return null;
+): Promise<EngineeringSurveySubmission | null> {
+  const dto = await reopenPartySubmission(taskId, returnNote);
+  if (!dto) return null;
+  notifyChanged();
+  notifyTasksChanged();
+  return dtoToSubmission(dto);
+}
 
-  const next: EngineeringSurveySubmission = {
-    ...current,
-    status: "reopened",
-    returnNote,
-    updatedAtUtc: new Date().toISOString(),
-  };
-  saveEngineeringSurveySubmission(next);
-  return next;
+export async function prefetchEngineeringSurveySubmissions(
+  taskIds: string[],
+): Promise<void> {
+  await prefetchPartySubmissionsForTasks(taskIds);
 }
 
 export function isVisibleInEngineeringSurveyQueue(
@@ -165,4 +217,24 @@ export function engineeringSurveyStatusLabel(
   if (status === "submitted") return "مُرسَل";
   if (status === "reopened") return "مُعاد";
   return "قيد العمل";
+}
+
+/** Seed cache without API (tests / migration). */
+export function seedEngineeringSurveySubmissionCache(
+  submission: EngineeringSurveySubmission,
+): void {
+  setCachedPartySubmission(
+    {
+      taskId: submission.taskId,
+      kind: "engineering-survey",
+      status: submission.status,
+      propertyId: submission.propertyId,
+      poNumber: submission.poNumber,
+      payload: submissionToPayload(submission),
+      returnNote: submission.returnNote,
+      submittedAtUtc: submission.submittedAtUtc,
+      updatedAtUtc: submission.updatedAtUtc,
+    },
+    submission.taskId,
+  );
 }

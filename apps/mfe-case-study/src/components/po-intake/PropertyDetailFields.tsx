@@ -148,9 +148,13 @@ export function ProgressBar({
 export function DocIconButton({
   label,
   danger,
+  disabled,
+  onClick,
 }: {
   label: string;
   danger?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
@@ -158,6 +162,8 @@ export function DocIconButton({
       className={`pd-icon-btn${danger ? " pd-icon-btn--danger" : ""}`}
       title={label}
       aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
     >
       {label === "معاينة" ? "👁" : label === "تحميل" ? "⬇" : "🗑"}
     </button>

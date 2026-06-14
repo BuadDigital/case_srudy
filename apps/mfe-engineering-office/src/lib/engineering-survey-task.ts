@@ -5,12 +5,12 @@ export function findSurveyChildForParent(
   propertyId: string,
   tasks: WorkflowTask[],
 ): WorkflowTask | null {
-  return (
-    tasks.find(
-      (t) =>
-        t.parentTaskId === parentTaskId &&
-        t.propertyId === propertyId &&
-        t.kind === "engineering-survey",
-    ) ?? null
+  const children = tasks.filter(
+    (t) => t.parentTaskId === parentTaskId && t.kind === "engineering-survey",
   );
+  if (!children.length) return null;
+  if (propertyId) {
+    return children.find((t) => t.propertyId === propertyId) ?? children[0]!;
+  }
+  return children[0]!;
 }

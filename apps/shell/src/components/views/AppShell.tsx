@@ -52,11 +52,11 @@ import {
   decodePoParam,
 } from "@case-study/mfe";
 import { AppBreadcrumb } from "@/components/views/AppBreadcrumb";
-import { resolvePoChrome } from "@/lib/po-chrome";
+import { resolvePoChrome, buildPoPropertyDetailSegments } from "@/lib/po-chrome";
 import { resolveMyTasksChrome } from "@/lib/my-tasks-chrome";
+import { EngineeringSurveyTopbarActions } from "@engineering-office/mfe";
 import { pagesForPrototypeRole } from "@platform/app-shared/prototype/prototype-role-access";
 import { ActiveTransactionsSituationBar } from "@case-study/mfe";
-import { EngineeringSurveySituationBar } from "@engineering-office/mfe";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
 import { useFailuresNavBadge } from "@/lib/query/use-failures-nav-badge";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
@@ -462,6 +462,49 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return prop.deedNumber.trim();
   }, [caseStudyTask, caseStudyPo]);
 
+  const activeSurveyTask = useMemo(() => {
+    if (!activeSurveyTaskId) return null;
+    const id = decodeTaskParam(activeSurveyTaskId);
+    return workflowTasks?.find((t) => t.id === id) ?? null;
+  }, [activeSurveyTaskId, workflowTasks]);
+
+  const { data: activeSurveyPo } = usePoRecordQuery(
+    activeSurveyTask?.poNumber ?? null,
+  );
+
+  const activeSurveyDeedLabel = useMemo(() => {
+    if (!activeSurveyTask || !activeSurveyPo) return "";
+    const prop = findPropertyForTask(activeSurveyPo, activeSurveyTask);
+    if (!prop) return "";
+    const formatted = formatPropertyDeedDisplay(prop);
+    if (formatted && formatted !== "—") return formatted;
+    return prop.deedNumber.trim();
+  }, [activeSurveyTask, activeSurveyPo]);
+
+  const activeSurveyBreadcrumb = useMemo(() => {
+    if (!onActiveSurveyWorkspace || !activeSurveyTask?.poNumber?.trim()) {
+      return null;
+    }
+    return buildPoPropertyDetailSegments(
+      activeSurveyTask.poNumber.trim(),
+      activeSurveyDeedLabel || undefined,
+    );
+  }, [
+    onActiveSurveyWorkspace,
+    activeSurveyTask,
+    activeSurveyDeedLabel,
+  ]);
+
+  const caseStudyBreadcrumb = useMemo(() => {
+    if (!onCaseStudyWorkspace || !caseStudyTask?.poNumber?.trim()) {
+      return null;
+    }
+    return buildPoPropertyDetailSegments(
+      caseStudyTask.poNumber.trim(),
+      caseStudyDeedLabel || undefined,
+    );
+  }, [onCaseStudyWorkspace, caseStudyTask, caseStudyDeedLabel]);
+
   const poPropertyDetailContext = useMemo(() => {
     if (!pathname) return null;
     const parts = pathname.split("/").filter(Boolean);
@@ -568,7 +611,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const showActiveTransactionsSituation =
     isInActiveTransactionsSection(currentPage, onTaskWork) ||
-    onCaseStudyWorkspace ||
     onActiveSurveyWorkspace ||
     onPropertyAppraisalWorkspace ||
     onPropertyInspectionWorkspace ||
@@ -593,9 +635,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   let activeTransactionsInserted = false;
 
   const onPoPropertyDetail = Boolean(poChrome?.propertyDetail);
+  const onActiveSurveyPropertyDetail = onActiveSurveyWorkspace;
   const onPoList = pathname === "/po";
   const breadcrumbSegments =
     poChrome?.segments ??
+    activeSurveyBreadcrumb ??
+    caseStudyBreadcrumb ??
     (myTasksChrome?.breadcrumb
       ? myTasksChrome.breadcrumb
           .split(" / ")
@@ -615,7 +660,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     "";
 
   const displayBreadcrumbSegments = (() => {
-    if (onPoPropertyDetail || !breadcrumbSegments?.length) {
+    if (
+      onPoPropertyDetail ||
+      onActiveSurveyPropertyDetail ||
+      !breadcrumbSegments?.length
+    ) {
       return breadcrumbSegments ?? [];
     }
     const lastLabel =
@@ -763,7 +812,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div id="topbar">
           <div className="tb-left">
             <AppBreadcrumb segments={displayBreadcrumbSegments} />
-            {!onPoPropertyDetail
+            {!onPoPropertyDetail && !onActiveSurveyPropertyDetail
               ? (() => {
                   if (!resolvedPageTitle && !poChrome?.titlePo) return null;
                   return (
@@ -789,6 +838,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 propertyId={poChrome.propertyDetail.propertyId}
               />
             ) : null}
+            {onActiveSurveyPropertyDetail ? (
+              <EngineeringSurveyTopbarActions />
+            ) : null}
             <div className="user-chip">
               <div
                 className="avatar"
@@ -809,12 +861,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div id="content" className="content content--flush">
-          {showActiveTransactionsSituation ? (
-            currentPage === "active-survey" || onActiveSurveyWorkspace ? (
-              <EngineeringSurveySituationBar />
-            ) : (
-              <ActiveTransactionsSituationBar />
-            )
+          {showActiveTransactionsSituation &&
+          currentPage !== "active-survey" &&
+          !onActiveSurveyWorkspace &&
+          !onCaseStudyWorkspace ? (
+            <ActiveTransactionsSituationBar />
           ) : null}
           {children}
         </div>

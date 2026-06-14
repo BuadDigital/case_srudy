@@ -13,6 +13,7 @@ import {
 } from "../../lib/evaluator/evaluator-recall-storage";
 import {
   EVALUATOR_SUBMISSION_CHANGED_EVENT,
+  fetchEvaluatorSubmissionSnapshot,
   loadEvaluatorSubmission,
 } from "../../lib/evaluator/evaluator-submission-storage";
 import {
@@ -48,6 +49,13 @@ export function EvaluatorAdvisoryPanel({
     () => findAppraisalChildForParent(parentTask.id, propertyId, tasks),
     [parentTask.id, propertyId, tasks, refreshKey],
   );
+
+  useEffect(() => {
+    if (!appraisalTask) return;
+    void fetchEvaluatorSubmissionSnapshot(appraisalTask.id).then(() => {
+      setRefreshKey((k) => k + 1);
+    });
+  }, [appraisalTask?.id]);
 
   const submission = useMemo(() => {
     if (!appraisalTask) return null;

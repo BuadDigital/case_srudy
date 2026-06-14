@@ -82,7 +82,7 @@ Party queues: property-inspection, property-appraisal, valuation-coordination,
 | `FinancialView` | `@financial/mfe` | ✓ |
 | `KpiView` | `@kpi/mfe` | ✓ |
 
-Orphan copies may remain under `apps/shell/src/components/views/` until cleanup — shell imports use `@*/mfe` only.
+Shell `components/views/` holds layout only (`AppShell`, `AppBreadcrumb`, `NavIcon`); all platform views import from `@*/mfe`.
 
 ---
 

@@ -571,7 +571,7 @@ docker compose -f infra/docker-compose.yml down
 | Change a case-study / failures / settings screen | `apps/mfe-case-study/`, `apps/mfe-failures/`, `apps/mfe-settings/` |
 | Change dashboard / survey / keys / financial / KPI | `apps/mfe-dashboard/`, `apps/mfe-survey/`, `apps/mfe-keys/`, `apps/mfe-financial/`, `apps/mfe-kpi/` |
 | Change messages / valuation-requests | `apps/mfe-messages/`, `apps/mfe-valuation/` |
-| Change a shell-only screen | `apps/shell/src/components/views/AppShell.tsx`, `NavIcon.tsx` (orphan `*View.tsx` copies pending cleanup) |
+| Change a shell-only screen | `apps/shell/src/components/views/AppShell.tsx`, `NavIcon.tsx`, `AppBreadcrumb.tsx` |
 | Map URL → screen | `apps/shell/src/app/(app)/[page]/page.tsx` |
 | Login page | `apps/shell/src/app/login/page.tsx` |
 | Sidebar / layout / logout | `apps/shell/src/components/views/AppShell.tsx` |
@@ -587,8 +587,8 @@ docker compose -f infra/docker-compose.yml down
 
 1. Add `PageId` in `packages/types/src/navigation.ts`
 2. Add nav item + mock data in `constants.ts`
-3. Create `YourView.tsx` under `components/views/`
-4. Register in `[page]/page.tsx` → `VIEWS` map
+3. Create `YourView.tsx` in the matching `apps/mfe-*/src/views/` package (or add a new `@*/mfe` workspace)
+4. Export from the MFE `index.ts` and register in `[page]/page.tsx` → `VIEWS` map
 5. Add role `pages` array for each role in `ROLES`
 
 ### Working with prototypes

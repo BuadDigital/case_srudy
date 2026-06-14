@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
+import {
+  findSurveyChildForParent,
+} from "@engineering-office/mfe";
 import { useMemo, useState } from "react";
 import { getPropertyFailure } from "@failures/mfe";
 import { failureStatusLabel } from "@failures/mfe/lib/failures-local-storage";
@@ -12,10 +15,12 @@ import {
   FieldBox,
   FieldsGrid,
   InfoBox,
-  ProgressBar,
   SectionDivider,
   SectionHeader,
 } from "./PropertyDetailFields";
+import { PropertyDetailCaseStudyReport } from "./PropertyDetailCaseStudyReport";
+import { PropertyDetailPropertyKeys } from "./PropertyDetailPropertyKeys";
+import { PropertyDetailEnfathUpload } from "./PropertyDetailEnfathUpload";
 import { PropertyTransactionTimeline } from "./PropertyTransactionTimeline";
 import {
   boundariesAvailabilityLabel,
@@ -31,9 +36,6 @@ import {
   type PoPropertyIntake,
 } from "../../lib/prototype/po-intake-data";
 import { isValidContactEntry } from "./po-property-validation";
-import {
-  buildCaseStudyTracks,
-} from "../../lib/prototype/case-study-tracks";
 import { PartyRoleDetailPanel } from "./PartyRoleDetailPanel";
 import {
   buildPropertyDetailPartyCards,
@@ -41,7 +43,6 @@ import {
   partyCardStatusLabel,
   type PropertyDetailPartyRoleKey,
 } from "../../lib/prototype/property-detail-parties";
-import { caseStudyWorkspacePath } from "../../lib/my-task-routes";
 import { poPropertyFailurePath, poPropertyPath } from "../../lib/po-routes";
 import {
   buildPropertyDetailTimeline,
@@ -50,6 +51,14 @@ import {
 import {
   caseStudyTaskForProperty,
 } from "../../lib/prototype/tasks-storage";
+import { childTasksForCaseStudyParent } from "../../lib/prototype/case-study-party-answers";
+import {
+  countPropertyDetailDocuments,
+  downloadPropertyDetailDocument,
+  type PropertyDetailDocumentEntry,
+  type PropertyDetailDocumentSection,
+} from "../../lib/prototype/property-detail-documents";
+import { usePropertyDetailDocuments } from "../../query/property-detail-documents-query";
 import { useWorkflowTasksQuery } from "../../query/case-study-queries";
 import { usePropertyDetailPartySubmissionsQuery } from "../../query/property-detail-party-submissions-queries";
 
@@ -63,65 +72,74 @@ const TABS = [
   { id: "appraisal", label: "تقييم العقار" },
   { id: "photos", label: "صور العقار" },
   { id: "log", label: "السجل والتدقيق" },
+  { id: "keys", label: "مفاتيح العقار" },
+  { id: "enfath-upload", label: "الرفع على انفاذ" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
-type DocEntry = { id: string; name: string; sub: string; kind: "pdf" | "file" };
+function docIconLabel(kind: PropertyDetailDocumentEntry["kind"]): string {
+  if (kind === "pdf") return "PDF";
+  if (kind === "image") return "📷";
+  return "📄";
+}
 
-function collectDocuments(
-  property: PoPropertyIntake,
-  showDecree: boolean,
-): DocEntry[] {
-  const docs: DocEntry[] = [];
+function docIconClass(kind: PropertyDetailDocumentEntry["kind"]): string {
+  return kind === "pdf" ? "pd-doc-icon is-pdf" : "pd-doc-icon";
+}
 
-  if (property.realEstateRegFileName?.trim()) {
-    docs.push({
-      id: "reg",
-      name: "صورة الصك الأصلي",
-      sub: property.realEstateRegFileName.trim(),
-      kind: "pdf",
-    });
-  }
-  if (showDecree && property.assignmentDocFileName?.trim()) {
-    docs.push({
-      id: "assignment",
-      name: "قرار الإسناد",
-      sub: property.assignmentDocFileName.trim(),
-      kind: "file",
-    });
-  }
-  if (property.delegationLetterFileName?.trim()) {
-    docs.push({
-      id: "delegation",
-      name: "خطاب التفويض",
-      sub: property.delegationLetterFileName.trim(),
-      kind: "file",
-    });
-  }
-  if (
-    property.boundariesAvailability === "doc" &&
-    property.boundariesExternalDocName?.trim()
-  ) {
-    docs.push({
-      id: "boundaries",
-      name: "مستند الحدود",
-      sub: property.boundariesExternalDocName.trim(),
-      kind: "file",
-    });
-  }
-  property.otherDocumentFileNames.forEach((name, i) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    docs.push({
-      id: `other-${i}`,
-      name: trimmed,
-      sub: trimmed,
-      kind: "file",
-    });
-  });
+function DocumentRow({ doc }: { doc: PropertyDetailDocumentEntry }) {
+  const canDownload = Boolean(doc.dataUrl);
 
-  return docs;
+  return (
+    <div className="pd-doc-row">
+      <div className="pd-doc-row-main">
+        <span className={docIconClass(doc.kind)} aria-hidden>
+          {docIconLabel(doc.kind)}
+        </span>
+        <div>
+          <div className="pd-doc-name">{doc.name}</div>
+          <div className="pd-doc-sub">
+            <bdi dir="ltr" className="po-property-detail-ltr-val">
+              {doc.fileName}
+            </bdi>
+          </div>
+        </div>
+      </div>
+      <div className="pd-doc-actions">
+        <DocIconButton
+          label="تحميل"
+          disabled={!canDownload}
+          onClick={() => downloadPropertyDetailDocument(doc)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DocumentsTab({
+  sections,
+}: {
+  sections: PropertyDetailDocumentSection[];
+}) {
+  return (
+    <>
+      {sections.map((section) => (
+        <section key={section.id} className="pd-doc-section">
+          <SectionHeader>{section.title}</SectionHeader>
+          {section.documents.length === 0 ? (
+            <InfoBox icon="ℹ">لا توجد مستندات في هذا القسم بعد.</InfoBox>
+          ) : (
+            <div className="pd-doc-list">
+              {section.documents.map((doc) => (
+                <DocumentRow key={doc.id} doc={doc} />
+              ))}
+            </div>
+          )}
+        </section>
+      ))}
+    </>
+  );
 }
 
 function logIconGlyph(tone: string): string {
@@ -136,36 +154,6 @@ function logIconClass(tone: string): string {
   if (tone === "active") return "pd-log-icon--amber";
   if (tone === "warn") return "pd-log-icon--red";
   return "pd-log-icon--gray";
-}
-
-function basicDataProgress(property: PoPropertyIntake): number {
-  const fields = [
-    property.deedNumber,
-    property.deedDate,
-    property.ownerName,
-    property.city,
-    property.classification,
-    property.area,
-  ];
-  const filled = fields.filter((f) => f.trim()).length;
-  return Math.round((filled / fields.length) * 100);
-}
-
-function trackProgressPct(
-  trackId: string,
-  task: ReturnType<typeof caseStudyTaskForProperty>,
-  tasks: Parameters<typeof buildCaseStudyTracks>[1],
-): number {
-  if (!task) return 0;
-  const tracks = buildCaseStudyTracks(task, tasks);
-  const track = tracks.find((t) => t.id === trackId);
-  return track?.progressPct ?? 0;
-}
-
-function progressTone(pct: number): "teal" | "amber" | "red" {
-  if (pct >= 100) return "teal";
-  if (pct > 0) return "amber";
-  return "red";
 }
 
 function BasicTab({
@@ -309,61 +297,6 @@ function BasicTab({
   );
 }
 
-function DocumentsTab({
-  property,
-  showDecree,
-}: {
-  property: PoPropertyIntake;
-  showDecree: boolean;
-}) {
-  const docs = collectDocuments(property, showDecree);
-
-  if (docs.length === 0) {
-    return (
-      <EmptyState
-        icon="📎"
-        title="لا توجد مستندات مرفقة"
-        sub="لم يُرفع أي مستند لهذا العقار بعد."
-      />
-    );
-  }
-
-  return (
-    <>
-      <SectionHeader>المستندات المرفوعة</SectionHeader>
-      <div className="pd-doc-list">
-        {docs.map((doc) => (
-          <div key={doc.id} className="pd-doc-row">
-            <div className="pd-doc-row-main">
-              <span className="pd-doc-icon" aria-hidden>
-                {doc.kind === "pdf" ? "PDF" : "📄"}
-              </span>
-              <div>
-                <div className="pd-doc-name">{doc.name}</div>
-                <div className="pd-doc-sub">
-                  <bdi dir="ltr" className="po-property-detail-ltr-val">
-                    {doc.sub}
-                  </bdi>
-                </div>
-              </div>
-            </div>
-            <div className="pd-doc-actions">
-              <DocIconButton label="معاينة" />
-              <DocIconButton label="تحميل" />
-              <DocIconButton label="حذف" danger />
-            </div>
-          </div>
-        ))}
-      </div>
-      <p className="pd-tab-actions">
-        <button type="button" className="btn btn-sm">
-          رفع مستند جديد
-        </button>
-      </p>
-    </>
-  );
-}
-
 export function PoPropertyDetailTabs({
   record,
   property,
@@ -405,7 +338,42 @@ export function PoPropertyDetailTabs({
     [record.properties, property.id],
   );
 
-  const docCount = collectDocuments(property, showDecree).length;
+  const surveyTask = useMemo(
+    () =>
+      task
+        ? findSurveyChildForParent(task.id, property.id, tasks)
+        : null,
+    [task, property.id, tasks],
+  );
+
+  const appraisalTask = useMemo(() => {
+    if (!task) return null;
+    return (
+      childTasksForCaseStudyParent(task.id, tasks).find(
+        (t) => t.kind === "property-appraisal",
+      ) ?? null
+    );
+  }, [task, tasks]);
+
+  const inspectionTask = useMemo(() => {
+    if (!task) return null;
+    return (
+      childTasksForCaseStudyParent(task.id, tasks).find(
+        (t) => t.kind === "field-inspection",
+      ) ?? null
+    );
+  }, [task, tasks]);
+
+  const propertyDocumentSections = usePropertyDetailDocuments({
+    property,
+    showDecree,
+    poNumber,
+    surveyTaskId: surveyTask?.id ?? null,
+    appraisalTaskId: appraisalTask?.id ?? null,
+    inspectionTaskId: inspectionTask?.id ?? null,
+  });
+
+  const docCount = countPropertyDetailDocuments(propertyDocumentSections);
   const specialistName = task?.assigneeName?.trim() || record.assignmentSpecialist.trim();
   const partyCards = buildPropertyDetailPartyCards({
     specialistName,
@@ -418,11 +386,14 @@ export function PoPropertyDetailTabs({
   const coordinatorName =
     coordinatorCard && !coordinatorCard.unassigned ? coordinatorCard.name : "";
 
+  const governmentCard =
+    partyCards.find((c) => c.roleKey === "government") ?? null;
+
   const partySubmissionsQuery = usePropertyDetailPartySubmissionsQuery({
     parentTask: task ?? null,
     allTasks: tasks,
     coordinatorName,
-    enabled: tab === "parties",
+    enabled: tab === "parties" || tab === "keys",
   });
 
   const logEvents = useMemo(
@@ -430,8 +401,6 @@ export function PoPropertyDetailTabs({
       [...buildPropertyDetailTimeline({ record, property, tasks })].reverse(),
     [record, property, tasks],
   );
-
-  const basicPct = basicDataProgress(property);
 
   return (
     <div className="po-property-detail-tabs-wrap">
@@ -449,6 +418,21 @@ export function PoPropertyDetailTabs({
           }
           if (t.id === "photos") {
             count = 0;
+          }
+          if (t.id === "keys") {
+            const govSubmission = partySubmissionsQuery.data?.government;
+            if (govSubmission?.hasData) {
+              const keysField = govSubmission.fields.find(
+                (f) => f.label === "حالة المفاتيح",
+              );
+              if (keysField?.value?.includes("استلام")) {
+                count = 1;
+                countTone = "teal";
+              } else if (keysField?.value) {
+                count = 1;
+                countTone = "gray";
+              }
+            }
           }
 
           return (
@@ -476,7 +460,7 @@ export function PoPropertyDetailTabs({
           ) : null}
 
           {tab === "documents" ? (
-            <DocumentsTab property={property} showDecree={showDecree} />
+            <DocumentsTab sections={propertyDocumentSections} />
           ) : null}
 
           {tab === "linked" ? (
@@ -641,49 +625,12 @@ export function PoPropertyDetailTabs({
 
           {tab === "report" ? (
             <>
-              <SectionHeader>حالة دراسة الحالة</SectionHeader>
-              {!task ? (
-                <InfoBox variant="amber" icon="ℹ">
-                  لم يُبدأ بنموذج دراسة الحالة بعد — افتح مسار دراسة حالة
-                  العقارات لإكماله.
-                </InfoBox>
-              ) : null}
-              <SectionHeader>نسبة إتمام البيانات</SectionHeader>
-              <ProgressBar
-                label="البيانات الأساسية"
-                pct={basicPct}
-                tone={progressTone(basicPct)}
+              <SectionHeader>نموذج دراسة الحالة</SectionHeader>
+              <PropertyDetailCaseStudyReport
+                record={record}
+                property={property}
+                task={task ?? null}
               />
-              <ProgressBar
-                label="بيانات المعاين"
-                pct={trackProgressPct("inspection", task, tasks)}
-                tone={progressTone(trackProgressPct("inspection", task, tasks))}
-              />
-              <ProgressBar
-                label="بيانات المكتب الهندسي"
-                pct={trackProgressPct("survey", task, tasks)}
-                tone={progressTone(trackProgressPct("survey", task, tasks))}
-              />
-              <ProgressBar
-                label="بيانات المقيّم"
-                pct={trackProgressPct("appraisal", task, tasks)}
-                tone={progressTone(trackProgressPct("appraisal", task, tasks))}
-              />
-              <ProgressBar
-                label="مراجعة المراجع الحكومي"
-                pct={trackProgressPct("government", task, tasks)}
-                tone={progressTone(trackProgressPct("government", task, tasks))}
-              />
-              {task ? (
-                <p className="pd-tab-actions">
-                  <Link
-                    href={caseStudyWorkspacePath(task.id)}
-                    className="btn btn-sm btn-primary"
-                  >
-                    فتح دراسة الحالة
-                  </Link>
-                </p>
-              ) : null}
             </>
           ) : null}
 
@@ -756,6 +703,20 @@ export function PoPropertyDetailTabs({
               </>
             )
           ) : null}
+
+          {tab === "keys" ? (
+            <PropertyDetailPropertyKeys
+              property={property}
+              governmentCard={governmentCard}
+              submission={partySubmissionsQuery.data?.government ?? null}
+              loading={
+                partySubmissionsQuery.isLoading ||
+                partySubmissionsQuery.isFetching
+              }
+            />
+          ) : null}
+
+          {tab === "enfath-upload" ? <PropertyDetailEnfathUpload /> : null}
         </div>
 
         <PropertyTransactionTimeline record={record} property={property} />

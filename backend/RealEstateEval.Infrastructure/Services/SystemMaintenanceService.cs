@@ -26,8 +26,11 @@ public class SystemMaintenanceService : ISystemMaintenanceService
         var workOrders = await _db.WorkOrders.CountAsync(cancellationToken);
         var courts = await _db.CourtCatalogEntries.CountAsync(cancellationToken);
         var infoRoles = await _db.CaseStudyInfoRolesConfigs.CountAsync(cancellationToken);
+        var propertyFailures = await _db.PropertyFailures.CountAsync(cancellationToken);
 
         await _db.CaseStudyForms.ExecuteDeleteAsync(cancellationToken);
+        await _db.PartyTaskSubmissions.ExecuteDeleteAsync(cancellationToken);
+        await _db.PropertyFailures.ExecuteDeleteAsync(cancellationToken);
         await _db.WorkflowTasks.ExecuteDeleteAsync(cancellationToken);
         await _db.PropertyContacts.ExecuteDeleteAsync(cancellationToken);
         await _db.WorkOrderProperties.ExecuteDeleteAsync(cancellationToken);
@@ -44,6 +47,7 @@ public class SystemMaintenanceService : ISystemMaintenanceService
             CaseStudyFormsDeleted = caseStudyForms,
             CourtCatalogEntriesDeleted = courts,
             CaseStudyInfoRolesConfigsDeleted = infoRoles,
+            PropertyFailuresDeleted = propertyFailures,
             RegisteredUsersDeleted = registeredUsersDeleted,
         };
     }

@@ -252,6 +252,15 @@ public class WorkflowTaskService : IWorkflowTaskService
         var tasks = await _db.WorkflowTasks
             .Where(t => t.PoNumber == n)
             .ToListAsync(cancellationToken);
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        if (taskIds.Count > 0)
+        {
+            var subs = await _db.PartyTaskSubmissions
+                .Where(s => taskIds.Contains(s.WorkflowTaskId))
+                .ToListAsync(cancellationToken);
+            if (subs.Count > 0)
+                _db.PartyTaskSubmissions.RemoveRange(subs);
+        }
         _db.WorkflowTasks.RemoveRange(tasks);
         await _db.SaveChangesAsync(cancellationToken);
     }
@@ -277,6 +286,7 @@ public class WorkflowTaskService : IWorkflowTaskService
                 t.Id != linked.Id &&
                 (t.PropertyId == propertyId ||
                  (t.ParentTaskId.HasValue && parentIds.Contains(t.ParentTaskId.Value)))).ToList();
+            await RemovePartySubmissionsForTasksAsync(toRemove.Select(t => t.Id).ToList(), cancellationToken);
             _db.WorkflowTasks.RemoveRange(toRemove);
 
             linked.PropertyId = null;
@@ -298,6 +308,7 @@ public class WorkflowTaskService : IWorkflowTaskService
             var toRemove = list.Where(t =>
                 t.PropertyId == propertyId ||
                 (t.ParentTaskId.HasValue && parentIds.Contains(t.ParentTaskId.Value))).ToList();
+            await RemovePartySubmissionsForTasksAsync(toRemove.Select(t => t.Id).ToList(), cancellationToken);
             _db.WorkflowTasks.RemoveRange(toRemove);
         }
 
@@ -503,5 +514,17 @@ public class WorkflowTaskService : IWorkflowTaskService
             return "استعلام بورصة — بانتظار البيانات";
         }
         return string.IsNullOrEmpty(deed) ? "—" : deed;
+    }
+
+    private async Task RemovePartySubmissionsForTasksAsync(
+        List<Guid> taskIds,
+        CancellationToken cancellationToken)
+    {
+        if (taskIds.Count == 0) return;
+        var subs = await _db.PartyTaskSubmissions
+            .Where(s => taskIds.Contains(s.WorkflowTaskId))
+            .ToListAsync(cancellationToken);
+        if (subs.Count > 0)
+            _db.PartyTaskSubmissions.RemoveRange(subs);
     }
 }

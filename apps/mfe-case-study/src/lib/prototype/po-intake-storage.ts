@@ -408,7 +408,7 @@ export async function deletePoRecord(
     };
   }
   await deleteTasksForPo(poNumber);
-  deleteFailuresForPo(poNumber);
+  await deleteFailuresForPo(poNumber);
   notifyWorkOrdersChanged();
   return { ok: true };
 }

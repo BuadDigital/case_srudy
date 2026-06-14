@@ -52,7 +52,7 @@ export function FailureRaisePanel({
 
   function handleSubmit() {
     if (!problemTypeId || activeFailure) return;
-    createFailure({
+    void createFailure({
       poNumber,
       propertyId,
       deedNumber,
@@ -61,12 +61,13 @@ export function FailureRaisePanel({
       raisedByRole,
       internalNote: note,
       specialist,
+    }).then(() => {
+      void queryClient.invalidateQueries({ queryKey: prototypeKeys.failures() });
+      setOpen(false);
+      setProblemTypeId("");
+      setNote("");
+      onSubmitted?.();
     });
-    void queryClient.invalidateQueries({ queryKey: prototypeKeys.failures() });
-    setOpen(false);
-    setProblemTypeId("");
-    setNote("");
-    onSubmitted?.();
   }
 
   if (activeFailure && !open) {

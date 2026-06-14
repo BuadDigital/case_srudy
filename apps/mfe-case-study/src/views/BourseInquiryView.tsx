@@ -148,7 +148,7 @@ export function BourseInquiryView() {
       setSaving(true);
       setFormError(null);
       setObstructionReasonError(undefined);
-      submitBourseObstruction({
+      await submitBourseObstruction({
         poNumber: selected.poNumber,
         propertyId: selected.propertyId,
         deedNumber: property.deedNumber || selected.deedNumber,

@@ -6,16 +6,15 @@ import { RegField } from "@platform/app-shared/registration/FormFields";
 import {
   CASE_STUDY_FORM_STEPS,
   CASE_STUDY_SECTION_QUESTIONS,
-  CASE_STUDY_TABLE_HEADERS,
   caseStudyAnswerKey,
   type CaseStudyFormAnswer,
   type CaseStudyQuestionSection,
 } from "../../lib/prototype/case-study-form-data";
-import { CaseStudyApprovalSection } from "./CaseStudyApprovalSection";
 import { CaseStudyReportActions } from "./CaseStudyReportActions";
+import { CaseStudyProgressDonut } from "./CaseStudyProgressDonut";
+import { CaseStudyMatrixTable } from "./CaseStudyMatrixTable";
 import {
   canPartyAnswerQuestion,
-  CASE_STUDY_INFO_ROLE_TYPES,
   CASE_STUDY_INFO_ROLES_CHANGED_EVENT,
   emptyCaseStudyInfoRolesConfig,
   isPartyQuestionVisible,
@@ -31,6 +30,7 @@ import {
   emptyCaseStudyFormDraft,
   loadCaseStudyFormDraft,
   loadPartyCaseStudyFormDraft,
+  PARTY_CASE_STUDY_FORM_CHANGED_EVENT,
   saveCaseStudyFormDraft,
   savePartyCaseStudyFormDraft,
   type CaseStudyFormDraft,
@@ -105,250 +105,6 @@ function RemarksBlock({
   );
 }
 
-function BinaryCell({
-  checked,
-  label,
-  onToggle,
-  disabled = false,
-}: {
-  checked: boolean;
-  label: string;
-  onToggle: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={`cs-form-cb${checked ? " checked" : ""}${disabled ? " cs-form-cb--locked" : ""}`}
-      aria-pressed={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={disabled ? undefined : onToggle}
-    />
-  );
-}
-
-function PartyContributions({
-  items,
-  answerLabel,
-  specialistAnswer,
-}: {
-  items: PartyQuestionContribution[];
-  answerLabel: (answer: CaseStudyFormAnswer) => string;
-  specialistAnswer: CaseStudyFormAnswer | null;
-}) {
-  if (items.length === 0) return null;
-  return (
-    <div className="cs-form-party-contribs">
-      <p className="cs-form-party-contribs-title">إجابات الأطراف</p>
-      <ul className="cs-form-party-contribs-list">
-        {items.map((item) => {
-          const roleType = item.roleType
-            ? CASE_STUDY_INFO_ROLE_TYPES.find((r) => r.id === item.roleType)
-            : null;
-          const differs =
-            specialistAnswer != null && specialistAnswer !== item.answer;
-          return (
-            <li
-              key={`${item.taskId}-${item.answer}`}
-              className={`cs-form-party-contrib${differs ? " cs-form-party-contrib--diff" : ""}`}
-            >
-              <span
-                className="cs-form-party-dot"
-                style={{ background: item.partyColor }}
-              />
-              <span className="cs-form-party-contrib-name">
-                {item.partyName}
-                {item.roleLabel ? (
-                  <span
-                    className="cs-form-party-role"
-                    style={
-                      roleType
-                        ? { background: roleType.bg, color: roleType.color }
-                        : undefined
-                    }
-                  >
-                    {item.roleLabel}
-                  </span>
-                ) : null}
-              </span>
-              <span className="cs-form-party-contrib-ans">
-                {answerLabel(item.answer)}
-              </span>
-              <span className="cs-form-party-contrib-who">{item.assigneeName}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function QuestionTable({
-  section,
-  answers,
-  onAnswer,
-  canEditKey,
-  visibleKey,
-  partyByKey,
-  specialistReview,
-  onToggleReview,
-  showSpecialistReview,
-}: {
-  section: CaseStudyQuestionSection;
-  answers: Record<string, CaseStudyFormAnswer | null>;
-  onAnswer: (key: string, value: CaseStudyFormAnswer | null) => void;
-  canEditKey?: (key: string) => boolean;
-  visibleKey?: (key: string) => boolean;
-  partyByKey?: Record<string, PartyQuestionContribution[]>;
-  specialistReview?: Record<string, boolean>;
-  onToggleReview?: (key: string, approved: boolean) => void;
-  showSpecialistReview?: boolean;
-}) {
-  const questions = CASE_STUDY_SECTION_QUESTIONS[section];
-  const headers = CASE_STUDY_TABLE_HEADERS[section];
-  const visibleRows = questions
-    .map((q, i) => ({ q, i, key: caseStudyAnswerKey(section, i) }))
-    .filter((row) => (visibleKey ? visibleKey(row.key) : true));
-
-  if (visibleRows.length === 0) {
-    return (
-      <p className="po-properties-hint">
-        لا توجد أسئلة مسندة لدورك في هذا القسم.
-      </p>
-    );
-  }
-
-  return (
-    <div className="cs-form-table-wrap">
-      <table className="cs-form-table">
-        <thead>
-          <tr>
-            <th>الأسئلة</th>
-            <th className="center">{headers.colA}</th>
-            <th className="center">{headers.colB}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleRows.map(({ q, key }) => {
-            const val = answers[key] ?? null;
-            const editable = canEditKey ? canEditKey(key) : true;
-            const partyItems = partyByKey?.[key] ?? [];
-            const approved = specialistReview?.[key] ?? false;
-            const answerLabel = (a: CaseStudyFormAnswer) =>
-              a === "A" ? headers.colA : headers.colB;
-            return (
-              <tr key={key}>
-                <td className="question" colSpan={1}>
-                  <div className="cs-form-question-cell">
-                    <span className="cs-form-question-text">{q}</span>
-                    <PartyContributions
-                      items={partyItems}
-                      answerLabel={answerLabel}
-                      specialistAnswer={val}
-                    />
-                    {showSpecialistReview && partyItems.length > 0 ? (
-                      <label className="cs-form-review-approve">
-                        <input
-                          type="checkbox"
-                          checked={approved}
-                          onChange={(e) =>
-                            onToggleReview?.(key, e.target.checked)
-                          }
-                        />
-                        <span>اعتماد بعد مراجعة إجابات الأطراف</span>
-                      </label>
-                    ) : null}
-                  </div>
-                </td>
-                <td className="center">
-                  <BinaryCell
-                    checked={val === "A"}
-                    label={headers.colA}
-                    disabled={!editable}
-                    onToggle={() => onAnswer(key, val === "A" ? null : "A")}
-                  />
-                </td>
-                <td className="center">
-                  <BinaryCell
-                    checked={val === "B"}
-                    label={headers.colB}
-                    disabled={!editable}
-                    onToggle={() => onAnswer(key, val === "B" ? null : "B")}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-const DONUT_R = 14;
-const DONUT_CIRC = 2 * Math.PI * DONUT_R;
-
-function Donut({
-  pct,
-  color,
-  label,
-  sub,
-}: {
-  pct: number;
-  color: string;
-  label: string;
-  sub: string;
-}) {
-  const offset = DONUT_CIRC * (1 - pct / 100);
-  return (
-    <div className="cs-mini-donut">
-      <svg
-        width="44"
-        height="44"
-        viewBox="0 0 36 36"
-        className="cs-mini-donut-svg"
-        aria-hidden="true"
-      >
-        <circle
-          cx="18"
-          cy="18"
-          r={DONUT_R}
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth="3.5"
-        />
-        <circle
-          cx="18"
-          cy="18"
-          r={DONUT_R}
-          fill="none"
-          stroke={color}
-          strokeWidth="3.5"
-          strokeDasharray={`${DONUT_CIRC}`}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 18 18)"
-          style={{ transition: "stroke-dashoffset 0.4s ease" }}
-        />
-        <text
-          x="18"
-          y="18"
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="cs-mini-donut-pct"
-        >
-          {pct}%
-        </text>
-      </svg>
-      <div className="cs-mini-donut-meta">
-        <span className="cs-mini-donut-label">{label}</span>
-        <span className="cs-mini-donut-sub">{sub}</span>
-      </div>
-    </div>
-  );
-}
-
 function FormProgressRings({
   summary,
 }: {
@@ -356,7 +112,7 @@ function FormProgressRings({
 }) {
   return (
     <div className="cs-form-progress-rings" aria-label="تقدم النموذج">
-      <Donut
+      <CaseStudyProgressDonut
         pct={summary.pct}
         color="var(--success, #16a34a)"
         label="اكتمال النموذج"
@@ -432,18 +188,13 @@ function SpecialistClosingCards({
   reportModel: ReturnType<typeof buildCaseStudyReportModel>;
 }) {
   return (
-    <>
-      <RegistrationFormCard title="الاعتماد والتوقيع">
-        <CaseStudyApprovalSection approval={reportModel.approval} />
-      </RegistrationFormCard>
-      <RegistrationFormCard title="التقرير النهائي">
-        <p className="cs-form-report-hint">
-          يُعبّأ التقرير تلقائياً من إجابات النموذج وبيانات النظام (الصك، أمر
-          العمل، التاريخ، المعتمد).
-        </p>
-        <CaseStudyReportActions model={reportModel} />
-      </RegistrationFormCard>
-    </>
+    <RegistrationFormCard title="التقرير النهائي">
+      <p className="cs-form-report-hint">
+        يُعبّأ التقرير تلقائياً من إجابات النموذج وبيانات النظام (الصك، أمر
+        العمل، التاريخ، المعتمد).
+      </p>
+      <CaseStudyReportActions model={reportModel} />
+    </RegistrationFormCard>
   );
 }
 
@@ -554,23 +305,6 @@ export function CaseStudyForm({
     };
   }, [isParty]);
 
-  const toggleSpecialistReview = useCallback(
-    (key: string, approved: boolean) => {
-      setDraft((d) => {
-        const next = {
-          ...d,
-          specialistReviewApproved: {
-            ...d.specialistReviewApproved,
-            [key]: approved,
-          },
-        };
-        void saveCaseStudyFormDraft(next);
-        return next;
-      });
-    },
-    [],
-  );
-
   const canEditKey = useCallback(
     (key: string) =>
       canPartyAnswerQuestion(infoRolesMatrix, key, viewerPartyId),
@@ -590,19 +324,6 @@ export function CaseStudyForm({
       sectionHasVisibleQuestions(section) ? i : -1,
     ).filter((i) => i >= 0);
   }, [sectionHasVisibleQuestions]);
-
-  const questionTableProps = {
-    canEditKey,
-    visibleKey: isQuestionVisible,
-    ...(isParty
-      ? {}
-      : {
-          partyByKey: partyAnswersByKey,
-          specialistReview: draft.specialistReviewApproved ?? {},
-          onToggleReview: toggleSpecialistReview,
-          showSpecialistReview: true,
-        }),
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -640,6 +361,34 @@ export function CaseStudyForm({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per task
   }, [storageTaskId, referenceTaskId, isParty]);
+
+  useEffect(() => {
+    if (!isParty || !partyChildTaskId) return;
+
+    const onExternalUpdate = (event: Event) => {
+      const taskId = (event as CustomEvent<{ taskId?: string }>).detail?.taskId;
+      if (taskId !== partyChildTaskId) return;
+
+      void loadPartyCaseStudyFormDraft(partyChildTaskId).then((stored) => {
+        if (!stored) return;
+        setDraft((current) => ({
+          ...current,
+          answers: { ...current.answers, ...stored.answers },
+        }));
+      });
+    };
+
+    window.addEventListener(
+      PARTY_CASE_STUDY_FORM_CHANGED_EVENT,
+      onExternalUpdate,
+    );
+    return () => {
+      window.removeEventListener(
+        PARTY_CASE_STUDY_FORM_CHANGED_EVENT,
+        onExternalUpdate,
+      );
+    };
+  }, [isParty, partyChildTaskId]);
 
   const persist = useCallback(
     (next: CaseStudyFormDraft) => {
@@ -783,8 +532,21 @@ export function CaseStudyForm({
   const isFirstVisibleStep = navSteps[0] === step;
   const isLastVisibleStep = navSteps[navSteps.length - 1] === step;
   const showStepFooterActions = !partyAdvisory;
-  const sectionCardTitle = (label: string) =>
-    partyAdvisory ? undefined : label;
+
+  const matrixTableProps = {
+    canEditKey,
+    visibleKey: isQuestionVisible,
+    sectionIndex: navSteps.indexOf(step) + 1,
+    sectionTotal: navSteps.length || 1,
+    ...(isParty
+      ? { showPartyColumn: false }
+      : {
+          partyByKey: partyAnswersByKey,
+          showPartyColumn: true,
+          partyContribCount,
+          onRefreshParty: () => setPartyRevision((n) => n + 1),
+        }),
+  };
 
   const formFooterActions = (
     <div className="cs-form-actions-end">
@@ -831,22 +593,25 @@ export function CaseStudyForm({
         <div className="note note-success cs-form-notice">{saveNotice}</div>
       ) : null}
 
-      <CaseStudyMatrixBanner
-        viewerPartyId={viewerPartyId}
-        isParty={!!isParty}
-        partyAdvisory={partyAdvisory}
-        partyContribCount={partyContribCount}
-        onRefreshParty={() => setPartyRevision((n) => n + 1)}
-      />
+      {isParty ? (
+        <CaseStudyMatrixBanner
+          viewerPartyId={viewerPartyId}
+          isParty={!!isParty}
+          partyAdvisory={partyAdvisory}
+          partyContribCount={partyContribCount}
+          onRefreshParty={() => setPartyRevision((n) => n + 1)}
+        />
+      ) : null}
 
       {step === 0 && sectionHasVisibleQuestions("deed") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title={sectionCardTitle("بيانات الصك والعقار")}>
-            <QuestionTable
+          <RegistrationFormCard>
+            <CaseStudyMatrixTable
               section="deed"
+              sectionTitle="بيانات الصك والعقار"
               answers={draft.answers}
               onAnswer={setAnswer}
-              {...questionTableProps}
+              {...matrixTableProps}
             />
             {!isParty ? (
               <RemarksBlock
@@ -878,12 +643,13 @@ export function CaseStudyForm({
 
       {step === 1 && sectionHasVisibleQuestions("survey") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title={sectionCardTitle("الرفع المساحي والطبيعة")}>
-            <QuestionTable
+          <RegistrationFormCard>
+            <CaseStudyMatrixTable
               section="survey"
+              sectionTitle="الرفع المساحي والطبيعة"
               answers={draft.answers}
               onAnswer={setAnswer}
-              {...questionTableProps}
+              {...matrixTableProps}
             />
             {!isParty ? (
               <RemarksBlock
@@ -925,12 +691,13 @@ export function CaseStudyForm({
 
       {step === 2 && sectionHasVisibleQuestions("comp") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title={sectionCardTitle("مكونات العقار")}>
-            <QuestionTable
+          <RegistrationFormCard>
+            <CaseStudyMatrixTable
               section="comp"
+              sectionTitle="مكونات العقار"
               answers={draft.answers}
               onAnswer={setAnswer}
-              {...questionTableProps}
+              {...matrixTableProps}
             />
             {!isParty ? (
               <>
@@ -1008,12 +775,13 @@ export function CaseStudyForm({
 
       {step === 3 && sectionHasVisibleQuestions("occ") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title={sectionCardTitle("الإشغال والإيجار")}>
-            <QuestionTable
+          <RegistrationFormCard>
+            <CaseStudyMatrixTable
               section="occ"
+              sectionTitle="الإشغال والإيجار"
               answers={draft.answers}
               onAnswer={setAnswer}
-              {...questionTableProps}
+              {...matrixTableProps}
             />
             {!isParty ? (
               <div className="cs-form-meter">
@@ -1068,12 +836,13 @@ export function CaseStudyForm({
 
       {step === 4 && sectionHasVisibleQuestions("extra") ? (
         <section className="cs-form-panel">
-          <RegistrationFormCard title={sectionCardTitle("ملاحظات إضافية")}>
-            <QuestionTable
+          <RegistrationFormCard>
+            <CaseStudyMatrixTable
               section="extra"
+              sectionTitle="ملاحظات إضافية"
               answers={draft.answers}
               onAnswer={setAnswer}
-              {...questionTableProps}
+              {...matrixTableProps}
             />
           </RegistrationFormCard>
 

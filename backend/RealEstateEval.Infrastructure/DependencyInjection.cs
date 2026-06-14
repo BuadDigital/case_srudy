@@ -37,6 +37,8 @@ public static class DependencyInjection
         services.AddScoped<IWorkOrderService, WorkOrderService>();
         services.AddScoped<IWorkflowTaskService, WorkflowTaskService>();
         services.AddScoped<ICaseStudyFormService, CaseStudyFormService>();
+        services.AddScoped<IPartyTaskSubmissionService, PartyTaskSubmissionService>();
+        services.AddScoped<IFailureService, FailureService>();
         services.AddScoped<ISystemMaintenanceService, SystemMaintenanceService>();
 
         return services;

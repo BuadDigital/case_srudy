@@ -102,6 +102,13 @@ export function getCachedAssignmentDoc(
   return readCachedDoc("decree", poNumber, propertyId);
 }
 
+export function getCachedDelegationDoc(
+  poNumber: string,
+  propertyId: string,
+): CachedAssignmentDoc | null {
+  return readCachedDoc("delegation", poNumber, propertyId);
+}
+
 export function isImageMime(mimeType: string): boolean {
   return mimeType.startsWith("image/");
 }

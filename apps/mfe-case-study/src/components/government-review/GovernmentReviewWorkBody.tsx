@@ -70,14 +70,18 @@ export function GovernmentReviewWorkBody({
 
   useEffect(() => {
     if (!propertyId) return;
-    setDraft(
-      getOrCreateGovernmentReviewDraft({
-        taskId: task.id,
-        propertyId,
-        poNumber: task.poNumber,
-        courtName: property?.court,
-      }),
-    );
+    let cancelled = false;
+    void getOrCreateGovernmentReviewDraft({
+      taskId: task.id,
+      propertyId,
+      poNumber: task.poNumber,
+      courtName: property?.court,
+    }).then((next) => {
+      if (!cancelled) setDraft(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [task.id, task.poNumber, propertyId, property?.court]);
 
   const locked = draft ? isGovernmentReviewFormLocked(draft.status) : false;
@@ -86,8 +90,9 @@ export function GovernmentReviewWorkBody({
   const persist = useCallback(
     (patch: Parameters<typeof updateGovernmentReviewDraft>[1]) => {
       if (!task.id) return;
-      const next = updateGovernmentReviewDraft(task.id, patch);
-      if (next) setDraft(next);
+      void updateGovernmentReviewDraft(task.id, patch).then((next) => {
+        if (next) setDraft(next);
+      });
     },
     [task.id],
   );

@@ -11,6 +11,7 @@
       "@failures/mfe/*": ["../mfe-failures/src/*"],
       "@settings/mfe": ["../mfe-settings/src/index.ts"],
       "@settings/mfe/*": ["../mfe-settings/src/*"],
+      "@platform/api-client": ["../../packages/api-client/src/index.ts"],
       "@platform/app-shared": ["../../packages/app-shared/src/index.ts"],
       "@platform/app-shared/*": ["../../packages/app-shared/src/*"],
       "@platform/types": ["../../packages/types/src/index.ts"],

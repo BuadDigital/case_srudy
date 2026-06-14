@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@case-study/mfe": "*",
+    "@platform/api-client": "*",
     "@platform/app-shared": "*",
     "@platform/types": "*",
     "@settings/mfe": "*",

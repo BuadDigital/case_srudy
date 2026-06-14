@@ -1,16 +1,17 @@
+import { getCachedPartySubmission } from "@platform/app-shared/prototype/party-submission-api";
 import { MAX_EVALUATOR_PDF_BYTES } from "./evaluator-window-data";
+import {
+  loadEvaluatorSubmission,
+  saveEvaluatorSubmission,
+  type EvaluatorReportMetadata,
+} from "./evaluator-submission-storage";
 
 export type CachedEvaluatorReport = {
   fileName: string;
   mimeType: string;
   dataUrl?: string;
+  sizeBytes?: number;
 };
-
-const STORAGE_PREFIX = "evalEvaluatorReport:";
-
-function storageKey(taskId: string): string {
-  return `${STORAGE_PREFIX}${taskId}`;
-}
 
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -25,13 +26,23 @@ export function getCachedEvaluatorReport(
   taskId: string,
 ): CachedEvaluatorReport | null {
   if (typeof window === "undefined" || !taskId) return null;
-  try {
-    const raw = localStorage.getItem(storageKey(taskId));
-    if (!raw) return null;
-    return JSON.parse(raw) as CachedEvaluatorReport;
-  } catch {
-    return null;
+  const dto = getCachedPartySubmission(taskId);
+  if (!dto) return null;
+  const attachment = dto.payload.reportAttachment as CachedEvaluatorReport | undefined;
+  if (attachment?.fileName) return attachment;
+  const metadata = dto.payload.reportMetadata as EvaluatorReportMetadata | undefined;
+  if (metadata?.fileName) {
+    return {
+      fileName: metadata.fileName,
+      mimeType: metadata.mimeType,
+      sizeBytes: metadata.sizeBytes,
+    };
   }
+  const sub = loadEvaluatorSubmission(taskId);
+  if (sub?.reportFileName) {
+    return { fileName: sub.reportFileName, mimeType: "application/pdf" };
+  }
+  return null;
 }
 
 export async function cacheEvaluatorReport(
@@ -48,23 +59,43 @@ export async function cacheEvaluatorReport(
     return { ok: false, error: "الحجم الأقصى 20 ميجابايت." };
   }
 
-  const payload: CachedEvaluatorReport = {
-    fileName: file.name,
-    mimeType: file.type || "application/pdf",
-  };
+  const current = loadEvaluatorSubmission(taskId);
+  if (!current) {
+    return { ok: false, error: "لا توجد مسودة تقييم." };
+  }
 
   try {
-    payload.dataUrl = await readAsDataUrl(file);
-    localStorage.setItem(storageKey(taskId), JSON.stringify(payload));
+    const dataUrl = await readAsDataUrl(file);
+    const reportAttachment: CachedEvaluatorReport = {
+      fileName: file.name,
+      mimeType: file.type || "application/pdf",
+      dataUrl,
+      sizeBytes: file.size,
+    };
+    const reportMetadata: EvaluatorReportMetadata = {
+      fileName: file.name,
+      mimeType: file.type || "application/pdf",
+      sizeBytes: file.size,
+    };
+    await saveEvaluatorSubmission(
+      {
+        ...current,
+        reportFileName: file.name,
+        reportAttachment,
+      } as typeof current & { reportAttachment: CachedEvaluatorReport },
+      reportMetadata,
+    );
     return { ok: true };
   } catch {
     return { ok: false, error: "تعذّر قراءة الملف." };
   }
 }
 
-export function clearCachedEvaluatorReport(taskId: string): void {
+export async function clearCachedEvaluatorReport(taskId: string): Promise<void> {
   if (typeof window === "undefined" || !taskId) return;
-  localStorage.removeItem(storageKey(taskId));
+  const current = loadEvaluatorSubmission(taskId);
+  if (!current) return;
+  await saveEvaluatorSubmission({ ...current, reportFileName: null });
 }
 
 export function openEvaluatorReportPreview(taskId: string): void {

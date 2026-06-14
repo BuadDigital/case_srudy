@@ -1,18 +1,21 @@
-import {
-  CASE_STUDY_FORM_STEPS,
-  CASE_STUDY_SECTION_QUESTIONS,
-  CASE_STUDY_TABLE_HEADERS,
-  caseStudyFormSummary,
+import { CASE_STUDY_FORM_STEPS, CASE_STUDY_SECTION_QUESTIONS, CASE_STUDY_TABLE_HEADERS, caseStudyFormSummary,
   type CaseStudyFormAnswer,
   type CaseStudyQuestionSection,
 } from "./case-study-form-data";
-import {
-  loadCaseStudyFormDraft,
-  loadPartyCaseStudyFormDraft,
+import { loadCaseStudyFormDraft, loadPartyCaseStudyFormDraft,
   type CaseStudyFormDraft,
   type CaseStudyFormStatus,
 } from "./case-study-form-storage";
 import { childTasksForCaseStudyParent } from "./case-study-party-answers";
+import {
+  fieldInspectionRentalStatusLabel,
+  fieldInspectionStatusLabel,
+  fieldInspectionYesNoLabel,
+} from "./field-inspection-data";
+import {
+  loadFieldInspectionSubmissionSnapshot,
+  type FieldInspectionSubmissionSnapshot,
+} from "./field-inspection-submission-storage";
 import type { PropertyDetailPartyRoleKey } from "./property-detail-parties";
 import {
   migrateDistribution,
@@ -21,19 +24,10 @@ import {
   type WorkflowTaskStatus,
 } from "./tasks-storage";
 import { formatDateAr } from "./po-intake-data";
-
-/** Must match `evaluator-submission-storage` in @evaluator/mfe (no circular import). */
-const EVALUATOR_STORAGE_PREFIX = "evalEvaluatorSubmission:";
-
-/** Must match `engineering-survey-submission-storage` in @engineering-office/mfe (no circular import). */
-const ENGINEERING_SURVEY_STORAGE_PREFIX = "evalEngineeringSurveySubmission:";
-
-/** Must match `government-review-work-storage` (no circular import). */
-const GOVERNMENT_REVIEW_STORAGE_PREFIX = "evalGovernmentReviewSubmission:";
-
-/** Must match `valuation-coordination-work-storage` (no circular import). */
-const VALUATION_COORDINATION_STORAGE_PREFIX =
-  "evalValuationCoordinationSubmission:";
+import { getPartyTaskSubmission, type PartyTaskSubmissionDto } from "@platform/api-client";
+import { workOrdersApiConfig } from "../work-orders-api-config";
+import { fetchGovernmentReviewSubmission } from "./government-review-work-storage";
+import { fetchValuationCoordinationSubmission } from "./valuation-coordination-work-storage";
 
 /** Must match `ENGINEERING_SURVEY_CHECKLIST_ITEMS` in engineering-survey-data (no circular import). */
 const ENGINEERING_SURVEY_CHECKLIST_LABELS = [
@@ -212,12 +206,40 @@ function childForRole(
   );
 }
 
-function loadEvaluatorSubmissionSnapshot(
-  taskId: string,
+function parseEvaluatorPayload(
+  dto: PartyTaskSubmissionDto,
 ): EvaluatorSubmissionSnapshot | null {
+  const payload = dto.payload ?? {};
+  if (typeof payload !== "object" || payload === null) return null;
+  const raw = payload as Record<string, unknown>;
+  return {
+    status: String(raw.status ?? dto.status ?? "draft"),
+    evaluatorPrice: String(raw.evaluatorPrice ?? ""),
+    evaluatorNotes: String(raw.evaluatorNotes ?? ""),
+    reportFileName:
+      typeof raw.reportFileName === "string" ? raw.reportFileName : null,
+    submittedAtUtc:
+      typeof raw.submittedAtUtc === "string"
+        ? raw.submittedAtUtc
+        : dto.submittedAtUtc ?? null,
+    checklist: (raw.checklist ?? {}) as EvaluatorChecklist,
+  };
+}
+
+async function loadEvaluatorSubmissionSnapshot(
+  taskId: string,
+): Promise<EvaluatorSubmissionSnapshot | null> {
+  const config = workOrdersApiConfig();
+  if (config) {
+    const result = await getPartyTaskSubmission(config, taskId);
+    if (result.ok) {
+      return parseEvaluatorPayload(result.data);
+    }
+  }
+
   if (typeof window === "undefined" || !taskId) return null;
   try {
-    const raw = localStorage.getItem(`${EVALUATOR_STORAGE_PREFIX}${taskId}`);
+    const raw = localStorage.getItem(`evalEvaluatorSubmission:${taskId}`);
     if (!raw) return null;
     return JSON.parse(raw) as EvaluatorSubmissionSnapshot;
   } catch {
@@ -225,45 +247,85 @@ function loadEvaluatorSubmissionSnapshot(
   }
 }
 
-function loadEngineeringSurveySubmissionSnapshot(
+async function loadEngineeringSurveySubmissionSnapshot(
   taskId: string,
-): EngineeringSurveySubmissionSnapshot | null {
-  if (typeof window === "undefined" || !taskId) return null;
-  try {
-    const raw = localStorage.getItem(`${ENGINEERING_SURVEY_STORAGE_PREFIX}${taskId}`);
-    if (!raw) return null;
-    return JSON.parse(raw) as EngineeringSurveySubmissionSnapshot;
-  } catch {
-    return null;
-  }
+): Promise<EngineeringSurveySubmissionSnapshot | null> {
+  const config = workOrdersApiConfig();
+  if (!config || !taskId) return null;
+
+  const result = await getPartyTaskSubmission(config, taskId);
+  if (!result.ok) return null;
+
+  const payload = result.data.payload ?? {};
+  const status =
+    (payload.status as EngineeringSurveySubmissionSnapshot["status"] | undefined)
+    ?? (result.data.status as EngineeringSurveySubmissionSnapshot["status"])
+    ?? "draft";
+
+  return {
+    status,
+    latitude: String(payload.latitude ?? ""),
+    longitude: String(payload.longitude ?? ""),
+    surveyReportFileName: String(payload.surveyReportFileName ?? ""),
+    siteLetterFileName: String(payload.siteLetterFileName ?? ""),
+    siteConfirmed: payload.siteConfirmed === true,
+    checklist: Array.isArray(payload.checklist)
+      ? (payload.checklist as EngineeringSurveyChecklistRow[])
+      : [],
+    returnNote:
+      typeof payload.returnNote === "string"
+        ? payload.returnNote
+        : result.data.returnNote,
+    updatedAtUtc:
+      typeof payload.updatedAtUtc === "string"
+        ? payload.updatedAtUtc
+        : result.data.updatedAtUtc,
+    submittedAtUtc:
+      typeof payload.submittedAtUtc === "string"
+        ? payload.submittedAtUtc
+        : result.data.submittedAtUtc,
+  };
 }
 
-function loadGovernmentReviewSubmissionSnapshot(
-  taskId: string,
-): GovernmentReviewSubmissionSnapshot | null {
-  if (typeof window === "undefined" || !taskId) return null;
-  try {
-    const raw = localStorage.getItem(`${GOVERNMENT_REVIEW_STORAGE_PREFIX}${taskId}`);
-    if (!raw) return null;
-    return JSON.parse(raw) as GovernmentReviewSubmissionSnapshot;
-  } catch {
-    return null;
-  }
+async function loadGovernmentReviewSubmissionSnapshot(
+  child: WorkflowTask,
+): Promise<GovernmentReviewSubmissionSnapshot | null> {
+  if (!child.propertyId) return null;
+  const submission = await fetchGovernmentReviewSubmission(child.id);
+  if (!submission) return null;
+  return {
+    status: submission.status,
+    visitStatus: submission.visitStatus,
+    visitDate: submission.visitDate,
+    courtName: submission.courtName,
+    keysStatus: submission.keysStatus,
+    keysDescription: submission.keysDescription,
+    accessBlockReason: submission.accessBlockReason,
+    reviewNotes: submission.reviewNotes,
+    submittedAtUtc: submission.submittedAtUtc,
+    updatedAtUtc: submission.updatedAtUtc,
+  };
 }
 
-function loadValuationCoordinationSubmissionSnapshot(
-  taskId: string,
-): ValuationCoordinationSubmissionSnapshot | null {
-  if (typeof window === "undefined" || !taskId) return null;
-  try {
-    const raw = localStorage.getItem(
-      `${VALUATION_COORDINATION_STORAGE_PREFIX}${taskId}`,
-    );
-    if (!raw) return null;
-    return JSON.parse(raw) as ValuationCoordinationSubmissionSnapshot;
-  } catch {
-    return null;
-  }
+async function loadValuationCoordinationSubmissionSnapshot(
+  child: WorkflowTask,
+): Promise<ValuationCoordinationSubmissionSnapshot | null> {
+  if (!child.propertyId) return null;
+  const submission = await fetchValuationCoordinationSubmission(child.id);
+  if (!submission) return null;
+  return {
+    status: submission.status,
+    receiptConfirmed: submission.receiptConfirmed,
+    receiptDate: submission.receiptDate,
+    inspectorName: submission.inspectorName,
+    appraiserName: submission.appraiserName,
+    priority: submission.priority,
+    coordinationNotes: submission.coordinationNotes,
+    inspectorInstructions: submission.inspectorInstructions,
+    appraiserInstructions: submission.appraiserInstructions,
+    submittedAtUtc: submission.submittedAtUtc,
+    updatedAtUtc: submission.updatedAtUtc,
+  };
 }
 
 function evaluatorStatusLabel(status: string): string {
@@ -595,6 +657,139 @@ function buildFromEvaluator(
   };
 }
 
+function buildFromFieldInspection(
+  submission: FieldInspectionSubmissionSnapshot,
+  childTask?: WorkflowTask | null,
+): PropertyDetailPartySubmission {
+  const fields: PropertyDetailPartySubmission["fields"] = [
+    {
+      label: "حالة المعاينة",
+      value: fieldInspectionStatusLabel(submission.status),
+    },
+  ];
+
+  if (submission.propertyType.trim()) {
+    fields.push({ label: "نوع العقار", value: submission.propertyType.trim() });
+  }
+  if (submission.areaDistrict.trim()) {
+    fields.push({ label: "المنطقة / الحي", value: submission.areaDistrict.trim() });
+  }
+  if (submission.actualAreaSqm.trim()) {
+    fields.push({
+      label: "المساحة الفعلية",
+      value: `${submission.actualAreaSqm.trim()} م²`,
+      ltr: true,
+    });
+  }
+  if (submission.structuralCondition.trim()) {
+    fields.push({
+      label: "الحالة الإنشائية",
+      value: submission.structuralCondition.trim(),
+    });
+  }
+  if (submission.hasMovableItems !== null) {
+    fields.push({
+      label: "منقولات داخل العقار",
+      value: fieldInspectionYesNoLabel(submission.hasMovableItems),
+    });
+  }
+  if (submission.isCurrentlyRented) {
+    fields.push({
+      label: "العقار مؤجر",
+      value: fieldInspectionRentalStatusLabel(submission.isCurrentlyRented),
+    });
+  }
+  if (submission.accessDifficulty.trim()) {
+    fields.push({
+      label: "إمكانية الوصول",
+      value: submission.accessDifficulty.trim(),
+    });
+  }
+  if (submission.avgPricePerSqm.trim()) {
+    fields.push({
+      label: "متوسط سعر م²",
+      value: `${submission.avgPricePerSqm.trim()} ر.س`,
+      ltr: true,
+    });
+  }
+  if (submission.marketActivityLevel.trim()) {
+    fields.push({
+      label: "نشاط السوق",
+      value: submission.marketActivityLevel.trim(),
+    });
+  }
+  if (submission.responsiblePersonName.trim()) {
+    fields.push({
+      label: "المسؤول عن التوقيع",
+      value: submission.responsiblePersonName.trim(),
+    });
+  }
+  if (submission.responsiblePersonRole.trim()) {
+    fields.push({
+      label: "صفة المسؤول",
+      value: submission.responsiblePersonRole.trim(),
+    });
+  }
+  if (submission.submittedAtUtc) {
+    fields.push({
+      label: "تاريخ الإرسال",
+      value: formatDateAr(submission.submittedAtUtc.slice(0, 10)),
+      ltr: true,
+    });
+  }
+  if (childTask) {
+    fields.push({
+      label: "حالة المهمة",
+      value: workflowStatusLabel(childTask.status),
+    });
+  }
+
+  const remarks: PropertyDetailPartySubmission["remarks"] = [];
+  if (submission.marketNotes.trim()) {
+    remarks.push({ label: "ملاحظات سوقية", value: submission.marketNotes.trim() });
+  }
+  if (submission.generalNotes.trim()) {
+    remarks.push({ label: "ملاحظات عامة", value: submission.generalNotes.trim() });
+  }
+
+  const signedPhotos = submission.signedDocumentPhotos.filter((p) => p.trim());
+  if (signedPhotos.length > 0) {
+    remarks.push({
+      label: "صور المستندات",
+      value: signedPhotos.join("، "),
+    });
+  }
+
+  const propertyPhotos = Object.values(submission.propertyPhotos).filter((p) =>
+    p.trim(),
+  );
+  if (propertyPhotos.length > 0) {
+    remarks.push({
+      label: "صور العقار",
+      value: propertyPhotos.join("، "),
+    });
+  }
+
+  const hasData =
+    submission.status !== "draft" ||
+    Boolean(submission.propertyType.trim()) ||
+    Boolean(submission.structuralCondition.trim()) ||
+    remarks.length > 0;
+
+  return {
+    roleKey: "inspection",
+    hasData,
+    emptyReason: hasData ? undefined : "لم يُقدَّم بعد",
+    statusLabel: fieldInspectionStatusLabel(submission.status),
+    taskStatusLabel: childTask
+      ? workflowStatusLabel(childTask.status)
+      : undefined,
+    fields,
+    answers: [],
+    remarks,
+  };
+}
+
 function buildFromGovernmentReview(
   submission: GovernmentReviewSubmissionSnapshot,
   childTask?: WorkflowTask | null,
@@ -852,7 +1047,7 @@ export type PropertyDetailPartySubmissionsMap = Record<
   PropertyDetailPartySubmission
 >;
 
-/** Load all party-role submissions in parallel (forms via API, appraiser via localStorage). */
+/** Load all party-role submissions in parallel (forms + party task submissions via API). */
 export async function loadPropertyDetailPartySubmissions(input: {
   parentTask: WorkflowTask | null;
   allTasks: WorkflowTask[];
@@ -882,7 +1077,7 @@ export async function loadPropertyDetailPartySubmission(input: {
   if (roleKey === "coordinator") {
     const child = childForRole(parentTask, allTasks, "coordinator");
     if (child) {
-      const submission = loadValuationCoordinationSubmissionSnapshot(child.id);
+      const submission = await loadValuationCoordinationSubmissionSnapshot(child);
       if (submission) {
         return buildFromValuationCoordination(submission, child);
       }
@@ -908,7 +1103,7 @@ export async function loadPropertyDetailPartySubmission(input: {
   }
 
   if (roleKey === "appraisal") {
-    const submission = loadEvaluatorSubmissionSnapshot(child.id);
+    const submission = await loadEvaluatorSubmissionSnapshot(child.id);
     if (!submission) {
       return emptySubmission(roleKey, "لم يُقدَّم بعد");
     }
@@ -916,7 +1111,7 @@ export async function loadPropertyDetailPartySubmission(input: {
   }
 
   if (roleKey === "survey") {
-    const submission = loadEngineeringSurveySubmissionSnapshot(child.id);
+    const submission = await loadEngineeringSurveySubmissionSnapshot(child.id);
     if (!submission) {
       return emptySubmission(roleKey, "لم يُقدَّم بعد");
     }
@@ -924,11 +1119,19 @@ export async function loadPropertyDetailPartySubmission(input: {
   }
 
   if (roleKey === "government") {
-    const submission = loadGovernmentReviewSubmissionSnapshot(child.id);
+    const submission = await loadGovernmentReviewSubmissionSnapshot(child);
     if (!submission) {
       return emptySubmission(roleKey, "لم يُقدَّم بعد");
     }
     return buildFromGovernmentReview(submission, child);
+  }
+
+  if (roleKey === "inspection") {
+    const submission = await loadFieldInspectionSubmissionSnapshot(child.id);
+    if (!submission) {
+      return emptySubmission(roleKey, "لم يُقدَّم بعد");
+    }
+    return buildFromFieldInspection(submission, child);
   }
 
   const draft = await loadPartyCaseStudyFormDraft(child.id);

@@ -1,4 +1,16 @@
-import { localFailuresRepository } from "./failures-local-storage";
+import {
+  approveFailureAsync,
+  createFailureAsync,
+  deleteFailuresForPoAsync,
+  getPropertyFailureFromCache,
+  loadFailuresFromBackend,
+  reportBourseObstructionAsync,
+  resolveFailureAsync,
+  returnFailureAsync,
+  submitFailureForReviewAsync,
+  suspendFailureAsync,
+  upgradeFailureToInternalAsync,
+} from "./failures-api";
 import type {
   BourseObstructionInput,
   CreateFailureInput,
@@ -6,94 +18,69 @@ import type {
   ResolveFailureInput,
 } from "./failures-types";
 
-export type FailuresRepository = {
-  loadFailures(): FailureRecord[];
-  createFailure(input: CreateFailureInput): FailureRecord;
-  upgradeFailureToInternal(id: string): FailureRecord | null;
-  submitFailureForReview(id: string): FailureRecord | null;
-  resolveFailure(id: string, input: ResolveFailureInput): FailureRecord | null;
-  suspendFailure(id: string, note: string): FailureRecord | null;
-  approveFailure(id: string, finalNote: string): FailureRecord | null;
-  returnFailure(id: string, finalNote: string): FailureRecord | null;
-  deleteFailuresForPo(poNumber: string): void;
-  getPropertyFailure(
-    poNumber: string,
-    propertyId: string,
-  ): FailureRecord | null;
-  reportBourseObstructionToSupervisor(
-    input: BourseObstructionInput,
-  ): FailureRecord;
-};
-
-let activeRepository: FailuresRepository = localFailuresRepository;
-
-/** Active failures backend — localStorage today; swap via `setFailuresRepository` when API exists. */
-export function getFailuresRepository(): FailuresRepository {
-  return activeRepository;
+export async function loadFailures(): Promise<FailureRecord[]> {
+  return loadFailuresFromBackend();
 }
 
-/** Test hook / future API migration — replace the active repository implementation. */
-export function setFailuresRepository(repository: FailuresRepository): void {
-  activeRepository = repository;
+export async function createFailure(
+  input: CreateFailureInput,
+): Promise<FailureRecord> {
+  return createFailureAsync(input);
 }
 
-export function loadFailures(): FailureRecord[] {
-  return getFailuresRepository().loadFailures();
+export async function upgradeFailureToInternal(
+  id: string,
+): Promise<FailureRecord | null> {
+  return upgradeFailureToInternalAsync(id);
 }
 
-export function createFailure(input: CreateFailureInput): FailureRecord {
-  return getFailuresRepository().createFailure(input);
-}
-
-export function upgradeFailureToInternal(id: string): FailureRecord | null {
-  return getFailuresRepository().upgradeFailureToInternal(id);
-}
-
-export function resolveFailure(
+export async function resolveFailure(
   id: string,
   input: ResolveFailureInput,
-): FailureRecord | null {
-  return getFailuresRepository().resolveFailure(id, input);
+): Promise<FailureRecord | null> {
+  return resolveFailureAsync(id, input);
 }
 
-export function suspendFailure(
+export async function suspendFailure(
   id: string,
   note: string,
-): FailureRecord | null {
-  return getFailuresRepository().suspendFailure(id, note);
+): Promise<FailureRecord | null> {
+  return suspendFailureAsync(id, note);
 }
 
-export function submitFailureForReview(id: string): FailureRecord | null {
-  return getFailuresRepository().submitFailureForReview(id);
+export async function submitFailureForReview(
+  id: string,
+): Promise<FailureRecord | null> {
+  return submitFailureForReviewAsync(id);
 }
 
-export function approveFailure(
+export async function approveFailure(
   id: string,
   finalNote: string,
-): FailureRecord | null {
-  return getFailuresRepository().approveFailure(id, finalNote);
+): Promise<FailureRecord | null> {
+  return approveFailureAsync(id, finalNote);
 }
 
-export function returnFailure(
+export async function returnFailure(
   id: string,
   finalNote: string,
-): FailureRecord | null {
-  return getFailuresRepository().returnFailure(id, finalNote);
+): Promise<FailureRecord | null> {
+  return returnFailureAsync(id, finalNote);
 }
 
-export function deleteFailuresForPo(poNumber: string): void {
-  getFailuresRepository().deleteFailuresForPo(poNumber);
+export async function deleteFailuresForPo(poNumber: string): Promise<void> {
+  return deleteFailuresForPoAsync(poNumber);
 }
 
 export function getPropertyFailure(
   poNumber: string,
   propertyId: string,
 ): FailureRecord | null {
-  return getFailuresRepository().getPropertyFailure(poNumber, propertyId);
+  return getPropertyFailureFromCache(poNumber, propertyId);
 }
 
-export function reportBourseObstructionToSupervisor(
+export async function reportBourseObstructionToSupervisor(
   input: BourseObstructionInput,
-): FailureRecord {
-  return getFailuresRepository().reportBourseObstructionToSupervisor(input);
+): Promise<FailureRecord> {
+  return reportBourseObstructionAsync(input);
 }

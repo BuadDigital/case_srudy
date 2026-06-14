@@ -112,11 +112,8 @@ export function resolveMyTasksChrome(
   }
   if (parts[0] === "case-study" && parts[1]) {
     decodeTaskParam(parts[1]);
-    const base =
-      "دراسة الحالة / المعاملات النشطة / دراسة حالة العقارات";
-    const deed = options?.deedLabel?.trim();
     return {
-      breadcrumb: deed ? `${base} / ${deed}` : base,
+      breadcrumb: "",
       title: "",
     };
   }

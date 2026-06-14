@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<WorkflowTask> WorkflowTasks => Set<WorkflowTask>();
     public DbSet<CaseStudyForm> CaseStudyForms => Set<CaseStudyForm>();
     public DbSet<CaseStudyInfoRolesConfig> CaseStudyInfoRolesConfigs => Set<CaseStudyInfoRolesConfig>();
+    public DbSet<PartyTaskSubmission> PartyTaskSubmissions => Set<PartyTaskSubmission>();
+    public DbSet<PropertyFailure> PropertyFailures => Set<PropertyFailure>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -151,6 +153,38 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.ToTable("CaseStudyInfoRolesConfigs");
             e.Property(x => x.MatrixJson).HasColumnType("jsonb");
             e.Property(x => x.NotesJson).HasColumnType("jsonb");
+        });
+
+        builder.Entity<PartyTaskSubmission>(e =>
+        {
+            e.ToTable("PartyTaskSubmissions");
+            e.Property(x => x.Kind).HasMaxLength(64);
+            e.Property(x => x.Status).HasMaxLength(32);
+            e.Property(x => x.PoNumber).HasMaxLength(64);
+            e.Property(x => x.PayloadJson).HasColumnType("jsonb");
+            e.Property(x => x.ReturnNote).HasMaxLength(4000);
+            e.HasIndex(x => x.WorkflowTaskId).IsUnique();
+            e.HasIndex(x => x.PoNumber);
+        });
+
+        builder.Entity<PropertyFailure>(e =>
+        {
+            e.ToTable("PropertyFailures");
+            e.Property(x => x.PoNumber).HasMaxLength(64);
+            e.Property(x => x.PropertyId).HasMaxLength(128);
+            e.Property(x => x.DeedNumber).HasMaxLength(128);
+            e.Property(x => x.Title).HasMaxLength(512);
+            e.Property(x => x.ProblemTypeId).HasMaxLength(64);
+            e.Property(x => x.Severity).HasMaxLength(32);
+            e.Property(x => x.RaisedByRole).HasMaxLength(128);
+            e.Property(x => x.InternalNote).HasMaxLength(4000);
+            e.Property(x => x.FinalNote).HasMaxLength(4000);
+            e.Property(x => x.ResolutionReason).HasMaxLength(4000);
+            e.Property(x => x.ContinueInstructions).HasMaxLength(4000);
+            e.Property(x => x.Status).HasMaxLength(32);
+            e.Property(x => x.Specialist).HasMaxLength(256);
+            e.HasIndex(x => x.PoNumber);
+            e.HasIndex(x => new { x.PoNumber, x.PropertyId });
         });
 
         builder.Entity<CaseStudyForm>(e =>

@@ -1,14 +1,17 @@
 import type { ValuationCoordinationSubmission } from "./valuation-coordination-work-data";
-import { submitValuationCoordinationSubmission } from "./valuation-coordination-work-storage";
-import { completeChildTask } from "./tasks-storage";
+import {
+  saveValuationCoordinationSubmission,
+  submitValuationCoordinationSubmission,
+} from "./valuation-coordination-work-storage";
 
-/** يُنهي استلام منسق التقييم ويُكمل مهمة الطرف. */
+/** يُنهي استلام منسق التقييم عبر PartyTaskSubmissions — الخادم يُكمل مهمة الطرف. */
 export async function finalizeValuationCoordinationSubmission(
   taskId: string,
+  draft?: ValuationCoordinationSubmission,
 ): Promise<ValuationCoordinationSubmission | null> {
-  const submitted = submitValuationCoordinationSubmission(taskId);
-  if (!submitted) return null;
-
-  await completeChildTask(taskId);
-  return submitted;
+  if (draft) {
+    const saved = await saveValuationCoordinationSubmission(draft);
+    if (!saved) return null;
+  }
+  return submitValuationCoordinationSubmission(taskId);
 }

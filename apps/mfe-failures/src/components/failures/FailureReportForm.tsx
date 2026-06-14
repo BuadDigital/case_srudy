@@ -29,7 +29,7 @@ export function FailureReportForm({
 
   function handleSubmit() {
     if (!problemTypeId) return;
-    createFailure({
+    void createFailure({
       poNumber,
       propertyId,
       deedNumber,
@@ -38,8 +38,7 @@ export function FailureReportForm({
       raisedByRole,
       internalNote: note,
       specialist,
-    });
-    onDone();
+    }).then(() => onDone());
   }
 
   return (

@@ -81,23 +81,19 @@ export function FailuresView() {
   }, [items]);
 
   function handleSubmit(id: string) {
-    submitFailureForReview(id);
-    refresh();
+    void submitFailureForReview(id).then(() => refresh());
   }
 
   function handleUpgrade(id: string) {
-    upgradeFailureToInternal(id);
-    refresh();
+    void upgradeFailureToInternal(id).then(() => refresh());
   }
 
   function handleApprove(id: string) {
-    approveFailure(id, supervisorNote[id] ?? "");
-    refresh();
+    void approveFailure(id, supervisorNote[id] ?? "").then(() => refresh());
   }
 
   function handleReturn(id: string) {
-    returnFailure(id, supervisorNote[id] ?? "");
-    refresh();
+    void returnFailure(id, supervisorNote[id] ?? "").then(() => refresh());
   }
 
   async function handleSuspend(id: string) {
@@ -114,12 +110,13 @@ export function FailuresView() {
   function handleResolve(id: string) {
     const draft = resolveDraft[id] ?? { reason: "", instructions: "" };
     if (!draft.reason.trim() || !draft.instructions.trim()) return;
-    resolveFailure(id, {
+    void resolveFailure(id, {
       resolutionReason: draft.reason,
       continueInstructions: draft.instructions,
+    }).then(() => {
+      setResolveOpen((o) => ({ ...o, [id]: false }));
+      refresh();
     });
-    setResolveOpen((o) => ({ ...o, [id]: false }));
-    refresh();
   }
 
   function toggleResolve(id: string) {

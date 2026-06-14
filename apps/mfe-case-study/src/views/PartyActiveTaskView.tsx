@@ -25,6 +25,10 @@ import type { WorkflowTask } from "../lib/prototype/tasks-storage";
 import type { PartyAppraisalExtensions } from "../lib/party-appraisal-extensions";
 import type { PartyEngineeringSurveyExtensions } from "../lib/party-engineering-survey-extensions";
 import {
+  FIELD_INSPECTION_SUBMISSION_CHANGED_EVENT,
+} from "../lib/case-study-field-inspection-events";
+import { fieldInspectionTaskStatusBadge } from "../lib/prototype/field-inspection-work-queue";
+import {
   GOVERNMENT_REVIEW_SUBMISSION_CHANGED_EVENT,
 } from "../lib/prototype/government-review-work-storage";
 import { governmentReviewTaskStatusBadge } from "../lib/prototype/government-review-work-queue";
@@ -70,6 +74,10 @@ function queueConfig(
       hidePageTitle: true,
       tableHint: "اضغط الصف لفتح نموذج المعاينة في صفحة مستقلة.",
       fullPageTaskPath: propertyInspectionWorkspacePath,
+      statusColumnLabel: "الحالة",
+      getTaskStatusBadge: (task) =>
+        fieldInspectionTaskStatusBadge(task.id, task.status),
+      refreshOnWindowEvents: [FIELD_INSPECTION_SUBMISSION_CHANGED_EVENT],
     };
   }
 
@@ -80,7 +88,7 @@ function queueConfig(
       tableHint: "اضغط الصف لفتح مهمة المراجعة في صفحة مستقلة.",
       fullPageTaskPath: governmentReviewWorkspacePath,
       statusColumnLabel: "الحالة",
-      getTaskStatusBadge: (task) => governmentReviewTaskStatusBadge(task.id),
+      getTaskStatusBadge: (task) => governmentReviewTaskStatusBadge(task),
       refreshOnWindowEvents: [GOVERNMENT_REVIEW_SUBMISSION_CHANGED_EVENT],
     };
   }

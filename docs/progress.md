@@ -1,7 +1,7 @@
-# Project Progress — Ejada Internal (نظام إجادة الداخلي)
+# Project Progress — (نظام إجادة الداخلي)
 
-**Last updated:** 9 June 2026 (F3 complete + dead-code cleanup + info-roles API)  
-**Repo:** [BuadDigital/case_srudy](https://github.com/BuadDigital/case_srudy) · branch `main`
+**Last updated:** 14 June 2026 (party submissions API + engineering MFE + property detail)  
+**Repo:** [BuadDigital/case_srudy](https://github.com/BuadDigital/case_srudy) · branch `feature/failures-mfe-and-platform-split` (local work may be ahead of `main`)  
 **Audience:** Project manager and developers — single handoff document.
 
 ---
@@ -11,9 +11,9 @@
 
 | Layer             | What is real today                                                                                                               | What is prototype-only                                                              |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **PostgreSQL**    | Users, profiles (HR/Proc/CRM), work orders, properties, contacts, courts catalog, **workflow tasks**, **case study form drafts**, **info-role matrix** | Failures (تعذرات), file bytes, messages/KPI data                                    |
-| **ASP.NET API**   | Auth (JWT), users, work orders, courts, **workflow tasks**, **case study forms**, **case-study-info-roles**                    | No messaging, search, attachments blob, failures                                    |
-| **Next.js shell** | Host + layout; **@case-study/mfe** owns API-ready PO + active-transaction UI; case study workspace + party tasks in shell        | Failures, attachment previews; sidebar **role switcher** for demo                  |
+| **PostgreSQL**    | Users, profiles (HR/Proc/CRM), work orders, properties, contacts, courts catalog, **workflow tasks**, **case study form drafts**, **info-role matrix**, **party task submissions** (5 kinds) | Failures (تعذرات), **file bytes** (PDFs / PO attachments), messages/KPI/financial/keys/survey admin data |
+| **ASP.NET API**   | Auth (JWT), users, work orders, courts, **workflow tasks**, **case study forms**, **case-study-info-roles**, **party-task-submissions** | No messaging, search, **attachments blob**, failures, platform placeholder modules |
+| **Next.js shell** | Host + layout; domain MFEs via `[page]/page.tsx`; case study + **full-page party routes**; property detail with parties + case study report | Failures list; attachment **previews** (browser); sidebar **role switcher** for demo; survey/keys/messages/KPI/financial mock pages |
 
 
 **Demo path:** Login → PO list/intake → properties per PO → **البيانات الأولية** → **استعلام بورصة** (حالة الصك: فعال / غير فعال → متعذر) → **توزيع المعاملات** → **دراسة حالة العقارات** → **نموذج الدراسة** → party tasks → **إدارة التعذرات** (supervisor) → **جميع حقول النظام** / **الإعدادات**.
@@ -51,17 +51,26 @@ Three separate concepts; **do not merge** in UI labels or data models.
 ```
 property_study/
 ├── apps/
-│   ├── shell/               # Next.js 16 host (@platform/shell) — login, layout, nav, mock routes
-│   ├── mfe-case-study/      # @case-study/mfe — API-ready PO + المعاملات النشطة
+│   ├── shell/               # Next.js 16 host (@platform/shell) — login, layout, party-task host routes
+│   ├── mfe-case-study/      # @case-study/mfe — PO, active transactions, property detail, party queues
+│   ├── mfe-engineering-office/  # @engineering-office/mfe — الرفع المساحي (map, checklist, submit/reopen)
+│   ├── mfe-evaluator/       # @evaluator/mfe — تقييم العقار
+│   ├── mfe-dashboard/       # @dashboard/mfe — لوحة التحكم (PO stats API + mock VR rows)
 │   ├── mfe-failures/        # @failures/mfe — إدارة التعذرات (localStorage + repository port)
 │   ├── mfe-settings/        # @settings/mfe — الإعدادات + جميع حقول النظام
+│   ├── mfe-survey/          # @survey/mfe — mock survey offices
+│   ├── mfe-keys/            # @keys/mfe — mock keys
+│   ├── mfe-financial/       # @financial/mfe — mock financial
+│   ├── mfe-kpi/             # @kpi/mfe — mock KPI
+│   ├── mfe-messages/        # @messages/mfe — mock messages
+│   ├── mfe-valuation/       # @valuation/mfe — mock valuation requests list
 │   └── plan/                # Frontend planning notes (FRONTEND.md)
 ├── backend/
 │   ├── RealEstateEval.Api/  # ASP.NET Core 10 API
 │   └── plan/                # Backend infra notes (LOCAL_INFRA.md)
 ├── packages/
-│   ├── app-shared/          # @platform/app-shared — PrototypeContext, registration, shared nav/constants
-│   ├── api-client/          # fetch wrappers (auth, users, work-orders, courts, workflow-tasks, case-study-forms)
+│   ├── app-shared/          # PrototypeContext, registration, party-submission-api cache, work-orders-read
+│   ├── api-client/          # auth, users, work-orders, courts, workflow-tasks, case-study-forms, party-task-submissions, …
 │   ├── auth-client/         # JWT session + AppAuthGate
 │   ├── design-system/       # prototype.css, registration.css, StatusBadge
 │   └── types/               # PageId, RoleId, user/org DTO types, CASE_STUDY_READY_NAV
@@ -100,9 +109,68 @@ property_study/
 - Frontend: `packages/api-client/src/case-study-info-roles.ts`; `apps/mfe-settings/src/lib/prototype/case-study-info-roles-storage.ts` reads/writes API (no `localStorage`).
 - `SystemMaintenanceService` clears info-roles on dev reset.
 
-**Still in shell (not split yet):** case study workspace/form (`CaseStudyForm`), party task queues (`PartyActiveTaskWork`), government review, evaluator, mock pages (survey, keys, messages, …).
+**Still in shell (by design):** case study workspace route, party-task host (`PartyActiveTaskViewHost`), full-page party Next.js routes, layout chrome. Party **logic** lives in `@case-study/mfe`, `@engineering-office/mfe`, `@evaluator/mfe`.
 
 **Known package coupling (acceptable for now):** `app-shared` imports `WorkflowTask` types from MFE (`import type`); `PrototypeContext` uses `@platform/shell/prototype-auth` for demo persona login.
+
+### F4 platform MFEs + party submissions (10–14 Jun 2026)
+
+**Platform domain packages (F4b — logical split, single deploy)**
+
+- **`@dashboard/mfe`**, **`@survey/mfe`**, **`@keys/mfe`**, **`@financial/mfe`**, **`@kpi/mfe`**, **`@messages/mfe`**, **`@valuation/mfe`** — each owns its `*View.tsx`; shell `[page]/page.tsx` imports from `@*/mfe` only.
+- **`@evaluator/mfe`** — appraiser work panel, advisory panel, submission storage.
+- **`@engineering-office/mfe`** — engineering survey queue extensions, work panel, Google Maps, 13-item checklist, submit/reopen.
+- **F4c:** Removed legacy orphan `*View.tsx` copies from shell (layout-only: `AppShell`, `AppBreadcrumb`, `NavIcon`). Documented in `FRONTEND.md`.
+- **F4d:** Dashboard decoupled from `@case-study/mfe` — reads PO/property stats via `@platform/app-shared/prototype/work-orders-read.ts` + api-client.
+- **F5 Module Federation** — still deferred.
+
+**Full-page party work routes (shell)**
+
+| Route | Party |
+| ----- | ----- |
+| `/active-survey/[taskId]` | المكتب الهندسي |
+| `/property-appraisal/[taskId]` | المقيم العقاري |
+| `/property-inspection/[taskId]` | المعاين الميداني |
+| `/government-review/[taskId]` | المراجع الحكومي |
+| `/valuation-coordination/[taskId]` | منسق التقييم |
+
+**Backend — party task submissions API**
+
+- Entity **`PartyTaskSubmissions`** + migration `20260614074003_AddPartyTaskSubmissions`.
+- **`PartyTaskSubmissionsController`** — `GET/PUT /api/party-task-submissions/{taskId}`, `POST …/submit`, `POST …/reopen` (reopen: **engineering-survey** + **property-appraisal** only).
+- **`PartyTaskSubmissionService`** — validates payload per kind; on submit marks workflow task **completed**.
+- Supported kinds: `engineering-survey`, `property-appraisal`, `government-review`, `valuation-coordination`, `field-inspection`.
+- Frontend: `packages/api-client/src/party-task-submissions.ts`; shared cache `packages/app-shared/src/prototype/party-submission-api.ts`.
+
+**All five party work flows off localStorage (primary path = API)**
+
+| Kind | MFE / storage module |
+| ---- | -------------------- |
+| Engineering survey | `@engineering-office/mfe` → `engineering-survey-submission-storage.ts` |
+| Property appraisal | `@evaluator/mfe` → `evaluator-submission-storage.ts` |
+| Government review | `government-review-work-storage.ts` (delegation letters still **localStorage**) |
+| Valuation coordination | `valuation-coordination-work-storage.ts` |
+| Field inspection | `field-inspection-submission-storage.ts` (+ local cache fallback) |
+
+**Property detail page (`PoPropertyDetailPage`) — UX**
+
+- **الأطراف** tab: six party cards + **`PartyRoleDetailPanel`** loads each role’s submission via API (`property-detail-party-submissions.ts`).
+- **تقرير دراسة الحالة** tab: read-only **`CaseStudyReportDocument`** (all 37 questions + answers from `CaseStudyForms` API) via `PropertyDetailCaseStudyReport.tsx`.
+- Removed **نسبة إتمام البيانات** progress bars from report tab (misleading 50% track states).
+- Timeline + party status sidebar driven from workflow tasks API; assignee **names** still resolved from `distribution-party-accounts.ts` (IDs from API).
+
+**UI polish (same period)**
+
+- RTL sidebar active indicator on the **right**.
+- Breadcrumb dedup in `AppShell.tsx`; engineering situation stats in top bar (removed duplicate row above queue table).
+- Google Maps: `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in `apps/shell/.env.local` (gitignored); default coords Jeddah Al-Balad for empty coordinates.
+
+**Still prototype after F4**
+
+- Failures (تعذرات), suspended transactions, internal delegation letters, evaluator recall list, PO intake draft, **PDF/file bytes** (metadata in API JSON only).
+- Platform pages: survey, keys, messages, financial, KPI, valuation-requests list — mock constants.
+- Property detail **تقييم العقار** tab — placeholder (appraiser data exists in API but tab not wired).
+- Server-driven nav roles (sidebar switcher remains for demo).
 
 ---
 
@@ -195,6 +263,8 @@ Seeder: `backend/RealEstateEval.Infrastructure/Data/DataSeeder.cs` (runs on API 
 | **Case study**       | `WorkOrders`, `WorkOrderProperties`, `PropertyContacts`, `CourtCatalogEntries`              |
 | **Workflow**         | `WorkflowTasks` — phases, distribution JSON, obstruction fields, parent/child links         |
 | **Case study forms** | `CaseStudyForms` — specialist + party drafts per task (answers JSON, step, status)          |
+| **Info roles**       | `CaseStudyInfoRolesConfigs` — singleton matrix JSON (parties × 37 questions)                |
+| **Party submissions**| `PartyTaskSubmissions` — per child workflow task: kind, status, payload JSON, return note   |
 
 
 ### 3.2 Work order schema (current model)
@@ -210,6 +280,8 @@ Seeder: `backend/RealEstateEval.Infrastructure/Data/DataSeeder.cs` (runs on API 
 `**WorkflowTasks`:** `PoNumber`, `PropertyId`, `Kind`, `Phase`, `Status`, `Title`, distribution parties, `ParentTaskId`, `ObstructionReason`, `ObstructionPriorPhase`, assignee fields, timestamps.
 
 `**CaseStudyForms`:** `TaskId`, `IsParty`, form JSON blob (answers, steps, remarks, signatures).
+
+`**PartyTaskSubmissions`:** `WorkflowTaskId` (unique), `Kind`, `Status` (`draft` / `submitted` / `reopened`), `PayloadJson`, `ReturnNote`, `PropertyId`, `PoNumber`, timestamps. Kinds: `engineering-survey`, `property-appraisal`, `government-review`, `valuation-coordination`, `field-inspection`.
 
 ### 3.3 Migration history (apply in order)
 
@@ -230,13 +302,15 @@ Seeder: `backend/RealEstateEval.Infrastructure/Data/DataSeeder.cs` (runs on API 
 | `20260608095833_SyncPendingModelChanges`           | Model sync                                                                 |
 | `20260608105222_RestoreOptionalAssignmentSpecialist` | Restore optional specialist                                            |
 | `20260609095419_AddCaseStudyInfoRolesConfig`       | **Info-role matrix** (`CaseStudyInfoRolesConfigs`, JSONB)                  |
+| `20260614074003_AddPartyTaskSubmissions`           | **Party work submissions** (`PartyTaskSubmissions`)                          |
 
 
 ### 3.4 Not stored in database
 
 - Failure records (إدارة التعذرات — `@failures/mfe` localStorage via `failures-local-storage.ts`)
-- Assignment/reg/decree **file content** (filenames only; preview cache in localStorage)
+- Assignment/reg/decree/**survey/appraiser PDF file content** (filenames/metadata in DB or JSON; bytes in browser localStorage or base64 in payload)
 - PO intake draft (`evalPoIntakeDraft`)
+- Internal delegation letters, suspended transactions, evaluator recall list
 - Messages, KPI, survey, valuation mock entities
 
 ---
@@ -354,13 +428,26 @@ Seeder: `backend/RealEstateEval.Infrastructure/Data/DataSeeder.cs` (runs on API 
 **Storage:** `CaseStudyInfoRolesConfigs` table (`MatrixJson`, `NotesJson` JSONB).  
 **Frontend:** `packages/api-client/src/case-study-info-roles.ts`, `apps/mfe-settings/src/lib/prototype/case-study-info-roles-storage.ts`.
 
+### 4.8 Party task submissions — `PartyTaskSubmissionsController`
+
+
+| Method | Route                                           | Notes                          |
+| ------ | ----------------------------------------------- | ------------------------------ |
+| GET    | `/api/party-task-submissions/{taskId}`          | Load submission for child task |
+| PUT    | `/api/party-task-submissions/{taskId}`          | Save draft payload             |
+| POST   | `/api/party-task-submissions/{taskId}/submit`   | Validate + submit; completes workflow task |
+| POST   | `/api/party-task-submissions/{taskId}/reopen`   | Engineering + appraiser only   |
+
+
+**Service:** `PartyTaskSubmissionService.cs` · **Frontend:** `packages/api-client/src/party-task-submissions.ts`, `packages/app-shared/src/prototype/party-submission-api.ts`, per-MFE storage modules.
+
 ---
 
 ## 5. Frontend — routes & screens
 
 **App:** `apps/shell` (host) + `apps/mfe-case-study` (`@case-study/mfe`) · **Router:** Next.js App Router · **Styling:** `prototype.css` + `registration.css` + Tailwind (`globals.css`).
 
-**F3 routing:** PO and active-transaction views are imported from `@case-study/mfe` in shell `page.tsx` files; shell keeps `AppShell`, login, case-study workspace, party queues, and mock pages.
+**F3 routing:** PO and active-transaction views import from `@case-study/mfe`; platform views from `@*/mfe` in `[page]/page.tsx`; shell keeps layout, login, case-study workspace, full-page party routes, and mock platform pages.
 
 ### 5.1 Top-level routes
 
@@ -634,6 +721,16 @@ Partial property updates use `propertyToEnfathDto` when bourse not completed —
 
 Applies to: معاينة العقار · المراجعة الحكومية · استلام التقييم · تقييم العقار · الرفع المساحي (after تأكيد التوزيع creates child tasks).
 
+#### Property detail — `/po/[poNumber]/property/[propertyId]`
+
+- **Hero + tabs** (`PoPropertyDetailTabs.tsx`): basic data, documents (filenames from PO API), linked properties, failures (localStorage), **الأطراف**, **تقرير دراسة الحالة**, appraisal placeholder, photos placeholder, audit log.
+- **الأطراف:** `buildPropertyDetailPartyCards` from workflow tasks + distribution; click card → `loadPropertyDetailPartySubmission` (API for specialist form + all five party submission kinds).
+- **تقرير دراسة الحالة:** `PropertyDetailCaseStudyReport` embeds printable report (`buildCaseStudyReportModel` + `CaseStudyReportDocument`) — read-only; edit via **فتح دراسة الحالة للتعديل** → `/case-study/[taskId]`.
+
+#### Full-page party work (shell routes)
+
+Each party queue row opens a dedicated full-page task (mirrors engineering pattern): survey, appraisal, inspection, government review, valuation coordination — work body + submit via **PartyTaskSubmissions** API.
+
 ---
 
 ## 9. ادوات النظام (`/system-tools`)
@@ -688,7 +785,7 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | `@failures/mfe`           | إدارة التعذرات — repository port, localStorage, `FailureReportForm`, API stub              |
 | `@settings/mfe`           | users, courts, info-roles, system-tools views + storage                                    |
 | `@platform/app-shared`    | `PrototypeContext`, registration, nav/constants, `prototypeKeys`, `active-transactions`    |
-| `@platform/api-client`    | `auth`, `users`, `work-orders`, `courts`, `workflow-tasks`, `case-study-forms`, `case-study-info-roles`, `failures` (stub), field-errors |
+| `@platform/api-client`    | `auth`, `users`, `work-orders`, `courts`, `workflow-tasks`, `case-study-forms`, `case-study-info-roles`, `party-task-submissions`, `failures` (stub), field-errors |
 | `@platform/auth-client`   | Session + `AppAuthGate`                                                                      |
 | `@platform/design-system` | CSS + `StatusBadge`                                                                          |
 | `@platform/types`         | `PageId`, `RoleId`, `CASE_STUDY_READY_NAV`, users, organization types                        |
@@ -712,20 +809,21 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | Case study workspace + form + report                   | Yes (forms) | API                                  | `/case-study/[taskId]`              |
 | علاقة المستخدم بالمعلومة                               | Yes         | API                                  | جميع حقول النظام                    |
 | Party queues + نموذج الدراسة tab                       | Yes         | API                                  | المعاملات النشطة                    |
+| Party work submit (5 flows) + property detail parties  | Yes         | API (`PartyTaskSubmissions`)         | Full-page routes + PO property detail |
 | Users / org                                            | Yes         | API                                  | الإعدادات                           |
 | Courts                                                 | Yes         | API                                  | جميع حقول النظام (placeholder flag) |
 | Failures (إدارة التعذرات)                              | No          | localStorage                         | Normal                              |
 | System tools                                           | No          | Static catalog                       | جميع حقول النظام                    |
-| Survey, keys, VR, field-form, messages, financial, KPI | No          | Mocks                                | Red                                 |
+| Survey, keys, VR list, messages, financial, KPI       | No          | Mocks                                | Red                                 |
 
 
 ### 12.1 Backend ↔ Frontend alignment (how many backends?)
 
-**Short answer:** one API monolith today (`RealEstateEval.Api`) with **8 live domains** (+1 dev-only). You need **~5 more domains** for production-ready current screens, or **~14 total new pieces** for full sidebar alignment (including red placeholder modules).
+**Short answer:** one API monolith today (`RealEstateEval.Api`) with **9 live domains** (+1 dev-only). You need **~4 more domains** for production-ready current screens, or **~13 total new pieces** for full sidebar alignment (including red placeholder modules).
 
 **Not 15 separate servers** — extend the same API with new controllers/services until a future split (see `docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md`).
 
-#### Live backend domains today (8 + dev)
+#### Live backend domains today (9 + dev)
 
 
 | #   | Domain             | Controller                      | Frontend consumers                                            |
@@ -733,14 +831,15 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | 1   | Auth               | `AuthController`                | `/login`, `prototype-auth.ts` silent login                    |
 | 2   | Users              | `UsersController`               | `/users`, registration flows in app-shared                    |
 | 3   | Work orders        | `WorkOrdersController`          | `@case-study/mfe` PO list, intake, properties, bourse         |
-| 4   | Workflow tasks     | `WorkflowTasksController`       | MFE active queues, party tasks, distribution                  |
-| 5   | Case study forms   | `CaseStudyFormsController`      | `/case-study/[taskId]`, party نموذج الدراسة tab               |
+| 4   | Workflow tasks     | `WorkflowTasksController`       | MFE active queues, party tasks, distribution, property detail timeline |
+| 5   | Case study forms   | `CaseStudyFormsController`      | `/case-study/[taskId]`, party نموذج الدراسة tab, property detail report tab |
 | 6   | Case study info roles | `CaseStudyInfoRolesController` | `/case-study-info-roles`, `CaseStudyForm` matrix              |
-| 7   | Courts             | `CourtsController`              | `/courts`                                                     |
-| 8   | System maintenance | `SystemController`              | `@settings/mfe` `clear-all-system-data.ts` → `DELETE /api/system/data` (dev only) |
+| 7   | Party submissions  | `PartyTaskSubmissionsController`| Engineering, appraiser, gov review, valuation coord, field inspection |
+| 8   | Courts             | `CourtsController`              | `/courts`                                                     |
+| 9   | System maintenance | `SystemController`              | `@settings/mfe` `clear-all-system-data.ts` → `DELETE /api/system/data` (dev only) |
 
 
-**Core transaction path is aligned:** PO → البيانات الأولية → استعلام بورصة → توزيع → دراسة حالة → party tasks.
+**Core transaction path is aligned:** PO → البيانات الأولية → استعلام بورصة → توزيع → دراسة حالة → party tasks (save/submit in PostgreSQL) → property detail read-back.
 
 #### Frontend `PageId` coverage (27 routes in `packages/types`)
 
@@ -748,9 +847,9 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 | Status                            | Count | Pages / notes                                                                                                                                                                                                                                                    |
 | --------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Fully API-backed**              | 15    | Above + `case-study-info-roles`                                                                                                                                                                                                                                  |
-| **Partial API**                   | 4     | `dashboard` (PO/property stats API; team + VR mock), `bourse-inquiry` (task obstruction API; failure row localStorage), PO attachments (filename in DB; preview bytes in browser), `users` (list/create OK; no edit/deactivate)                                  |
+| **Partial API**                   | 6     | `dashboard` (PO/property stats API; team + VR mock), `bourse-inquiry` (task obstruction API; failure row localStorage), PO/party attachments (filename in DB/JSON; **PDF bytes in browser**), `users` (list/create OK; no edit/deactivate), party full-page routes (submission API; gov **delegation letters** localStorage), property detail **تقييم العقار** tab (placeholder) |
 | **Browser-only — needs backend**  | 1     | `failures`                                                                                                                                                                                                                                                       |
-| **Mock / static — needs backend** | 8     | `survey`, `keys`, `valuation-requests`, `field-form`, `messages`, `financial`, `kpi`, plus `internal-delegation-letters` (government review, localStorage)                                                                                                       |
+| **Mock / static — needs backend** | 7     | `survey`, `keys`, `valuation-requests`, `messages`, `financial`, `kpi` (field inspection **party work** is API-backed; `/field-form` demo route separate)                                                                                                       |
 | **Intentionally no backend**      | 1     | `system-tools` (static field catalog)                                                                                                                                                                                                                            |
 
 
@@ -761,10 +860,10 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 
 | Phase                        | Count | Items                                                                                                                   | Blocks                                             |
 | ---------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| **1 — live prototype gaps**  | 2     | Failures API; attachments/blob API (صك، تكليف، سجل عيني)                                                                | `failures`, بورصة تعذر end-to-end, file previews   |
+| **1 — live prototype gaps**  | 2     | Failures API; attachments/blob API (صك، تكليف، survey/appraiser PDFs)                                                 | `failures`, بورصة تعذر end-to-end, file previews   |
 | **2 — users & auth**         | 3     | Users PATCH (edit/deactivate/search); PROC org teams persistence; `/api/auth/me` + JWT roles (replace sidebar switcher) | `/users` completeness, real RBAC                   |
-| **3 — richer screens**       | 2     | Delegation letters API; dashboard aggregates API                                                                        | `government-review` letters, `dashboard` team load |
-| **4 — red nav placeholders** | 7     | Messages, KPI, financial, survey offices, keys, valuation requests, field-form persistence                              | Placeholder sidebar pages                          |
+| **3 — richer screens**       | 3     | Delegation letters API; property detail appraisal tab wiring; dashboard aggregates API                                | gov review letters, property detail, `dashboard`   |
+| **4 — red nav placeholders** | 6     | Messages, KPI, financial, survey offices, keys, valuation requests list                                                 | Placeholder sidebar pages                          |
 | **Deferred**                 | 1     | Court case parties on PO/property (§16)                                                                                 | أطراف التنفيذ                                      |
 
 
@@ -773,11 +872,11 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 
 | Question                                        | Answer                                        |
 | ----------------------------------------------- | --------------------------------------------- |
-| Backend domains that exist today?               | **8** (+1 dev-only system reset)              |
-| Frontend areas aligned with API?                | **15 full** + **4 partial**                   |
-| New domains for production-ready current flows? | **5** (Phase 1 + Phase 2)                     |
-| New domains for full sidebar alignment?         | **~15** (Phases 1–4 + deferred court parties) |
-| Target controller count in one API?             | **~13** (7 today + ~6 new)                    |
+| Backend domains that exist today?               | **9** (+1 dev-only system reset)              |
+| Frontend areas aligned with API?                | **15 full** + **6 partial**                   |
+| New domains for production-ready current flows? | **4** (Phase 1 + Phase 2)                     |
+| New domains for full sidebar alignment?         | **~13** (Phases 1–4 + deferred court parties) |
+| Target controller count in one API?             | **~14** (9 today + ~5 new)                    |
 
 
 **Seeder path (corrected):** `backend/RealEstateEval.Infrastructure/Data/DataSeeder.cs` — seeds org admins + all sidebar `@ejadah.dev` HR personas + Jeddah survey PROC provider (`survey.jeddah@ejadah.dev`; `UserName` = email, not Arabic display name).
@@ -907,7 +1006,19 @@ Applies to: معاينة العقار · المراجعة الحكومية · ا
 30. **Docs (9 Jun 2026):** `apps/plan/FRONTEND.md` — F3 marked complete; packages table updated.
 31. **`@settings/mfe` + `@failures/mfe`:** settings (users, courts, info-roles, system-tools) and failures (إدارة التعذرات) split into own packages; failures repository port + `FAILURES_CHANGED_EVENT`; dummy data unchanged (`evalFailureRecords`).
 32. **Cleanup pass:** removed duplicate API helpers from case-study `work-orders-api-config`, dead evaluator checklist validation, stale doc paths (`README`, `progress`, PM review).
+33. **F4b platform MFEs (Jun 2026):** `@dashboard`, `@survey`, `@keys`, `@financial`, `@kpi`, `@messages`, `@valuation` — views moved out of shell; `[page]/page.tsx` imports `@*/mfe` only.
+34. **`@evaluator/mfe` + `@engineering-office/mfe`:** appraiser and engineering survey packages; party extensions wired into case-study queues and shell full-page routes.
+35. **F4c shell cleanup:** orphan platform `*View.tsx` removed from shell (layout components only); `FRONTEND.md` checklist marked complete.
+36. **F4d dashboard decoupling:** `@dashboard/mfe` reads work orders via `work-orders-read` + api-client (no import from `@case-study/mfe`).
+37. **Party submissions API (14 Jun 2026):** `PartyTaskSubmissions` table + `PartyTaskSubmissionsController`; migration `20260614074003_AddPartyTaskSubmissions`; submit completes workflow task; reopen for engineering + appraiser.
+38. **Five party flows on API:** engineering survey, property appraisal, government review, valuation coordination, field inspection — frontend storage modules call `party-submission-api.ts` (shared cache in app-shared).
+39. **Full-page party routes:** `/active-survey/[taskId]`, `/property-appraisal/[taskId]`, `/property-inspection/[taskId]`, `/government-review/[taskId]`, `/valuation-coordination/[taskId]`.
+40. **Property detail — الأطراف:** party cards + `PartyRoleDetailPanel` with per-role API submissions (`property-detail-party-submissions.ts`).
+41. **Property detail — تقرير دراسة الحالة:** read-only `CaseStudyReportDocument` on same page (`PropertyDetailCaseStudyReport.tsx`); removed misleading progress bars.
+42. **Engineering survey UX:** Google Maps panel, 13-item checklist, situation topbar, specialist reopen via `EngineeringSurveyAdvisoryPanel`; Jeddah default coordinates.
+43. **UI polish:** RTL sidebar active indicator; breadcrumb dedup; engineering queue duplicate stats row removed.
+44. **Still deferred after F4:** failures API, attachment blobs, server-driven roles, platform mock pages (survey/keys/messages/KPI/financial), property photos, appraisal summary tab on property detail.
 
 ---
 
-*This file was verified against the codebase on 9 June 2026. Update when `main` changes materially.*
+*This file was verified against the codebase on 14 June 2026. Update when `main` changes materially.*

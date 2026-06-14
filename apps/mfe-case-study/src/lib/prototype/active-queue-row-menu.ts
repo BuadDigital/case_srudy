@@ -92,9 +92,7 @@ export function buildCaseStudyQueueRowMoreItems(options: {
       id: "assign-task",
       label: "إسناد مهمة",
       onClick: () =>
-        options.router.push(
-          `${caseStudyWorkspacePath(options.task.id)}?tab=parties`,
-        ),
+        options.router.push(caseStudyWorkspacePath(options.task.id)),
     },
   ];
 }

@@ -10,12 +10,12 @@ export function validateBourseObstructionReason(
   return null;
 }
 
-export function submitBourseObstruction(input: {
+export async function submitBourseObstruction(input: {
   poNumber: string;
   propertyId: string;
   deedNumber: string;
   reason: string;
   specialist: string;
-}): void {
-  reportBourseObstructionToSupervisor(input);
+}): Promise<void> {
+  await reportBourseObstructionToSupervisor(input);
 }

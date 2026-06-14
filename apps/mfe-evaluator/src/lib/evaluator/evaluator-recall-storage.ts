@@ -1,4 +1,4 @@
-import { reopenEvaluatorSubmission } from "./evaluator-submission-storage";
+import { reopenEvaluatorSubmissionViaApi } from "./evaluator-submission-storage";
 
 export type EvaluatorRecallStatus = "pending" | "approved" | "rejected";
 
@@ -110,7 +110,7 @@ export function approveEvaluatorRecall(taskId: string): EvaluatorRecallRequest |
   };
   items[idx] = updated;
   saveAll(items);
-  reopenEvaluatorSubmission(taskId);
+  void reopenEvaluatorSubmissionViaApi(taskId, current.reason);
   notifyEvaluatorRecallChanged();
   return updated;
 }

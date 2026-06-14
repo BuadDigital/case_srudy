@@ -14,7 +14,10 @@ export async function suspendPropertyTransaction(input: {
   const { failure } = input;
   if (isPropertySuspended(failure.poNumber, failure.propertyId)) return false;
 
-  const suspended = suspendFailure(failure.id, input.supervisorNote.trim());
+  const suspended = await suspendFailure(
+    failure.id,
+    input.supervisorNote.trim(),
+  );
   if (!suspended) return false;
 
   await suspendWorkflowTasksForProperty(

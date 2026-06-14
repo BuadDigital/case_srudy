@@ -90,15 +90,19 @@ export function ValuationCoordinationWorkBody({
 
   useEffect(() => {
     if (!propertyId) return;
-    setDraft(
-      getOrCreateValuationCoordinationDraft({
-        taskId: task.id,
-        propertyId,
-        poNumber: task.poNumber,
-        inspectorName,
-        appraiserName,
-      }),
-    );
+    let cancelled = false;
+    void getOrCreateValuationCoordinationDraft({
+      taskId: task.id,
+      propertyId,
+      poNumber: task.poNumber,
+      inspectorName,
+      appraiserName,
+    }).then((next) => {
+      if (!cancelled) setDraft(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [
     task.id,
     task.poNumber,
@@ -113,10 +117,15 @@ export function ValuationCoordinationWorkBody({
   const persist = useCallback(
     (patch: Parameters<typeof updateValuationCoordinationDraft>[1]) => {
       if (!task.id) return;
-      const next = updateValuationCoordinationDraft(task.id, patch);
-      if (next) setDraft(next);
+      void updateValuationCoordinationDraft(task.id, {
+        ...patch,
+        inspectorName,
+        appraiserName,
+      }).then((next) => {
+        if (next) setDraft(next);
+      });
     },
-    [task.id],
+    [task.id, inspectorName, appraiserName],
   );
 
   const submit = useCallback(async (): Promise<boolean> => {
@@ -137,7 +146,10 @@ export function ValuationCoordinationWorkBody({
 
     hostRef.current?.onSavingChange?.(true);
     setFormError(null);
-    const submitted = await finalizeValuationCoordinationSubmission(task.id);
+    const submitted = await finalizeValuationCoordinationSubmission(
+      task.id,
+      withAssignees,
+    );
     hostRef.current?.onSavingChange?.(false);
 
     if (submitted) {

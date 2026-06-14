@@ -167,6 +167,18 @@ export async function loadPartyCaseStudyFormDraft(
   return dtoToDraft(result.data);
 }
 
+export const PARTY_CASE_STUDY_FORM_CHANGED_EVENT =
+  "party-case-study-form-changed";
+
+function notifyPartyCaseStudyFormChanged(taskId: string): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(PARTY_CASE_STUDY_FORM_CHANGED_EVENT, {
+      detail: { taskId },
+    }),
+  );
+}
+
 export async function savePartyCaseStudyFormDraft(
   draft: CaseStudyFormDraft,
 ): Promise<CaseStudyFormDraft | null> {
@@ -182,5 +194,7 @@ export async function savePartyCaseStudyFormDraft(
     draftToDto(payload),
   );
   if (!result.ok) return null;
-  return dtoToDraft(result.data);
+  const saved = dtoToDraft(result.data);
+  notifyPartyCaseStudyFormChanged(draft.taskId);
+  return saved;
 }

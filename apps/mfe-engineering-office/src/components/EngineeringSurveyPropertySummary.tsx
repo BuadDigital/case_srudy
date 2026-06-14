@@ -1,77 +1,87 @@
 "use client";
 
 import type { PoPropertyIntake } from "@case-study/mfe";
-import { formatPropertyDeedDisplay } from "@case-study/mfe";
-import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
-
-function InfoCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="eng-office-info-cell">
-      <div className="eng-office-info-lbl">{label}</div>
-      <div className="eng-office-info-val">{value || "—"}</div>
-    </div>
-  );
-}
+import {
+  boundariesAvailabilityLabel,
+  formatPropertyDeedDisplay,
+  restrictionsPresentLabel,
+  showsCourtFields,
+  type PoIntakeRecord,
+} from "@case-study/mfe";
+import {
+  FieldBox,
+  FieldsGrid,
+  InfoBox,
+  SectionDivider,
+  SectionHeader,
+} from "@case-study/mfe/components/po-intake/PropertyDetailFields";
 
 export function EngineeringSurveyPropertySummary({
   property,
+  record,
 }: {
   property: PoPropertyIntake | undefined;
+  record?: PoIntakeRecord;
 }) {
   if (!property) {
     return (
-      <RegistrationFormCard title="بيانات العقار">
-        <p className="po-properties-hint">جاري تحميل بيانات الصك…</p>
-      </RegistrationFormCard>
+      <InfoBox icon="ℹ">جاري تحميل بيانات الصك…</InfoBox>
     );
   }
 
   const deedLabel = formatPropertyDeedDisplay(property);
+  const restrictions = restrictionsPresentLabel(property.restrictionsPresent);
+  const courtLine = [property.court, property.circuit]
+    .filter(Boolean)
+    .join(" · ");
+  const showCourt =
+    record != null && showsCourtFields(record.assignmentType);
 
   return (
     <>
-      <RegistrationFormCard title="بيانات الصك">
-        <div className="eng-office-info-grid">
-          <InfoCell label="رقم الصك" value={deedLabel} />
-          <InfoCell label="تاريخ الصك" value={property.deedDate || "—"} />
-          <InfoCell label="حالة الصك" value={property.deedStatus || "—"} />
-          <InfoCell label="اسم المالك" value={property.ownerName || "—"} />
-          <InfoCell
-            label="القيود على العقار"
-            value={property.restrictionsPresent?.trim() || "لا توجد قيود"}
-          />
-        </div>
-      </RegistrationFormCard>
+      <SectionHeader>بيانات الصك</SectionHeader>
+      <FieldsGrid>
+        <FieldBox label="رقم الصك" value={deedLabel} ltr />
+        <FieldBox label="تاريخ الصك" value={property.deedDate} ltr />
+        <FieldBox label="حالة الصك">
+          {property.deedStatus.trim() ? (
+            <span className="pd-badge pd-badge-teal">{property.deedStatus}</span>
+          ) : null}
+        </FieldBox>
+        <FieldBox label="اسم المالك" value={property.ownerName} />
+        <FieldBox label="حالة الملك" value={property.deedStatus} />
+        <FieldBox
+          label="القيود على العقار"
+          value={restrictions}
+          emptyLabel="لا توجد قيود"
+        />
+      </FieldsGrid>
 
-      <RegistrationFormCard title="بيانات الموقع">
-        <div className="eng-office-info-grid">
-          <InfoCell label="المدينة" value={property.city} />
-          <InfoCell label="الحي" value={property.district} />
-          <InfoCell
-            label="المحكمة / الدائرة"
-            value={
-              [property.court, property.circuit].filter(Boolean).join(" - ") ||
-              "—"
-            }
-          />
-          <InfoCell
-            label="توفر الحدود"
-            value={property.boundariesAvailability || "—"}
-          />
-        </div>
-      </RegistrationFormCard>
+      <SectionDivider />
+      <SectionHeader>بيانات الموقع</SectionHeader>
+      <FieldsGrid>
+        <FieldBox label="المدينة" value={property.city} />
+        <FieldBox label="الحي" value={property.district} />
+        {showCourt ? (
+          <FieldBox label="المحكمة / الدائرة" value={courtLine} />
+        ) : null}
+        <FieldBox
+          label="توفر الحدود"
+          value={boundariesAvailabilityLabel(property.boundariesAvailability)}
+        />
+      </FieldsGrid>
 
-      <RegistrationFormCard title="البيانات المساحية">
-        <div className="eng-office-info-grid">
-          <InfoCell label="التصنيف" value={property.classification || "—"} />
-          <InfoCell label="النوع / الاستخدام" value={property.propertyType || "—"} />
-          <InfoCell
-            label="المساحة الإجمالية"
-            value={property.area ? `${property.area} م²` : "—"}
-          />
-          <InfoCell label="رقم المهمة" value={property.taskNumber || "—"} />
-        </div>
-      </RegistrationFormCard>
+      <SectionDivider />
+      <SectionHeader>البيانات المساحية</SectionHeader>
+      <FieldsGrid>
+        <FieldBox label="التصنيف" value={property.classification} />
+        <FieldBox label="النوع / الاستخدام" value={property.propertyType} />
+        <FieldBox
+          label="المساحة الإجمالية"
+          value={property.area.trim() ? `${property.area.trim()} م²` : ""}
+        />
+        <FieldBox label="رقم المهمة" value={property.taskNumber} ltr />
+      </FieldsGrid>
     </>
   );
 }

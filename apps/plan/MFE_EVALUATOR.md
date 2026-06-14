@@ -59,7 +59,7 @@
 
 | File | Note |
 |------|------|
-| `components/views/ValuationRequestsView.tsx` | `real-estate-appraiser` role filter — future `@valuation/mfe` per platform plan |
+| `@valuation/mfe` → `ValuationRequestsView` | `real-estate-appraiser` role filter — wired in shell `[page]/page.tsx` |
 | `lib/query/prototype-queries.ts` | Shared task/PO queries — shell or `api-client`, not evaluator-owned |
 | `packages/design-system/.../prototype.css` | `.evaluator-*`, `.appraiser-*` styles (~56 rules) — keep in design-system until F5 |
 

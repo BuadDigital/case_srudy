@@ -19,6 +19,8 @@ export type PartyEngineeringSurveyExtensions = {
     def: PartyTaskPageDef;
     childTask: WorkflowTask;
     hostRef: RefObject<PartyEngineeringSurveyWorkHostRef | null>;
+    deedNumber: string;
+    onFailureSubmitted?: () => void;
   }) => ReactNode;
   isSurveyLocked: (taskId: string, saving: boolean) => boolean;
 };

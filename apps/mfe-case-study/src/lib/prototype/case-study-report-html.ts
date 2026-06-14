@@ -1,7 +1,3 @@
-import {
-  CASE_STUDY_SIGNATURE_IMAGE,
-  CASE_STUDY_STAMP_IMAGE,
-} from "./case-study-form-data";
 import type { CaseStudyReportModel } from "./case-study-report-model";
 
 export type CaseStudyReportPrintOptions = {
@@ -67,18 +63,10 @@ function renderMark(checked: boolean): string {
   return `<span class="cs-report-mark${checked ? " checked" : ""}">${checked ? "✓" : ""}</span>`;
 }
 
-function assetUrl(path: string, origin?: string): string {
-  if (!origin) return path;
-  return `${origin.replace(/\/$/, "")}${path}`;
-}
-
 export function buildCaseStudyReportPrintHtml(
   model: CaseStudyReportModel,
-  options?: CaseStudyReportPrintOptions,
+  _options?: CaseStudyReportPrintOptions,
 ): string {
-  const origin = options?.origin;
-  const signatureSrc = assetUrl(CASE_STUDY_SIGNATURE_IMAGE, origin);
-  const stampSrc = assetUrl(CASE_STUDY_STAMP_IMAGE, origin);
   const sectionsHtml = model.sections
     .map((section) => {
       const rows = section.rows
@@ -111,14 +99,6 @@ export function buildCaseStudyReportPrintHtml(
     })
     .join("");
 
-  const locationRow =
-    model.propertyLocation || model.propertyType
-      ? `<tr>
-          ${model.propertyLocation ? `<th>الموقع</th><td>${escapeHtml(model.propertyLocation)}</td>` : "<th></th><td></td>"}
-          ${model.propertyType ? `<th>نوع العقار</th><td>${escapeHtml(model.propertyType)}</td>` : "<th></th><td></td>"}
-        </tr>`
-      : "";
-
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -128,54 +108,7 @@ export function buildCaseStudyReportPrintHtml(
 </head>
 <body>
 <article class="cs-report-doc">
-  <header class="cs-report-header">
-    <div class="cs-report-brand">
-      <span class="cs-report-brand-mark">إ</span>
-      <div>
-        <h1 class="cs-report-title">${escapeHtml(model.title)}</h1>
-        <p class="cs-report-subtitle">${escapeHtml(model.providerName)}</p>
-      </div>
-    </div>
-    <table class="cs-report-meta-table">
-      <tbody>
-        <tr>
-          <th>اسم مزود الخدمة</th><td>${escapeHtml(model.providerName)}</td>
-          <th>رقم الطلب</th><td>${escapeHtml(model.requestNumber)}</td>
-        </tr>
-        <tr>
-          <th>تاريخ الطلب</th><td>${escapeHtml(model.requestDate)}</td>
-          <th>رقم الصك</th><td>${escapeHtml(model.deedNumber)}</td>
-        </tr>
-        ${locationRow}
-        ${
-          model.assignmentSpecialist && model.assignmentSpecialist !== "—"
-            ? `<tr>
-          <th>أخصائي الإسناد</th><td colspan="3">${escapeHtml(model.assignmentSpecialist)}</td>
-        </tr>`
-            : ""
-        }
-      </tbody>
-    </table>
-  </header>
   ${sectionsHtml}
-  <section class="cs-report-section cs-report-section--approval">
-    <h2 class="cs-report-section-title">الاعتماد والتوقيع</h2>
-    <div class="cs-report-approval">
-      <p class="note">${escapeHtml(model.approval.declarationText)}</p>
-      <table class="cs-form-sig-table">
-        <thead><tr>
-          <th>رقم الصك</th><th>معتمد التقرير</th><th>التاريخ</th><th>التوقيع</th><th>ختم الشركة</th>
-        </tr></thead>
-        <tbody><tr>
-          <td><span class="cs-form-sig-value">${escapeHtml(model.approval.deedNumber)}</span></td>
-          <td><span class="cs-form-sig-value">${escapeHtml(model.approval.approverName)}</span></td>
-          <td><span class="cs-form-sig-value">${escapeHtml(model.approval.reportDate)}</span></td>
-          <td><img class="cs-form-sig-img cs-form-sig-img--signature" src="${escapeHtml(signatureSrc)}" alt="توقيع معتمد التقرير" /></td>
-          <td><img class="cs-form-sig-img cs-form-sig-img--stamp" src="${escapeHtml(stampSrc)}" alt="ختم الشركة" /></td>
-        </tr></tbody>
-      </table>
-    </div>
-  </section>
 </article>
 <script>window.onload=function(){window.print();};</script>
 </body>

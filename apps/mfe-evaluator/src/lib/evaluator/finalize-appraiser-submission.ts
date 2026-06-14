@@ -9,12 +9,16 @@ import {
 import { clearEvaluatorRecall } from "./evaluator-recall-storage";
 import type { EvaluatorSubmission } from "./evaluator-window-data";
 
+export type FinalizeAppraiserResult =
+  | { ok: true; submission: EvaluatorSubmission }
+  | { ok: false; message: string };
+
 /** يرسل تقييم المقيم + إجابات الاستدلال لأخصائي دراسة الحالة. */
 export async function finalizeAppraiserSubmission(
   appraisalTaskId: string,
-): Promise<EvaluatorSubmission | null> {
-  const submitted = submitEvaluatorSubmission(appraisalTaskId);
-  if (!submitted) return null;
+): Promise<FinalizeAppraiserResult> {
+  const result = await submitEvaluatorSubmission(appraisalTaskId);
+  if (!result.ok) return result;
 
   clearEvaluatorRecall(appraisalTaskId);
 
@@ -27,7 +31,7 @@ export async function finalizeAppraiserSubmission(
     });
   }
 
-  return submitted;
+  return result;
 }
 
 export function hasSubmittedAppraisalForChild(

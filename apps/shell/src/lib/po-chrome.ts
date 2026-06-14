@@ -29,6 +29,19 @@ function poTrailBase(poNumber: string): BreadcrumbSegment[] {
   ];
 }
 
+export function buildPoPropertyDetailSegments(
+  poNumber: string,
+  deedLabel?: string,
+): BreadcrumbSegment[] {
+  const segments: BreadcrumbSegment[] = [...poTrailBase(poNumber)];
+  const deed = deedLabel?.trim();
+  if (deed) {
+    const ltr = !/[\u0600-\u06FF]/.test(deed);
+    segments.push({ label: deed, current: true, ltr });
+  }
+  return segments;
+}
+
 export function resolvePoChrome(
   pathname: string,
   options?: PoChromeOptions,
@@ -114,13 +127,8 @@ export function resolvePoChrome(
 
   if (parts.length === 4) {
     const deed = options?.deedLabel?.trim();
-    const segments: BreadcrumbSegment[] = [...poTrailBase(poNumber)];
-    if (deed) {
-      const ltr = !/[\u0600-\u06FF]/.test(deed);
-      segments.push({ label: deed, current: true, ltr });
-    }
     return {
-      segments,
+      segments: buildPoPropertyDetailSegments(poNumber, deed),
       title: "",
       propertyDetail: { poNumber, propertyId },
     };

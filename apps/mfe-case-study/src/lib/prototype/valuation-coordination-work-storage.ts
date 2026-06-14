@@ -1,9 +1,17 @@
+import { notifyTasksChanged } from "./tasks-storage";
+import {
+  fetchPartySubmission,
+  getCachedPartySubmission,
+  payloadFromDto,
+  persistPartySubmissionPayload,
+  prefetchPartySubmissionsForTasks,
+  setCachedPartySubmission,
+  submitPartySubmission,
+} from "@platform/app-shared/prototype/party-submission-api";
 import {
   createValuationCoordinationDraft,
   type ValuationCoordinationSubmission,
 } from "./valuation-coordination-work-data";
-
-const STORAGE_PREFIX = "evalValuationCoordinationSubmission:";
 
 export const VALUATION_COORDINATION_SUBMISSION_CHANGED_EVENT =
   "valuation-coordination-submission-changed";
@@ -16,52 +24,66 @@ function notifyChanged(): void {
   }
 }
 
-function storageKey(taskId: string): string {
-  return `${STORAGE_PREFIX}${taskId}`;
+function dtoToSubmission(
+  dto: ReturnType<typeof getCachedPartySubmission>,
+): ValuationCoordinationSubmission | null {
+  if (!dto) return null;
+  const payload = payloadFromDto<ValuationCoordinationSubmission>(dto);
+  return {
+    ...payload,
+    taskId: dto.taskId,
+    propertyId: payload.propertyId ?? dto.propertyId ?? "",
+    poNumber: payload.poNumber ?? dto.poNumber ?? "",
+    status:
+      payload.status ??
+      (dto.status as ValuationCoordinationSubmission["status"]),
+    submittedAtUtc: dto.submittedAtUtc ?? payload.submittedAtUtc ?? null,
+    updatedAtUtc: dto.updatedAtUtc ?? payload.updatedAtUtc,
+  };
 }
 
 export function loadValuationCoordinationSubmission(
   taskId: string,
 ): ValuationCoordinationSubmission | null {
-  if (typeof window === "undefined" || !taskId) return null;
-  try {
-    const raw = localStorage.getItem(storageKey(taskId));
-    if (!raw) return null;
-    return JSON.parse(raw) as ValuationCoordinationSubmission;
-  } catch {
-    return null;
-  }
+  return dtoToSubmission(getCachedPartySubmission(taskId));
 }
 
-export function saveValuationCoordinationSubmission(
+export async function fetchValuationCoordinationSubmission(
+  taskId: string,
+): Promise<ValuationCoordinationSubmission | null> {
+  const dto = await fetchPartySubmission(taskId);
+  return dtoToSubmission(dto);
+}
+
+export async function saveValuationCoordinationSubmission(
   submission: ValuationCoordinationSubmission,
-): void {
-  if (typeof window === "undefined" || !submission.taskId) return;
-  localStorage.setItem(
-    storageKey(submission.taskId),
-    JSON.stringify({
-      ...submission,
-      updatedAtUtc: new Date().toISOString(),
-    }),
-  );
+): Promise<ValuationCoordinationSubmission | null> {
+  if (!submission.taskId) return null;
+  const payload = {
+    ...submission,
+    updatedAtUtc: new Date().toISOString(),
+  };
+  const dto = await persistPartySubmissionPayload(submission.taskId, payload);
+  if (!dto) return null;
   notifyChanged();
+  return dtoToSubmission(dto);
 }
 
-export function getOrCreateValuationCoordinationDraft(input: {
+export async function getOrCreateValuationCoordinationDraft(input: {
   taskId: string;
   propertyId: string;
   poNumber: string;
   inspectorName?: string;
   appraiserName?: string;
-}): ValuationCoordinationSubmission {
-  const existing = loadValuationCoordinationSubmission(input.taskId);
+}): Promise<ValuationCoordinationSubmission> {
+  const existing = await fetchValuationCoordinationSubmission(input.taskId);
   if (existing) return existing;
   const draft = createValuationCoordinationDraft(input);
-  saveValuationCoordinationSubmission(draft);
-  return draft;
+  const saved = await saveValuationCoordinationSubmission(draft);
+  return saved ?? draft;
 }
 
-export function updateValuationCoordinationDraft(
+export async function updateValuationCoordinationDraft(
   taskId: string,
   patch: Partial<
     Pick<
@@ -72,9 +94,11 @@ export function updateValuationCoordinationDraft(
       | "coordinationNotes"
       | "inspectorInstructions"
       | "appraiserInstructions"
+      | "inspectorName"
+      | "appraiserName"
     >
   >,
-): ValuationCoordinationSubmission | null {
+): Promise<ValuationCoordinationSubmission | null> {
   const current = loadValuationCoordinationSubmission(taskId);
   if (!current || current.status === "submitted") return current;
 
@@ -84,22 +108,48 @@ export function updateValuationCoordinationDraft(
     status: "draft",
     updatedAtUtc: new Date().toISOString(),
   };
-  saveValuationCoordinationSubmission(next);
-  return next;
+  return saveValuationCoordinationSubmission(next);
 }
 
-export function submitValuationCoordinationSubmission(
+export async function submitValuationCoordinationSubmission(
   taskId: string,
-): ValuationCoordinationSubmission | null {
+): Promise<ValuationCoordinationSubmission | null> {
   const current = loadValuationCoordinationSubmission(taskId);
   if (!current || current.status === "submitted") return current;
 
-  const next: ValuationCoordinationSubmission = {
+  await saveValuationCoordinationSubmission({
     ...current,
-    status: "submitted",
-    submittedAtUtc: new Date().toISOString(),
+    status: "draft",
     updatedAtUtc: new Date().toISOString(),
-  };
-  saveValuationCoordinationSubmission(next);
-  return next;
+  });
+
+  const dto = await submitPartySubmission(taskId);
+  if (!dto) return loadValuationCoordinationSubmission(taskId);
+  notifyChanged();
+  notifyTasksChanged();
+  return dtoToSubmission(dto);
+}
+
+export async function prefetchValuationCoordinationSubmissions(
+  taskIds: string[],
+): Promise<void> {
+  await prefetchPartySubmissionsForTasks(taskIds);
+}
+
+export function seedValuationCoordinationSubmissionCache(
+  submission: ValuationCoordinationSubmission,
+): void {
+  setCachedPartySubmission(
+    {
+      taskId: submission.taskId,
+      kind: "valuation-coordination",
+      status: submission.status,
+      propertyId: submission.propertyId,
+      poNumber: submission.poNumber,
+      payload: { ...submission },
+      submittedAtUtc: submission.submittedAtUtc ?? undefined,
+      updatedAtUtc: submission.updatedAtUtc,
+    },
+    submission.taskId,
+  );
 }

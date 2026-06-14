@@ -16,6 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@engineering-office/mfe": "*",
+    "@evaluator/mfe": "*",
     "@failures/mfe": "*",
     "@settings/mfe": "*",
     "@platform/app-shared": "*",

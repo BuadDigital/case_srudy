@@ -277,7 +277,7 @@ export function CaseStudyTaskWork({
         return;
       }
       setSaving(true);
-      submitBourseObstruction({
+      await submitBourseObstruction({
         poNumber: task.poNumber,
         propertyId: task.propertyId,
         deedNumber: property.deedNumber,

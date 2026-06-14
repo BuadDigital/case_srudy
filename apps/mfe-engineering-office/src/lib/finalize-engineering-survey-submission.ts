@@ -9,7 +9,7 @@ import { submitEngineeringSurveySubmission } from "./engineering-survey-submissi
 export async function finalizeEngineeringSurveySubmission(
   surveyTaskId: string,
 ): Promise<EngineeringSurveySubmission | null> {
-  const submitted = submitEngineeringSurveySubmission(surveyTaskId);
+  const submitted = await submitEngineeringSurveySubmission(surveyTaskId);
   if (!submitted) return null;
 
   const partyDraft = await loadPartyCaseStudyFormDraft(surveyTaskId);
