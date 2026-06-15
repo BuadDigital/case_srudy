@@ -109,6 +109,8 @@ function dtoToProperty(dto: WorkOrderPropertyDto): PoPropertyIntake {
     delegationLetterFileName: dto.delegationLetterFileName ?? "",
     otherDocumentFileNames: dto.otherDocumentFileNames ?? [],
     realEstateRegFileName: dto.realEstateRegFileName ?? "",
+    buildLicenseNumber: "",
+    subdivisionRecordNumber: "",
     bourseDataCompleted: dto.bourseDataCompleted ?? false,
     contacts: (dto.contacts ?? []).map((c) => ({
       name: c.name ?? "",

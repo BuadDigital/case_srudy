@@ -1,6 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  Card,
+  CardBody,
+  FormGroup,
+  Input,
+  Label,
+  Note,
+  Textarea,
+  cn,
+} from "@platform/design-system";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import { RegField } from "@platform/app-shared/registration/FormFields";
 import {
@@ -13,6 +24,7 @@ import {
 import { CaseStudyReportActions } from "./CaseStudyReportActions";
 import { CaseStudyProgressDonut } from "./CaseStudyProgressDonut";
 import { CaseStudyMatrixTable } from "./CaseStudyMatrixTable";
+import { CaseStudyInfathSpecialistSection } from "./CaseStudyInfathSpecialistSection";
 import {
   canPartyAnswerQuestion,
   CASE_STUDY_INFO_ROLES_CHANGED_EVENT,
@@ -92,16 +104,15 @@ function RemarksBlock({
   rows?: number;
 }) {
   return (
-    <div className="cs-form-remarks">
-      <p className="cs-form-remarks-label">{label}</p>
-      <textarea
-        className="reg-fi cs-form-textarea"
+    <FormGroup className="mb-4 border-t border-border pt-3">
+      <Label className="mb-1.5 text-xs font-medium text-amber-text">{label}</Label>
+      <Textarea
         rows={rows}
         placeholder="الملاحظات..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-    </div>
+    </FormGroup>
   );
 }
 
@@ -111,7 +122,10 @@ function FormProgressRings({
   summary: { total: number; answered: number; pending: number; pct: number };
 }) {
   return (
-    <div className="cs-form-progress-rings" aria-label="تقدم النموذج">
+    <div
+      className="flex shrink-0 items-center justify-center gap-2.5"
+      aria-label="تقدم النموذج"
+    >
       <CaseStudyProgressDonut
         pct={summary.pct}
         color="var(--success, #16a34a)"
@@ -137,11 +151,16 @@ function CaseStudyMatrixBanner({
 }) {
   const party = partyById(viewerPartyId);
   return (
-    <div
-      className={`note note-info cs-form-matrix-banner${partyAdvisory ? " cs-form-matrix-banner--advisory" : ""}`}
+    <Note
+      tone="info"
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-2.5",
+        partyAdvisory &&
+          "rounded-[10px] border border-blue-200 bg-gradient-to-br from-blue-50 to-slate-50 text-info",
+      )}
     >
       {isParty ? (
-        <p className="cs-form-matrix-banner-text">
+        <p className="m-0 min-w-[min(100%,240px)] flex-1">
           {partyAdvisory ? (
             <>
               الأسئلة أدناه <strong>استدلالية للأخصائي</strong> — تظهر فقط
@@ -158,27 +177,23 @@ function CaseStudyMatrixBanner({
         </p>
       ) : (
         <>
-          <p className="cs-form-matrix-banner-text">
+          <p className="m-0 min-w-[min(100%,240px)] flex-1">
             <strong>مسؤولية الأخصائي:</strong> تظهر الأسئلة المسندة لك في
             المصفوفة فقط. راجع إجابات الأطراف على الأسئلة الظاهرة، ثم حدّد
             إجابتك الرسمية واعتمدها حيث وُجدت مساهمات.
           </p>
           {partyContribCount > 0 ? (
-            <button
-              type="button"
-              className="btn btn-sm cs-form-refresh-party"
-              onClick={onRefreshParty}
-            >
+            <Button size="sm" className="me-auto" onClick={onRefreshParty}>
               تحديث إجابات الأطراف ({partyContribCount})
-            </button>
+            </Button>
           ) : (
-            <span className="cs-form-party-empty-hint">
+            <span className="text-[11px] text-text-3">
               لا توجد إجابات من الأطراف بعد على الأسئلة الظاهرة.
             </span>
           )}
         </>
       )}
-    </div>
+    </Note>
   );
 }
 
@@ -189,7 +204,7 @@ function SpecialistClosingCards({
 }) {
   return (
     <RegistrationFormCard title="التقرير النهائي">
-      <p className="cs-form-report-hint">
+      <p className="mb-3 text-xs leading-relaxed text-text-2">
         يُعبّأ التقرير تلقائياً من إجابات النموذج وبيانات النظام (الصك، أمر
         العمل، التاريخ، المعتمد).
       </p>
@@ -514,16 +529,16 @@ export function CaseStudyForm({
   };
 
   if (!hydrated || !infoRolesReady) {
-    return <p className="po-properties-loading">جاري تحميل النموذج…</p>;
+    return <p className="my-2 text-xs text-text-3">جاري تحميل النموذج…</p>;
   }
 
   if (visibleStepIndices.length === 0) {
     const party = partyById(viewerPartyId);
     return (
-      <div className="note note-warn cs-form-matrix-empty">
+      <Note tone="warn">
         لا توجد أسئلة مسندة لـ<strong>{party.name}</strong> في «علاقة المستخدم
         بالمعلومة». راجع الإعدادات في الشريط الجانبي.
-      </div>
+      </Note>
     );
   }
 
@@ -549,37 +564,64 @@ export function CaseStudyForm({
   };
 
   const formFooterActions = (
-    <div className="cs-form-actions-end">
-      <button type="button" className="btn" onClick={saveDraft}>
-        حفظ مسودة
-      </button>
+    <div className="flex justify-end gap-2">
+      <Button onClick={saveDraft}>حفظ مسودة</Button>
       {isParty ? (
-        <button type="button" className="btn btn-primary" onClick={submitForm}>
+        <Button variant="primary" onClick={submitForm}>
           حفظ إجاباتي
-        </button>
+        </Button>
       ) : (
-        <button type="button" className="btn btn-success" onClick={submitForm}>
+        <Button
+          className="border-success bg-success text-white hover:border-primary-mid hover:bg-primary-mid"
+          onClick={submitForm}
+        >
           رفع النموذج للنظام
-        </button>
+        </Button>
       )}
     </div>
   );
 
   return (
-    <div className={`cs-form${partyAdvisory ? " cs-form--party-advisory" : ""}`}>
+    <div
+      className={cn(
+        "flex flex-col gap-3",
+        partyAdvisory &&
+          "mt-0 gap-4 [&_[data-registration-card]]:overflow-hidden [&_[data-registration-card]]:rounded-xl [&_[data-registration-card]]:border [&_[data-registration-card]]:border-border [&_[data-registration-card]]:shadow-sm [&_[data-registration-card]_div:last-child]:p-0",
+      )}
+    >
       {!partyAdvisory ? (
-        <div className="cs-form-steps-row">
-          <nav className="cs-form-steps" aria-label="خطوات نموذج الدراسة">
+        <div className="mb-3.5 flex flex-wrap items-stretch gap-3.5 border-b border-border">
+          <nav
+            className="flex min-w-0 flex-1 flex-nowrap gap-2 overflow-x-auto"
+            aria-label="خطوات نموذج الدراسة"
+          >
             {navSteps.map((i) => {
               const s = CASE_STUDY_FORM_STEPS[i];
+              const isActive = step === i;
+              const isDone = i < step;
               return (
                 <button
                   key={s.id}
                   type="button"
-                  className={`cs-form-step${step === i ? " active" : ""}${i < step ? " done" : ""}`}
+                  className={cn(
+                    "flex shrink-0 cursor-pointer items-center gap-1.5 border-none border-b-2 border-transparent bg-transparent px-3.5 py-2.5 text-xs whitespace-nowrap transition-colors",
+                    isActive
+                      ? "border-b-primary font-semibold text-primary"
+                      : isDone
+                        ? "text-success"
+                        : "text-text-3 hover:text-text-2",
+                  )}
                   onClick={() => goStep(i)}
                 >
-                  <span className="cs-form-step-num">{STEP_AR_NUMS[i]}</span>
+                  <span
+                    className={cn(
+                      "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold",
+                      isActive && "bg-primary text-white",
+                      isDone && "bg-success text-white",
+                    )}
+                  >
+                    {STEP_AR_NUMS[i]}
+                  </span>
                   {s.label}
                 </button>
               );
@@ -589,9 +631,7 @@ export function CaseStudyForm({
         </div>
       ) : null}
 
-      {saveNotice ? (
-        <div className="note note-success cs-form-notice">{saveNotice}</div>
-      ) : null}
+      {saveNotice ? <Note tone="success">{saveNotice}</Note> : null}
 
       {isParty ? (
         <CaseStudyMatrixBanner
@@ -604,7 +644,8 @@ export function CaseStudyForm({
       ) : null}
 
       {step === 0 && sectionHasVisibleQuestions("deed") ? (
-        <section className="cs-form-panel">
+        <Card>
+          <CardBody className="flex flex-col gap-3">
           <RegistrationFormCard>
             <CaseStudyMatrixTable
               section="deed"
@@ -624,25 +665,23 @@ export function CaseStudyForm({
           {!isParty && isLastVisibleStep ? (
             <SpecialistClosingCards reportModel={reportModel} />
           ) : null}
-          <div className="cs-form-actions">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             <span />
             {isLastVisibleStep ? (
               showStepFooterActions ? formFooterActions : null
             ) : (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => goAdjacentStep(1)}
-              >
+              <Button variant="primary" onClick={() => goAdjacentStep(1)}>
                 التالي — الرفع المساحي ←
-              </button>
+              </Button>
             )}
           </div>
-        </section>
+          </CardBody>
+        </Card>
       ) : null}
 
       {step === 1 && sectionHasVisibleQuestions("survey") ? (
-        <section className="cs-form-panel">
+        <Card>
+          <CardBody className="flex flex-col gap-3">
           <RegistrationFormCard>
             <CaseStudyMatrixTable
               section="survey"
@@ -662,35 +701,29 @@ export function CaseStudyForm({
           {!isParty && isLastVisibleStep ? (
             <SpecialistClosingCards reportModel={reportModel} />
           ) : null}
-          <div className="cs-form-actions">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             {!isFirstVisibleStep ? (
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => goAdjacentStep(-1)}
-              >
+              <Button variant="outline" onClick={() => goAdjacentStep(-1)}>
                 → السابق
-              </button>
+              </Button>
             ) : (
               <span />
             )}
             {isLastVisibleStep ? (
               showStepFooterActions ? formFooterActions : null
             ) : (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => goAdjacentStep(1)}
-              >
+              <Button variant="primary" onClick={() => goAdjacentStep(1)}>
                 التالي — مكونات العقار ←
-              </button>
+              </Button>
             )}
           </div>
-        </section>
+          </CardBody>
+        </Card>
       ) : null}
 
       {step === 2 && sectionHasVisibleQuestions("comp") ? (
-        <section className="cs-form-panel">
+        <Card>
+          <CardBody className="flex flex-col gap-3">
           <RegistrationFormCard>
             <CaseStudyMatrixTable
               section="comp"
@@ -701,17 +734,17 @@ export function CaseStudyForm({
             />
             {!isParty ? (
               <>
-                <div className="cs-form-meter-inline">
-                  <span className="cs-form-meter-label">عداد الكهرباء رقم (</span>
-                  <input
-                    className="cs-form-meter-num-inline"
+                <div className="flex flex-wrap items-center gap-1.5 border-t border-border py-3 text-sm text-text">
+                  <span className="font-semibold text-text-2">عداد الكهرباء رقم (</span>
+                  <Input
+                    className="w-[5.5rem] rounded-none border-0 border-b bg-transparent px-0.5 shadow-none focus:ring-0"
                     placeholder="رقم"
                     aria-label="رقم العداد"
                     value={draft.meterNumber}
                     onChange={(e) => patch("meterNumber", e.target.value)}
                   />
-                  <span className="cs-form-meter-label">)</span>
-                  <span className="cs-form-meter-options">
+                  <span className="font-semibold text-text-2">)</span>
+                  <span className="ms-2 inline-flex flex-wrap items-center gap-3">
                     {(
                       [
                         ["electronic", "إلكتروني"],
@@ -719,7 +752,10 @@ export function CaseStudyForm({
                         ["none", "لا يوجد"],
                       ] as const
                     ).map(([val, label]) => (
-                      <label key={val} className="cs-form-radio">
+                      <label
+                        key={val}
+                        className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-normal text-text-2"
+                      >
                         <input
                           type="radio"
                           name={`meter-${taskId}`}
@@ -746,35 +782,29 @@ export function CaseStudyForm({
           {!isParty && isLastVisibleStep ? (
             <SpecialistClosingCards reportModel={reportModel} />
           ) : null}
-          <div className="cs-form-actions">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             {!isFirstVisibleStep ? (
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => goAdjacentStep(-1)}
-              >
+              <Button variant="outline" onClick={() => goAdjacentStep(-1)}>
                 → السابق
-              </button>
+              </Button>
             ) : (
               <span />
             )}
             {isLastVisibleStep ? (
               showStepFooterActions ? formFooterActions : null
             ) : (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => goAdjacentStep(1)}
-              >
+              <Button variant="primary" onClick={() => goAdjacentStep(1)}>
                 التالي — الإشغال والإيجار ←
-              </button>
+              </Button>
             )}
           </div>
-        </section>
+          </CardBody>
+        </Card>
       ) : null}
 
       {step === 3 && sectionHasVisibleQuestions("occ") ? (
-        <section className="cs-form-panel">
+        <Card>
+          <CardBody className="flex flex-col gap-3">
           <RegistrationFormCard>
             <CaseStudyMatrixTable
               section="occ"
@@ -784,7 +814,7 @@ export function CaseStudyForm({
               {...matrixTableProps}
             />
             {!isParty ? (
-              <div className="cs-form-meter">
+              <div>
                 <RegField
                   id="cs-hoa"
                   label="قيمة اشتراك اتحاد الملاك"
@@ -792,9 +822,9 @@ export function CaseStudyForm({
                   placeholder="القيمة"
                   value={draft.hoaFee}
                   onChange={(v) => patch("hoaFee", v)}
-                  className="cs-form-hoa-field"
+                  className="inline-block max-w-[200px]"
                 />
-                <span className="cs-form-hoa-unit">ريال سعودي</span>
+                <span className="me-2 text-xs text-text-2">ريال سعودي</span>
                 <RemarksBlock
                   label="ملاحظات"
                   value={draft.occupancyRemarks}
@@ -807,35 +837,29 @@ export function CaseStudyForm({
           {!isParty && isLastVisibleStep ? (
             <SpecialistClosingCards reportModel={reportModel} />
           ) : null}
-          <div className="cs-form-actions">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             {!isFirstVisibleStep ? (
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => goAdjacentStep(-1)}
-              >
+              <Button variant="outline" onClick={() => goAdjacentStep(-1)}>
                 → السابق
-              </button>
+              </Button>
             ) : (
               <span />
             )}
             {isLastVisibleStep ? (
               showStepFooterActions ? formFooterActions : null
             ) : (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => goAdjacentStep(1)}
-              >
+              <Button variant="primary" onClick={() => goAdjacentStep(1)}>
                 التالي — ملاحظات إضافية ←
-              </button>
+              </Button>
             )}
           </div>
-        </section>
+          </CardBody>
+        </Card>
       ) : null}
 
       {step === 4 && sectionHasVisibleQuestions("extra") ? (
-        <section className="cs-form-panel">
+        <Card>
+          <CardBody className="flex flex-col gap-3">
           <RegistrationFormCard>
             <CaseStudyMatrixTable
               section="extra"
@@ -849,21 +873,30 @@ export function CaseStudyForm({
           {!isParty && isLastVisibleStep ? (
             <SpecialistClosingCards reportModel={reportModel} />
           ) : null}
-          <div className="cs-form-actions">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             {!isFirstVisibleStep ? (
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => goAdjacentStep(-1)}
-              >
+              <Button variant="outline" onClick={() => goAdjacentStep(-1)}>
                 → السابق
-              </button>
+              </Button>
             ) : (
               <span />
             )}
             {isLastVisibleStep ? (showStepFooterActions ? formFooterActions : null) : null}
           </div>
-        </section>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {!isParty ? (
+        <CaseStudyInfathSpecialistSection
+          draft={draft}
+          disabled={draft.status === "submitted"}
+          onPatch={(p) => {
+            (Object.keys(p) as (keyof CaseStudyFormDraft)[]).forEach((key) => {
+              patch(key, p[key] as CaseStudyFormDraft[typeof key]);
+            });
+          }}
+        />
       ) : null}
     </div>
   );

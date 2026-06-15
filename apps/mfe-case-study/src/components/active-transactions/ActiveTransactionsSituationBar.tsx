@@ -1,9 +1,23 @@
 "use client";
-
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { StatValue } from "@case-study/mfe/components/ui/StatValue";
+import {
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatSub,
+  StatValue,
+  cn,
+  type StatAccent,
+} from "@platform/design-system";
 import { useActiveTransactionsSituation } from "@case-study/mfe/query/use-active-transactions-situation";
+
+const toneAccent: Record<"blue" | "warn" | "green" | "red", StatAccent> = {
+  blue: "blue",
+  warn: "amber",
+  green: "green",
+  red: "red",
+};
 
 function SituationCard({
   label,
@@ -20,9 +34,9 @@ function SituationCard({
 }) {
   const inner = (
     <>
-      <div className="stat-label">{label}</div>
+      <StatLabel>{label}</StatLabel>
       <StatValue value={value} />
-      <div className="stat-sub">{sub}</div>
+      <StatSub>{sub}</StatSub>
     </>
   );
 
@@ -30,16 +44,16 @@ function SituationCard({
     return (
       <Link
         href={href}
-        className={`stat-card ${tone} active-tx-situation-card active-tx-situation-card--link`}
+        className={cn(
+          "block text-inherit no-underline transition-[box-shadow,transform] duration-150 hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,0.08)]",
+        )}
       >
-        {inner}
+        <StatCard accent={toneAccent[tone]}>{inner}</StatCard>
       </Link>
     );
   }
 
-  return (
-    <div className={`stat-card ${tone} active-tx-situation-card`}>{inner}</div>
-  );
+  return <StatCard accent={toneAccent[tone]}>{inner}</StatCard>;
 }
 
 const SUB_ASSIGNED_TO_YOU = "المسندة إليك";
@@ -92,20 +106,14 @@ export function ActiveTransactionsSituationBar() {
     );
   }
 
-  const colCount = cards.length;
-  const gridClass =
-    colCount === 2
-      ? "stat-grid active-tx-situation-grid active-tx-situation-grid--2"
-      : colCount === 3
-        ? "stat-grid active-tx-situation-grid active-tx-situation-grid--3"
-        : "stat-grid active-tx-situation-grid";
+  const gridCols = cards.length as 2 | 3 | 4;
 
   return (
     <section
-      className="active-tx-situation"
+      className="shrink-0 bg-bg px-6 pt-4 pb-0"
       aria-label="ملخص وضع المعاملات"
     >
-      <div className={gridClass}>{cards}</div>
+      <StatGrid cols={gridCols}>{cards}</StatGrid>
     </section>
   );
 }

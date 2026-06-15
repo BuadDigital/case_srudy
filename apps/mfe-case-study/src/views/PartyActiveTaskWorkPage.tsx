@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
+import { Button, PageGutter, PageShell } from "@platform/design-system";
 import { partyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import type { PageId } from "@platform/types";
 import type { PartyAppraisalExtensions } from "../lib/party-appraisal-extensions";
@@ -32,29 +33,32 @@ export function PartyActiveTaskWorkPage({
 
   if (!def) {
     return (
-      <p className="po-properties-loading">صفحة المهمة غير معرّفة.</p>
+      <p className="p-4 text-xs text-text-3">صفحة المهمة غير معرّفة.</p>
     );
   }
 
   if (!isFetched) {
-    return <p className="po-properties-loading">جاري تحميل المهمة…</p>;
+    return <p className="p-4 text-xs text-text-3">جاري تحميل المهمة…</p>;
   }
 
   if (!task) {
     return (
-      <div className="po-properties-page pd-page">
-        <div className="po-properties-empty">
-          <p>لم تُعثر على المهمة أو لم تعد في قائمتك.</p>
-          <button
+      <PageShell>
+        <PageGutter className="py-8 text-center">
+          <p className="m-0 text-[13px] text-text-3">
+            لم تُعثر على المهمة أو لم تعد في قائمتك.
+          </p>
+          <Button
             type="button"
-            className="btn btn-sm btn-primary"
-            style={{ marginTop: 12 }}
+            size="sm"
+            variant="primary"
+            className="mt-3"
             onClick={() => router.push(partyTaskPath(pageId))}
           >
             العودة للقائمة
-          </button>
-        </div>
-      </div>
+          </Button>
+        </PageGutter>
+      </PageShell>
     );
   }
 

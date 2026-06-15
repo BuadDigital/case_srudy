@@ -11,12 +11,6 @@ export type SystemFieldsNavItem = {
 /** جميع حقول النظام — مرجع الحقول والأدوات */
 export const SYSTEM_FIELDS_NAV: SystemFieldsNavItem[] = [
   {
-    id: "system-tools",
-    label: "ادوات النظام",
-    icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
-    available: true,
-  },
-  {
     id: "case-study-info-roles",
     label: "علاقة المستخدم بالمعلومة",
     icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0zM22 12h-4l-3 9L9 3l-3 9H2",

@@ -35,6 +35,19 @@ export type EvaluatorSubmission = {
   evaluatorNotes: string;
   checklist: EvaluatorChecklistAnswers;
   reportFileName: string | null;
+  /** حقول الرفع لإنفاذ — المقيّم */
+  appraisalDate: string;
+  valuationMethod: string;
+  valueBasis: string;
+  demandLevel: string;
+  landValue: string;
+  buildingValue: string;
+  forcedSaleDiscountPct: string;
+  searchScopeNotes: string;
+  planImageFileName: string | null;
+  appraiserAddress: string;
+  appraiserPhone: string;
+  reportIssueDate: string;
   submittedAtUtc: string | null;
   updatedAtUtc: string;
 };
@@ -128,6 +141,18 @@ export function createEvaluatorDraft(input: {
     evaluatorNotes: "",
     checklist: emptyChecklist(),
     reportFileName: null,
+    appraisalDate: "",
+    valuationMethod: "طريقة البيوع المقارنة",
+    valueBasis: "القيمة السوقية",
+    demandLevel: "",
+    landValue: "",
+    buildingValue: "",
+    forcedSaleDiscountPct: "20",
+    searchScopeNotes: "",
+    planImageFileName: null,
+    appraiserAddress: "",
+    appraiserPhone: "",
+    reportIssueDate: "",
     submittedAtUtc: null,
     updatedAtUtc: now,
   };

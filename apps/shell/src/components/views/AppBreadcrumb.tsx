@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { cn } from "@platform/design-system";
 import type { BreadcrumbSegment } from "@/lib/breadcrumb";
 
 function BreadcrumbChevron() {
   return (
-    <span className="breadcrumb-sep" aria-hidden>
+    <span
+      className="inline-flex shrink-0 items-center text-[10px] text-text-3"
+      aria-hidden
+    >
       <svg
         width="11"
         height="11"
@@ -23,7 +27,7 @@ function BreadcrumbChevron() {
 function BreadcrumbLabel({ segment }: { segment: BreadcrumbSegment }) {
   if (segment.ltr) {
     return (
-      <bdi dir="ltr" className="po-num-ltr">
+      <bdi dir="ltr" className="inline-block [direction:ltr] [unicode-bidi:isolate]">
         {segment.label}
       </bdi>
     );
@@ -35,20 +39,30 @@ export function AppBreadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
   if (segments.length === 0) return null;
 
   return (
-    <nav className="breadcrumb" id="tb-bc" aria-label="مسار التنقل">
+    <nav
+      className="flex min-w-0 shrink-0 flex-wrap items-center gap-[5px] text-[12.5px] text-text-2"
+      id="tb-bc"
+      aria-label="مسار التنقل"
+    >
       {segments.map((segment, index) => {
         const isCurrent = segment.current ?? index === segments.length - 1;
         const showSep = index > 0;
 
         return (
-          <span key={`${segment.label}-${index}`} className="breadcrumb-part">
+          <span
+            key={`${segment.label}-${index}`}
+            className="inline-flex items-center gap-[5px]"
+          >
             {showSep ? <BreadcrumbChevron /> : null}
             {isCurrent || !segment.href ? (
-              <span className={isCurrent ? "breadcrumb-current" : undefined}>
+              <span className={cn(isCurrent && "font-medium text-text")}>
                 <BreadcrumbLabel segment={segment} />
               </span>
             ) : (
-              <Link href={segment.href}>
+              <Link
+                href={segment.href}
+                className="text-text-2 no-underline transition-colors hover:text-primary"
+              >
                 <BreadcrumbLabel segment={segment} />
               </Link>
             )}

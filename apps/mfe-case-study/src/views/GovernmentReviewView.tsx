@@ -2,6 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  cn,
+  Note,
+  PageShell,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@platform/design-system";
 import { InternalDelegationLetterPanel } from "../components/government-review/InternalDelegationLetterPanel";
 import { PoNumber } from "../components/ui/PoNumber";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
@@ -34,6 +49,11 @@ import {
   usePoRecordsQuery,
   useWorkflowTasksQuery,
 } from "../query/case-study-queries";
+
+const ROW =
+  "cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--info-bg)_40%,var(--surface))]";
+const ROW_ACTIVE =
+  "bg-[color-mix(in_srgb,var(--warning-bg)_45%,var(--surface))]";
 
 function governmentReviewPoPath(poNumber: string): string {
   return `/government-review?po=${encodeURIComponent(poNumber)}`;
@@ -70,42 +90,36 @@ function GovernmentReviewPoPanel({
   );
 
   return (
-    <div className="po-bourse-form-panel po-primary-data-form-panel">
-      <div className="card-body">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            marginBottom: 12,
-          }}
-        >
+    <Card className="sticky top-3 self-start overflow-hidden rounded-none border-none shadow-none lg:border-s lg:border-border">
+      <CardBody className="px-4 py-3">
+        <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h2 className="card-title" style={{ marginBottom: 4 }}>
+            <h2 className="m-0 mb-1 text-sm font-semibold text-text">
               {formatPoDisplay(row.poNumber)}
             </h2>
-            <p className="reg-field-hint">
+            <p className="m-0 text-[10px] text-text-3">
               {row.assignmentType} · {row.propertyCount} عقار · {row.openCount}{" "}
               مهمة مفتوحة
             </p>
           </div>
-          <button
+          <Button
             type="button"
-            className="btn btn-sm btn-ghost"
+            size="sm"
+            variant="ghost"
             onClick={onClose}
             aria-label="إغلاق"
           >
             ✕
-          </button>
+          </Button>
         </div>
         <RegistrationFormCard title="ملخص أمر العمل">
-          <div className="note note-info">{row.primaryDataLabel}</div>
+          <Note tone="info">{row.primaryDataLabel}</Note>
           {row.courts.length > 0 ? (
-            <p className="reg-field-hint" style={{ marginTop: 8 }}>
+            <p className="mt-2 text-[10px] text-text-3">
               المحاكم: {row.courts.join(" · ")}
             </p>
           ) : (
-            <p className="reg-field-hint" style={{ marginTop: 8 }}>
+            <p className="mt-2 text-[10px] text-text-3">
               لا توجد محاكم مسجّلة بعد في بيانات العقارات.
             </p>
           )}
@@ -113,28 +127,31 @@ function GovernmentReviewPoPanel({
 
         <RegistrationFormCard title="مهام المراجعة (حسب العقار)">
           {row.tasks.length === 0 ? (
-            <p className="reg-field-hint">لا توجد مهام مراجعة مرتبطة بهذا الأمر.</p>
+            <p className="text-[10px] text-text-3">
+              لا توجد مهام مراجعة مرتبطة بهذا الأمر.
+            </p>
           ) : (
-            <ul className="sys-tools-perms-list" style={{ margin: 0 }}>
+            <ul className="m-0 flex list-none flex-col gap-1 p-0">
               {row.tasks.map((task) => (
                 <li key={task.id}>
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn-sm btn-ghost"
-                    style={{ width: "100%", textAlign: "start" }}
+                    size="sm"
+                    variant="ghost"
+                    className="h-auto w-full justify-start py-2 text-start"
                     onClick={() => onOpenTask(task.id)}
                   >
                     {taskDisplayPropertyLabel(task)} — {task.title}
                     {task.status === "open" ? (
-                      <span className="badge b-prog" style={{ marginInlineStart: 8 }}>
+                      <Badge tone="warning" className="ms-2">
                         مفتوحة
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="badge b-done" style={{ marginInlineStart: 8 }}>
+                      <Badge tone="success" className="ms-2">
                         منجزة
-                      </span>
+                      </Badge>
                     )}
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -162,8 +179,8 @@ function GovernmentReviewPoPanel({
               );
             })
           : null}
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -269,37 +286,35 @@ export function GovernmentReviewView() {
   }, [refetchTasks]);
 
   const hasRail = !queueReady ? false : rows.length > 0;
-  const layoutClass = [
-    "po-primary-data-layout",
-    hasRail ? "po-primary-data-layout--has-rail" : "",
-    panelOpen && hasRail && selectedRow
-      ? "po-primary-data-layout--panel-open"
-      : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
 
   if (selectedTaskId) {
     return (
-      <p className="po-properties-loading">جاري فتح مهمة المراجعة…</p>
+      <p className="p-4 text-xs text-text-3">جاري فتح مهمة المراجعة…</p>
     );
   }
 
   return (
-    <div className="po-properties-page pd-page">
-      <div className={layoutClass}>
-        <article className="po-properties-shell po-properties-shell--compact po-bourse-queue-box">
-          <header className="po-properties-hero po-properties-hero--compact po-bourse-queue-hero">
-            <div className="po-properties-hero-main">
-              <h1 className="po-properties-title">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+      <div
+        className={cn(
+          "grid min-h-0 flex-1 items-stretch gap-0",
+          hasRail && panelOpen && selectedRow
+            ? "grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,1fr)]"
+            : "grid-cols-1",
+        )}
+      >
+        <PageShell>
+          <header className="grid items-center gap-1 border-b border-border bg-gradient-to-br from-surface-2 to-surface px-4 py-2.5">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h1 className="m-0 text-base font-bold text-text">
                 <span>{def?.pageTitle ?? "المراجعة الحكومية"}</span>
               </h1>
-              <div className="po-properties-meta">
-                <span className="po-properties-meta-count">
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-2">
+                <span className="font-medium text-text-2">
                   نطاق التغطية: {reviewerCoverageLabel(reviewerScope)}
                 </span>
                 {!queueReady ? null : (
-                  <span className="po-properties-meta-count">
+                  <span className="font-medium text-text-2">
                     {rows.length} {rows.length === 1 ? "أمر عمل" : "أوامر عمل"}
                   </span>
                 )}
@@ -308,84 +323,100 @@ export function GovernmentReviewView() {
           </header>
 
           {!queueReady ? (
-            <p className="po-properties-loading">جاري تحميل أوامر العمل…</p>
+            <p className="px-6 py-5 text-xs text-text-3">جاري تحميل أوامر العمل…</p>
           ) : rows.length === 0 ? (
-            <div className="po-properties-empty">
-              <p>{def?.emptyLine ?? "لا توجد مهام مراجعة حكومية."}</p>
-              <p className="po-properties-hint" style={{ marginTop: 8 }}>
+            <div className="px-6 py-8 text-center">
+              <p className="m-0 text-[13px] text-text-3">
+                {def?.emptyLine ?? "لا توجد مهام مراجعة حكومية."}
+              </p>
+              <p className="mt-2 text-[11px] text-text-3">
                 {def?.emptyHint ??
                   "تظهر هنا بعد تأكيد التوزيع عند تفعيل المراجع الحكومي."}
               </p>
             </div>
           ) : (
             <>
-              <div className="po-properties-tbl-wrap po-properties-tbl-wrap--scroll">
-                <table className="tbl po-properties-tbl po-properties-tbl--compact">
-                  <thead>
-                    <tr>
-                      <th className="po-pd-th-center">أمر العمل</th>
-                      <th className="po-pd-th-center">نوع الإسناد</th>
-                      <th className="po-pd-th-center">المحاكم</th>
-                      <th className="po-pd-th-center">العقارات</th>
-                      <th className="po-pd-th-center">مهام مفتوحة</th>
-                      <th className="po-pd-th-center">البيانات الأولية</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="w-full overflow-x-auto">
+                <Table className="table-fixed">
+                  <colgroup>
+                    <col className="w-28" />
+                    <col className="w-28" />
+                    <col />
+                    <col className="w-20" />
+                    <col className="w-24" />
+                    <col className="w-24" />
+                  </colgroup>
+                  <THead>
+                    <Tr hoverable={false}>
+                      <Th className="text-center">أمر العمل</Th>
+                      <Th className="text-center">نوع الإسناد</Th>
+                      <Th className="text-center">المحاكم</Th>
+                      <Th className="text-center">العقارات</Th>
+                      <Th className="text-center">مهام مفتوحة</Th>
+                      <Th className="text-center">البيانات الأولية</Th>
+                    </Tr>
+                  </THead>
+                  <TBody>
                     {rows.map((row) => {
                       const active = selectedPo?.trim() === row.poNumber.trim();
                       return (
-                        <tr
+                        <Tr
                           key={row.poNumber}
-                          className={`po-properties-row${active ? " po-bourse-row-active" : ""}`}
+                          hoverable={false}
+                          className={cn(ROW, active && ROW_ACTIVE)}
                           onClick={() => handleRowClick(row.poNumber)}
                         >
-                          <td className="po-pd-td-center">
+                          <Td className="text-center">
                             <PoNumber value={row.poNumber} />
-                          </td>
-                          <td className="po-properties-cell-muted po-pd-td-center">
+                          </Td>
+                          <Td className="text-center text-text-2">
                             {row.assignmentType}
-                          </td>
-                          <td className="po-properties-cell-muted po-pd-td-center">
+                          </Td>
+                          <Td className="text-center text-text-2">
                             {row.courts.length > 0
                               ? row.courts.join(" · ")
                               : "—"}
-                          </td>
-                          <td className="po-properties-cell-muted po-pd-td-center">
+                          </Td>
+                          <Td className="text-center text-text-2">
                             {row.propertyCount}
-                          </td>
-                          <td className="po-pd-td-center">
+                          </Td>
+                          <Td className="text-center">
                             {row.openCount > 0 ? (
-                              <span className="badge b-prog">{row.openCount}</span>
+                              <Badge tone="warning">{row.openCount}</Badge>
                             ) : (
-                              <span className="badge b-done">0</span>
+                              <Badge tone="success">0</Badge>
                             )}
-                          </td>
-                          <td className="po-pd-td-center">
+                          </Td>
+                          <Td className="text-center">
                             {row.primaryDataReady ? (
-                              <span className="badge b-done">مكتمل</span>
+                              <Badge tone="success">مكتمل</Badge>
                             ) : (
-                              <span className="badge b-prog">ناقص</span>
+                              <Badge tone="warning">ناقص</Badge>
                             )}
-                          </td>
-                        </tr>
+                          </Td>
+                        </Tr>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TBody>
+                </Table>
               </div>
-              <p className="po-properties-hint po-bourse-queue-hint">
+              <p className="px-6 py-2 pb-3 text-[11px] text-text-3">
                 اضغط صف أمر العمل لفتح مهام المراجعة وخطابات التفويض — اختر
                 مهمة عقار لفتحها في صفحة مستقلة.
               </p>
             </>
           )}
-        </article>
+        </PageShell>
 
         {hasRail ? (
           <div
             id="government-review-panel"
-            className={`po-primary-data-panel-slot${panelOpen && selectedRow ? " is-open" : ""}`}
+            className={cn(
+              "min-w-0 self-stretch overflow-hidden opacity-0 invisible",
+              panelOpen &&
+                selectedRow &&
+                "visible overflow-visible border-s border-border opacity-100",
+            )}
           >
             {panelOpen && selectedRow ? (
               <GovernmentReviewPoPanel

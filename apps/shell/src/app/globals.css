@@ -1,187 +1,92 @@
-@import "tailwindcss";
-
-:root {
-  /* HTML design tokens (docs/property_detail.html) */
-  --bg: #f7f8fa;
-  --teal: #1d9e75;
-  --teal-light: #e1f5ee;
-  --teal-text: #0f6e56;
-  --amber: #ef9f27;
-  --amber-light: #faeeda;
-  --amber-text: #854f0b;
-  --red: #e24b4a;
-  --red-light: #fcebeb;
-  --red-text: #a32d2d;
-  --blue: #378add;
-  --blue-light: #e6f1fb;
-  --blue-text: #185fa5;
-  --topbar-h: 52px;
-  --sidebar-w: 200px;
-
-  /* Semantic aliases used across the app */
-  --primary: var(--teal);
-  --primary-mid: #188f69;
-  --primary-light: var(--blue);
-  --accent: var(--teal);
-  --accent-dark: var(--teal-text);
-  --sidebar: #1a2232;
-  --surface: #ffffff;
-  --surface2: #f2f4f7;
-  --surface3: #eaedf2;
-  --border: rgba(0, 0, 0, 0.08);
-  --border2: rgba(0, 0, 0, 0.14);
-  --text: #111827;
-  --text2: #6b7280;
-  --text3: #9ca3af;
-  --success: var(--teal-text);
-  --success-bg: var(--teal-light);
-  --warning: var(--amber-text);
-  --warning-bg: var(--amber-light);
-  --danger: var(--red-text);
-  --danger-bg: var(--red-light);
-  --info: var(--blue-text);
-  --info-bg: var(--blue-light);
-  --purple: #8e44ad;
-  --purple-bg: #ebd9f7;
-  --orange: #d35400;
-  --orange-bg: #fae5d3;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-@theme inline {
-  --font-sans: var(--font-arabic), system-ui, sans-serif;
-}
-
-body {
-  min-height: 100%;
-  min-height: 100svh;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-}
-
-/* Login — stable layout (not tied to Tailwind utility load order after leaving the app shell) */
-.login-page {
-  font-size: 16px;
-  min-height: 100svh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(16px, 4vw, 40px);
-  box-sizing: border-box;
-  background: var(--surface2);
-}
-.login-page-card {
-  width: 100%;
-  max-width: 28rem;
-  padding: clamp(1.5rem, 4vw, 2.5rem);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  border-inline-start: 3px solid var(--primary);
-  box-sizing: border-box;
-}
-.login-page-card .login-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.25rem;
-}
-.login-page-card .login-lead {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--text2);
-  margin-bottom: 1.5rem;
-}
-.login-page-card label.login-field-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text2);
-  margin-bottom: 0.4rem;
-}
-.login-page-card input.login-field-input {
-  width: 100%;
-  font-size: 1rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  box-sizing: border-box;
-}
-.login-page-card input.login-field-input:focus {
-  outline: none;
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.12);
-}
-.login-page-card button.login-submit {
-  width: 100%;
-  margin-top: 0.25rem;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--primary);
-  background: var(--primary);
-  color: #fff;
-  cursor: pointer;
-}
-.login-page-card button.login-submit:hover:not(:disabled) {
-  background: var(--primary-mid);
-}
-.login-page-card button.login-submit:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-.login-page-card .login-hint {
-  margin-top: 1.75rem;
-  font-size: 0.8125rem;
-  line-height: 1.6;
-  color: var(--text3);
-}
-.login-page-card .login-error {
-  margin-bottom: 1rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--radius);
-  border-inline-end: 3px solid var(--danger);
-  background: var(--danger-bg);
-  color: #922b21;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-.login-page-card .login-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.75rem;
-}
-.login-page-card .login-brand-icon {
-  display: flex;
-  height: 2.75rem;
-  width: 2.75rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #fff;
-}
-.login-page-card .login-brand-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.35;
-}
-.login-page-card .login-brand-sub {
-  margin-top: 0.15rem;
-  font-size: 0.8rem;
-  color: var(--text3);
-}
-.login-page-card .login-field-group {
-  margin-bottom: 1.1rem;
-}
+@import "tailwindcss";
+@import "@platform/design-system/tokens.css";
+
+/* Scan all MFE + shared packages for utility classes */
+@source "../../../../apps/**/*.{ts,tsx}";
+@source "../../../../packages/**/*.{ts,tsx}";
+
+/**
+ * Theme must live in the entry CSS file so Tailwind v4 registers utilities
+ * (bg-sidebar, text-text, etc.). Keep in sync with tailwind-theme.css.
+ */
+@theme inline {
+  --font-sans:
+    var(--font-arabic), "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui,
+    sans-serif;
+
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f4f7;
+  --color-surface-3: #eaedf2;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-md: rgba(0, 0, 0, 0.14);
+
+  --color-text: #111827;
+  --color-text-2: #6b7280;
+  --color-text-3: #9ca3af;
+
+  --color-primary: #1d9e75;
+  --color-primary-mid: #188f69;
+  --color-teal-light: #e1f5ee;
+  --color-teal-text: #0f6e56;
+
+  --color-amber: #ef9f27;
+  --color-amber-light: #faeeda;
+  --color-amber-text: #854f0b;
+
+  --color-danger: #a32d2d;
+  --color-danger-bg: #fcebeb;
+  --color-red: #e24b4a;
+
+  --color-info: #185fa5;
+  --color-info-bg: #e6f1fb;
+  --color-blue: #378add;
+
+  --color-sidebar: #1a2232;
+  --color-sidebar-muted: rgba(255, 255, 255, 0.55);
+  --color-sidebar-muted-strong: rgba(255, 255, 255, 0.85);
+  --color-sidebar-label: rgba(255, 255, 255, 0.35);
+  --color-sidebar-border: rgba(255, 255, 255, 0.07);
+  --color-success: #0f6e56;
+  --color-success-bg: #e1f5ee;
+
+  --color-warning: #ef9f27;
+  --color-warning-bg: #faeeda;
+
+  --color-purple: #8e44ad;
+  --color-purple-bg: #ebd9f7;
+
+  --color-orange: #d35400;
+  --color-orange-bg: #fae5d3;
+
+  --color-primary-light: #1d9e75;
+  --color-teal: #1d9e75;
+
+  --radius-DEFAULT: 8px;
+  --radius-lg: 12px;
+  --radius-sm: 6px;
+
+  --spacing-topbar: 52px;
+  --spacing-sidebar: 200px;
+  --spacing-tabs: 42px;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-modal: 0 8px 32px rgba(15, 52, 96, 0.18);
+}
+
+@layer base {
+  html {
+    @apply font-sans antialiased;
+  }
+
+  body {
+    @apply min-h-full bg-bg text-text text-sm;
+  }
+
+  /* Native <select> in dark sidebar — avoid OS light chrome + invisible text */
+  #sidebar select {
+    color-scheme: dark;
+  }
+}
+

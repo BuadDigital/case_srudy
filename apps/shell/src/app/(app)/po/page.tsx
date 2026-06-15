@@ -5,9 +5,7 @@ export default function PoPage() {
   return (
     <Suspense
       fallback={
-        <p className="po-properties-loading" style={{ padding: 24 }}>
-          جاري تحميل أوامر العمل…
-        </p>
+        <p className="my-2 px-6 py-6 text-xs text-text-3">جاري تحميل أوامر العمل…</p>
       }
     >
       <PoListView />

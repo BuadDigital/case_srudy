@@ -19,13 +19,12 @@ export type PageId =
   | "valuation-coordination"
   | "property-appraisal"
   | "active-survey"
-  | "messages"
+  | "system-fields-catalog"
   | "financial"
   | "kpi"
   | "users"
   | "courts"
   | "failure-types"
-  | "system-tools"
   | "case-study-info-roles";
 
 export type RoleId =
@@ -103,13 +102,12 @@ export function isPageId(value: string): value is PageId {
     value === "valuation-coordination" ||
     value === "property-appraisal" ||
     value === "active-survey" ||
-    value === "messages" ||
+    value === "system-fields-catalog" ||
     value === "financial" ||
     value === "kpi" ||
     value === "users" ||
     value === "courts" ||
     value === "failure-types" ||
-    value === "system-tools" ||
     value === "case-study-info-roles"
   );
 }

@@ -53,6 +53,72 @@ function readStringArray(value: unknown): string[] {
   return value.map((item) => (typeof item === "string" ? item : ""));
 }
 
+function readYesNo(value: unknown): FieldInspectionSubmission["hasKitchen"] {
+  if (value === "yes" || value === "no") return value;
+  return "";
+}
+
+const INFATH_PAYLOAD_KEYS = [
+  "inspectionDate",
+  "facade",
+  "streetWidthM",
+  "builtAreaSqm",
+  "propertyUsage",
+  "streetName",
+  "mainStreetName",
+  "mapLatitude",
+  "mapLongitude",
+  "roomCount",
+  "hallCount",
+  "unitCount",
+  "bathroomCount",
+  "propertyAgeYears",
+  "showroomCount",
+  "towerCount",
+  "wellCount",
+  "hasKitchen",
+  "hasCarEntrance",
+  "hasBasement",
+  "hasElevator",
+  "hasPool",
+  "districtState",
+  "availableServices",
+  "surroundingAmenities",
+  "propertyDescription",
+  "districtProsCons",
+  "accessRouteDescription",
+  "assetNotes",
+  "buildingFloors",
+  "basementTotalSqm",
+  "annexTotalSqm",
+  "buildingsTotalSqm",
+  "exteriorPhotosPdf",
+  "interiorPhotosPdf",
+] as const;
+
+function readInfathPayload(
+  payload: Record<string, unknown>,
+  draft: FieldInspectionSubmission,
+): Partial<FieldInspectionSubmission> {
+  const yesNoKeys = new Set([
+    "hasKitchen",
+    "hasCarEntrance",
+    "hasBasement",
+    "hasElevator",
+    "hasPool",
+  ]);
+  const out: Partial<FieldInspectionSubmission> = {};
+  for (const key of INFATH_PAYLOAD_KEYS) {
+    const raw = payload[key];
+    if (yesNoKeys.has(key)) {
+      (out as Record<string, string>)[key] = readYesNo(raw);
+    } else {
+      (out as Record<string, string>)[key] = readString(raw) || String((draft as unknown as Record<string, string>)[key] ?? "");
+    }
+  }
+  return out;
+}
+
 function readPropertyPhotos(
   value: unknown,
 ): FieldInspectionSubmission["propertyPhotos"] {
@@ -106,6 +172,7 @@ function payloadToSubmission(
     signedDocumentPhotos: readStringArray(payload.signedDocumentPhotos),
     propertyPhotos: readPropertyPhotos(payload.propertyPhotos),
     generalNotes: readString(payload.generalNotes),
+    ...readInfathPayload(payload as Record<string, unknown>, draft),
     status: (dto.status === "submitted"
       ? "submitted"
       : "draft") as FieldInspectionSubmissionStatus,
@@ -134,6 +201,9 @@ function submissionToPayload(
     signedDocumentPhotos: submission.signedDocumentPhotos,
     propertyPhotos: submission.propertyPhotos,
     generalNotes: submission.generalNotes,
+    ...Object.fromEntries(
+      INFATH_PAYLOAD_KEYS.map((key) => [key, submission[key]]),
+    ),
     status: submission.status,
     submittedAtUtc: submission.submittedAtUtc,
     updatedAtUtc: submission.updatedAtUtc,
@@ -226,24 +296,14 @@ export async function saveFieldInspectionDraft(
 export async function updateFieldInspectionDraft(
   taskId: string,
   patch: Partial<
-    Pick<
+    Omit<
       FieldInspectionSubmission,
-      | "propertyDisplayId"
-      | "propertyType"
-      | "areaDistrict"
-      | "actualAreaSqm"
-      | "structuralCondition"
-      | "hasMovableItems"
-      | "isCurrentlyRented"
-      | "accessDifficulty"
-      | "avgPricePerSqm"
-      | "marketActivityLevel"
-      | "marketNotes"
-      | "responsiblePersonName"
-      | "responsiblePersonRole"
-      | "signedDocumentPhotos"
-      | "propertyPhotos"
-      | "generalNotes"
+      | "taskId"
+      | "propertyId"
+      | "poNumber"
+      | "status"
+      | "submittedAtUtc"
+      | "updatedAtUtc"
     >
   >,
 ): Promise<FieldInspectionSubmission | null> {

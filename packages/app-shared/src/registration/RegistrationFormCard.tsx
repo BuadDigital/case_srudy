@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import type { ReactNode } from "react";
+import { Card, CardBody, CardHeader } from "@platform/design-system";
 
 export function RegistrationFormCard({
   title,
@@ -15,19 +16,23 @@ export function RegistrationFormCard({
 }) {
   const showHeader = Boolean(title || subtitle || headerRight);
   return (
-    <div className="reg-form-card">
+    <Card className="mb-4 overflow-hidden shadow-none" data-registration-card>
       {showHeader ? (
-        <div className="reg-form-card-hd">
+        <CardHeader className="bg-surface">
           <div>
-            {title ? <h3>{title}</h3> : null}
-            {subtitle ? <p>{subtitle}</p> : null}
+            {title ? (
+              <h3 className="text-[13px] font-semibold text-text">{title}</h3>
+            ) : null}
+            {subtitle ? (
+              <p className="m-0 text-[11px] text-text-3">{subtitle}</p>
+            ) : null}
           </div>
           {headerRight ? (
-            <div className="reg-form-card-hd-right">{headerRight}</div>
+            <div className="flex shrink-0 items-center gap-2">{headerRight}</div>
           ) : null}
-        </div>
+        </CardHeader>
       ) : null}
-      <div className="reg-form-card-body">{children}</div>
-    </div>
+      <CardBody>{children}</CardBody>
+    </Card>
   );
 }

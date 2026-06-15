@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "@platform/design-system";
 
 export type RowMoreMenuItem = {
   id: string;
@@ -33,6 +34,12 @@ function KebabIcon() {
     </svg>
   );
 }
+
+const moreBtnClass = (open: boolean) =>
+  cn(
+    "inline-flex h-[30px] w-[30px] items-center justify-center rounded-[var(--radius-DEFAULT)] border border-border bg-surface text-text-2 transition-colors hover:bg-info-bg hover:border-info hover:text-info",
+    open && "bg-info-bg border-info text-info",
+  );
 
 export function RowMoreMenu({
   items,
@@ -109,7 +116,7 @@ export function RowMoreMenu({
     <div
       ref={menuRef}
       id={menuId}
-      className="row-more-menu"
+      className="rounded-lg border border-border bg-surface py-1 shadow-[0_8px_24px_rgba(15,23,42,0.14)]"
       role="menu"
       style={menuStyle}
     >
@@ -118,7 +125,10 @@ export function RowMoreMenu({
           key={item.id}
           type="button"
           role="menuitem"
-          className={`row-more-item${item.danger ? " row-more-item--danger" : ""}`}
+          className={cn(
+            "block w-full cursor-pointer border-none bg-transparent px-3 py-2 text-start text-xs whitespace-nowrap text-text hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-45",
+            item.danger && "text-danger",
+          )}
           disabled={item.disabled}
           onClick={() => {
             if (item.disabled) return;
@@ -135,13 +145,13 @@ export function RowMoreMenu({
   return (
     <div
       ref={wrapRef}
-      className={`row-more-wrap${open ? " row-more-wrap--open" : ""}`}
+      className="relative inline-flex justify-center align-middle"
       onClick={(e) => e.stopPropagation()}
     >
       <button
         ref={btnRef}
         type="button"
-        className="row-more-btn"
+        className={moreBtnClass(open)}
         aria-label={ariaLabel}
         aria-haspopup="menu"
         aria-expanded={open}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { Button } from "@platform/design-system";
 import {
   getSurveyWorkTopbarState,
   subscribeSurveyWorkTopbar,
@@ -16,15 +17,19 @@ export function EngineeringSurveyTopbarActions() {
   if (!topbar) return null;
 
   return (
-    <div className="topbar-actions" aria-label="إجراءات الرفع المساحي">
-      <button
+    <div
+      className="flex shrink-0 flex-wrap items-center justify-end gap-2"
+      aria-label="إجراءات الرفع المساحي"
+    >
+      <Button
         type="button"
-        className="btn btn-sm btn-primary"
+        size="sm"
+        variant="primary"
         disabled={topbar.saving}
         onClick={topbar.onSave}
       >
         {topbar.saving ? "جاري الإرسال…" : topbar.saveLabel}
-      </button>
+      </Button>
     </div>
   );
 }

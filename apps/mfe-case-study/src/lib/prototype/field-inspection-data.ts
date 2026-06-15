@@ -36,6 +36,27 @@ export const FIELD_INSPECTION_SIGNATORY_ROLE_OPTIONS = [
   "حارس",
 ] as const;
 
+export const FIELD_INSPECTION_FACADE_OPTIONS = [
+  "شمالية",
+  "جنوبية",
+  "شرقية",
+  "غربية",
+] as const;
+
+export const FIELD_INSPECTION_DISTRICT_STATE_OPTIONS = [
+  "قائم",
+  "قيد الإنشاء",
+  "مهجور",
+] as const;
+
+export type FieldInspectionFacade =
+  (typeof FIELD_INSPECTION_FACADE_OPTIONS)[number];
+
+export type FieldInspectionDistrictState =
+  (typeof FIELD_INSPECTION_DISTRICT_STATE_OPTIONS)[number];
+
+export type FieldInspectionYesNoChoice = "yes" | "no" | "";
+
 export const FIELD_INSPECTION_PHOTO_SLOTS = [
   { key: "mainFacade", label: "واجهة رئيسية" },
   { key: "entrance", label: "المدخل" },
@@ -90,6 +111,42 @@ export type FieldInspectionSubmission = {
   signedDocumentPhotos: string[];
   propertyPhotos: FieldInspectionPropertyPhotos;
   generalNotes: string;
+  /** حقول الرفع لإنفاذ — المعاين (أصيل) */
+  inspectionDate: string;
+  facade: FieldInspectionFacade | "";
+  streetWidthM: string;
+  builtAreaSqm: string;
+  propertyUsage: string;
+  streetName: string;
+  mainStreetName: string;
+  mapLatitude: string;
+  mapLongitude: string;
+  roomCount: string;
+  hallCount: string;
+  unitCount: string;
+  bathroomCount: string;
+  propertyAgeYears: string;
+  showroomCount: string;
+  towerCount: string;
+  wellCount: string;
+  hasKitchen: FieldInspectionYesNoChoice;
+  hasCarEntrance: FieldInspectionYesNoChoice;
+  hasBasement: FieldInspectionYesNoChoice;
+  hasElevator: FieldInspectionYesNoChoice;
+  hasPool: FieldInspectionYesNoChoice;
+  districtState: FieldInspectionDistrictState | "";
+  availableServices: string;
+  surroundingAmenities: string;
+  propertyDescription: string;
+  districtProsCons: string;
+  accessRouteDescription: string;
+  assetNotes: string;
+  buildingFloors: string;
+  basementTotalSqm: string;
+  annexTotalSqm: string;
+  buildingsTotalSqm: string;
+  exteriorPhotosPdf: string;
+  interiorPhotosPdf: string;
   status: FieldInspectionSubmissionStatus;
   submittedAtUtc: string | null;
   updatedAtUtc: string;
@@ -131,6 +188,41 @@ export function createFieldInspectionDraft(input: {
     signedDocumentPhotos: ["", "", ""],
     propertyPhotos: emptyFieldInspectionPhotos(),
     generalNotes: "",
+    inspectionDate: "",
+    facade: "",
+    streetWidthM: "",
+    builtAreaSqm: "",
+    propertyUsage: "",
+    streetName: "",
+    mainStreetName: "",
+    mapLatitude: "",
+    mapLongitude: "",
+    roomCount: "",
+    hallCount: "",
+    unitCount: "",
+    bathroomCount: "",
+    propertyAgeYears: "",
+    showroomCount: "",
+    towerCount: "",
+    wellCount: "",
+    hasKitchen: "",
+    hasCarEntrance: "",
+    hasBasement: "",
+    hasElevator: "",
+    hasPool: "",
+    districtState: "",
+    availableServices: "",
+    surroundingAmenities: "",
+    propertyDescription: "",
+    districtProsCons: "",
+    accessRouteDescription: "",
+    assetNotes: "",
+    buildingFloors: "",
+    basementTotalSqm: "",
+    annexTotalSqm: "",
+    buildingsTotalSqm: "",
+    exteriorPhotosPdf: "",
+    interiorPhotosPdf: "",
     status: "draft",
     submittedAtUtc: null,
     updatedAtUtc: now,

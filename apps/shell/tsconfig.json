@@ -30,8 +30,6 @@
       "@financial/mfe/*": ["../mfe-financial/src/*"],
       "@kpi/mfe": ["../mfe-kpi/src/index.ts"],
       "@kpi/mfe/*": ["../mfe-kpi/src/*"],
-      "@messages/mfe": ["../mfe-messages/src/index.ts"],
-      "@messages/mfe/*": ["../mfe-messages/src/*"],
       "@valuation/mfe": ["../mfe-valuation/src/index.ts"],
       "@valuation/mfe/*": ["../mfe-valuation/src/*"],
       "@platform/app-shared": ["../../packages/app-shared/src/index.ts"],

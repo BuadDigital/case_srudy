@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Input, Label, cn } from "@platform/design-system";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import type { WorkflowTask } from "@case-study/mfe";
 import {
@@ -235,7 +236,7 @@ export function EngineeringSurveyWorkPanel({
   }
 
   if (!draft) {
-    return <p className="po-properties-loading">جاري تحميل نموذج الرفع…</p>;
+    return <p className="my-2 text-xs text-text-3">جاري تحميل نموذج الرفع…</p>;
   }
 
   const surveyBody = (
@@ -259,14 +260,14 @@ export function EngineeringSurveyWorkPanel({
         يُستخدم الموقع للتحقق من زيارة المكتب الهندسي. يجب أن تتطابق الإحداثيات
         مع موقع العقار الفعلي.
       </InfoBox>
-      <div className="eng-office-coords-row">
-        <div className="form-group">
-          <label className="form-label" htmlFor="eng-lat">
-            خط العرض (Latitude) <span className="req">*</span>
-          </label>
-          <input
+      <div className="mb-3 grid grid-cols-[1fr_1fr_auto] items-end gap-2.5">
+        <div className="mb-3.5">
+          <Label htmlFor="eng-lat" className="text-xs">
+            خط العرض (Latitude) <span className="text-danger">*</span>
+          </Label>
+          <Input
             id="eng-lat"
-            className="form-control eng-office-mono"
+            className="font-mono text-[13px]"
             disabled={formDisabled}
             value={draft.latitude}
             placeholder={JEDDAH_DEFAULT_LAT}
@@ -280,16 +281,16 @@ export function EngineeringSurveyWorkPanel({
             }}
           />
           {fieldErrors.latitude ? (
-            <p className="form-error">{fieldErrors.latitude}</p>
+            <p className="mt-1 text-[11px] text-danger">{fieldErrors.latitude}</p>
           ) : null}
         </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="eng-lng">
-            خط الطول (Longitude) <span className="req">*</span>
-          </label>
-          <input
+        <div className="mb-3.5">
+          <Label htmlFor="eng-lng" className="text-xs">
+            خط الطول (Longitude) <span className="text-danger">*</span>
+          </Label>
+          <Input
             id="eng-lng"
-            className="form-control eng-office-mono"
+            className="font-mono text-[13px]"
             disabled={formDisabled}
             value={draft.longitude}
             placeholder={JEDDAH_DEFAULT_LNG}
@@ -303,17 +304,19 @@ export function EngineeringSurveyWorkPanel({
             }}
           />
           {fieldErrors.longitude ? (
-            <p className="form-error">{fieldErrors.longitude}</p>
+            <p className="mt-1 text-[11px] text-danger">{fieldErrors.longitude}</p>
           ) : null}
         </div>
-        <button
+        <Button
           type="button"
-          className="btn btn-sm btn-outline eng-office-locate-btn"
+          size="sm"
+          variant="outline"
+          className="h-[34px] whitespace-nowrap"
           disabled={formDisabled}
           onClick={useCurrentLocation}
         >
           موقعي الحالي
-        </button>
+        </Button>
       </div>
       <EngineeringSurveyMap
         latitude={draft.latitude}
@@ -323,16 +326,78 @@ export function EngineeringSurveyWorkPanel({
       />
 
       <SectionDivider />
+      <SectionHeader>الحدود والأطوال (إنفاذ)</SectionHeader>
+      <div className="mb-3.5 grid grid-cols-2 gap-2.5">
+        <div className="mb-3.5">
+          <Label htmlFor="eng-on-site-area" className="text-xs">
+            المساحة على الطبيعة (م²)
+          </Label>
+          <Input
+            id="eng-on-site-area"
+            className="text-xs"
+            disabled={formDisabled}
+            value={draft.onSiteAreaSqm}
+            onChange={(e) => persist({ onSiteAreaSqm: e.target.value })}
+          />
+        </div>
+      </div>
+      {(
+        [
+          ["northBoundary", "northBoundaryLengthM", "الحد الشمالي", "طول الحد الشمالي التقريبي (م)"],
+          ["southBoundary", "southBoundaryLengthM", "الحد الجنوبي", "طول الحد الجنوبي التقريبي (م)"],
+          ["eastBoundary", "eastBoundaryLengthM", "الحد الشرقي", "طول الحد الشرقي التقريبي (م)"],
+          ["westBoundary", "westBoundaryLengthM", "الحد الغربي", "طول الحد الغربي التقريبي (م)"],
+        ] as const
+      ).map(([boundKey, lenKey, boundLabel, lenLabel]) => (
+        <div key={boundKey} className="mb-3.5 grid grid-cols-2 gap-2.5">
+          <div className="mb-3.5">
+            <Label className="text-xs">{boundLabel}</Label>
+            <Input
+              className="text-xs"
+              disabled={formDisabled}
+              value={draft[boundKey]}
+              onChange={(e) => persist({ [boundKey]: e.target.value })}
+            />
+          </div>
+          <div className="mb-3.5">
+            <Label className="text-xs">{lenLabel}</Label>
+            <Input
+              className="text-xs"
+              disabled={formDisabled}
+              value={draft[lenKey]}
+              onChange={(e) => persist({ [lenKey]: e.target.value })}
+            />
+          </div>
+        </div>
+      ))}
+      <div className="mb-3.5">
+        <Label htmlFor="eng-survey-notes" className="text-xs">
+          ملاحظات الرفع المساحي
+        </Label>
+        <textarea
+          id="eng-survey-notes"
+          className={cn(
+            "min-h-[72px] w-full resize-y rounded-[var(--radius-DEFAULT)] border border-border bg-surface px-2.5 py-2 text-xs text-text outline-none",
+            "focus:border-primary focus:ring-[3px] focus:ring-primary/12",
+          )}
+          rows={3}
+          disabled={formDisabled}
+          value={draft.surveyNotes}
+          onChange={(e) => persist({ surveyNotes: e.target.value })}
+        />
+      </div>
+
+      <SectionDivider />
       <SectionHeader>التقرير المساحي</SectionHeader>
-      <div className="eng-office-upload-zone">
-        <div className="eng-office-upload-title">رفع التقرير المساحي</div>
-        <div className="eng-office-upload-sub">PDF — الحجم الأقصى 20 ميجابايت</div>
-        <label className="btn btn-sm btn-primary eng-office-upload-btn">
+      <div className="rounded-[var(--radius-DEFAULT)] border-2 border-dashed border-border-md bg-surface-2 p-[18px] text-center">
+        <div className="mb-1 text-xs font-semibold text-text-2">رفع التقرير المساحي</div>
+        <div className="mb-2.5 text-[11px] text-text-3">PDF — الحجم الأقصى 20 ميجابايت</div>
+        <label className="mt-1 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border border-primary bg-primary px-2 py-1 text-[11px] text-white transition-colors hover:border-primary-mid hover:bg-primary-mid">
           اختيار ملف
           <input
             type="file"
             accept=".pdf,application/pdf"
-            hidden
+            className="hidden"
             disabled={formDisabled}
             onChange={(e) =>
               onFilePick("surveyReportFileName", e.target.files?.[0] ?? null)
@@ -341,34 +406,35 @@ export function EngineeringSurveyWorkPanel({
         </label>
       </div>
       {draft.surveyReportFileName ? (
-        <div className="eng-office-uploaded-file">
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-[var(--radius-DEFAULT)] border border-[#a9dfbf] bg-[#d5f5ef] px-3 py-2 text-xs">
           <span>{draft.surveyReportFileName}</span>
           {!formDisabled ? (
-            <button
+            <Button
               type="button"
-              className="btn btn-sm btn-ghost"
+              size="sm"
+              variant="ghost"
               onClick={() => onFileClear("surveyReportFileName")}
             >
               حذف
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}
       {fieldErrors.survey_report ? (
-        <p className="form-error">{fieldErrors.survey_report}</p>
+        <p className="mt-1 text-[11px] text-danger">{fieldErrors.survey_report}</p>
       ) : null}
 
       <SectionDivider />
       <SectionHeader>خطاب إقرار صحة الموقع</SectionHeader>
-      <div className="eng-office-upload-zone">
-        <div className="eng-office-upload-title">رفع خطاب الإقرار</div>
-        <div className="eng-office-upload-sub">PDF — الحجم الأقصى 10 ميجابايت</div>
-        <label className="btn btn-sm btn-primary eng-office-upload-btn">
+      <div className="rounded-[var(--radius-DEFAULT)] border-2 border-dashed border-border-md bg-surface-2 p-[18px] text-center">
+        <div className="mb-1 text-xs font-semibold text-text-2">رفع خطاب الإقرار</div>
+        <div className="mb-2.5 text-[11px] text-text-3">PDF — الحجم الأقصى 10 ميجابايت</div>
+        <label className="mt-1 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border border-primary bg-primary px-2 py-1 text-[11px] text-white transition-colors hover:border-primary-mid hover:bg-primary-mid">
           اختيار ملف
           <input
             type="file"
             accept=".pdf,application/pdf"
-            hidden
+            className="hidden"
             disabled={formDisabled}
             onChange={(e) =>
               onFilePick("siteLetterFileName", e.target.files?.[0] ?? null)
@@ -377,20 +443,21 @@ export function EngineeringSurveyWorkPanel({
         </label>
       </div>
       {draft.siteLetterFileName ? (
-        <div className="eng-office-uploaded-file">
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-[var(--radius-DEFAULT)] border border-[#a9dfbf] bg-[#d5f5ef] px-3 py-2 text-xs">
           <span>{draft.siteLetterFileName}</span>
           {!formDisabled ? (
-            <button
+            <Button
               type="button"
-              className="btn btn-sm btn-ghost"
+              size="sm"
+              variant="ghost"
               onClick={() => onFileClear("siteLetterFileName")}
             >
               حذف
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}
-      <label className="eng-office-confirm-box">
+      <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-[var(--radius-DEFAULT)] border border-[#fad7a0] bg-[#fef3d7] px-3 py-2.5 text-[11px] leading-relaxed">
         <input
           type="checkbox"
           checked={draft.siteConfirmed}
@@ -410,10 +477,10 @@ export function EngineeringSurveyWorkPanel({
         </span>
       </label>
       {fieldErrors.site_confirmed ? (
-        <p className="form-error">{fieldErrors.site_confirmed}</p>
+        <p className="mt-1 text-[11px] text-danger">{fieldErrors.site_confirmed}</p>
       ) : null}
       {fieldErrors.site_letter ? (
-        <p className="form-error">{fieldErrors.site_letter}</p>
+        <p className="mt-1 text-[11px] text-danger">{fieldErrors.site_letter}</p>
       ) : null}
 
       <SectionDivider />
@@ -432,7 +499,7 @@ export function EngineeringSurveyWorkPanel({
         }}
       />
       {fieldErrors.checklist ? (
-        <p className="form-error">{fieldErrors.checklist}</p>
+        <p className="mt-1 text-[11px] text-danger">{fieldErrors.checklist}</p>
       ) : null}
 
       <SectionDivider />
@@ -442,38 +509,50 @@ export function EngineeringSurveyWorkPanel({
   );
 
   return (
-    <div className="po-property-detail-tabs-wrap">
-      <nav className="pd-tabs-bar" aria-label="أقسام المهمة">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <nav
+        className="flex shrink-0 gap-0 overflow-x-auto border-b border-border bg-surface px-6 [&::-webkit-scrollbar]:h-0"
+        aria-label="أقسام المهمة"
+      >
         <button
           type="button"
-          className={`pd-tab${workTab === "property" ? " active" : ""}`}
+          className={cn(
+            "mb-[-1px] flex items-center gap-1.5 border-b-2 border-transparent bg-transparent px-3.5 py-2.5 font-inherit text-xs text-text-2 transition-colors hover:text-text",
+            workTab === "property" && "border-b-primary font-medium text-primary",
+          )}
           onClick={() => setWorkTab("property")}
         >
           بيانات العقار
         </button>
         <button
           type="button"
-          className={`pd-tab${workTab === "survey" ? " active" : ""}`}
+          className={cn(
+            "mb-[-1px] flex items-center gap-1.5 border-b-2 border-transparent bg-transparent px-3.5 py-2.5 font-inherit text-xs text-text-2 transition-colors hover:text-text",
+            workTab === "survey" && "border-b-primary font-medium text-primary",
+          )}
           onClick={() => setWorkTab("survey")}
         >
           {def.workTitle}
         </button>
         <button
           type="button"
-          className={`pd-tab${workTab === "failures" ? " active" : ""}`}
+          className={cn(
+            "mb-[-1px] flex items-center gap-1.5 border-b-2 border-transparent bg-transparent px-3.5 py-2.5 font-inherit text-xs text-text-2 transition-colors hover:text-text",
+            workTab === "failures" && "border-b-primary font-medium text-primary",
+          )}
           onClick={() => setWorkTab("failures")}
         >
           التعذرات
           {activeFailureCount > 0 ? (
-            <span className="pd-tab-count pd-tab-count--red">
+            <span className="rounded-[10px] bg-danger-bg px-1.5 py-px text-[10px] font-medium text-danger">
               {activeFailureCount}
             </span>
           ) : null}
         </button>
       </nav>
 
-      <div className="pd-body-row">
-        <div className="pd-tab-content">
+      <div className="flex min-h-0 flex-1 flex-row items-stretch overflow-hidden">
+        <div className="order-1 min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-5">
           {workTab === "property" ? (
             <EngineeringSurveyPropertySummary
               property={property}
@@ -482,7 +561,7 @@ export function EngineeringSurveyWorkPanel({
           ) : null}
           {workTab === "survey" ? surveyBody : null}
           {workTab === "failures" && propertyId ? (
-            <div className="eng-office-failures-panel">
+            <div>
               <SectionHeader>التعذرات المسجلة</SectionHeader>
               <FailureRaisePanel
                 poNumber={task.poNumber}

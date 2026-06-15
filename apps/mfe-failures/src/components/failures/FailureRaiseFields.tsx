@@ -1,8 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
+import { Label, Select, cn } from "@platform/design-system";
 import type { FailureSeverity } from "../../lib/failures-types";
 import { useFailureTypesQuery } from "../../query/failure-types-queries";
+
+const fieldTextareaClass = cn(
+  "min-h-[72px] w-full resize-y rounded-[var(--radius-DEFAULT)] border border-border bg-surface px-2.5 py-2 text-xs text-text outline-none",
+  "focus:border-primary focus:ring-[3px] focus:ring-primary/12",
+);
 
 export function FailureRaiseFields({
   severity,
@@ -40,37 +46,37 @@ export function FailureRaiseFields({
 
   return (
     <>
-      <div className="reg-fg-full" style={{ marginBottom: 10 }}>
-        <span className="reg-fl">نوع التعذر *</span>
-        <div className="radio-group" style={{ marginTop: 6 }}>
-          <label className="radio-opt">
+      <div className="mb-2.5">
+        <Label className="text-[11px] font-semibold text-text-2">نوع التعذر *</Label>
+        <div className="mt-1.5 flex flex-wrap gap-4">
+          <label className="inline-flex cursor-pointer items-center gap-1 text-xs">
             <input
               type="radio"
               name={`${idPrefix}_severity`}
               checked={severity === "suspected"}
               onChange={() => onSeverityChange("suspected")}
-            />{" "}
+            />
             احتمال تعذر
           </label>
-          <label className="radio-opt">
+          <label className="inline-flex cursor-pointer items-center gap-1 text-xs">
             <input
               type="radio"
               name={`${idPrefix}_severity`}
               checked={severity === "internal"}
               onChange={() => onSeverityChange("internal")}
-            />{" "}
+            />
             تعذر داخلي
           </label>
         </div>
       </div>
 
-      <div className="reg-fg-full" style={{ marginBottom: 10 }}>
-        <label className="reg-fl" htmlFor={`${idPrefix}_problem_type`}>
+      <div className="mb-2.5">
+        <Label htmlFor={`${idPrefix}_problem_type`} className="text-[11px] font-semibold text-text-2">
           نوع المشكلة *
-        </label>
-        <select
+        </Label>
+        <Select
           id={`${idPrefix}_problem_type`}
-          className="reg-fi"
+          className="mt-1 text-xs"
           value={problemTypeId}
           onChange={(e) => onProblemTypeIdChange(e.target.value)}
         >
@@ -84,30 +90,27 @@ export function FailureRaiseFields({
               ))}
             </optgroup>
           ))}
-        </select>
+        </Select>
         {selectedType?.description ? (
-          <p className="reg-field-hint" style={{ marginTop: 6 }}>
-            {selectedType.description}
-          </p>
+          <p className="mt-1.5 text-[10px] text-text-3">{selectedType.description}</p>
         ) : null}
       </div>
 
-      <div className="reg-fg-full" style={{ marginBottom: 12 }}>
-        <label className="reg-fl" htmlFor={`${idPrefix}_note`}>
+      <div className="mb-3">
+        <Label htmlFor={`${idPrefix}_note`} className="text-[11px] font-semibold text-text-2">
           ملاحظات
-        </label>
+        </Label>
         <textarea
           id={`${idPrefix}_note`}
-          className="form-control"
+          className={cn(fieldTextareaClass, "mt-1")}
           rows={3}
           value={note}
           onChange={(e) => onNoteChange(e.target.value)}
           placeholder="وصف تفصيلي للمشكلة (اختياري)"
-          style={{ width: "100%", fontSize: 12 }}
         />
       </div>
 
-      <p className="reg-field-hint" style={{ marginBottom: 12 }}>
+      <p className="mb-3 text-[10px] text-text-3">
         {severity === "internal"
           ? "يُضبط حالة الصك إلى «قيد التحقق» ويُوقف العمل على العقار حتى يُعالج التعذر."
           : "احتمال تعذر — إشارة تحذيرية فقط دون إيقاف العمل على العقار."}

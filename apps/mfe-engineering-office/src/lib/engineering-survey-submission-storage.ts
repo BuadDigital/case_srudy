@@ -142,6 +142,16 @@ export async function updateEngineeringSurveyDraft(
       | "siteConfirmed"
       | "checklist"
       | "returnNote"
+      | "onSiteAreaSqm"
+      | "northBoundary"
+      | "northBoundaryLengthM"
+      | "southBoundary"
+      | "southBoundaryLengthM"
+      | "eastBoundary"
+      | "eastBoundaryLengthM"
+      | "westBoundary"
+      | "westBoundaryLengthM"
+      | "surveyNotes"
     >
   >,
 ): Promise<EngineeringSurveySubmission | null> {

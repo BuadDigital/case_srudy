@@ -1,6 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type RefObject } from "react";
+import { FormGroup, FormRow, Input, Label, Note, Select } from "@platform/design-system";
+import {
+  RegField,
+  RegTextarea,
+} from "@platform/app-shared/registration/FormFields";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import { usePoRecordQuery, useWorkflowTasksQuery } from "../../query/case-study-queries";
@@ -35,6 +40,9 @@ export type ValuationCoordinationWorkHostRef = {
   onSubmitted?: () => void;
   onSavingChange?: (saving: boolean) => void;
 };
+
+const CHECKBOX_OPT =
+  "flex cursor-pointer items-start gap-2 text-sm text-text-2";
 
 function distributionForTask(
   task: WorkflowTask,
@@ -167,45 +175,40 @@ export function ValuationCoordinationWorkBody({
   }, [hostRef, submit]);
 
   if (!draft) {
-    return <p className="po-properties-loading">جاري تحميل نموذج الاستلام…</p>;
+    return <p className="text-xs text-text-3">جاري تحميل نموذج الاستلام…</p>;
   }
 
   return (
     <>
       {locked ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
-          تم تأكيد الاستلام — النموذج للقراءة فقط.
-        </div>
+        <Note tone="success">تم تأكيد الاستلام — النموذج للقراءة فقط.</Note>
       ) : null}
 
       {formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
+        <Note tone="warn" role="alert">
           {formError}
-        </div>
+        </Note>
       ) : null}
 
-      <RegistrationFormCard title="استلام المعاملة">
-        <div className="note note-info" style={{ marginBottom: 12 }}>
-          {property
-            ? `${property.city}${property.district ? ` · ${property.district}` : ""}`
-            : "—"}
-          {property?.court ? ` · ${property.court}` : ""}
-        </div>
+      <fieldset disabled={formDisabled} className="contents">
+        <RegistrationFormCard title="استلام المعاملة">
+          <Note tone="info">
+            {property
+              ? `${property.city}${property.district ? ` · ${property.district}` : ""}`
+              : "—"}
+            {property?.court ? ` · ${property.court}` : ""}
+          </Note>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="vc-receipt-date">
-              تاريخ الاستلام
-            </label>
-            <input
+          <FormRow className="grid-cols-1 sm:grid-cols-2">
+            <RegField
               id="vc-receipt-date"
-              className="form-control"
+              label="تاريخ الاستلام"
               type="date"
               dir="ltr"
               value={draft.receiptDate}
-              disabled={formDisabled}
-              onChange={(e) => {
-                persist({ receiptDate: e.target.value });
+              error={fieldErrors.receiptDate}
+              onChange={(v) => {
+                persist({ receiptDate: v });
                 setFieldErrors((prev) => {
                   const next = { ...prev };
                   delete next.receiptDate;
@@ -213,108 +216,119 @@ export function ValuationCoordinationWorkBody({
                 });
               }}
             />
-            {fieldErrors.receiptDate ? (
-              <p className="reg-field-error">{fieldErrors.receiptDate}</p>
+            <FormGroup className="mb-3 flex flex-col gap-1">
+              <Label
+                htmlFor="vc-priority"
+                className="text-[11px] font-semibold text-text-2"
+              >
+                أولوية التنفيذ
+              </Label>
+              <Select
+                id="vc-priority"
+                value={draft.priority}
+                className="text-xs"
+                onChange={(e) =>
+                  persist({
+                    priority: e.target.value as ValuationCoordinationPriority,
+                  })
+                }
+              >
+                <option value="normal">
+                  {valuationCoordinationPriorityLabel("normal")}
+                </option>
+                <option value="urgent">
+                  {valuationCoordinationPriorityLabel("urgent")}
+                </option>
+              </Select>
+            </FormGroup>
+          </FormRow>
+
+          <FormGroup className="mb-3 flex flex-col gap-1">
+            <label className={CHECKBOX_OPT}>
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={draft.receiptConfirmed}
+                onChange={(e) => {
+                  persist({ receiptConfirmed: e.target.checked });
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.receiptConfirmed;
+                    return next;
+                  });
+                }}
+              />
+              <span>أؤكد استلام المعاملة في قسم التقييم العقاري</span>
+            </label>
+            {fieldErrors.receiptConfirmed ? (
+              <p className="mt-1 text-[10px] text-danger" role="alert">
+                {fieldErrors.receiptConfirmed}
+              </p>
             ) : null}
-          </div>
-          <div className="form-group">
-            <span className="form-label">أولوية التنفيذ</span>
-            <select
-              className="form-control"
-              value={draft.priority}
-              disabled={formDisabled}
-              onChange={(e) =>
-                persist({
-                  priority: e.target.value as ValuationCoordinationPriority,
-                })
-              }
-            >
-              <option value="normal">
-                {valuationCoordinationPriorityLabel("normal")}
-              </option>
-              <option value="urgent">
-                {valuationCoordinationPriorityLabel("urgent")}
-              </option>
-            </select>
-          </div>
-        </div>
+          </FormGroup>
+        </RegistrationFormCard>
 
-        <div className="form-group">
-          <label className="gov-delegation-property-opt">
-            <input
-              type="checkbox"
-              checked={draft.receiptConfirmed}
-              disabled={formDisabled}
-              onChange={(e) => {
-                persist({ receiptConfirmed: e.target.checked });
-                setFieldErrors((prev) => {
-                  const next = { ...prev };
-                  delete next.receiptConfirmed;
-                  return next;
-                });
-              }}
-            />
-            <span>أؤكد استلام المعاملة في قسم التقييم العقاري</span>
-          </label>
-          {fieldErrors.receiptConfirmed ? (
-            <p className="reg-field-error">{fieldErrors.receiptConfirmed}</p>
-          ) : null}
-        </div>
-      </RegistrationFormCard>
+        <RegistrationFormCard title="إسناد الفريق">
+          <FormRow className="grid-cols-1 sm:grid-cols-2">
+            <FormGroup className="mb-3 flex flex-col gap-1">
+              <Label
+                htmlFor="vc-inspector"
+                className="text-[11px] font-semibold text-text-2"
+              >
+                المعاين الميداني
+              </Label>
+              <Input
+                id="vc-inspector"
+                readOnly
+                value={inspectorName || "—"}
+                className="bg-surface-3 text-xs"
+              />
+              {fieldErrors.inspectorName ? (
+                <p className="mt-1 text-[10px] text-danger" role="alert">
+                  {fieldErrors.inspectorName}
+                </p>
+              ) : (
+                <p className="mt-1 text-[10px] text-text-3">
+                  من توزيع المعاملات — للقراءة فقط
+                </p>
+              )}
+            </FormGroup>
+            <FormGroup className="mb-3 flex flex-col gap-1">
+              <Label
+                htmlFor="vc-appraiser"
+                className="text-[11px] font-semibold text-text-2"
+              >
+                المقيم العقاري
+              </Label>
+              <Input
+                id="vc-appraiser"
+                readOnly
+                value={appraiserName || "—"}
+                className="bg-surface-3 text-xs"
+              />
+              {fieldErrors.appraiserName ? (
+                <p className="mt-1 text-[10px] text-danger" role="alert">
+                  {fieldErrors.appraiserName}
+                </p>
+              ) : (
+                <p className="mt-1 text-[10px] text-text-3">
+                  من توزيع المعاملات — للقراءة فقط
+                </p>
+              )}
+            </FormGroup>
+          </FormRow>
+        </RegistrationFormCard>
 
-      <RegistrationFormCard title="إسناد الفريق">
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="vc-inspector">
-              المعاين الميداني
-            </label>
-            <input
-              id="vc-inspector"
-              className="form-control"
-              value={inspectorName || "—"}
-              readOnly
-              style={{ background: "var(--surface3)" }}
-            />
-            {fieldErrors.inspectorName ? (
-              <p className="reg-field-error">{fieldErrors.inspectorName}</p>
-            ) : (
-              <p className="reg-field-hint">من توزيع المعاملات — للقراءة فقط</p>
-            )}
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="vc-appraiser">
-              المقيم العقاري
-            </label>
-            <input
-              id="vc-appraiser"
-              className="form-control"
-              value={appraiserName || "—"}
-              readOnly
-              style={{ background: "var(--surface3)" }}
-            />
-            {fieldErrors.appraiserName ? (
-              <p className="reg-field-error">{fieldErrors.appraiserName}</p>
-            ) : (
-              <p className="reg-field-hint">من توزيع المعاملات — للقراءة فقط</p>
-            )}
-          </div>
-        </div>
-      </RegistrationFormCard>
-
-      <RegistrationFormCard title="تنسيق التنفيذ">
-        <div className="form-group">
-          <label className="form-label" htmlFor="vc-note">
-            ملاحظات الاستلام والتنسيق
-          </label>
-          <textarea
+        <RegistrationFormCard title="تنسيق التنفيذ">
+          <RegTextarea
             id="vc-note"
-            className="form-control"
+            label="ملاحظات الاستلام والتنسيق"
             rows={3}
-            disabled={formDisabled}
             placeholder="تأكيد استلام المعاملة، موعد المعاينة المتوقع، وأي تنسيق مع دراسة الحالة…"
             value={draft.coordinationNotes}
-            onChange={(e) => {
-              persist({ coordinationNotes: e.target.value });
+            error={fieldErrors.coordinationNotes}
+            onChange={(v) => {
+              persist({ coordinationNotes: v });
               setFieldErrors((prev) => {
                 const next = { ...prev };
                 delete next.coordinationNotes;
@@ -322,46 +336,27 @@ export function ValuationCoordinationWorkBody({
               });
             }}
           />
-          {fieldErrors.coordinationNotes ? (
-            <p className="reg-field-error">{fieldErrors.coordinationNotes}</p>
-          ) : null}
-        </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="vc-inspector-instructions">
-              تعليمات للمعاين
-            </label>
-            <textarea
+          <FormRow className="grid-cols-1 sm:grid-cols-2">
+            <RegTextarea
               id="vc-inspector-instructions"
-              className="form-control"
+              label="تعليمات للمعاين"
               rows={2}
-              disabled={formDisabled}
               placeholder="موعد الزيارة، نقطة التقاء، أو متطلبات الوصول…"
               value={draft.inspectorInstructions}
-              onChange={(e) =>
-                persist({ inspectorInstructions: e.target.value })
-              }
+              onChange={(v) => persist({ inspectorInstructions: v })}
             />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="vc-appraiser-instructions">
-              تعليمات للمقيم
-            </label>
-            <textarea
+            <RegTextarea
               id="vc-appraiser-instructions"
-              className="form-control"
+              label="تعليمات للمقيم"
               rows={2}
-              disabled={formDisabled}
               placeholder="أسلوب التقييم، مستندات مطلوبة، أو موعد التسليم…"
               value={draft.appraiserInstructions}
-              onChange={(e) =>
-                persist({ appraiserInstructions: e.target.value })
-              }
+              onChange={(v) => persist({ appraiserInstructions: v })}
             />
-          </div>
-        </div>
-      </RegistrationFormCard>
+          </FormRow>
+        </RegistrationFormCard>
+      </fieldset>
     </>
   );
 }

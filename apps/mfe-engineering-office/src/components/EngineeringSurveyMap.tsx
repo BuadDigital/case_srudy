@@ -124,14 +124,14 @@ export function EngineeringSurveyMap({
 
   if (mapError) {
     return (
-      <div className="eng-office-map-placeholder">
-        <p>{mapError}</p>
+      <div className="rounded-[var(--radius-DEFAULT)] border border-dashed border-border-md bg-surface-2 px-4 py-6 text-center text-xs text-text-3">
+        <p className="m-0 mb-2.5">{mapError}</p>
         {hasPin ? (
           <a
             href={googleMapsSearchUrl(lat!, lng!)}
             target="_blank"
             rel="noopener noreferrer"
-            className="eng-office-map-link"
+            className="font-medium text-primary no-underline hover:underline"
           >
             فتح الموقع في Google Maps ({latitude}, {longitude})
           </a>
@@ -143,13 +143,15 @@ export function EngineeringSurveyMap({
   }
 
   return (
-    <div className="eng-office-map-frame">
-      <div ref={containerRef} className="eng-office-map-canvas" aria-label="خريطة Google" />
+    <div className="relative overflow-hidden rounded-[var(--radius-DEFAULT)] border border-border bg-surface-2">
+      <div ref={containerRef} className="h-[280px] w-full" aria-label="خريطة Google" />
       {!mapReady ? (
-        <div className="eng-office-map-loading">جاري تحميل الخريطة…</div>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/85 text-xs text-text-3">
+          جاري تحميل الخريطة…
+        </div>
       ) : null}
       {!hasPin && mapReady ? (
-        <p className="eng-office-map-hint">
+        <p className="m-0 border-t border-border bg-surface px-3 py-2 text-[11px] text-text-3">
           اضغط على الخريطة لتحديد موقع العقار، أو أدخل الإحداثيات يدوياً.
         </p>
       ) : null}

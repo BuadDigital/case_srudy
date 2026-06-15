@@ -16,9 +16,39 @@ import {
   mergeFieldErrors,
   type FieldErrors,
 } from "@platform/app-shared/registration/registration-utils";
+import { Label, Note } from "@platform/design-system";
 import { PoEditShell } from "./PoEditShell";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function CountDisplay({
+  label,
+  value,
+  unit,
+  tag,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  tag?: string;
+}) {
+  return (
+    <div className="col-span-full sm:col-span-2">
+      <Label className="text-[11px]">{label}</Label>
+      <div className="flex min-h-[38px] w-full items-center gap-2.5 rounded-[var(--radius-DEFAULT)] border border-border bg-surface-2 px-3 py-2 text-xs text-text-2">
+        <span className="text-[15px] font-bold leading-none text-primary tabular-nums">
+          {value}
+        </span>
+        {unit ? <span className="text-xs text-text-2">{unit}</span> : null}
+        {tag ? (
+          <span className="ms-auto whitespace-nowrap rounded-[10px] bg-info-bg px-2.5 py-0.5 text-[10px] font-semibold text-info">
+            {tag}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export function PoHeaderEdit({
   record,
@@ -123,14 +153,10 @@ export function PoHeaderEdit({
       onBack={onBackAction}
       onSave={() => void handleSave()}
     >
-      {formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
-          {formError}
-        </div>
-      ) : null}
+      {formError ? <Note tone="warn">{formError}</Note> : null}
 
       <RegistrationFormCard title="بيانات أمر العمل">
-        <div className="reg-fg2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <RegField
             id="po_number_ro"
             label="رقم PO (التعميد)"
@@ -185,31 +211,23 @@ export function PoHeaderEdit({
               setExpectedPropertyCount(digits || "");
             }}
           />
-          <div className="reg-sp2 po-due-date-field">
-            <span className="reg-fl">تاريخ الاستلام الفعلي</span>
-            <div className="po-count-box">
-              <span className="po-count-box-value">{receivedDisplay}</span>
-              <span className="po-count-box-tag">بعد الحفظ</span>
-            </div>
-          </div>
-          <div className="reg-sp2 po-due-date-field">
-            <span className="reg-fl">تاريخ الاستحقاق</span>
-            <div className="po-count-box">
-              <span className="po-count-box-value">{dueDisplay}</span>
-              <span className="po-count-box-tag">محسوب</span>
-            </div>
-          </div>
-          <div className="reg-sp2 po-count-field">
-            <span className="reg-fl">عدد العقارات</span>
-            <div className="po-count-box">
-              <span className="po-count-box-value">
-                {record.properties.length}
-              </span>
-              <span className="po-count-box-unit">عقارات</span>
-            </div>
-          </div>
+          <CountDisplay
+            label="تاريخ الاستلام الفعلي"
+            value={receivedDisplay}
+            tag="بعد الحفظ"
+          />
+          <CountDisplay
+            label="تاريخ الاستحقاق"
+            value={dueDisplay}
+            tag="محسوب"
+          />
+          <CountDisplay
+            label="عدد العقارات"
+            value={String(record.properties.length)}
+            unit="عقارات"
+          />
         </div>
-        <p className="reg-field-hint" style={{ marginTop: 8 }}>
+        <p className="mt-2 text-[11px] text-text-3">
           رقم PO غير قابل للتعديل بعد الحفظ الأول.
         </p>
       </RegistrationFormCard>

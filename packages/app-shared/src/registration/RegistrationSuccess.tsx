@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { Button } from "@platform/design-system";
 import type { StaffUser } from "@platform/app-shared/prototype/constants";
 import {
   registrationSuccessLabel,
@@ -25,38 +26,39 @@ export function RegistrationSuccess({
     data.hr_username || data.pc_username || data.crm_username || "—";
 
   return (
-    <div className="reg-success-wrap">
-      <div className="reg-success-ico" aria-hidden />
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+    <div className="w-full max-w-[480px] px-6 py-10 text-center">
+      <div
+        className="relative mx-auto mb-4 h-[60px] w-[60px] rounded-full border-2 border-success bg-success-bg after:absolute after:left-1/2 after:top-[46%] after:h-[18px] after:w-[10px] after:-translate-x-1/2 after:rotate-45 after:border-b-[3px] after:border-r-[3px] after:border-solid after:border-success"
+        aria-hidden
+      />
+      <h2 className="mb-2 text-lg font-bold text-text">
         تم إنشاء الحساب بنجاح
       </h2>
-      <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 16 }}>
+      <p className="mb-4 text-[13px] text-text-2">
         تمت إضافة «{user.name}» إلى قائمة المستخدمين.
       </p>
-      <div className="reg-success-info">
-        <div className="reg-si-row">
-          الاسم: <strong>{user.name}</strong>
+      <div className="mb-4 rounded border border-border bg-surface-2 p-4 text-start text-sm text-text-2">
+        <div className="py-1">
+          الاسم: <strong className="text-text">{user.name}</strong>
         </div>
-        <div className="reg-si-row">
-          النوع: <strong>{typeLabel}</strong>
+        <div className="py-1">
+          النوع: <strong className="text-text">{typeLabel}</strong>
         </div>
-        <div className="reg-si-row">
-          البريد: <strong>{user.email}</strong>
+        <div className="py-1">
+          البريد: <strong className="text-text">{user.email}</strong>
         </div>
-        <div className="reg-si-row">
-          اسم المستخدم: <strong>{username}</strong>
+        <div className="py-1">
+          اسم المستخدم: <strong className="text-text">{username}</strong>
         </div>
       </div>
-      <div className="reg-success-btns">
-        <button type="button" className="btn btn-primary" onClick={onBackToList}>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button type="button" variant="primary" onClick={onBackToList}>
           العودة للقائمة
-        </button>
-        <button type="button" className="btn" onClick={onAddAnother}>
+        </Button>
+        <Button type="button" onClick={onAddAnother}>
           + تسجيل مستخدم آخر
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
-
-

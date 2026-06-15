@@ -1,5 +1,6 @@
 "use client";
 
+import { Note } from "@platform/design-system";
 import { useMemo } from "react";
 import { CaseStudyForm } from "./CaseStudyForm";
 import { partyIdForRoleId } from "@settings/mfe";
@@ -56,26 +57,26 @@ export function PartyCaseStudyFormTab({
 
   if (!partyId) {
     return (
-      <div className="note note-warn">
+      <Note tone="warn">
         لا يوجد طرف مطابق لهذا الدور في مصفوفة علاقة المستخدم بالمعلومة.
-      </div>
+      </Note>
     );
   }
 
   if (recordLoading && !record) {
-    return <p className="po-properties-loading">جاري التحميل…</p>;
+    return <p className="my-2 text-xs text-text-3">جاري التحميل…</p>;
   }
 
   if (!parentTask) {
     return (
-      <div className="note note-warn">
+      <Note tone="warn">
         لم تُعثر على معاملة دراسة الحالة الأم لهذا العقار. أكمل التوزيع أولاً.
-      </div>
+      </Note>
     );
   }
 
   return (
-    <div className="party-cs-form-tab">
+    <div>
       <CaseStudyForm
         taskId={childTask.id}
         task={parentTask}

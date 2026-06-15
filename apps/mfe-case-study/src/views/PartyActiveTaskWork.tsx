@@ -43,6 +43,7 @@ import type {
   PartyEngineeringSurveyExtensions,
   PartyEngineeringSurveyWorkHostRef,
 } from "../lib/party-engineering-survey-extensions";
+import { cn, Note, PageShell } from "@platform/design-system";
 import { FailureRaisePanel } from "@failures/mfe";
 import { failureRaiserRoleForParty } from "@failures/mfe/lib/failure-party-roles";
 import { setSurveyWorkTopbarState } from "@platform/app-shared/prototype/survey-work-topbar-bridge";
@@ -54,6 +55,55 @@ const PARTY_FAILURE_RAISE_KINDS = new Set([
   "government-review",
   "engineering-survey",
 ]);
+
+const LOADING_TEXT = "text-xs text-text-3";
+const PAGE_WRAP =
+  "flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg";
+const TAB_CONTENT = "min-w-0 flex-1 overflow-y-auto p-5";
+
+function PartyWorkTabs({
+  workTab,
+  workTitle,
+  onSelect,
+}: {
+  workTab: "task" | "case-study";
+  workTitle: string;
+  onSelect: (tab: "task" | "case-study") => void;
+}) {
+  return (
+    <nav
+      className="mb-3 overflow-hidden rounded-xl border border-border"
+      aria-label="أقسام المهمة"
+    >
+      <div className="flex flex-wrap border-b border-border bg-surface">
+        <button
+          type="button"
+          className={cn(
+            "cursor-pointer border-none bg-transparent px-3.5 py-2.5 text-xs font-medium transition-colors",
+            workTab === "task"
+              ? "-mb-px border-b-2 border-b-primary font-semibold text-primary"
+              : "text-text-2 hover:text-text",
+          )}
+          onClick={() => onSelect("task")}
+        >
+          {workTitle}
+        </button>
+        <button
+          type="button"
+          className={cn(
+            "cursor-pointer border-none bg-transparent px-3.5 py-2.5 text-xs font-medium transition-colors",
+            workTab === "case-study"
+              ? "-mb-px border-b-2 border-b-primary font-semibold text-primary"
+              : "text-text-2 hover:text-text",
+          )}
+          onClick={() => onSelect("case-study")}
+        >
+          نموذج الدراسة
+        </button>
+      </div>
+    </nav>
+  );
+}
 
 function PartyTaskFailureRaise({
   def,
@@ -299,32 +349,32 @@ export function PartyActiveTaskWork({
   function renderSurveyPropertyShell(body: ReactNode) {
     if (recordLoading && !record) {
       return (
-        <div className="po-property-detail-page pd-page">
-          <p className="po-properties-loading">جاري التحميل…</p>
+        <div className={PAGE_WRAP}>
+          <p className={cn(LOADING_TEXT, "p-6")}>جاري التحميل…</p>
         </div>
       );
     }
 
     if (!record || !surveyProperty || surveyPropertyIndex < 0) {
       return (
-        <div className="po-property-detail-page pd-page">
-          <div className="note note-warn" style={{ margin: 24 }}>
+        <div className={PAGE_WRAP}>
+          <Note tone="warn" className="m-6">
             لم تُعثر على بيانات العقار.
-          </div>
+          </Note>
         </div>
       );
     }
 
     return (
-      <div className="po-property-detail-page pd-page">
-        <article className="po-property-detail-shell">
+      <div className={PAGE_WRAP}>
+        <PageShell>
           <PropertyDetailHero
             record={record}
             property={surveyProperty}
             propertyIndex={surveyPropertyIndex + 1}
           />
           {body}
-        </article>
+        </PageShell>
       </div>
     );
   }
@@ -332,9 +382,9 @@ export function PartyActiveTaskWork({
   if (isEngineeringSurvey) {
     if (task.status === "completed" || submitSuccess) {
       return renderSurveyPropertyShell(
-        <div className="po-property-detail-tabs-wrap">
-          <div className="pd-tab-content">
-            <div className="note note-success">{def.completeMessage}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className={TAB_CONTENT}>
+            <Note tone="success">{def.completeMessage}</Note>
           </div>
         </div>,
       );
@@ -350,7 +400,7 @@ export function PartyActiveTaskWork({
           onFailureSubmitted: refresh,
         })
       ) : (
-        <p className="po-properties-loading">جاري تحميل نموذج الرفع المساحي…</p>
+        <p className={LOADING_TEXT}>جاري تحميل نموذج الرفع المساحي…</p>
       ),
     );
   }
@@ -365,7 +415,7 @@ export function PartyActiveTaskWork({
         saveLabel="رجوع"
         showFooter={false}
       >
-        <p className="po-properties-loading">جاري التحميل…</p>
+        <p className={LOADING_TEXT}>جاري التحميل…</p>
       </TaskWorkChrome>
     );
   }
@@ -384,7 +434,7 @@ export function PartyActiveTaskWork({
         showFooter={false}
       >
         <RegistrationFormCard title={def.completeTitle}>
-          <div className="note note-success">{def.completeMessage}</div>
+          <Note tone="success">{def.completeMessage}</Note>
         </RegistrationFormCard>
       </TaskWorkChrome>
     );
@@ -404,9 +454,9 @@ export function PartyActiveTaskWork({
           showFooter
         >
           <RegistrationFormCard title="تم الإرسال">
-            <div className="note note-success">
+            <Note tone="success">
               تم إرسال التقييم وإجابات الاستدلال لأخصائي دراسة الحالة.
-            </div>
+            </Note>
           </RegistrationFormCard>
         </TaskWorkChrome>
       );
@@ -437,7 +487,7 @@ export function PartyActiveTaskWork({
             hostRef: evaluatorHostRef,
           })
         ) : (
-          <p className="po-properties-loading">جاري تحميل نموذج التقييم…</p>
+          <p className={LOADING_TEXT}>جاري تحميل نموذج التقييم…</p>
         )}
         <PartyTaskFailureRaise
           def={def}
@@ -463,7 +513,7 @@ export function PartyActiveTaskWork({
           showFooter
         >
           <RegistrationFormCard title="تم الإرسال">
-            <div className="note note-success">{def.completeMessage}</div>
+            <Note tone="success">{def.completeMessage}</Note>
           </RegistrationFormCard>
         </TaskWorkChrome>
       );
@@ -487,28 +537,15 @@ export function PartyActiveTaskWork({
         }
         showFooter
       >
-        <nav className="case-study-tabs party-work-tabs" aria-label="أقسام المهمة">
-          <button
-            type="button"
-            className={`case-study-tab${workTab === "task" ? " active" : ""}`}
-            onClick={() => setWorkTab("task")}
-          >
-            {def.workTitle}
-          </button>
-          <button
-            type="button"
-            className={`case-study-tab${workTab === "case-study" ? " active" : ""}`}
-            onClick={() => setWorkTab("case-study")}
-          >
-            نموذج الدراسة
-          </button>
-        </nav>
+        <PartyWorkTabs
+          workTab={workTab}
+          workTitle={def.workTitle}
+          onSelect={setWorkTab}
+        />
 
         {workTab === "task" ? (
           <>
-            <div className="note note-info" style={{ marginBottom: 12 }}>
-              {def.workIntro}
-            </div>
+            <Note tone="info">{def.workIntro}</Note>
             <FieldInspectionWorkBody
               def={def}
               task={task}
@@ -547,7 +584,7 @@ export function PartyActiveTaskWork({
           showFooter
         >
           <RegistrationFormCard title="تم الإرسال">
-            <div className="note note-success">{def.completeMessage}</div>
+            <Note tone="success">{def.completeMessage}</Note>
           </RegistrationFormCard>
         </TaskWorkChrome>
       );
@@ -567,28 +604,15 @@ export function PartyActiveTaskWork({
         }
         showFooter
       >
-        <nav className="case-study-tabs party-work-tabs" aria-label="أقسام المهمة">
-          <button
-            type="button"
-            className={`case-study-tab${workTab === "task" ? " active" : ""}`}
-            onClick={() => setWorkTab("task")}
-          >
-            {def.workTitle}
-          </button>
-          <button
-            type="button"
-            className={`case-study-tab${workTab === "case-study" ? " active" : ""}`}
-            onClick={() => setWorkTab("case-study")}
-          >
-            نموذج الدراسة
-          </button>
-        </nav>
+        <PartyWorkTabs
+          workTab={workTab}
+          workTitle={def.workTitle}
+          onSelect={setWorkTab}
+        />
 
         {workTab === "task" ? (
           <>
-            <div className="note note-info" style={{ marginBottom: 12 }}>
-              {def.workIntro}
-            </div>
+            <Note tone="info">{def.workIntro}</Note>
             {isGovernmentReview ? (
               <GovernmentReviewWorkBody
                 def={def}
@@ -627,28 +651,15 @@ export function PartyActiveTaskWork({
       onSave={submitWork}
       saveLabel={saving ? "جاري الإرسال…" : def.saveLabel}
     >
-      <nav className="case-study-tabs party-work-tabs" aria-label="أقسام المهمة">
-        <button
-          type="button"
-          className={`case-study-tab${workTab === "task" ? " active" : ""}`}
-          onClick={() => setWorkTab("task")}
-        >
-          {def.workTitle}
-        </button>
-        <button
-          type="button"
-          className={`case-study-tab${workTab === "case-study" ? " active" : ""}`}
-          onClick={() => setWorkTab("case-study")}
-        >
-          نموذج الدراسة
-        </button>
-      </nav>
+      <PartyWorkTabs
+        workTab={workTab}
+        workTitle={def.workTitle}
+        onSelect={setWorkTab}
+      />
 
       {workTab === "task" ? (
         <>
-          <div className="note note-info" style={{ marginBottom: 12 }}>
-            {def.workIntro}
-          </div>
+          <Note tone="info">{def.workIntro}</Note>
           <PartyTaskFailureRaise
             def={def}
             task={task}

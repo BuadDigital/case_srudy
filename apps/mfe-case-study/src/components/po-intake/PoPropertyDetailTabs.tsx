@@ -9,12 +9,15 @@ import {
 import { useMemo, useState } from "react";
 import { getPropertyFailure } from "@failures/mfe";
 import { failureStatusLabel } from "@failures/mfe/lib/failures-local-storage";
+import { Button, cn, Tab, TabBar, TabCount, TabPanel } from "@platform/design-system";
 import {
+  DetailBadge,
   DocIconButton,
   EmptyState,
   FieldBox,
   FieldsGrid,
   InfoBox,
+  ltrValueClass,
   SectionDivider,
   SectionHeader,
 } from "./PropertyDetailFields";
@@ -84,29 +87,34 @@ function docIconLabel(kind: PropertyDetailDocumentEntry["kind"]): string {
   return "📄";
 }
 
-function docIconClass(kind: PropertyDetailDocumentEntry["kind"]): string {
-  return kind === "pdf" ? "pd-doc-icon is-pdf" : "pd-doc-icon";
-}
-
 function DocumentRow({ doc }: { doc: PropertyDetailDocumentEntry }) {
   const canDownload = Boolean(doc.dataUrl);
+  const isPdf = doc.kind === "pdf";
 
   return (
-    <div className="pd-doc-row">
-      <div className="pd-doc-row-main">
-        <span className={docIconClass(doc.kind)} aria-hidden>
+    <div className="flex items-center justify-between gap-3 rounded-[var(--radius-DEFAULT)] bg-surface-2 px-3 py-2.5 transition-colors hover:bg-[#eaedf2]">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span
+          className={cn(
+            "min-w-7 shrink-0 text-center text-xs font-bold",
+            isPdf ? "text-danger" : "text-success",
+          )}
+          aria-hidden
+        >
           {docIconLabel(doc.kind)}
         </span>
-        <div>
-          <div className="pd-doc-name">{doc.name}</div>
-          <div className="pd-doc-sub">
-            <bdi dir="ltr" className="po-property-detail-ltr-val">
+        <div className="min-w-0">
+          <div className="truncate text-[13px] font-medium text-text">
+            {doc.name}
+          </div>
+          <div className="mt-px text-[11px] text-text-2">
+            <bdi dir="ltr" className={ltrValueClass}>
               {doc.fileName}
             </bdi>
           </div>
         </div>
       </div>
-      <div className="pd-doc-actions">
+      <div className="flex shrink-0 gap-1.5">
         <DocIconButton
           label="تحميل"
           disabled={!canDownload}
@@ -125,12 +133,12 @@ function DocumentsTab({
   return (
     <>
       {sections.map((section) => (
-        <section key={section.id} className="pd-doc-section">
+        <section key={section.id} className="[&+&]:mt-5">
           <SectionHeader>{section.title}</SectionHeader>
           {section.documents.length === 0 ? (
             <InfoBox icon="ℹ">لا توجد مستندات في هذا القسم بعد.</InfoBox>
           ) : (
-            <div className="pd-doc-list">
+            <div className="mb-1 flex flex-col gap-1.5">
               {section.documents.map((doc) => (
                 <DocumentRow key={doc.id} doc={doc} />
               ))}
@@ -150,10 +158,16 @@ function logIconGlyph(tone: string): string {
 }
 
 function logIconClass(tone: string): string {
-  if (tone === "done") return "pd-log-icon--teal";
-  if (tone === "active") return "pd-log-icon--amber";
-  if (tone === "warn") return "pd-log-icon--red";
-  return "pd-log-icon--gray";
+  if (tone === "done") return "bg-success-bg text-success";
+  if (tone === "active") return "bg-warning-bg text-warning";
+  if (tone === "warn") return "bg-danger-bg text-danger";
+  return "bg-surface-2 text-text-2";
+}
+
+function partyDotClass(dotClass: string): string {
+  if (dotClass.includes("teal")) return "bg-success";
+  if (dotClass.includes("amber")) return "bg-warning";
+  return "bg-text-3";
 }
 
 function BasicTab({
@@ -188,7 +202,7 @@ function BasicTab({
         <FieldBox label="تاريخ الصك" value={property.deedDate} ltr />
         <FieldBox label="حالة الصك">
           {property.deedStatus.trim() ? (
-            <span className="pd-badge pd-badge-teal">{property.deedStatus}</span>
+            <DetailBadge tone="teal">{property.deedStatus}</DetailBadge>
           ) : null}
         </FieldBox>
         <FieldBox label="اسم المالك" value={property.ownerName} />
@@ -262,7 +276,7 @@ function BasicTab({
                   {record.receivedFromEnfathAt ? (
                     <>
                       {" بتاريخ "}
-                      <bdi dir="ltr" className="po-property-detail-ltr-val">
+                      <bdi dir="ltr" className={ltrValueClass}>
                         {formatDateAr(record.receivedFromEnfathAt)}
                       </bdi>
                     </>
@@ -393,7 +407,7 @@ export function PoPropertyDetailTabs({
     parentTask: task ?? null,
     allTasks: tasks,
     coordinatorName,
-    enabled: tab === "parties" || tab === "keys",
+    enabled: tab === "parties" || tab === "keys" || tab === "enfath-upload",
   });
 
   const logEvents = useMemo(
@@ -403,8 +417,8 @@ export function PoPropertyDetailTabs({
   );
 
   return (
-    <div className="po-property-detail-tabs-wrap">
-      <nav className="pd-tabs-bar" aria-label="أقسام تفاصيل العقار">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <TabBar aria-label="أقسام تفاصيل العقار">
         {TABS.map((t) => {
           let count: number | null = null;
           let countTone: "teal" | "red" | "gray" = "gray";
@@ -436,25 +450,22 @@ export function PoPropertyDetailTabs({
           }
 
           return (
-            <button
+            <Tab
               key={t.id}
-              type="button"
-              className={`pd-tab${tab === t.id ? " active" : ""}`}
+              active={tab === t.id}
               onClick={() => setTab(t.id)}
             >
               {t.label}
               {count !== null ? (
-                <span className={`pd-tab-count pd-tab-count--${countTone}`}>
-                  {count}
-                </span>
+                <TabCount tone={countTone}>{count}</TabCount>
               ) : null}
-            </button>
+            </Tab>
           );
         })}
-      </nav>
+      </TabBar>
 
-      <div className="pd-body-row">
-        <div className="pd-tab-content">
+      <div className="flex min-h-0 flex-1 flex-row items-stretch overflow-hidden max-[960px]:flex-col">
+        <TabPanel>
           {tab === "basic" ? (
             <BasicTab record={record} property={property} />
           ) : null}
@@ -473,17 +484,17 @@ export function PoPropertyDetailTabs({
             ) : (
               <>
                 <SectionHeader>العقارات على نفس أمر العمل</SectionHeader>
-                <ul className="po-property-linked-list">
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">
                   {linkedProperties.map(({ property: linked, index }) => (
-                    <li key={linked.id} className="po-property-linked-item">
+                    <li key={linked.id} className="m-0">
                       <Link
                         href={poPropertyPath(poNumber, linked.id)}
-                        className="po-property-linked-link"
+                        className="flex flex-col gap-1 rounded-[var(--radius-DEFAULT)] border border-border bg-surface-2 px-3.5 py-3 no-underline transition-colors hover:border-primary-light hover:bg-info-bg"
                       >
-                        <span className="po-property-linked-deed">
+                        <span className="text-[13px] font-semibold text-primary-light">
                           {formatPropertyDeedDisplay(linked)}
                         </span>
-                        <span className="po-property-linked-meta">
+                        <span className="text-[11px] text-text-3">
                           عقار {index} · {formatPropertyLocation(linked) || "—"}
                         </span>
                       </Link>
@@ -499,17 +510,20 @@ export function PoPropertyDetailTabs({
               <>
                 <SectionHeader>التعذرات المسجلة</SectionHeader>
                 <div
-                  className={`pd-fail-row${
+                  className={cn(
+                    "mb-1.5 flex items-start justify-between gap-3 rounded-[var(--radius-DEFAULT)] bg-surface-2 px-3.5 py-3 border-e-[3px]",
                     failure.status === "approved"
-                      ? " pd-fail-row--resolved"
-                      : " pd-fail-row--pending"
-                  }`}
+                      ? "border-e-success"
+                      : "border-e-warning",
+                  )}
                 >
-                  <div className="pd-fail-body">
-                    <div className="pd-fail-title">{failure.title}</div>
-                    <div className="pd-fail-meta">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-0.5 text-[13px] font-medium text-text">
+                      {failure.title}
+                    </div>
+                    <div className="text-[11px] text-text-2">
                       سُجّل بواسطة {failure.specialist || "—"} ·{" "}
-                      <bdi dir="ltr" className="po-property-detail-ltr-val">
+                      <bdi dir="ltr" className={ltrValueClass}>
                         {formatDateAr(failure.updatedAt.slice(0, 10))}
                       </bdi>
                       {failure.internalNote
@@ -517,31 +531,32 @@ export function PoPropertyDetailTabs({
                         : null}
                     </div>
                   </div>
-                  <div className="pd-fail-actions">
-                    <span className="pd-badge pd-badge-amber">
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <DetailBadge tone="amber">
                       {failureStatusLabel(failure.status)}
-                    </span>
-                    <button
+                    </DetailBadge>
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-danger"
+                      size="sm"
+                      variant="danger"
                       onClick={() =>
                         router.push(poPropertyFailurePath(poNumber, property.id))
                       }
                     >
                       معالجة
-                    </button>
+                    </Button>
                   </div>
                 </div>
-                <p className="pd-tab-actions">
-                  <button
+                <p className="mt-3">
+                  <Button
                     type="button"
-                    className="btn btn-sm"
+                    size="sm"
                     onClick={() =>
                       router.push(poPropertyFailurePath(poNumber, property.id))
                     }
                   >
                     تسجيل تعذّر جديد
-                  </button>
+                  </Button>
                 </p>
               </>
             ) : (
@@ -552,16 +567,16 @@ export function PoPropertyDetailTabs({
                   title="لا توجد تعذرات"
                   sub="لم يُسجَّل أي تعذر لهذا العقار."
                 />
-                <p className="pd-tab-actions">
-                  <button
+                <p className="mt-3">
+                  <Button
                     type="button"
-                    className="btn btn-sm"
+                    size="sm"
                     onClick={() =>
                       router.push(poPropertyFailurePath(poNumber, property.id))
                     }
                   >
                     تسجيل تعذّر جديد
-                  </button>
+                  </Button>
                 </p>
               </>
             )
@@ -570,16 +585,18 @@ export function PoPropertyDetailTabs({
           {tab === "parties" ? (
             <>
               <SectionHeader>الأطراف المعيّنة</SectionHeader>
-              <div className="pd-party-grid">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {partyCards.map((card) => {
                   const selected = selectedPartyRole === card.roleKey;
                   return (
                     <button
                       key={card.roleKey}
                       type="button"
-                      className={`pd-party-card pd-party-card--clickable${
-                        selected ? " pd-party-card--selected" : ""
-                      }`}
+                      className={cn(
+                        "w-full rounded-[var(--radius-DEFAULT)] border border-transparent bg-surface-2 px-3.5 py-3 text-start font-[inherit] text-inherit transition-colors hover:border-border",
+                        "cursor-pointer",
+                        selected && "border-success bg-success-bg",
+                      )}
                       aria-pressed={selected}
                       onClick={() =>
                         setSelectedPartyRole((prev) =>
@@ -587,19 +604,25 @@ export function PoPropertyDetailTabs({
                         )
                       }
                     >
-                      <div className="pd-party-role">{card.role}</div>
+                      <div className="mb-1 text-[11px] text-text-3">
+                        {card.role}
+                      </div>
                       <div
-                        className={`pd-party-name${
-                          card.unassigned ? " pd-party-name--na" : ""
-                        }`}
+                        className={cn(
+                          "mb-1.5 text-[13px] font-medium text-text",
+                          card.unassigned && "font-normal text-text-3",
+                        )}
                       >
                         {card.name}
                       </div>
-                      <div className="pd-party-status">
+                      <div className="flex items-center gap-1.5">
                         <span
-                          className={`pd-status-dot ${partyCardDotClass(card)}`}
+                          className={cn(
+                            "h-1.5 w-1.5 shrink-0 rounded-full",
+                            partyDotClass(partyCardDotClass(card)),
+                          )}
                         />
-                        <span className="pd-status-label">
+                        <span className="text-[11px] text-text-2">
                           {partyCardStatusLabel(card)}
                         </span>
                       </div>
@@ -657,20 +680,23 @@ export function PoPropertyDetailTabs({
             <>
               <SectionHeader>صور العقار</SectionHeader>
               <InfoBox icon="ℹ">لا توجد صور مرفوعة لهذا العقار بعد.</InfoBox>
-              <div className="pd-photos-grid">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[1, 2, 3, 4].map((n) => (
-                  <div key={n} className="pd-photo-cell">
-                    <span className="pd-photo-cell-icon" aria-hidden>
+                  <div
+                    key={n}
+                    className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border-[1.5px] border-dashed border-border bg-surface-2 text-[11px] text-text-3 transition-colors hover:border-success hover:bg-success-bg hover:text-success"
+                  >
+                    <span className="text-[22px] leading-none" aria-hidden>
                       +
                     </span>
                     <span>رفع صورة</span>
                   </div>
                 ))}
               </div>
-              <p className="pd-tab-actions">
-                <button type="button" className="btn btn-sm">
+              <p className="mt-3">
+                <Button type="button" size="sm">
                   رفع صور متعددة
-                </button>
+                </Button>
               </p>
             </>
           ) : null}
@@ -681,18 +707,26 @@ export function PoPropertyDetailTabs({
             ) : (
               <>
                 <SectionHeader>سجل الإجراءات الكامل</SectionHeader>
-                <div className="pd-log-list">
+                <div className="flex flex-col gap-0">
                   {logEvents.map((event) => (
-                    <div key={event.id} className="pd-log-row">
+                    <div
+                      key={event.id}
+                      className="flex items-start gap-3 border-b border-border py-2.5 last:border-b-0"
+                    >
                       <div
-                        className={`pd-log-icon ${logIconClass(event.tone)}`}
+                        className={cn(
+                          "flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full text-sm",
+                          logIconClass(event.tone),
+                        )}
                         aria-hidden
                       >
                         {logIconGlyph(event.tone)}
                       </div>
-                      <div className="pd-log-body">
-                        <div className="pd-log-action">{event.title}</div>
-                        <div className="pd-log-meta">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-0.5 text-[13px] text-text">
+                          {event.title}
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-[11px] text-text-2 [&>span+span]:before:mx-2 [&>span+span]:before:text-text-3 [&>span+span]:before:content-['·']">
                           <span>{formatTimelineDate(event.at)}</span>
                           {event.detail ? <span>{event.detail}</span> : null}
                         </div>
@@ -716,8 +750,20 @@ export function PoPropertyDetailTabs({
             />
           ) : null}
 
-          {tab === "enfath-upload" ? <PropertyDetailEnfathUpload /> : null}
-        </div>
+          {tab === "enfath-upload" ? (
+            <PropertyDetailEnfathUpload
+              record={record}
+              property={property}
+              task={task ?? null}
+              parties={partySubmissionsQuery.data}
+              documentSections={propertyDocumentSections}
+              loading={
+                partySubmissionsQuery.isLoading ||
+                partySubmissionsQuery.isFetching
+              }
+            />
+          ) : null}
+        </TabPanel>
 
         <PropertyTransactionTimeline record={record} property={property} />
       </div>

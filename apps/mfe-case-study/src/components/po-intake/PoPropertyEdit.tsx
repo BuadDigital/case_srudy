@@ -19,6 +19,7 @@ import {
   mergeFieldErrors,
   type FieldErrors,
 } from "@platform/app-shared/registration/registration-utils";
+import { Button, Note } from "@platform/design-system";
 import { PoEditShell } from "./PoEditShell";
 import { PoPropertyBourseForm } from "./PoPropertyBourseForm";
 import { PoPropertyEnfathForm } from "./PoPropertyEnfathForm";
@@ -150,7 +151,7 @@ export function PoPropertyEdit({
         onSave={onBackAction}
         saveLabel="رجوع"
       >
-        <p style={{ color: "var(--text3)" }}>جاري التحميل…</p>
+        <p className="text-xs text-text-3">جاري التحميل…</p>
       </PoEditShell>
     );
   }
@@ -163,7 +164,7 @@ export function PoPropertyEdit({
         onSave={onBackAction}
         saveLabel="رجوع"
       >
-        <div className="note note-warn">لم يُعثر على العقار.</div>
+        <Note tone="warn">لم يُعثر على العقار.</Note>
       </PoEditShell>
     );
   }
@@ -245,22 +246,20 @@ export function PoPropertyEdit({
       onSave={() => void handleSave()}
       footerExtra={
         showDeleteProperty ? (
-          <button
+          <Button
             type="button"
-            className="btn btn-danger-outline"
+            size="sm"
+            variant="danger"
+            className="border-red/30 bg-transparent hover:bg-danger-bg/60"
             disabled={saving}
             onClick={() => void handleDelete()}
           >
             حذف العقار
-          </button>
+          </Button>
         ) : null
       }
     >
-      {formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
-          {formError}
-        </div>
-      ) : null}
+      {formError ? <Note tone="warn">{formError}</Note> : null}
 
       <RegistrationFormCard title="بيانات إنفاذ (الصك)">
         <PoPropertyEnfathForm
@@ -284,10 +283,10 @@ export function PoPropertyEdit({
           />
         </RegistrationFormCard>
       ) : (
-        <div className="note note-info" style={{ marginTop: 12 }}>
+        <Note tone="info">
           بيانات البورصة غير مكتملة — أكملها من «استعلام البورصة» في القائمة
           الجانبية.
-        </div>
+        </Note>
       )}
     </PoEditShell>
   );

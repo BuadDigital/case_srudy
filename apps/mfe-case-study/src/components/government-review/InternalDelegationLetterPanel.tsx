@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Button, Note } from "@platform/design-system";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import type { InternalDelegationLetter } from "../../lib/prototype/internal-delegation-letters";
 import { updateDelegationLetterSelection } from "../../lib/prototype/internal-delegation-letters";
@@ -53,21 +54,22 @@ export function InternalDelegationLetterPanel({
     <RegistrationFormCard
       title={`خطاب تفويض داخلي — ${letter.court}`}
     >
-      <div className="note note-info" style={{ marginBottom: 12 }}>
+      <Note tone="info">
         {letter.city ? `${letter.city} · ` : ""}
         {letter.circuit !== "—" ? `الدائرة: ${letter.circuit}` : null}
-      </div>
+      </Note>
 
-      <p className="reg-field-hint" style={{ marginBottom: 10 }}>
+      <p className="mb-2.5 text-[10px] text-text-3">
         اختر العقارات المشمولة في خطاب الزيارة لهذه المحكمة:
       </p>
 
-      <ul className="gov-delegation-property-list">
+      <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {courtProperties.map((property) => (
           <li key={property.id}>
-            <label className="gov-delegation-property-opt">
+            <label className="flex cursor-pointer items-start gap-2 text-[13px] text-text">
               <input
                 type="checkbox"
+                className="mt-0.5"
                 checked={selected.includes(property.id)}
                 onChange={() => toggleProperty(property.id)}
               />
@@ -81,22 +83,23 @@ export function InternalDelegationLetterPanel({
       </ul>
 
       {!readiness.ready ? (
-        <div className="note note-warn" style={{ marginTop: 12 }}>
+        <Note tone="warn" className="mt-3">
           التصدير متاح بعد اكتمال البيانات الأولية لجميع عقارات أمر العمل (
           {readiness.label}).
-        </div>
+        </Note>
       ) : null}
 
-      <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button
           type="button"
-          className="btn btn-sm btn-primary"
+          size="sm"
+          variant="primary"
           disabled={!readiness.ready || selected.length === 0}
           onClick={handlePrint}
         >
           طباعة / تصدير الخطاب
-        </button>
-        <span className="reg-field-hint">
+        </Button>
+        <span className="text-[10px] text-text-3">
           {selected.length} عقار مختار
         </span>
       </div>

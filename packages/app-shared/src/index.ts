@@ -6,4 +6,5 @@ export * from "./prototype/party-task-pages";
 export * from "./prototype/prototype-role-access";
 export * from "./prototype/settings-nav";
 export * from "./prototype/system-fields-nav";
+export * from "./prototype/property-fields-catalog";
 export { prototypeKeys } from "./query/prototype-keys";

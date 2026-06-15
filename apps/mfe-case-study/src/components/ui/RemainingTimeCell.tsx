@@ -6,12 +6,14 @@ function pad2(n: number): string {
 
 export function RemainingTimeCell({ state }: { state: RemainingTimeState }) {
   if (state.status === "missing") {
-    return <span className="po-properties-cell-muted">—</span>;
+    return <span className="text-text-2">—</span>;
   }
 
   if (state.status === "overdue") {
     return (
-      <span className="my-tasks-remaining my-tasks-remaining--overdue">متأخر</span>
+      <span className="inline-block font-mono text-xs font-semibold text-danger">
+        متأخر
+      </span>
     );
   }
 
@@ -19,7 +21,7 @@ export function RemainingTimeCell({ state }: { state: RemainingTimeState }) {
 
   return (
     <span
-      className="my-tasks-remaining"
+      className="inline-block font-mono text-xs font-medium tracking-wide text-text-2 tabular-nums"
       dir="ltr"
       title="أيام.ساعات.دقائق.ثوانٍ"
       aria-label={`${days} أيام و ${pad2(hours)} ساعة و ${pad2(minutes)} دقيقة و ${pad2(seconds)} ثانية`}

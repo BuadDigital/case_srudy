@@ -21,8 +21,15 @@ import type { WorkflowTask } from "../../lib/prototype/tasks-storage";
 import { caseStudyWorkspacePath } from "../../lib/my-task-routes";
 import { useWorkflowTasksQuery } from "../../query/case-study-queries";
 import { EmptyState, InfoBox } from "./PropertyDetailFields";
+import { cn } from "@platform/design-system";
 
 const DEFAULT_INFO_ROLES = emptyCaseStudyInfoRolesConfig();
+
+const linkButtonPrimarySmClass = cn(
+  "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border font-normal whitespace-nowrap transition-colors",
+  "px-2 py-1 text-[11px]",
+  "border-primary bg-primary text-white hover:border-primary-mid hover:bg-primary-mid",
+);
 
 export function PropertyDetailCaseStudyReport({
   record,
@@ -101,7 +108,9 @@ export function PropertyDetailCaseStudyReport({
   }
 
   if (loading) {
-    return <p className="pd-party-detail-loading">جاري تحميل نموذج دراسة الحالة…</p>;
+    return (
+      <p className="m-0 text-xs text-text-3">جاري تحميل نموذج دراسة الحالة…</p>
+    );
   }
 
   if (!draft || !reportModel) {
@@ -112,11 +121,8 @@ export function PropertyDetailCaseStudyReport({
           title="لم يُبدأ النموذج بعد"
           sub="سيظهر هنا نموذج دراسة الحالة مع جميع الأسئلة والإجابات بعد البدء في تعبئته."
         />
-        <p className="pd-tab-actions">
-          <Link
-            href={caseStudyWorkspacePath(task.id)}
-            className="btn btn-sm btn-primary"
-          >
+        <p className="mt-3">
+          <Link href={caseStudyWorkspacePath(task.id)} className={linkButtonPrimarySmClass}>
             دراسة حالة العقار
           </Link>
         </p>
@@ -127,14 +133,11 @@ export function PropertyDetailCaseStudyReport({
   return (
     <>
       <CaseStudyPartyProgressRings items={partyProgress} />
-      <div className="pd-case-study-report">
+      <div className="mt-1">
         <CaseStudyReportDocument model={reportModel} />
       </div>
-      <p className="pd-tab-actions">
-        <Link
-          href={caseStudyWorkspacePath(task.id)}
-          className="btn btn-sm btn-primary"
-        >
+      <p className="mt-3">
+        <Link href={caseStudyWorkspacePath(task.id)} className={linkButtonPrimarySmClass}>
           دراسة حالة العقار
         </Link>
       </p>

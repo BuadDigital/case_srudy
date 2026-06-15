@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Button, ModalBody, ModalHeader, ModalOverlay, ModalTitle } from "@platform/design-system";
 import { CaseStudyReportDocument } from "./CaseStudyReportDocument";
 import { buildCaseStudyReportPrintHtml } from "../../lib/prototype/case-study-report-html";
 import type { CaseStudyReportModel } from "../../lib/prototype/case-study-report-model";
@@ -41,55 +42,45 @@ export function CaseStudyReportActions({ model }: Props) {
 
   return (
     <>
-      <div className="cs-form-report-actions">
-        <button
-          type="button"
-          className="btn btn-outline"
-          onClick={() => setPreviewOpen(true)}
-        >
+      <div className="flex flex-wrap gap-2.5">
+        <Button variant="outline" onClick={() => setPreviewOpen(true)}>
           معاينة التقرير
-        </button>
-        <button type="button" className="btn btn-primary" onClick={openPrintWindow}>
+        </Button>
+        <Button variant="primary" onClick={openPrintWindow}>
           تحميل التقرير
-        </button>
+        </Button>
       </div>
 
       {previewOpen ? (
-        <div
-          className="cs-report-preview-overlay"
+        <ModalOverlay
+          className="z-[1200] items-start overflow-y-auto p-6 px-4 print:absolute print:inset-0 print:overflow-visible print:bg-white print:p-0"
+          onClick={() => setPreviewOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-label="معاينة تقرير دراسة الحالة"
-          onClick={() => setPreviewOpen(false)}
         >
           <div
-            className="cs-report-preview-panel"
+            className="w-full max-w-[920px] overflow-hidden rounded-xl bg-surface-2 shadow-lg print:rounded-none print:shadow-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="cs-report-preview-toolbar no-print">
-              <span className="cs-report-preview-title">معاينة التقرير النهائي</span>
-              <div className="cs-report-preview-buttons">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-primary"
-                  onClick={printFromPreview}
-                >
+            <ModalHeader className="print:hidden border-b border-border bg-surface px-3.5 py-2.5">
+              <ModalTitle className="text-start text-[13px]">
+                معاينة التقرير النهائي
+              </ModalTitle>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="primary" onClick={printFromPreview}>
                   طباعة / PDF
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => setPreviewOpen(false)}
-                >
+                </Button>
+                <Button size="sm" onClick={() => setPreviewOpen(false)}>
                   إغلاق
-                </button>
+                </Button>
               </div>
-            </div>
-            <div className="cs-report-preview-scroll">
+            </ModalHeader>
+            <ModalBody className="max-h-[calc(100vh-120px)] overflow-auto bg-[#eef3f9] p-4 print:max-h-none print:overflow-visible print:bg-white">
               <CaseStudyReportDocument model={model} id="cs-report-print-root" />
-            </div>
+            </ModalBody>
           </div>
-        </div>
+        </ModalOverlay>
       ) : null}
     </>
   );

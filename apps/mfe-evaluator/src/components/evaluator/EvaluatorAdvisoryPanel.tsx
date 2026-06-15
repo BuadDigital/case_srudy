@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
+import { Button, cn } from "@platform/design-system";
 import type { WorkflowTask } from "@case-study/mfe";
 import { findAppraisalChildForParent } from "../../lib/evaluator/evaluator-inspection-gate";
 import { openEvaluatorReportPreview } from "../../lib/evaluator/evaluator-report-attachments";
@@ -23,6 +24,13 @@ import {
   evaluatorStatusLabel,
   formatEvaluatorPriceDisplay,
 } from "../../lib/evaluator/evaluator-window-data";
+
+const noteWarnClass = cn(
+  "mb-3 rounded-[var(--radius-DEFAULT)] border border-amber border-e-[3px] border-e-amber bg-amber-light px-3.5 py-2.5 text-xs leading-relaxed text-amber-text",
+);
+
+const infoRowClass =
+  "flex items-baseline justify-between gap-3 border-b border-border py-2 text-xs last:border-b-0";
 
 export function EvaluatorAdvisoryPanel({
   parentTask,
@@ -70,7 +78,7 @@ export function EvaluatorAdvisoryPanel({
   if (!appraisalTask) {
     return (
       <RegistrationFormCard title="بيانات المقيم العقاري (استرشادي)">
-        <p className="po-properties-hint">
+        <p className="text-xs leading-relaxed text-text-3">
           لم تُسند مهمة التقييم العقاري بعد لهذا العقار.
         </p>
       </RegistrationFormCard>
@@ -80,7 +88,7 @@ export function EvaluatorAdvisoryPanel({
   if (!submission || submission.status === "draft") {
     return (
       <RegistrationFormCard title="بيانات المقيم العقاري (استرشادي)">
-        <p className="po-properties-hint">
+        <p className="text-xs leading-relaxed text-text-3">
           المقيم لم يُرسل التقييم بعد — القيمة التقديرية تُحدَّد من المقيم فقط.
         </p>
       </RegistrationFormCard>
@@ -109,92 +117,91 @@ export function EvaluatorAdvisoryPanel({
 
   return (
     <RegistrationFormCard title="بيانات المقيم العقاري (استرشادي — للقراءة فقط)">
-      <p className="evaluator-context-hint">
+      <p className="mb-3 text-[11px] leading-relaxed text-text-3">
         هذه البيانات من المقيم بصفة أصيل — لا يُعدَّل السعر من الأخصائي. طلب
         الاستدعاء للتعديل يحتاج موافقتك.
       </p>
 
       {recall?.status === "pending" ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
-          <p>
+        <div className={noteWarnClass}>
+          <p className="m-0">
             <strong>طلب استدعاء من المقيم</strong>
             {recall.reason ? ` — ${recall.reason}` : ""}
           </p>
-          <div className="appraiser-submitted-actions" style={{ marginTop: 8 }}>
-            <button
-              type="button"
-              className="btn btn-sm btn-primary"
-              onClick={handleApproveRecall}
-            >
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="primary" onClick={handleApproveRecall}>
               الموافقة على الاستدعاء
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline"
-              onClick={handleRejectRecall}
-            >
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={handleRejectRecall}>
               رفض
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
 
       {recall && recall.status !== "pending" ? (
-        <div className="cs-info-row">
-          <span className="cs-info-label">طلب الاستدعاء</span>
-          <span className="cs-info-value">{recallStatusLabel(recall.status)}</span>
+        <div className={infoRowClass}>
+          <span className="shrink-0 text-text-3">طلب الاستدعاء</span>
+          <span className="text-left font-medium text-text">
+            {recallStatusLabel(recall.status)}
+          </span>
         </div>
       ) : null}
 
-      <div className="cs-info-row">
-        <span className="cs-info-label">الحالة</span>
-        <span className="cs-info-value">
+      <div className={infoRowClass}>
+        <span className="shrink-0 text-text-3">الحالة</span>
+        <span className="text-left font-medium text-text">
           {evaluatorStatusLabel(submission.status)}
         </span>
       </div>
-      <div className="cs-info-row">
-        <span className="cs-info-label">سعر التقييم</span>
-        <span className="cs-info-value evaluator-price-display">
+      <div className={infoRowClass}>
+        <span className="shrink-0 text-text-3">سعر التقييم</span>
+        <span className="text-left font-bold text-primary">
           {formatEvaluatorPriceDisplay(submission.evaluatorPrice)}
         </span>
       </div>
       {submission.reportFileName ? (
-        <div className="cs-info-row">
-          <span className="cs-info-label">تقرير المقياس</span>
-          <span className="cs-info-value">
+        <div className={infoRowClass}>
+          <span className="shrink-0 text-text-3">تقرير المقياس</span>
+          <span className="text-left font-medium text-text">
             {submission.reportFileName}{" "}
-            <button
+            <Button
               type="button"
-              className="btn btn-sm"
+              size="sm"
               onClick={() => openEvaluatorReportPreview(appraisalTask.id)}
             >
               معاينة PDF
-            </button>
+            </Button>
           </span>
         </div>
       ) : null}
       {submission.evaluatorNotes.trim() ? (
-        <div className="cs-info-row">
-          <span className="cs-info-label">ملاحظات المقيم</span>
-          <span className="cs-info-value">{submission.evaluatorNotes}</span>
+        <div className={infoRowClass}>
+          <span className="shrink-0 text-text-3">ملاحظات المقيم</span>
+          <span className="text-left font-medium text-text">
+            {submission.evaluatorNotes}
+          </span>
         </div>
       ) : null}
 
-      <h4 className="evaluator-section-title" style={{ marginTop: 16 }}>
-        قائمة الفحص
-      </h4>
-      <ul className="evaluator-advisory-checklist">
+      <h4 className="mb-2.5 mt-4 text-xs font-semibold text-primary">قائمة الفحص</h4>
+      <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
         {allQuestions.map((q) => (
-          <li key={q.id}>
-            <span>{q.label}</span>
-            <strong>{checklistAnswerLabel(submission.checklist[q.id])}</strong>
+          <li
+            key={q.id}
+            className="flex justify-between gap-3 border-b border-dashed border-border py-1.5 text-[11px] last:border-b-0"
+          >
+            <span className="flex-1 text-text-2">{q.label}</span>
+            <strong className="whitespace-nowrap text-text">
+              {checklistAnswerLabel(submission.checklist[q.id])}
+            </strong>
           </li>
         ))}
         {submission.checklist.q_shared_deed === true ? (
           <>
-            <li>
-              <span>نطاق الملكية (صك مشاع)</span>
-              <strong>
+            <li className="flex justify-between gap-3 border-b border-dashed border-border py-1.5 text-[11px]">
+              <span className="flex-1 text-text-2">نطاق الملكية (صك مشاع)</span>
+              <strong className="whitespace-nowrap text-text">
                 {submission.checklist.shared_deed_scope === "full"
                   ? "كامل المساحة"
                   : submission.checklist.shared_deed_scope === "part"
@@ -203,25 +210,29 @@ export function EvaluatorAdvisoryPanel({
               </strong>
             </li>
             {submission.checklist.shared_deed_scope === "part" ? (
-              <li>
-                <span>نسبة الملكية</span>
-                <strong>{submission.checklist.shared_deed_percentage || "—"}</strong>
+              <li className="flex justify-between gap-3 border-b border-dashed border-border py-1.5 text-[11px]">
+                <span className="flex-1 text-text-2">نسبة الملكية</span>
+                <strong className="whitespace-nowrap text-text">
+                  {submission.checklist.shared_deed_percentage || "—"}
+                </strong>
               </li>
             ) : null}
           </>
         ) : null}
         {submission.checklist.q_lease_exists === true ? (
-          <li>
-            <span>عقد الإيجار ساري</span>
-            <strong>
+          <li className="flex justify-between gap-3 border-b border-dashed border-border py-1.5 text-[11px]">
+            <span className="flex-1 text-text-2">عقد الإيجار ساري</span>
+            <strong className="whitespace-nowrap text-text">
               {checklistAnswerLabel(submission.checklist.q_lease_active)}
             </strong>
           </li>
         ) : null}
         {submission.checklist.q_technical_notes_exists === true ? (
-          <li>
-            <span>ملاحظات فنية</span>
-            <strong>{submission.checklist.technical_notes_text || "—"}</strong>
+          <li className="flex justify-between gap-3 border-b border-dashed border-border py-1.5 text-[11px]">
+            <span className="flex-1 text-text-2">ملاحظات فنية</span>
+            <strong className="whitespace-nowrap text-text">
+              {submission.checklist.technical_notes_text || "—"}
+            </strong>
           </li>
         ) : null}
       </ul>

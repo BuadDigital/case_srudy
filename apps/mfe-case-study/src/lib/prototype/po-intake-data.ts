@@ -318,6 +318,8 @@ export type PoPropertyIntake = {
   delegationLetterFileName: string;
   otherDocumentFileNames: string[];
   realEstateRegFileName: string;
+  buildLicenseNumber: string;
+  subdivisionRecordNumber: string;
   bourseDataCompleted: boolean;
   contacts: PoContact[];
 };
@@ -368,6 +370,8 @@ export function emptyProperty(): PoPropertyIntake {
     delegationLetterFileName: "",
     otherDocumentFileNames: [],
     realEstateRegFileName: "",
+    buildLicenseNumber: "",
+    subdivisionRecordNumber: "",
     bourseDataCompleted: false,
     contacts: [{ name: "", role: "", phone: "" }],
   };

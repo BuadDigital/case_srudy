@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { cn } from "@platform/design-system";
 import {
   buildPropertyDetailTimeline,
   formatTimelineDate,
@@ -11,12 +12,22 @@ import { formatDateAr } from "../../lib/prototype/po-intake-data";
 import type { PoIntakeRecord, PoPropertyIntake } from "../../lib/prototype/po-intake-data";
 import { caseStudyTaskForProperty } from "../../lib/prototype/tasks-storage";
 import { useWorkflowTasksQuery } from "../../query/case-study-queries";
+import { DetailBadge, ltrValueClass } from "./PropertyDetailFields";
 
 function toneToDotClass(tone: PropertyTimelineTone): string {
-  if (tone === "done") return "pd-tl-dot--teal";
-  if (tone === "active") return "pd-tl-dot--amber";
-  if (tone === "warn") return "pd-tl-dot--red";
-  return "pd-tl-dot--gray";
+  if (tone === "done") return "bg-success";
+  if (tone === "active") return "bg-warning";
+  if (tone === "warn") return "bg-danger";
+  return "bg-text-3";
+}
+
+function badgeToneFromClass(
+  badgeClass: string,
+): "teal" | "amber" | "red" | "gray" {
+  if (badgeClass.includes("teal")) return "teal";
+  if (badgeClass.includes("amber")) return "amber";
+  if (badgeClass.includes("red")) return "red";
+  return "gray";
 }
 
 function ClockIcon() {
@@ -73,59 +84,82 @@ export function PropertyTransactionTimeline({
   const displayEvents = useMemo(() => [...events].reverse(), [events]);
 
   return (
-    <aside className="pd-timeline-panel" aria-label="الجدول الزمني للمعاملة">
-      <div className="pd-tl-header">
-        <span className="pd-tl-header-title">الجدول الزمني</span>
-        <span className="pd-tl-header-icon" aria-hidden>
+    <aside
+      className="order-2 min-w-0 w-full max-w-[240px] shrink-0 overflow-x-hidden overflow-y-auto border-s border-border bg-surface px-3.5 py-4 max-[960px]:max-h-[360px] max-[960px]:w-full max-[960px]:border-s-0 max-[960px]:border-t"
+      aria-label="الجدول الزمني للمعاملة"
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-xs font-medium text-text-2">الجدول الزمني</span>
+        <span className="inline-flex text-text-3" aria-hidden>
           <ClockIcon />
         </span>
       </div>
 
       {displayEvents.length === 0 ? (
-        <p className="po-property-detail-empty-contacts">
-          لا توجد أحداث مسجّلة بعد.
-        </p>
+        <p className="m-0 text-xs text-text-3">لا توجد أحداث مسجّلة بعد.</p>
       ) : (
-        <div className="pd-tl-list">
+        <div className="flex flex-col gap-0">
           {displayEvents.map((event, index) => (
-            <div key={event.id} className="pd-tl-entry">
-              <div className="pd-tl-spine">
+            <div key={event.id} className="flex gap-2.5">
+              <div className="flex w-3.5 shrink-0 flex-col items-center">
                 <span
-                  className={`pd-tl-dot ${toneToDotClass(event.tone)}`}
+                  className={cn(
+                    "z-[1] mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                    toneToDotClass(event.tone),
+                  )}
                   aria-hidden
                 />
                 {index < displayEvents.length - 1 ? (
-                  <span className="pd-tl-line" aria-hidden />
+                  <span
+                    className="min-h-3.5 w-px flex-1 bg-border"
+                    aria-hidden
+                  />
                 ) : null}
               </div>
-              <div className="pd-tl-body">
-                <div className="pd-tl-action">{event.title}</div>
-                <div className="pd-tl-when">{formatTimelineDate(event.at)}</div>
+              <div className="min-w-0 flex-1 pb-4">
+                <div className="mb-0.5 text-xs leading-snug text-text">
+                  {event.title}
+                </div>
+                <div className="text-[11px] text-text-3 [direction:ltr] [unicode-bidi:isolate]">
+                  {formatTimelineDate(event.at)}
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <hr className="pd-tl-divider" />
-      <div className="pd-tl-section-label">حالة الأطراف</div>
+      <hr className="my-3 border-0 border-t border-border" />
+      <div className="mb-2 text-[10px] font-medium tracking-wide text-text-3 uppercase">
+        حالة الأطراف
+      </div>
       {partyRows.map((row) => (
-        <div key={row.label} className="pd-party-status-row">
-          <span className="pd-party-status-name">{row.label}</span>
-          <span className={`pd-badge pd-party-status-badge ${row.badgeClass}`}>
-            {row.badge}
+        <div
+          key={row.label}
+          className="flex min-w-0 items-center justify-between gap-2 border-b border-border py-1.5 last:border-b-0"
+        >
+          <span className="min-w-0 truncate text-[11px] text-text-2">
+            {row.label}
           </span>
+          <DetailBadge
+            tone={badgeToneFromClass(row.badgeClass)}
+            className="px-1.5 py-px text-[10px]"
+          >
+            {row.badge}
+          </DetailBadge>
         </div>
       ))}
 
-      <hr className="pd-tl-divider" />
-      <div className="pd-tl-section-label">مواعيد مهمة</div>
-      <div className="pd-tl-dates">
-        <div className="pd-tl-date-row">
+      <hr className="my-3 border-0 border-t border-border" />
+      <div className="mb-2 text-[10px] font-medium tracking-wide text-text-3 uppercase">
+        مواعيد مهمة
+      </div>
+      <div className="mt-0.5 flex flex-col gap-1.5">
+        <div className="flex justify-between text-[11px] text-text-2">
           <span>الاستحقاق</span>
-          <span className="pd-tl-date-row--due">
+          <span className="font-medium text-danger">
             {record.dueDateAt ? (
-              <bdi dir="ltr" className="po-property-detail-ltr-val">
+              <bdi dir="ltr" className={ltrValueClass}>
                 {formatDateAr(record.dueDateAt)}
               </bdi>
             ) : (
@@ -133,11 +167,11 @@ export function PropertyTransactionTimeline({
             )}
           </span>
         </div>
-        <div className="pd-tl-date-row">
+        <div className="flex justify-between text-[11px] text-text-2">
           <span>استلام إنفاذ</span>
           <span>
             {record.receivedFromEnfathAt ? (
-              <bdi dir="ltr" className="po-property-detail-ltr-val">
+              <bdi dir="ltr" className={ltrValueClass}>
                 {formatDateAr(record.receivedFromEnfathAt)}
               </bdi>
             ) : (

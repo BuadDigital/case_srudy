@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Button, Card, CardBody, CardHeader } from "@platform/design-system";
 import { createFailure } from "../../lib/failures-repository";
 import type { FailureSeverity } from "../../lib/failures-types";
 import { FailureRaiseFields } from "./FailureRaiseFields";
 
-/** Property failure report form (PO property route). */
 export function FailureReportForm({
   poNumber,
   propertyId,
@@ -42,11 +42,13 @@ export function FailureReportForm({
   }
 
   return (
-    <div className="card" style={{ marginBottom: 16 }}>
-      <div className="card-header">
-        <span className="card-title">تسجيل تعذر — {deedNumber || poNumber}</span>
-      </div>
-      <div style={{ padding: 16 }}>
+    <Card className="mb-4 overflow-hidden shadow-none">
+      <CardHeader>
+        <span className="text-[13px] font-semibold text-text">
+          تسجيل تعذر — {deedNumber || poNumber}
+        </span>
+      </CardHeader>
+      <CardBody>
         <FailureRaiseFields
           severity={severity}
           onSeverityChange={setSeverity}
@@ -55,20 +57,21 @@ export function FailureReportForm({
           note={note}
           onNoteChange={setNote}
         />
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
+        <div className="flex gap-2">
+          <Button
             type="button"
-            className="btn btn-primary btn-sm"
+            variant="primary"
+            size="sm"
             disabled={!problemTypeId}
             onClick={handleSubmit}
           >
             {severity === "internal" ? "حفظ تعذر داخلي" : "تسجيل احتمال تعذر"}
-          </button>
-          <button type="button" className="btn btn-sm" onClick={onCancel}>
+          </Button>
+          <Button type="button" size="sm" onClick={onCancel}>
             إلغاء
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }

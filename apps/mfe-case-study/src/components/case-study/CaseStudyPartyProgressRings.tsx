@@ -10,7 +10,7 @@ export function CaseStudyPartyProgressRings({
 
   return (
     <div
-      className="cs-form-progress-rings pd-case-study-party-progress"
+      className="mb-4 flex w-full flex-wrap items-start justify-end gap-x-5 gap-y-3.5 border-b border-border pb-4"
       aria-label="تقدم الأطراف في نموذج الدراسة"
     >
       {items.map((item) => (

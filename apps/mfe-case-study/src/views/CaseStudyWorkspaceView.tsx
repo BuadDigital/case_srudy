@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
+import { Button, Note, PageGutter, PageShell } from "@platform/design-system";
 import { CaseStudyForm } from "../components/case-study/CaseStudyForm";
 import { PropertyDetailHero } from "../components/po-intake/PropertyDetailHero";
 import { PropertyTransactionTimeline } from "../components/po-intake/PropertyTransactionTimeline";
@@ -30,6 +31,7 @@ export function CaseStudyWorkspaceView({
     props: CaseStudyWorkspacePartiesExtrasProps,
   ) => ReactNode;
 }) {
+  const router = useRouter();
   const { role } = usePrototype();
   const {
     data: tasks,
@@ -66,56 +68,68 @@ export function CaseStudyWorkspaceView({
 
   if (!loading && (!task || !canAccess)) {
     return (
-      <div className="po-property-detail-page pd-page">
-        <div className="note note-warn" style={{ margin: 24 }}>
-          لم تُعثر على معاملة دراسة الحالة أو لا تملك صلاحية عرضها.
-          <div className="po-properties-empty-actions">
-            <Link href={activeCaseStudyPath()} className="btn btn-sm">
-              رجوع لدراسة حالة العقارات
-            </Link>
-          </div>
-        </div>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+        <PageGutter className="py-6">
+          <Note tone="warn">
+            لم تُعثر على معاملة دراسة الحالة أو لا تملك صلاحية عرضها.
+            <div className="mt-3">
+              <Button
+                size="sm"
+                variant="default"
+                type="button"
+                onClick={() => router.push(activeCaseStudyPath())}
+              >
+                رجوع لدراسة حالة العقارات
+              </Button>
+            </div>
+          </Note>
+        </PageGutter>
       </div>
     );
   }
 
   if (loading || !task) {
     return (
-      <div className="po-property-detail-page pd-page">
-        <p className="po-properties-loading" style={{ padding: 24 }}>
-          جاري تحميل دراسة الحالة…
-        </p>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+        <p className="p-6 text-xs text-text-3">جاري تحميل دراسة الحالة…</p>
       </div>
     );
   }
 
   if (!record || !property || propertyIndex < 0) {
     return (
-      <div className="po-property-detail-page pd-page">
-        <div className="note note-warn" style={{ margin: 24 }}>
-          لم تُعثر على بيانات العقار.
-          <div className="po-properties-empty-actions">
-            <Link href={activeCaseStudyPath()} className="btn btn-sm">
-              رجوع لدراسة حالة العقارات
-            </Link>
-          </div>
-        </div>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+        <PageGutter className="py-6">
+          <Note tone="warn">
+            لم تُعثر على بيانات العقار.
+            <div className="mt-3">
+              <Button
+                size="sm"
+                variant="default"
+                type="button"
+                onClick={() => router.push(activeCaseStudyPath())}
+              >
+                رجوع لدراسة حالة العقارات
+              </Button>
+            </div>
+          </Note>
+        </PageGutter>
       </div>
     );
   }
 
   return (
-    <div className="po-property-detail-page pd-page">
-      <article className="po-property-detail-shell">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+      <PageShell>
         <PropertyDetailHero
           record={record}
           property={property}
           propertyIndex={propertyIndex + 1}
         />
 
-        <div className="po-property-detail-tabs-wrap">
-          <div className="pd-body-row">
-            <div className="pd-tab-content">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-row items-stretch overflow-hidden max-lg:flex-col">
+            <div className="min-w-0 flex-1 overflow-y-auto p-5">
               <CaseStudyForm
                 taskId={taskId}
                 task={task}
@@ -124,7 +138,7 @@ export function CaseStudyWorkspaceView({
                 requestDateSeed={record.receivedFromEnfathAt}
               />
               {renderPartiesExtras ? (
-                <div className="case-study-workspace-extras">
+                <div className="mt-4 border-t border-border pt-4">
                   {renderPartiesExtras({
                     task,
                     property,
@@ -136,7 +150,7 @@ export function CaseStudyWorkspaceView({
             <PropertyTransactionTimeline record={record} property={property} />
           </div>
         </div>
-      </article>
+      </PageShell>
     </div>
   );
 }

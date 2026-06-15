@@ -21,6 +21,9 @@ export type GovernmentReviewSubmission = {
   keysDescription: string;
   accessBlockReason: string;
   reviewNotes: string;
+  /** حقول الرفع لإنفاذ — المراجع الحكومي */
+  propertyZoneStatus: string;
+  keysProofFileName: string;
   confirmed: boolean;
   status: GovernmentReviewSubmissionStatus;
   submittedAtUtc: string | null;
@@ -45,6 +48,8 @@ export function createGovernmentReviewDraft(input: {
     keysDescription: "",
     accessBlockReason: "",
     reviewNotes: "",
+    propertyZoneStatus: "",
+    keysProofFileName: "",
     confirmed: false,
     status: "draft",
     submittedAtUtc: null,

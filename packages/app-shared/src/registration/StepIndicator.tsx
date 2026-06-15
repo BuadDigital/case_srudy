@@ -1,17 +1,24 @@
 ﻿"use client";
 
+import { cn } from "@platform/design-system";
 import { Fragment } from "react";
+import type { RegistrationSource } from "../prototype/registration-data";
+import { FLOW_THEME } from "./registration-layout";
 
 export function StepIndicator({
   steps,
   current,
+  source = "proc",
 }: {
   steps: string[];
   current: number;
+  source?: RegistrationSource;
 }) {
+  const theme = FLOW_THEME[source];
+
   return (
-    <div className="reg-steps-wrap">
-      <div className="reg-steps-inner">
+    <div className="shrink-0 border-b border-border bg-transparent px-5 py-2.5">
+      <div className="mx-auto flex max-w-none items-center justify-center gap-0 overflow-x-auto">
         {steps.map((label, i) => {
           const n = i + 1;
           const done = n < current;
@@ -20,20 +27,40 @@ export function StepIndicator({
 
           return (
             <Fragment key={label}>
-              <div className="reg-step-item">
+              <div className="flex min-w-[72px] flex-[0_1_auto] items-center gap-2">
                 <div
-                  className={`reg-step-circle${done ? " done" : ""}${active ? " active" : ""}`}
+                  className={cn(
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-border-md bg-surface text-[10px] font-bold text-text-3 transition-all",
+                    done && "border-success bg-success-bg text-success text-[0]",
+                    active && theme.stepActive,
+                  )}
                 >
-                  {done ? <span className="reg-step-check" aria-hidden /> : n}
+                  {done ? (
+                    <span
+                      className="mt-[-1px] block h-[9px] w-[5px] rotate-45 border-b-2 border-r-2 border-solid border-success"
+                      aria-hidden
+                    />
+                  ) : (
+                    n
+                  )}
                 </div>
                 <span
-                  className={`reg-step-label${done ? " done" : ""}${active ? " active" : ""}`}
+                  className={cn(
+                    "max-w-full truncate text-[11px] font-medium text-text-3",
+                    active && theme.stepLabelActive,
+                    done && "text-text-2",
+                  )}
                 >
                   {label}
                 </span>
               </div>
               {i < steps.length - 1 ? (
-                <div className={`reg-step-line${lineDone ? " done" : ""}`} />
+                <div
+                  className={cn(
+                    "mx-1 h-0.5 w-7 min-w-5 max-w-10 shrink-0 self-center bg-border",
+                    lineDone && "bg-success",
+                  )}
+                />
               ) : null}
             </Fragment>
           );
@@ -42,4 +69,3 @@ export function StepIndicator({
     </div>
   );
 }
-

@@ -3,12 +3,27 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { StatusBadge } from "@platform/design-system";
+import {
+  Badge,
+  Button,
+  Note,
+  PageGutter,
+  PageShell,
+  StatusBadge,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  cn,
+  type BadgeTone,
+} from "@platform/design-system";
 import { RowMoreMenu } from "@case-study/mfe/components/ui/RowMoreMenu";
 import type { RowMoreMenuItem } from "@case-study/mfe/components/ui/RowMoreMenu";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
+import { ltrValueClass } from "../components/po-intake/PropertyDetailFields";
 import {
-  assignmentTypeBadgeClass,
   formatDateAr,
   formatPropertyLocation,
   formatPropertyTypeLine,
@@ -35,6 +50,13 @@ import {
 } from "../lib/prototype/po-roles";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import type { PoPropertyIntake } from "../lib/prototype/po-intake-data";
+
+function assignmentTypeBadgeTone(type: string): BadgeTone {
+  if (type === "تنفيذ") return "info";
+  if (type === "تركات") return "warning";
+  if (type === "قطاع خاص") return "primary";
+  return "default";
+}
 
 function deedLabel(property: PoPropertyIntake): string {
   return property.deedNumber.trim() || "—";
@@ -131,23 +153,29 @@ export function PoPropertiesPage({
 
   if (isPending && !record) {
     return (
-      <div className="po-properties-page pd-page">
-        <p className="po-properties-loading">جاري التحميل…</p>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+        <p className="m-2 text-xs text-text-3">جاري التحميل…</p>
       </div>
     );
   }
 
   if (!record) {
     return (
-      <div className="po-properties-page pd-page">
-        <div className="note note-warn">
-          لم يُعثر على أمر العمل.
-          <div className="po-properties-empty-actions">
-            <Link href={poListPath()} className="btn btn-sm">
-              رجوع لأوامر العمل
-            </Link>
-          </div>
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+        <PageGutter className="py-6">
+          <Note tone="warn">
+            لم يُعثر على أمر العمل.
+            <div className="mt-3">
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => router.push(poListPath())}
+              >
+                رجوع لأوامر العمل
+              </Button>
+            </div>
+          </Note>
+        </PageGutter>
       </div>
     );
   }
@@ -161,57 +189,66 @@ export function PoPropertiesPage({
     : false;
 
   return (
-    <div className="po-properties-page pd-page">
-      <article className="po-properties-shell">
-        <header className="po-properties-hero po-properties-hero--meta">
-          <div className="po-properties-hero-top">
-            <div className="po-properties-hero-main">
-              <Link href={poListPath()} className="po-properties-back">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+      <PageShell>
+        <header className="flex flex-col items-stretch gap-0 border-b border-border bg-gradient-to-br from-surface-2 to-surface px-5 py-4">
+          <div className="mb-2.5 flex items-start justify-between gap-4">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Link
+                href={poListPath()}
+                className="inline-flex w-fit items-center gap-1.5 py-1 text-[11px] font-medium text-text-2 no-underline transition-colors hover:text-primary [&_svg]:-scale-x-100"
+              >
                 <BackIcon />
                 <span>أوامر العمل</span>
               </Link>
-              <h1 className="po-properties-title">
+              <h1 className="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-lg font-bold leading-snug text-text">
                 <span>عقارات</span>
-                <PoNumber value={record.poNumber} className="po-properties-title-num" />
+                <PoNumber
+                  value={record.poNumber}
+                  className="text-[17px] text-primary"
+                />
               </h1>
-              <div className="po-properties-meta">
-                <span
-                  className={`badge ${assignmentTypeBadgeClass(record.assignmentType)}`}
-                >
+              <div className="flex flex-wrap items-center gap-2 text-xs text-text-2">
+                <Badge tone={assignmentTypeBadgeTone(record.assignmentType)}>
                   {record.assignmentType}
-                </span>
-                <span className="po-properties-meta-sep" aria-hidden>
+                </Badge>
+                <span className="select-none text-text-3" aria-hidden>
                   ·
                 </span>
-                <span className="po-properties-meta-count">
+                <span className="font-medium text-text-2">
                   {count} من {expected}{" "}
                   {expected === 1 ? "عقار" : "عقارات"}
                 </span>
               </div>
             </div>
             {showEdit ? (
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-primary po-properties-add"
+                size="sm"
+                variant="primary"
+                className="shrink-0"
                 onClick={() => router.push(poPropertyNewPath(poNumber))}
               >
                 + إضافة عقار
-              </button>
+              </Button>
             ) : null}
           </div>
 
-          <div className="pd-meta-strip" aria-label="ملخص أمر العمل">
-            <div className="pd-meta-item">
-              <div className="pd-meta-label">اسم الأخصائي</div>
-              <div className="pd-meta-val">
+          <div
+            className="flex flex-nowrap gap-0 overflow-x-auto pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:h-0"
+            aria-label="ملخص أمر العمل"
+          >
+            <div className="shrink-0 pe-4 ps-0">
+              <div className="mb-0.5 text-[11px] text-text-3">اسم الأخصائي</div>
+              <div className="text-[13px] font-medium text-text">
                 {record.assignmentSpecialist.trim() || "—"}
               </div>
             </div>
-            <div className="pd-meta-item">
-              <div className="pd-meta-label">استلام إنفاذ</div>
-              <div className="pd-meta-val">
+            <div className="shrink-0 border-s border-border px-4">
+              <div className="mb-0.5 text-[11px] text-text-3">استلام إنفاذ</div>
+              <div className="text-[13px] font-medium text-text">
                 {record.receivedFromEnfathAt ? (
-                  <bdi dir="ltr" className="po-property-detail-ltr-val">
+                  <bdi dir="ltr" className={ltrValueClass}>
                     {formatDateTimeAr(
                       record.receivedFromEnfathAt,
                       record.receivedFromEnfathTime,
@@ -222,13 +259,16 @@ export function PoPropertiesPage({
                 )}
               </div>
             </div>
-            <div className="pd-meta-item">
-              <div className="pd-meta-label">تاريخ الاستحقاق</div>
+            <div className="shrink-0 border-s border-border px-4">
+              <div className="mb-0.5 text-[11px] text-text-3">تاريخ الاستحقاق</div>
               <div
-                className={`pd-meta-val${dueUrgent ? " pd-meta-val--urgent" : ""}`}
+                className={cn(
+                  "text-[13px] font-medium",
+                  dueUrgent ? "text-red" : "text-text",
+                )}
               >
                 {record.dueDateAt ? (
-                  <bdi dir="ltr" className="po-property-detail-ltr-val">
+                  <bdi dir="ltr" className={ltrValueClass}>
                     {formatDateTimeAr(record.dueDateAt)}
                   </bdi>
                 ) : (
@@ -236,10 +276,13 @@ export function PoPropertiesPage({
                 )}
               </div>
             </div>
-            <div className="pd-meta-item">
-              <div className="pd-meta-label">المتبقي للتسليم</div>
+            <div className="shrink-0 border-s border-border px-4">
+              <div className="mb-0.5 text-[11px] text-text-3">المتبقي للتسليم</div>
               <div
-                className={`pd-meta-val${dueUrgent ? " pd-meta-val--urgent" : ""}`}
+                className={cn(
+                  "text-[13px] font-medium",
+                  dueUrgent ? "text-red" : "text-text",
+                )}
               >
                 {formatDeliveryRemainingLabel(record.dueDateAt)}
               </div>
@@ -248,45 +291,46 @@ export function PoPropertiesPage({
         </header>
 
         {count === 0 ? (
-          <div className="po-properties-empty">
-            <p>لا توجد عقارات في هذا الأمر.</p>
+          <div className="px-5 py-8 text-center">
+            <p className="m-0 mb-3.5 text-[13px] text-text-3">
+              لا توجد عقارات في هذا الأمر.
+            </p>
             {showEdit ? (
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-primary"
+                size="sm"
+                variant="primary"
                 onClick={() => router.push(poPropertyNewPath(poNumber))}
               >
                 إضافة أول عقار
-              </button>
+              </Button>
             ) : null}
           </div>
         ) : (
           <>
-            <div className="po-properties-tbl-wrap">
-              <table
-                className={`tbl po-properties-tbl po-properties-tbl--deed-list${showRowMenu ? " po-properties-tbl--has-view" : ""}`}
-              >
+            <div className="w-full overflow-x-auto">
+              <Table className="table-fixed">
                 <colgroup>
-                  <col className="po-col-deed" />
-                  <col className="po-col-location" />
-                  <col className="po-col-type" />
-                  <col className="po-col-deed-status" />
-                  <col className="po-col-status" />
-                  {showRowMenu ? <col className="po-col-more" /> : null}
+                  <col className="w-[10%] min-w-[5.25rem]" />
+                  <col className="w-[19%]" />
+                  <col className="w-[24%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[13%]" />
+                  {showRowMenu ? <col className="w-10" /> : null}
                 </colgroup>
-                <thead>
-                  <tr>
-                    <th>رقم الصك</th>
-                    <th>الموقع</th>
-                    <th>التصنيف / النوع</th>
-                    <th>حالة الصك</th>
-                    <th>الحالة</th>
+                <THead>
+                  <Tr hoverable={false}>
+                    <Th>رقم الصك</Th>
+                    <Th>الموقع</Th>
+                    <Th>التصنيف / النوع</Th>
+                    <Th>حالة الصك</Th>
+                    <Th>الحالة</Th>
                     {showRowMenu ? (
-                      <th className="po-properties-th-more" aria-label="المزيد" />
+                      <Th className="w-10 px-1.5" aria-label="المزيد" />
                     ) : null}
-                  </tr>
-                </thead>
-                <tbody>
+                  </Tr>
+                </THead>
+                <TBody>
                   {record.properties.map((prop, index) => {
                     const row = poPropertyToPropertyRow(
                       record,
@@ -311,54 +355,63 @@ export function PoPropertiesPage({
                     const label = deedLabel(prop);
 
                     return (
-                      <tr
+                      <Tr
                         key={prop.id}
-                        className="po-properties-row"
+                        hoverable={false}
+                        className="cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--info-bg)_40%,var(--surface))]"
                         onClick={() => router.push(detailHref)}
                       >
-                        <td>
-                          <span className="po-properties-deed">
-                            <span className="po-properties-row-idx" aria-hidden>
+                        <Td>
+                          <span className="inline-flex min-w-0 items-center gap-2">
+                            <span
+                              className="inline-flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-md bg-surface-3 text-[10px] font-semibold text-text-3"
+                              aria-hidden
+                            >
                               {index + 1}
                             </span>
-                            <span className="id-cell po-num-ltr">{label}</span>
+                            <span
+                              dir="ltr"
+                              className="inline-block text-[11px] font-semibold text-primary"
+                            >
+                              {label}
+                            </span>
                           </span>
-                        </td>
-                        <td className="po-properties-cell-muted">{location}</td>
-                        <td>{typeDisplay}</td>
-                        <td className="po-properties-cell-muted">
+                        </Td>
+                        <Td className="text-text-2">{location}</Td>
+                        <Td>{typeDisplay}</Td>
+                        <Td className="text-text-2">
                           {prop.deedStatus || "—"}
-                        </td>
-                        <td>
+                        </Td>
+                        <Td>
                           {boursePending ? (
-                            <span className="badge b-prog">بانتظار البورصة</span>
+                            <Badge tone="warning">بانتظار البورصة</Badge>
                           ) : (
                             <StatusBadge status={row.status} />
                           )}
-                        </td>
+                        </Td>
                         {showRowMenu ? (
-                          <td
-                            className="po-properties-cell-more"
+                          <Td
+                            className="w-10 px-1 text-center"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <RowMoreMenu items={resolveRowMoreItems(prop)} />
-                          </td>
+                          </Td>
                         ) : null}
-                      </tr>
+                      </Tr>
                     );
                   })}
-                </tbody>
-              </table>
+                </TBody>
+              </Table>
             </div>
             {showDecree ? (
-              <p className="po-properties-hint">
+              <p className="px-6 py-2 pb-3 text-[11px] text-text-3">
                 مسار التنفيذ — قرار إسناد مستقل لكل صك.
                 {showRowMenu
                   ? " اضغط الصف للتفاصيل أو ⋮ للإجراءات."
                   : " اضغط الصف للتفاصيل."}
               </p>
             ) : (
-              <p className="po-properties-hint">
+              <p className="px-6 py-2 pb-3 text-[11px] text-text-3">
                 {showRowMenu
                   ? "اضغط الصف لمعاينة العقار أو ⋮ للإجراءات (تفاصيل · استدعاء المعاملة…)."
                   : "اضغط الصف لمعاينة تفاصيل العقار."}
@@ -366,7 +419,7 @@ export function PoPropertiesPage({
             )}
           </>
         )}
-      </article>
+      </PageShell>
     </div>
   );
 }

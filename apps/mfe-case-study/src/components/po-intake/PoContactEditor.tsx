@@ -5,6 +5,7 @@ import {
   type PoContact,
 } from "../../lib/prototype/po-intake-data";
 import { RegField, RegSelect } from "@platform/app-shared/registration/FormFields";
+import { Button } from "@platform/design-system";
 import {
   normalizePhoneInput,
   PHONE_MIN_DIGITS,
@@ -35,22 +36,26 @@ export function PoContactEditor({
   }
 
   return (
-    <div className="po-contact-list">
+    <div className="flex flex-col gap-3">
       {contacts.map((c, i) => (
-        <div key={i} className="po-contact-card">
-          <div className="po-contact-card-hd">
+        <div
+          key={i}
+          className="rounded-[var(--radius-DEFAULT)] border border-border bg-surface p-3"
+        >
+          <div className="mb-2.5 flex items-center justify-between text-xs font-semibold text-text-2">
             <span>ضابط اتصال {contacts.length > 1 ? i + 1 : ""}</span>
             {contacts.length > 1 ? (
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-danger"
+                size="sm"
+                variant="danger"
                 onClick={() => removeContact(i)}
               >
                 حذف
-              </button>
+              </Button>
             ) : null}
           </div>
-          <div className="reg-fg2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <RegField
               id={`po_contact_name_${i}`}
               label="الاسم"
@@ -83,9 +88,9 @@ export function PoContactEditor({
           </div>
         </div>
       ))}
-      <button type="button" className="btn btn-sm" onClick={addContact}>
+      <Button type="button" size="sm" onClick={addContact}>
         + إضافة ضابط اتصال
-      </button>
+      </Button>
     </div>
   );
 }

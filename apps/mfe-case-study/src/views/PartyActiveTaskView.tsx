@@ -149,37 +149,37 @@ export function PartyActiveTaskView({
 
   if (def?.kind === "engineering-survey" && legacyTask) {
     return (
-      <p className="po-properties-loading">جاري فتح مهمة الرفع المساحي…</p>
+      <p className="p-4 text-xs text-text-3">جاري فتح مهمة الرفع المساحي…</p>
     );
   }
 
   if (def?.kind === "property-appraisal" && legacyTask) {
     return (
-      <p className="po-properties-loading">جاري فتح مهمة التقييم…</p>
+      <p className="p-4 text-xs text-text-3">جاري فتح مهمة التقييم…</p>
     );
   }
 
   if (def?.kind === "field-inspection" && legacyTask) {
     return (
-      <p className="po-properties-loading">جاري فتح مهمة المعاينة…</p>
+      <p className="p-4 text-xs text-text-3">جاري فتح مهمة المعاينة…</p>
     );
   }
 
   if (def?.kind === "government-review" && legacyTask) {
     return (
-      <p className="po-properties-loading">جاري فتح مهمة المراجعة…</p>
+      <p className="p-4 text-xs text-text-3">جاري فتح مهمة المراجعة…</p>
     );
   }
 
   if (def?.kind === "valuation-coordination" && legacyTask) {
     return (
-      <p className="po-properties-loading">جاري فتح مهمة الاستلام…</p>
+      <p className="p-4 text-xs text-text-3">جاري فتح مهمة الاستلام…</p>
     );
   }
 
   if (!def) {
     return (
-      <p className="po-properties-loading">صفحة المهمة غير معرّفة.</p>
+      <p className="p-4 text-xs text-text-3">صفحة المهمة غير معرّفة.</p>
     );
   }
 

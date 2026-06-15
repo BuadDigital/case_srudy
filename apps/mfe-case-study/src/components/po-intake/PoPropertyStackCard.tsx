@@ -6,6 +6,7 @@ import {
   type AssignmentType,
   type PoPropertyIntake,
 } from "../../lib/prototype/po-intake-data";
+import { Button, Card, CardBody, CardHeader, cn } from "@platform/design-system";
 import { isValidContactEntry } from "./po-property-validation";
 
 export function PoPropertyStackCard({
@@ -32,35 +33,40 @@ export function PoPropertyStackCard({
   const deedLabel = formatPropertyDeedDisplay(property);
 
   return (
-    <article className="po-property-stack-card" aria-label={`عقار ${index}`}>
-      <header className="po-property-stack-card-hd">
-        <div className="po-property-stack-card-title">
-          <span className="po-property-stack-card-num">عقار {index}</span>
-          <span className="po-property-stack-card-deed" dir="ltr">
+    <Card
+      className="rounded-[10px] bg-surface-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      aria-label={`عقار ${index}`}
+    >
+      <CardHeader className="items-start gap-3 px-4 py-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-xs font-bold text-primary">عقار {index}</span>
+          <span className="break-all text-[13px] font-semibold text-text" dir="ltr">
             {deedLabel}
           </span>
           {property.taskNumber ? (
-            <span className="po-property-stack-card-meta">
+            <span className="text-[11px] text-text-3">
               مهمة: {property.taskNumber}
             </span>
           ) : null}
         </div>
-        <div className="po-property-stack-card-actions">
-          <button type="button" className="btn btn-sm" onClick={onEdit}>
+        <div className="flex shrink-0 gap-1.5">
+          <Button type="button" size="sm" onClick={onEdit}>
             تعديل
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn-sm btn-danger-outline"
+            size="sm"
+            variant="danger"
+            className="border-red/30 bg-transparent hover:bg-danger-bg/60"
             onClick={onRemove}
           >
             حذف
-          </button>
+          </Button>
         </div>
-      </header>
-      <div className="po-property-stack-card-body">
-        <p>{location || "—"}</p>
-        <p className="po-property-stack-card-meta">
+      </CardHeader>
+      <CardBody className="px-4 py-3 text-xs leading-relaxed text-text-2">
+        <p className="m-0">{location || "—"}</p>
+        <p className="mt-1.5 flex flex-wrap gap-1.5 text-[11px] text-text-3">
           <span>{typeLabel}</span>
           <span aria-hidden>·</span>
           <span>
@@ -71,11 +77,11 @@ export function PoPropertyStackCard({
             <>
               <span aria-hidden>·</span>
               <span
-                className={
+                className={cn(
                   property.assignmentDocFileName.trim()
-                    ? "po-stack-decree-ok"
-                    : "po-stack-decree-missing"
-                }
+                    ? "text-success"
+                    : "font-semibold text-danger",
+                )}
               >
                 قرار الإسناد:{" "}
                 {property.assignmentDocFileName.trim() || "غير مرفق"}
@@ -83,7 +89,7 @@ export function PoPropertyStackCard({
             </>
           ) : null}
         </p>
-      </div>
-    </article>
+      </CardBody>
+    </Card>
   );
 }

@@ -16,12 +16,12 @@ export function CaseStudyProgressDonut({
 }: CaseStudyProgressDonutProps) {
   const offset = DONUT_CIRC * (1 - pct / 100);
   return (
-    <div className="cs-mini-donut">
+    <div className="flex items-center gap-1.5">
       <svg
         width="44"
         height="44"
         viewBox="0 0 36 36"
-        className="cs-mini-donut-svg"
+        className="block shrink-0"
         aria-hidden="true"
       >
         <circle
@@ -50,14 +50,16 @@ export function CaseStudyProgressDonut({
           y="18"
           textAnchor="middle"
           dominantBaseline="central"
-          className="cs-mini-donut-pct"
+          className="fill-text text-[7.5px] font-bold"
         >
           {pct}%
         </text>
       </svg>
-      <div className="cs-mini-donut-meta">
-        <span className="cs-mini-donut-label">{label}</span>
-        <span className="cs-mini-donut-sub">{sub}</span>
+      <div className="flex flex-col gap-px">
+        <span className="text-[10px] font-semibold leading-tight text-text-2">
+          {label}
+        </span>
+        <span className="text-[9px] leading-tight text-text-3">{sub}</span>
       </div>
     </div>
   );

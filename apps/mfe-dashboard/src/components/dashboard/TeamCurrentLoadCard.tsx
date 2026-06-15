@@ -1,8 +1,16 @@
-const TEAM_LOAD_SPECIALISTS: [string, string, number, number, "o" | "g"][] = [
-  ["أسامة الصالحي", "أخصائي", 14, 20, "o"],
-  ["عمر الحمراني", "أخصائي", 10, 20, "g"],
-  ["أيمن مجرشي", "أخصائي", 11, 20, "o"],
-  ["وليد باشماخ", "أخصائي", 8, 20, "g"],
+import {
+  CardBody,
+  KpiRowLabel,
+  ProgressBar,
+  SubpageHeader,
+  SubpagePanel,
+} from "@platform/design-system";
+
+const TEAM_LOAD_SPECIALISTS: [string, string, number, number, "warning" | "success"][] = [
+  ["أسامة الصالحي", "أخصائي", 14, 20, "warning"],
+  ["عمر الحمراني", "أخصائي", 10, 20, "success"],
+  ["أيمن مجرشي", "أخصائي", 11, 20, "warning"],
+  ["وليد باشماخ", "أخصائي", 8, 20, "success"],
 ];
 
 function LoadRow({
@@ -10,45 +18,38 @@ function LoadRow({
   roleLabel,
   value,
   max,
-  barClass,
+  tone,
 }: {
   name: string;
   roleLabel: string;
   value: number;
   max: number;
-  barClass: "o" | "g";
+  tone: "warning" | "success";
 }) {
-  const pct = Math.round((value / max) * 100);
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div className="kpi-lbl">
+    <div className="mb-3 last:mb-0">
+      <KpiRowLabel>
         <span>
-          {name} <span style={{ color: "var(--text3)" }}>({roleLabel})</span>
+          {name} <span className="text-text-3">({roleLabel})</span>
         </span>
-        <span style={{ fontWeight: 600 }}>
+        <span className="font-semibold">
           {value}/{max}
         </span>
-      </div>
-      <div className="prog-wrap">
-        <div className={`prog-bar ${barClass}`} style={{ width: `${pct}%` }} />
-      </div>
+      </KpiRowLabel>
+      <ProgressBar value={value} max={max} tone={tone} />
     </div>
   );
 }
 
 export function TeamCurrentLoadCard() {
   return (
-    <article className="page-shell">
-      <header className="po-subpage-hd">
-        <div className="po-subpage-titles">
-          <h2 className="po-subpage-title">حمل الفريق الحالي</h2>
-        </div>
-      </header>
-      <div className="card-body">
+    <SubpagePanel className="mb-4">
+      <SubpageHeader title="حمل الفريق الحالي" />
+      <CardBody>
         {TEAM_LOAD_SPECIALISTS.map(([n, r, v, m, c]) => (
-          <LoadRow key={n} name={n} roleLabel={r} value={v} max={m} barClass={c} />
+          <LoadRow key={n} name={n} roleLabel={r} value={v} max={m} tone={c} />
         ))}
-      </div>
-    </article>
+      </CardBody>
+    </SubpagePanel>
   );
 }

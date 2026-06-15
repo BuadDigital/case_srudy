@@ -23,7 +23,6 @@
     "@financial/mfe": "*",
     "@keys/mfe": "*",
     "@kpi/mfe": "*",
-    "@messages/mfe": "*",
     "@settings/mfe": "*",
     "@survey/mfe": "*",
     "@valuation/mfe": "*",

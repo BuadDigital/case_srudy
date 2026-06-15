@@ -16,7 +16,7 @@ The platform supports end-to-end work around **property case study** and **valua
 |------|---------------------|
 | **دراسة الحالة** | أوامر العمل (PO), العقارات, الإسناد, الرفع المساحي, إدارة المفاتيح, إدارة التعذرات |
 | **التقييم العقاري** | طلبات التقييم, نموذج المعاين |
-| **الإدارة والعمليات** | لوحة التحكم, المراسلة, مؤشرات الأداء, إدارة المستخدمين, التقارير المالية |
+| **الإدارة والعمليات** | لوحة التحكم, مؤشرات الأداء, إدارة المستخدمين, التقارير المالية |
 
 Different **roles** (مدير الإدارة, مشرف دراسة الحالة, أخصائي, مقيم, معاين, مالي, …) see different menu items and permissions. Screens are implemented; **business data is still mock** on the frontend while product and backend agree on core logic.
 
@@ -37,7 +37,6 @@ apps/
   mfe-failures/       ← @failures/mfe — إدارة التعذرات (localStorage until API)
   mfe-settings/       ← @settings/mfe — الإعدادات + جميع حقول النظام (API)
   mfe-valuation/      ← @valuation/mfe — طلبات التقييم (/valuation-requests)
-  mfe-messages/       ← @messages/mfe — المراسلة (/messages)
 ```
 
 **Platform domain split (F4b):** [MFE_PLATFORM_DOMAINS.md](./MFE_PLATFORM_DOMAINS.md)
@@ -71,9 +70,8 @@ Shared UI and auth live in **`packages/`** at the repo root (not inside `apps/`)
 | `@financial/mfe` | التقارير المالية |
 | `@kpi/mfe` | مؤشرات الأداء |
 | `@failures/mfe` | إدارة التعذرات — repository + localStorage prototype |
-| `@settings/mfe` | users, courts, info-roles, system-tools |
+| `@settings/mfe` | users, courts, info-roles, system-fields-catalog |
 | `@valuation/mfe` | `/valuation-requests` |
-| `@messages/mfe` | `/messages` |
 
 Run the shell from the **repository root**:
 
@@ -104,9 +102,8 @@ npm run dev
 | **`@kpi/mfe`** | `/kpi` |
 | **`@case-study/mfe`** | `/po/*`, `/active-primary-data`, `/bourse-inquiry`, `/active-distribution`, `/active-case-study`, `/field-form`, party queues |
 | **`@failures/mfe`** | `/failures`, `/failure-types`, PO property failure form — **localStorage** until backend exists |
-| **`@settings/mfe`** | `/users`, `/courts`, `/case-study-info-roles`, `/system-tools` |
+| **`@settings/mfe`** | `/users`, `/courts`, `/case-study-info-roles`, `/system-fields-catalog` |
 | **`@valuation/mfe`** | `/valuation-requests` |
-| **`@messages/mfe`** | `/messages` |
 
 **Remains in shell only:** login, layout/nav (`AppShell`), PO Next.js pages, evaluator prototype, `PartyActiveTaskViewHost`.
 
@@ -175,8 +172,8 @@ Details: [ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES.md](./ARCHITECTURE_MICRO
 - [ ] Per-role login (`@ejadah.dev` users) — role from server, not only the sidebar switcher
 - [x] Create `mfe-case-study` + `@platform/app-shared` for API-ready flows (PO + primary data + bourse + distribution) — F3 complete (single deploy)
 - [x] Platform domain MFEs (`dashboard`, `survey`, `keys`, `financial`, `kpi`) — F4b complete
-- [x] Wire `@valuation/mfe` and `@messages/mfe` in shell `[page]/page.tsx`
-- [x] Remove orphaned shell view copies (`SurveyView`, `KeysView`, `FinancialView`, `KpiView`, `MessagesView`, `ValuationRequestsView`) — F4c complete
+- [x] Wire `@valuation/mfe` in shell `[page]/page.tsx`
+- [x] Remove orphaned shell view copies (`SurveyView`, `KeysView`, `FinancialView`, `KpiView`, `ValuationRequestsView`) — F4c complete
 - [ ] Module Federation + CI deploy per app (F5)
 - [ ] Replace mock data with `@platform/api-client` calls
 - [ ] PO/property detail; case study form (`requirements/case_study_form 2.html`); registration (`requirements/ejada-registration_1.html`) if in scope

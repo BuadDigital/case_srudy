@@ -1,5 +1,11 @@
 "use client";
 
+import { Button, Input, Label, Note, cn } from "@platform/design-system";
+import {
+  RegField,
+  RegSelect,
+  RegTextarea,
+} from "@platform/app-shared/registration/FormFields";
 import {
   FIELD_INSPECTION_ACCESS_OPTIONS,
   FIELD_INSPECTION_CONDITION_OPTIONS,
@@ -16,6 +22,21 @@ import {
   type FieldInspectionSubmission,
 } from "../lib/prototype/field-inspection-data";
 import type { FieldInspectionFieldErrors } from "../lib/prototype/field-inspection-validation";
+import { FieldInspectionInfathSection } from "../components/field-inspection/FieldInspectionInfathSection";
+
+const FIELD_FORM =
+  "mb-3 rounded-lg border border-border bg-surface-2 p-4";
+const FIELD_SEC_TITLE =
+  "mb-3 border-b border-border pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary";
+const FORM_ROW =
+  "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4";
+const FORM_GROUP = "flex flex-col gap-1";
+const RADIO_GROUP = "mt-1 flex flex-wrap gap-3";
+const RADIO_OPT =
+  "inline-flex cursor-pointer items-center gap-1.5 text-xs text-text-2";
+const PHOTO_GRID = "mt-2 grid grid-cols-4 gap-2";
+const PHOTO_PH =
+  "flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-border-2 bg-surface-3 text-[10px] text-text-3 transition-colors hover:border-primary-light hover:text-primary-light disabled:cursor-not-allowed disabled:opacity-60";
 
 export type FieldFormViewProps = {
   embedded?: boolean;
@@ -39,6 +60,41 @@ export type FieldFormViewProps = {
         | "signedDocumentPhotos"
         | "propertyPhotos"
         | "generalNotes"
+        | "inspectionDate"
+        | "facade"
+        | "streetWidthM"
+        | "builtAreaSqm"
+        | "propertyUsage"
+        | "streetName"
+        | "mainStreetName"
+        | "mapLatitude"
+        | "mapLongitude"
+        | "roomCount"
+        | "hallCount"
+        | "unitCount"
+        | "bathroomCount"
+        | "propertyAgeYears"
+        | "showroomCount"
+        | "towerCount"
+        | "wellCount"
+        | "hasKitchen"
+        | "hasCarEntrance"
+        | "hasBasement"
+        | "hasElevator"
+        | "hasPool"
+        | "districtState"
+        | "availableServices"
+        | "surroundingAmenities"
+        | "propertyDescription"
+        | "districtProsCons"
+        | "accessRouteDescription"
+        | "assetNotes"
+        | "buildingFloors"
+        | "basementTotalSqm"
+        | "annexTotalSqm"
+        | "buildingsTotalSqm"
+        | "exteriorPhotosPdf"
+        | "interiorPhotosPdf"
       >
     >,
   ) => void;
@@ -81,88 +137,64 @@ export function FieldFormView({
   return (
     <>
       {!embedded ? (
-        <div className="note note-info">
+        <Note tone="info">
           هذا النموذج مُحسَّن للموبايل — يفتحه المعاين في الميدان بجانب برنامج
           مقياس
-        </div>
+        </Note>
       ) : null}
-      <div className="field-form">
-        <div className="field-sec-title">١ — بيانات العقار الأساسية</div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-id">
+      <fieldset disabled={disabled} className="contents">
+      <div className={FIELD_FORM}>
+        <div className={FIELD_SEC_TITLE}>١ — بيانات العقار الأساسية</div>
+        <div className={FORM_ROW}>
+          <div className={FORM_GROUP}>
+            <Label htmlFor="ff-id" className="text-[11px] font-semibold text-text-2">
               رقم العقار
-            </label>
-            <input
+            </Label>
+            <Input
               id="ff-id"
-              className="form-control"
-              value={value.propertyDisplayId}
               readOnly
-              style={{ background: "var(--surface3)" }}
+              value={value.propertyDisplayId}
+              className="bg-surface-3 text-xs"
             />
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-type">
-              نوع العقار
-            </label>
-            <select
-              id="ff-type"
-              className="form-control"
-              value={value.propertyType}
-              disabled={disabled}
-              onChange={(e) =>
-                onChange({
-                  propertyType: e.target.value as FieldInspectionPropertyType | "",
-                })
-              }
-            >
-              <option value="">— اختر —</option>
-              {FIELD_INSPECTION_PROPERTY_TYPE_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.propertyType ? (
-              <p className="reg-field-error">{fieldErrors.propertyType}</p>
-            ) : null}
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-area">
-              المنطقة / الحي
-            </label>
-            <input
-              id="ff-area"
-              className="form-control"
-              value={value.areaDistrict}
-              disabled={disabled}
-              placeholder="مثال: حي النزهة، مكة المكرمة"
-              onChange={(e) => onChange({ areaDistrict: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-sqm">
-              المساحة الفعلية (م²)
-            </label>
-            <input
-              id="ff-sqm"
-              className="form-control"
-              type="number"
-              value={value.actualAreaSqm}
-              disabled={disabled}
-              placeholder="0.00"
-              onChange={(e) => onChange({ actualAreaSqm: e.target.value })}
-            />
-          </div>
+          <RegSelect
+            id="ff-type"
+            label="نوع العقار"
+            value={value.propertyType}
+            disabled={disabled}
+            error={fieldErrors.propertyType}
+            placeholder="— اختر —"
+            options={FIELD_INSPECTION_PROPERTY_TYPE_OPTIONS}
+            onChange={(v) =>
+              onChange({
+                propertyType: v as FieldInspectionPropertyType | "",
+              })
+            }
+          />
+          <RegField
+            id="ff-area"
+            label="المنطقة / الحي"
+            value={value.areaDistrict}
+            placeholder="مثال: حي النزهة، مكة المكرمة"
+            onChange={(v) => onChange({ areaDistrict: v })}
+          />
+          <RegField
+            id="ff-sqm"
+            label="المساحة الفعلية (م²)"
+            type="number"
+            value={value.actualAreaSqm}
+            placeholder="0.00"
+            onChange={(v) => onChange({ actualAreaSqm: v })}
+          />
         </div>
       </div>
-      <div className="field-form">
-        <div className="field-sec-title">٢ — حالة العقار</div>
-        <div className="form-group">
-          <span className="form-label">الحالة الإنشائية</span>
-          <div className="radio-group">
+      <div className={FIELD_FORM}>
+        <div className={FIELD_SEC_TITLE}>٢ — حالة العقار</div>
+        <div className={FORM_GROUP}>
+          <span className="text-[11px] font-semibold text-text-2">الحالة الإنشائية</span>
+          <div className={RADIO_GROUP}>
             {FIELD_INSPECTION_CONDITION_OPTIONS.map((o) => (
-              <label key={o} className="radio-opt">
+              <label key={o} className={RADIO_OPT}>
                 <input
                   type="radio"
                   name="cond"
@@ -177,10 +209,10 @@ export function FieldFormView({
             ))}
           </div>
         </div>
-        <div className="form-group">
-          <span className="form-label">هل يوجد منقولات داخل العقار؟</span>
-          <div className="radio-group">
-            <label className="radio-opt">
+        <div className={FORM_GROUP}>
+          <span className="text-[11px] font-semibold text-text-2">هل يوجد منقولات داخل العقار؟</span>
+          <div className={RADIO_GROUP}>
+            <label className={RADIO_OPT}>
               <input
                 type="radio"
                 name="items"
@@ -190,7 +222,7 @@ export function FieldFormView({
               />{" "}
               نعم
             </label>
-            <label className="radio-opt">
+            <label className={RADIO_OPT}>
               <input
                 type="radio"
                 name="items"
@@ -202,9 +234,9 @@ export function FieldFormView({
             </label>
           </div>
         </div>
-        <div className="form-group">
-          <span className="form-label">هل العقار مؤجر حالياً؟</span>
-          <div className="radio-group">
+        <div className={FORM_GROUP}>
+          <span className="text-[11px] font-semibold text-text-2">هل العقار مؤجر حالياً؟</span>
+          <div className={RADIO_GROUP}>
             {(
               [
                 ["yes", "نعم"],
@@ -212,7 +244,7 @@ export function FieldFormView({
                 ["unknown", "غير معروف"],
               ] as const
             ).map(([rentValue, label]) => (
-              <label key={rentValue} className="radio-opt">
+              <label key={rentValue} className={RADIO_OPT}>
                 <input
                   type="radio"
                   name="rent"
@@ -229,11 +261,11 @@ export function FieldFormView({
             ))}
           </div>
         </div>
-        <div className="form-group">
-          <span className="form-label">إمكانية الوصول للعقار</span>
-          <div className="radio-group">
+        <div className={FORM_GROUP}>
+          <span className="text-[11px] font-semibold text-text-2">إمكانية الوصول للعقار</span>
+          <div className={RADIO_GROUP}>
             {FIELD_INSPECTION_ACCESS_OPTIONS.map((o) => (
-              <label key={o} className="radio-opt">
+              <label key={o} className={RADIO_OPT}>
                 <input
                   type="radio"
                   name="acc"
@@ -249,114 +281,75 @@ export function FieldFormView({
           </div>
         </div>
       </div>
-      <div className="field-form">
-        <div className="field-sec-title">٣ — البيانات السوقية</div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-price">
-              متوسط سعر م² في المنطقة
-            </label>
-            <input
-              id="ff-price"
-              className="form-control"
-              type="number"
-              value={value.avgPricePerSqm}
-              disabled={disabled}
-              placeholder="ريال / م²"
-              onChange={(e) => onChange({ avgPricePerSqm: e.target.value })}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-market">
-              مستوى نشاط السوق
-            </label>
-            <select
-              id="ff-market"
-              className="form-control"
-              value={value.marketActivityLevel}
-              disabled={disabled}
-              onChange={(e) =>
-                onChange({
-                  marketActivityLevel: e.target
-                    .value as FieldInspectionMarketActivity | "",
-                })
-              }
-            >
-              <option value="">— اختر —</option>
-              {FIELD_INSPECTION_MARKET_ACTIVITY_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="ff-mkt-note">
-            ملاحظات سوقية إضافية
-          </label>
-          <textarea
-            id="ff-mkt-note"
-            className="form-control"
-            rows={2}
-            value={value.marketNotes}
+      <div className={FIELD_FORM}>
+        <div className={FIELD_SEC_TITLE}>٣ — البيانات السوقية</div>
+        <div className={FORM_ROW}>
+          <RegField
+            id="ff-price"
+            label="متوسط سعر م² في المنطقة"
+            type="number"
+            value={value.avgPricePerSqm}
+            placeholder="ريال / م²"
+            onChange={(v) => onChange({ avgPricePerSqm: v })}
+          />
+          <RegSelect
+            id="ff-market"
+            label="مستوى نشاط السوق"
+            value={value.marketActivityLevel}
             disabled={disabled}
-            placeholder="أي معلومات إضافية عن السوق..."
-            onChange={(e) => onChange({ marketNotes: e.target.value })}
+            placeholder="— اختر —"
+            options={FIELD_INSPECTION_MARKET_ACTIVITY_OPTIONS}
+            onChange={(v) =>
+              onChange({
+                marketActivityLevel: v as FieldInspectionMarketActivity | "",
+              })
+            }
           />
         </div>
+        <RegTextarea
+          id="ff-mkt-note"
+          label="ملاحظات سوقية إضافية"
+          rows={2}
+          value={value.marketNotes}
+          placeholder="أي معلومات إضافية عن السوق..."
+          onChange={(v) => onChange({ marketNotes: v })}
+        />
       </div>
-      <div className="field-form">
-        <div className="field-sec-title">٤ — المستندات الموقعة</div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-sign-name">
-              اسم الشخص المسؤول
-            </label>
-            <input
-              id="ff-sign-name"
-              className="form-control"
-              value={value.responsiblePersonName}
-              disabled={disabled}
-              placeholder="الاسم الكامل"
-              onChange={(e) =>
-                onChange({ responsiblePersonName: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="ff-sign-title">
-              صفته
-            </label>
-            <select
-              id="ff-sign-title"
-              className="form-control"
-              value={value.responsiblePersonRole}
-              disabled={disabled}
-              onChange={(e) =>
-                onChange({
-                  responsiblePersonRole: e.target
-                    .value as FieldInspectionSignatoryRole | "",
-                })
-              }
-            >
-              <option value="">— اختر —</option>
-              {FIELD_INSPECTION_SIGNATORY_ROLE_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className={FIELD_FORM}>
+        <div className={FIELD_SEC_TITLE}>٤ — المستندات الموقعة</div>
+        <div className={FORM_ROW}>
+          <RegField
+            id="ff-sign-name"
+            label="اسم الشخص المسؤول"
+            value={value.responsiblePersonName}
+            placeholder="الاسم الكامل"
+            onChange={(v) => onChange({ responsiblePersonName: v })}
+          />
+          <RegSelect
+            id="ff-sign-title"
+            label="صفته"
+            value={value.responsiblePersonRole}
+            disabled={disabled}
+            placeholder="— اختر —"
+            options={FIELD_INSPECTION_SIGNATORY_ROLE_OPTIONS}
+            onChange={(v) =>
+              onChange({
+                responsiblePersonRole: v as FieldInspectionSignatoryRole | "",
+              })
+            }
+          />
         </div>
-        <div className="form-group">
-          <span className="form-label">صور المستندات الموقعة</span>
-          <div className="photo-grid">
+        <div className={FORM_GROUP}>
+          <span className="text-[11px] font-semibold text-text-2">صور المستندات الموقعة</span>
+          <div className={PHOTO_GRID}>
             {value.signedDocumentPhotos.slice(0, 3).map((fileName, n) => (
               <button
                 key={n}
                 type="button"
-                className={`photo-ph${fileName.trim() ? " has-photo" : ""}`}
+                className={cn(
+                  PHOTO_PH,
+                  fileName.trim() && "border-primary bg-info-bg text-primary",
+                )}
                 disabled={disabled}
                 onClick={() => toggleSignedPhoto(n)}
               >
@@ -364,22 +357,25 @@ export function FieldFormView({
                 <span>{fileName.trim() || "إضافة صورة"}</span>
               </button>
             ))}
-            <button type="button" className="photo-ph" disabled={disabled}>
+            <button type="button" className={PHOTO_PH} disabled={disabled}>
               +<span>المزيد</span>
             </button>
           </div>
         </div>
       </div>
-      <div className="field-form">
-        <div className="field-sec-title">٥ — صور العقار</div>
-        <div className="photo-grid">
+      <div className={FIELD_FORM}>
+        <div className={FIELD_SEC_TITLE}>٥ — صور العقار</div>
+        <div className={PHOTO_GRID}>
           {FIELD_INSPECTION_PHOTO_SLOTS.map(({ key, label }) => {
             const fileName = value.propertyPhotos[key]?.trim() ?? "";
             return (
               <button
                 key={key}
                 type="button"
-                className={`photo-ph${fileName ? " has-photo" : ""}`}
+                className={cn(
+                  PHOTO_PH,
+                  fileName && "border-primary bg-info-bg text-primary",
+                )}
                 disabled={disabled}
                 onClick={() => togglePropertyPhoto(key)}
               >
@@ -388,39 +384,41 @@ export function FieldFormView({
             );
           })}
         </div>
-        <div className="form-group" style={{ marginTop: 12 }}>
-          <label className="form-label" htmlFor="ff-gen">
-            ملاحظات عامة
-          </label>
-          <textarea
+        <div className="mt-3">
+          <RegTextarea
             id="ff-gen"
-            className="form-control"
+            label="ملاحظات عامة"
             rows={2}
             value={value.generalNotes}
-            disabled={disabled}
             placeholder="أي ملاحظات إضافية..."
-            onChange={(e) => onChange({ generalNotes: e.target.value })}
+            onChange={(v) => onChange({ generalNotes: v })}
           />
         </div>
       </div>
+      <FieldInspectionInfathSection
+        value={value}
+        disabled={disabled}
+        onChange={onChange}
+      />
+      </fieldset>
       {!embedded ? (
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
+        <div className="flex gap-2.5">
+          <Button
             type="button"
-            className="btn btn-primary"
+            variant="primary"
             disabled={disabled || saving}
             onClick={onSubmit}
           >
             {saving ? "جاري الإرسال…" : "حفظ وإرسال"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn"
+            variant="default"
             disabled={disabled || saving}
             onClick={onSaveDraft}
           >
             حفظ مسودة
-          </button>
+          </Button>
         </div>
       ) : null}
     </>

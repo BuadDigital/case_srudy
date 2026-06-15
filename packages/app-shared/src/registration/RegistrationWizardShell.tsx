@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import type { ReactNode } from "react";
+import { cn } from "@platform/design-system";
 import {
   ENTITY_SUBTITLES,
   FLOW_META,
@@ -9,6 +10,7 @@ import {
 import { RegistrationSidePanel } from "./RegistrationSidePanel";
 import { StepIndicator } from "./StepIndicator";
 import { REG_BACK, REG_PREV } from "./registration-labels";
+import { Button, FLOW_THEME, RegStepBadge } from "./registration-layout";
 import { UNSAVED_CONFIRM_MSG } from "./registration-utils";
 
 export function RegistrationWizardShell({
@@ -43,6 +45,7 @@ export function RegistrationWizardShell({
   children: ReactNode;
 }) {
   const meta = FLOW_META[source];
+  const theme = FLOW_THEME[source];
   const inWizard = !success && step <= steps.length;
   const displayStep = Math.min(step, steps.length);
 
@@ -53,73 +56,94 @@ export function RegistrationWizardShell({
 
   return (
     <div
-      className={`card reg-root reg-flow-card ${meta.flowClass}${inWizard ? " reg-flow-card--wizard reg-root--with-side" : ""}`}
+      className={cn(
+        "mb-4 flex w-full min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card",
+        theme.cardBorder,
+        "border-t-[3px]",
+        inWizard && "min-h-[480px]",
+      )}
     >
-      <div className="reg-layout">
+      <div className="flex min-h-0 flex-1 items-stretch">
         {inWizard ? (
           <RegistrationSidePanel source={source} onBack={handleBack} />
         ) : null}
 
-        <div className={`reg-main${inWizard ? " reg-main--wizard" : ""}`}>
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface-2",
+            inWizard && "bg-surface",
+          )}
+        >
           {!inWizard ? (
-            <header className="reg-topbar">
-              <div className="reg-topbar-main">
-                <button type="button" className="btn btn-sm" onClick={handleBack}>
+            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-6 py-2.5">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <Button type="button" size="sm" onClick={handleBack}>
                   {REG_BACK}
-                </button>
-                <div className="reg-topbar-titles">
-                  <div className="reg-tb-flow">{meta.title}</div>
-                  <div className="reg-tb-title">{title}</div>
+                </Button>
+                <div className="min-w-0">
+                  <div className={cn("mb-0.5 text-[11px]", theme.flowText)}>
+                    {meta.title}
+                  </div>
+                  <div className="text-sm font-bold leading-snug text-text">
+                    {title}
+                  </div>
                 </div>
               </div>
-              {success ? (
-                <span className="reg-step-badge done">مكتمل</span>
-              ) : null}
+              {success ? <RegStepBadge done>مكتمل</RegStepBadge> : null}
             </header>
           ) : null}
 
           {inWizard ? (
-            <div className="reg-wizard-scroll">
-              <div className="reg-wizard-panel reg-wizard-panel--wide">
-                <header className="reg-topbar reg-topbar--panel">
-                  <div className="reg-topbar-main">
-                    <div className="reg-topbar-titles">
-                      <div className="reg-tb-title">
+            <div className="flex min-h-0 flex-1 justify-stretch overflow-y-auto bg-surface p-0">
+              <div className="flex w-full max-w-none flex-col overflow-hidden bg-surface">
+                <header className="flex items-center justify-between gap-2.5 border-b border-border bg-surface px-5 py-2.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-bold leading-snug text-text">
                         الخطوة {displayStep} من {steps.length} — {title}
                       </div>
-                      <div className="reg-tb-sub" dir="ltr">
+                      <div className="text-[11px] text-text-3" dir="ltr">
                         {ENTITY_SUBTITLES[source]}
                       </div>
                     </div>
                   </div>
-                  <span className="reg-step-badge">الخطوة {displayStep}</span>
+                  <RegStepBadge>الخطوة {displayStep}</RegStepBadge>
                 </header>
-                <StepIndicator steps={steps} current={step} />
-                {hint ? <p className="reg-step-hint">{hint}</p> : null}
-                <div className="reg-body reg-body--panel">{children}</div>
-                <footer className="reg-foot reg-foot--panel">
-                  <div className="reg-foot-hint">{hint}</div>
-                  <div className="reg-foot-btns">
+                <StepIndicator steps={steps} current={step} source={source} />
+                {hint ? (
+                  <p className="m-0 px-5 pb-1.5 pt-2 text-start text-xs font-semibold leading-snug text-text-2">
+                    {hint}
+                  </p>
+                ) : null}
+                <div className="min-h-0 flex-1 overflow-y-auto px-5 py-1">
+                  {children}
+                </div>
+                <footer className="shrink-0 border-t border-border bg-surface-2 px-5 py-2.5">
+                  <div className="hidden text-[11px] text-text-3">{hint}</div>
+                  <div className="flex w-full justify-end gap-2">
                     {showPrev ? (
-                      <button type="button" className="btn" onClick={onPrev}>
+                      <Button type="button" onClick={onPrev}>
                         {REG_PREV}
-                      </button>
+                      </Button>
                     ) : null}
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-primary"
+                      variant="primary"
                       disabled={saving}
                       onClick={onNext}
                     >
                       {saving ? "جارٍ الحفظ..." : nextLabel}
-                    </button>
+                    </Button>
                   </div>
                 </footer>
               </div>
             </div>
           ) : (
             <div
-              className={`reg-body${success ? " reg-body--success" : ""}`}
+              className={cn(
+                "mx-auto box-border w-full max-w-[880px] flex-1 overflow-y-auto px-6 py-5",
+                success && "flex items-start justify-center bg-surface py-8 max-w-none",
+              )}
             >
               {children}
             </div>

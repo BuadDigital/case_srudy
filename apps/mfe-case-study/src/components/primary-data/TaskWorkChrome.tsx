@@ -1,6 +1,8 @@
 "use client";
 import type { ReactNode } from "react";
+import { Button, Card, CardBody } from "@platform/design-system";
 import { PoEditShell } from "@case-study/mfe/components/po-intake/PoEditShell";
+
 export function TaskWorkChrome({
   layout = "page",
   title,
@@ -30,24 +32,24 @@ export function TaskWorkChrome({
 }) {
   if (layout === "panel") {
     return (
-      <div className="po-bourse-form-panel po-primary-data-form-panel">
-        <div className="card-body">
+      <Card className="sticky top-3 m-0 max-h-[calc(100dvh-100px)] w-full self-start overflow-y-auto overscroll-contain shadow-none">
+        <CardBody className="bg-surface">
           {children}
           {showFooter && variant !== "detail" ? (
-            <div className="po-bourse-form-actions">
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
               {footerExtra}
-              <button
+              <Button
                 type="button"
-                className="btn btn-primary"
+                variant="primary"
                 disabled={saving}
                 onClick={onSave}
               >
                 {saving ? "جاري الحفظ…" : saveLabel}
-              </button>
+              </Button>
             </div>
           ) : null}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
     );
   }
 

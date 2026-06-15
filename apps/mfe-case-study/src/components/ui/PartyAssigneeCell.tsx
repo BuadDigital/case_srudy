@@ -1,11 +1,12 @@
 "use client";
 
+import { cn } from "@platform/design-system";
 import type { CaseStudyPartyAssignee } from "../../lib/prototype/case-study-tracks";
 
 function progressBarClass(pct: number): string {
-  if (pct >= 100) return "prog-bar g";
-  if (pct > 0) return "prog-bar o";
-  return "prog-bar";
+  if (pct >= 100) return "bg-success";
+  if (pct > 0) return "bg-amber";
+  return "bg-teal-light";
 }
 
 export function PartyAssigneeCell({ party }: { party: CaseStudyPartyAssignee }) {
@@ -17,16 +18,23 @@ export function PartyAssigneeCell({ party }: { party: CaseStudyPartyAssignee }) 
   const pct = party.progressPct;
 
   return (
-    <div className="po-party-cell" title={name}>
-      <div className="po-party-name">{name}</div>
-      <div className="po-party-progress-row">
-        <div className="prog-wrap po-party-progress-track">
+    <div
+      className="mx-auto flex w-full max-w-[7.25rem] flex-col items-stretch gap-1"
+      title={name}
+    >
+      <div className="truncate text-center text-[11px] leading-snug text-text-2">
+        {name}
+      </div>
+      <div className="flex w-full items-center gap-1">
+        <div className="h-[5px] min-w-0 flex-1 overflow-hidden rounded bg-surface-3">
           <div
-            className={progressBarClass(pct)}
+            className={cn("h-full rounded transition-[width] duration-[400ms]", progressBarClass(pct))}
             style={{ width: `${pct}%` }}
           />
         </div>
-        <span className="po-party-progress-pct">{pct}%</span>
+        <span className="min-w-[1.75em] shrink-0 text-end text-[9px] font-semibold text-text-3 tabular-nums">
+          {pct}%
+        </span>
       </div>
     </div>
   );

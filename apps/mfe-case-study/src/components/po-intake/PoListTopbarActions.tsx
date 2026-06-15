@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Button } from "@platform/design-system";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { canReceivePo } from "../../lib/prototype/po-roles";
 
@@ -26,16 +27,20 @@ export function PoListTopbarActions() {
   const showIntake = canReceivePo(role);
 
   return (
-    <div className="topbar-actions" aria-label="إجراءات أوامر العمل">
+    <div
+      className="flex shrink-0 flex-wrap items-center justify-end gap-2"
+      aria-label="إجراءات أوامر العمل"
+    >
       {showIntake ? (
-        <button
+        <Button
           type="button"
-          className="btn btn-sm btn-primary"
+          variant="primary"
+          size="sm"
           onClick={() => router.push("/po?intake=1")}
         >
           <PlusIcon />
           أمر عمل جديد
-        </button>
+        </Button>
       ) : null}
     </div>
   );

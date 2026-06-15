@@ -4,29 +4,46 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useHasMounted } from "../hooks/use-has-mounted";
-import { StatValue } from "../components/ui/StatValue";
 import { TeamCurrentLoadCard } from "../components/dashboard/TeamCurrentLoadCard";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
-import { StatusBadge } from "@platform/design-system";
+import {
+  Badge,
+  Note,
+  ProgressBar,
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatSub,
+  StatValue,
+  StatusBadge,
+  SubpageHeader,
+  SubpagePanel,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  cn,
+} from "@platform/design-system";
 import {
   DASHBOARD_TEAM_ROWS,
   MOCK_VR,
   type TeamKind,
 } from "@platform/app-shared/prototype/constants";
-import { assignmentTypeBadgeClass } from "../lib/po-display";
+import { assignmentTypeBadgeTone } from "../lib/po-display";
 import {
   usePoListRowsQuery,
   usePropertyListItemsQuery,
 } from "../query/dashboard-queries";
 
 const MGR_ROLES = new Set(["cdo", "general-manager", "section-supervisor"]);
-
 const TEAM_LOAD_ROLES = new Set([...MGR_ROLES, "cdo"]);
 
 function teamTint(t: TeamKind): { bg: string; fg: string } {
-  if (t === "internal") return { bg: "var(--info-bg)", fg: "var(--info)" };
-  if (t === "freelance") return { bg: "var(--warning-bg)", fg: "var(--warning)" };
-  return { bg: "var(--success-bg)", fg: "var(--success)" };
+  if (t === "internal") return { bg: "bg-info-bg", fg: "text-info" };
+  if (t === "freelance") return { bg: "bg-warning-bg", fg: "text-warning" };
+  return { bg: "bg-success-bg", fg: "text-success" };
 }
 
 export function DashboardView() {
@@ -57,173 +74,165 @@ export function DashboardView() {
 
   return (
     <>
-      <div className="stat-grid">
-        <div className="stat-card blue">
-          <div className="stat-label">عقارات مسجّلة</div>
+      <StatGrid>
+        <StatCard accent="blue">
+          <StatLabel>عقارات مسجّلة</StatLabel>
           <StatValue value={propertyStats?.total} />
-          <div className="stat-sub">من استلام أوامر العمل</div>
-        </div>
-        <div className="stat-card warn">
-          <div className="stat-label">قيد التنفيذ</div>
+          <StatSub>من استلام أوامر العمل</StatSub>
+        </StatCard>
+        <StatCard accent="warn">
+          <StatLabel>قيد التنفيذ</StatLabel>
           <StatValue value={propertyStats?.progress} />
-          <div className="stat-sub">بما فيها قيد التحقق</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">مكتملة</div>
+          <StatSub>بما فيها قيد التحقق</StatSub>
+        </StatCard>
+        <StatCard accent="green">
+          <StatLabel>مكتملة</StatLabel>
           <StatValue value={propertyStats?.done} />
-          <div className="stat-sub">{propertyStats?.donePct ?? "—"}</div>
-        </div>
-        <div className="stat-card red">
-          <div className="stat-label">تعذرات</div>
+          <StatSub>{propertyStats?.donePct ?? "—"}</StatSub>
+        </StatCard>
+        <StatCard accent="red">
+          <StatLabel>تعذرات</StatLabel>
           <StatValue value={propertyStats?.fail} />
-          <div className="stat-sub">
+          <StatSub>
             {propertyStats && propertyStats.fail > 0
               ? "تحتاج مراجعة"
               : "لا تعذرات مسجّلة"}
-          </div>
-        </div>
-      </div>
+          </StatSub>
+        </StatCard>
+      </StatGrid>
 
       {showTeamLoad ? <TeamCurrentLoadCard /> : null}
 
       {mgr ? (
-        <div className="grid-2">
-          <article className="page-shell">
-            <header className="po-subpage-hd">
-              <div className="po-subpage-titles">
-                <h2 className="po-subpage-title">أوامر العمل النشطة</h2>
-              </div>
-              <Link href="/po" className="btn btn-sm">
+        <div className="grid grid-cols-2 gap-3">
+          <SubpagePanel>
+            <SubpageHeader title="أوامر العمل النشطة">
+              <Link
+                href="/po"
+                className={cn(
+                  "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border border-border-md bg-surface px-2 py-1 text-[11px] font-normal text-text no-underline transition-colors hover:bg-surface-2",
+                )}
+              >
                 عرض الكل
               </Link>
-            </header>
-            <table
-              className="tbl"
-              data-pending={poReady ? undefined : "true"}
-            >
-              <thead>
-                <tr>
-                  <th>PO</th>
-                  <th>النوع</th>
-                  <th>التقدم</th>
-                  <th>الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
+            </SubpageHeader>
+            <Table pending={!poReady}>
+              <THead>
+                <Tr hoverable={false}>
+                  <Th>PO</Th>
+                  <Th>النوع</Th>
+                  <Th>التقدم</Th>
+                  <Th>الحالة</Th>
+                </Tr>
+              </THead>
+              <TBody>
                 {poReady && poActive.length === 0 ? (
-                  <tr className="tbl-empty">
-                    <td
-                      colSpan={4}
-                      style={{ textAlign: "center", color: "var(--text3)" }}
-                    >
+                  <Tr hoverable={false}>
+                    <Td colSpan={4} className="text-center text-text-3">
                       لا توجد أوامر عمل نشطة
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ) : null}
                 {poReady
                   ? poActive.map((p) => (
-                      <tr key={p.id} onClick={() => router.push("/po")}>
-                    <td className="id-cell">{p.id}</td>
-                    <td>
-                      <span
-                        className={`badge ${assignmentTypeBadgeClass(p.type)}`}
-                      >
-                        {p.type}
-                      </span>
-                    </td>
-                    <td style={{ minWidth: 100 }}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "var(--text3)",
-                          marginBottom: 3,
-                        }}
-                      >
-                        {p.done}/{p.count}
-                      </div>
-                      <div className="prog-wrap">
-                        <div
-                          className="prog-bar"
-                          style={{
-                            width: `${p.count > 0 ? Math.round((p.done / p.count) * 100) : 0}%`,
-                          }}
-                        />
-                      </div>
-                    </td>
-                    <td>
-                      <StatusBadge status={p.status} />
-                    </td>
-                      </tr>
+                      <Tr key={p.id} onClick={() => router.push("/po")}>
+                        <Td className="text-[11px] font-semibold text-primary-light">
+                          {p.id}
+                        </Td>
+                        <Td>
+                          <Badge
+                            tone={assignmentTypeBadgeTone(p.type)}
+                            className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal"
+                          >
+                            {p.type}
+                          </Badge>
+                        </Td>
+                        <Td className="min-w-[100px]">
+                          <div className="mb-0.5 text-[10px] text-text-3">
+                            {p.done}/{p.count}
+                          </div>
+                          <ProgressBar
+                            value={p.done}
+                            max={p.count}
+                            tone="primary"
+                          />
+                        </Td>
+                        <Td>
+                          <StatusBadge status={p.status} />
+                        </Td>
+                      </Tr>
                     ))
                   : null}
-              </tbody>
-            </table>
-          </article>
-          <article className="page-shell">
-            <header className="po-subpage-hd">
-              <div className="po-subpage-titles">
-                <h2 className="po-subpage-title">طلبات التقييم الأخيرة</h2>
-              </div>
-              <Link href="/valuation-requests" className="btn btn-sm">
+              </TBody>
+            </Table>
+          </SubpagePanel>
+          <SubpagePanel>
+            <SubpageHeader title="طلبات التقييم الأخيرة">
+              <Link
+                href="/valuation-requests"
+                className={cn(
+                  "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border border-border-md bg-surface px-2 py-1 text-[11px] font-normal text-text no-underline transition-colors hover:bg-surface-2",
+                )}
+              >
                 عرض الكل
               </Link>
-            </header>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>الطلب</th>
-                  <th>العقار</th>
-                  <th>المقيم</th>
-                  <th>الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
+            </SubpageHeader>
+            <Table>
+              <THead>
+                <Tr hoverable={false}>
+                  <Th>الطلب</Th>
+                  <Th>العقار</Th>
+                  <Th>المقيم</Th>
+                  <Th>الحالة</Th>
+                </Tr>
+              </THead>
+              <TBody>
                 {MOCK_VR.map((v) => (
-                  <tr key={v.id}>
-                    <td className="id-cell">{v.id}</td>
-                    <td>{v.propId}</td>
-                    <td style={{ fontSize: 11 }}>{v.appraiser}</td>
-                    <td>
+                  <Tr key={v.id} hoverable={false}>
+                    <Td className="text-[11px] font-semibold text-primary-light">
+                      {v.id}
+                    </Td>
+                    <Td>{v.propId}</Td>
+                    <Td className="text-[11px]">{v.appraiser}</Td>
+                    <Td>
                       <StatusBadge status={v.status} />
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
-          </article>
+              </TBody>
+            </Table>
+          </SubpagePanel>
         </div>
       ) : null}
 
-      <div className="sec-title">الفريق الميداني — مزودو الخدمة الداخليين</div>
-      <div className="note note-info">
+      <h3 className="mb-2.5 text-[13px] font-semibold text-text">
+        الفريق الميداني — مزودو الخدمة الداخليين
+      </h3>
+      <Note tone="info">
         المعاينون والمقيمون يتبعون قسم التقييم العقاري ويخدمون القسمين كمورد
         مشترك
-      </div>
+      </Note>
       {DASHBOARD_TEAM_ROWS.length === 0 ? (
-        <p className="field-team-empty">لا توجد بيانات فريق ميداني بعد.</p>
+        <p className="text-xs text-text-3">لا توجد بيانات فريق ميداني بعد.</p>
       ) : (
-        <div className="grid-3">
+        <div className="grid grid-cols-3 gap-2.5">
           {DASHBOARD_TEAM_ROWS.map(([init, name, roleLine, t, count]) => {
-            const { bg, fg } = teamTint(t);
+            const tint = teamTint(t);
             return (
-              <div key={name} className="team-card">
+              <div
+                key={name}
+                className="flex items-center gap-2.5 rounded-[var(--radius-lg)] border border-border bg-surface p-3"
+              >
                 <div
-                  className="avatar"
-                  style={{
-                    background: bg,
-                    color: fg,
-                    width: 34,
-                    height: 34,
-                    fontSize: 11,
-                  }}
+                  className={`flex size-[34px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${tint.bg} ${tint.fg}`}
                 >
                   {init}
                 </div>
-                <div className="team-info">
-                  <div className="team-name">{name}</div>
-                  <div className="team-role">{roleLine}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-text">{name}</div>
+                  <div className="text-[11px] text-text-2">{roleLine}</div>
                 </div>
-                <div className="team-count">{count}</div>
+                <div className="text-lg font-bold text-text">{count}</div>
               </div>
             );
           })}

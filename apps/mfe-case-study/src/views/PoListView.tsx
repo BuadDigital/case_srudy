@@ -4,10 +4,30 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { PoRow } from "@platform/app-shared/prototype/constants";
-import { StatValue } from "@case-study/mfe/components/ui/StatValue";
+import {
+  Badge,
+  Button,
+  Input,
+  PageBody,
+  Select,
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatSub,
+  StatValue,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  cn,
+  type BadgeTone,
+} from "@platform/design-system";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
 import { RowMoreMenu } from "@case-study/mfe/components/ui/RowMoreMenu";
 import { buildPoListRowMoreItems } from "../lib/prototype/po-list-row-menu";
+import { ltrValueClass } from "../components/po-intake/PropertyDetailFields";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { formatDateAr, isPastDue } from "../lib/prototype/po-intake-data";
 import { deletePoRecord } from "../lib/prototype/po-intake-storage";
@@ -39,38 +59,28 @@ function isDueUrgent(dueIso: string, status: PoRow["status"]): boolean {
   return isPastDue(dueIso) || isDueSoon(dueIso);
 }
 
-function progressClass(pct: number): string {
-  if (pct >= 80) return "";
-  if (pct >= 40) return "mid";
-  return "low";
+function progressFillClass(pct: number): string {
+  if (pct >= 80) return "bg-primary";
+  if (pct >= 40) return "bg-amber";
+  return "bg-red";
 }
 
 function poListStatusMeta(status: PoRow["status"]): {
-  cls: string;
+  tone: BadgeTone;
   label: string;
-  dot: string;
 } {
   if (status === "done") {
-    return { cls: "badge-teal", label: "مكتمل", dot: "var(--teal)" };
+    return { tone: "success", label: "مكتمل" };
   }
   if (status === "under_study") {
-    return { cls: "badge-red", label: "معلق", dot: "var(--red)" };
+    return { tone: "danger", label: "معلق" };
   }
-  return { cls: "badge-amber", label: "تنفيذ", dot: "var(--amber)" };
+  return { tone: "warning", label: "تنفيذ" };
 }
 
 function PoListStatusBadge({ status }: { status: PoRow["status"] }) {
-  const { cls, label, dot } = poListStatusMeta(status);
-  return (
-    <span className={`badge ${cls}`}>
-      <span
-        className="po-list-status-dot"
-        style={{ background: dot }}
-        aria-hidden
-      />
-      {label}
-    </span>
-  );
+  const { tone, label } = poListStatusMeta(status);
+  return <Badge tone={tone}>{label}</Badge>;
 }
 
 function SearchIcon() {
@@ -128,7 +138,7 @@ function GridIcon() {
 function SortIcon() {
   return (
     <svg
-      className="po-list-sort-icon"
+      className="ms-0.5 opacity-70"
       width="11"
       height="11"
       viewBox="0 0 24 24"
@@ -323,67 +333,75 @@ export function PoListView() {
 
       {toast ? (
         <div
-          className={`note reg-users-toast ${toast.kind === "success" ? "note-success" : "note-warn"}`}
+          className={cn(
+            "fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-lg border-s-[3px] px-3.5 py-2.5 text-xs leading-relaxed shadow-lg",
+            toast.kind === "success"
+              ? "border-primary bg-teal-light text-teal-text"
+              : "border-amber bg-amber-light text-amber-text",
+          )}
           role="status"
         >
           {toast.message}
         </div>
       ) : null}
 
-      <div className="po-list-page pd-page">
-        <div className="po-list-body page-body">
-          <div className="po-list-hd page-hd">
-            <h1 className="page-title">أوامر العمل الواردة من إنفاذ</h1>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+        <PageBody className="flex flex-col gap-5">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-lg font-bold text-text">أوامر العمل الواردة من إنفاذ</h1>
           </div>
 
-          <div className="po-list-stats stats-row">
-            <div className="stat-card">
-              <div className="stat-label">إجمالي أوامر العمل</div>
-              <StatValue value={stats?.total} className="stat-num" />
-              <div className="stat-sub">PO نشط</div>
-            </div>
-            <div className="stat-card amber">
-              <div className="stat-label">عقارات نشطة</div>
-              <StatValue value={stats?.propertyCount} className="stat-num" />
-              <div className="stat-sub">قيد المعالجة</div>
-            </div>
-            <div className="stat-card blue">
-              <div className="stat-label">متوسط العقارات / PO</div>
-              <StatValue value={stats?.avgPerPo} className="stat-num" />
-              <div className="stat-sub">عقار لكل أمر</div>
-            </div>
-            <div className="stat-card gray">
-              <div className="stat-label">مكتملة هذا الشهر</div>
-              <StatValue value={stats?.doneMonth} className="stat-num" />
-              <div className="stat-sub">
+          <StatGrid cols={4} className="mb-0">
+            <StatCard accent="default">
+              <StatLabel>إجمالي أوامر العمل</StatLabel>
+              <StatValue value={stats?.total} />
+              <StatSub>PO نشط</StatSub>
+            </StatCard>
+            <StatCard accent="amber">
+              <StatLabel>عقارات نشطة</StatLabel>
+              <StatValue value={stats?.propertyCount} />
+              <StatSub>قيد المعالجة</StatSub>
+            </StatCard>
+            <StatCard accent="blue">
+              <StatLabel>متوسط العقارات / PO</StatLabel>
+              <StatValue value={stats?.avgPerPo} />
+              <StatSub>عقار لكل أمر</StatSub>
+            </StatCard>
+            <StatCard accent="gray">
+              <StatLabel>مكتملة هذا الشهر</StatLabel>
+              <StatValue value={stats?.doneMonth} />
+              <StatSub>
                 {statsReady ? `من ${stats?.total ?? 0} إجمالي` : "\u00a0"}
-              </div>
-            </div>
-          </div>
+              </StatSub>
+            </StatCard>
+          </StatGrid>
 
-          <div className="po-list-section section-card">
-            <div className="section-hd">
-              <div className="section-title">
+          <div className="overflow-hidden rounded-lg border border-border bg-surface">
+            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5">
+              <div className="flex items-center gap-1.5 text-[13px] font-medium text-text">
                 <ListIcon />
                 قائمة أوامر العمل
               </div>
-              <div className="section-actions">
-                <button
+              <div className="flex items-center gap-1.5">
+                <Button
                   type="button"
-                  className="btn btn-sm"
+                  size="sm"
+                  variant="default"
                   title="تغيير العرض"
                   disabled
                 >
                   <GridIcon />
-                </button>
+                </Button>
               </div>
             </div>
 
-            <div className="filters-bar">
-              <div className="search-wrap">
-                <SearchIcon />
-                <input
-                  className="search-input"
+            <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2.5">
+              <div className="relative min-w-40 max-w-[260px] flex-1">
+                <span className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-text-3">
+                  <SearchIcon />
+                </span>
+                <Input
+                  className="h-8 bg-surface-2 pe-8 text-[12.5px]"
                   type="search"
                   placeholder="بحث برقم PO أو نوع الإسناد…"
                   value={search}
@@ -391,8 +409,8 @@ export function PoListView() {
                   aria-label="بحث أوامر العمل"
                 />
               </div>
-              <select
-                className="filter-select"
+              <Select
+                className="h-8 w-auto min-w-[130px] bg-surface-2 text-xs"
                 value={statusFilter}
                 onChange={(e) =>
                   setStatusFilter(e.target.value as StatusFilter)
@@ -403,9 +421,9 @@ export function PoListView() {
                 <option value="progress">قيد التنفيذ</option>
                 <option value="done">مكتمل</option>
                 <option value="under_study">معلق</option>
-              </select>
-              <select
-                className="filter-select"
+              </Select>
+              <Select
+                className="h-8 w-auto min-w-[130px] bg-surface-2 text-xs"
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 aria-label="تصفية نوع الإسناد"
@@ -416,62 +434,62 @@ export function PoListView() {
                     {type}
                   </option>
                 ))}
-              </select>
-              <span className="filter-count">
+              </Select>
+              <span className="ms-auto text-[11.5px] text-text-3">
                 {statsReady ? `${filtered.length} نتيجة` : "—"}
               </span>
             </div>
 
-            <div className="po-list-tbl-scroll">
-              <table
-                className="po-table"
-                data-pending={!statsReady}
-              >
-                <thead>
-                  <tr>
-                    <th>
+            <div className="overflow-x-auto">
+              <Table pending={!statsReady}>
+                <THead>
+                  <Tr hoverable={false}>
+                    <Th>
                       <button
                         type="button"
-                        className="po-list-th-btn"
+                        className="inline-flex cursor-pointer items-center gap-0.5 border-none bg-transparent p-0 font-inherit text-inherit"
                         onClick={() => toggleSort("po")}
                       >
                         رقم PO
                         <SortIcon />
                       </button>
-                    </th>
-                    <th>نوع الإسناد</th>
-                    <th>العقارات</th>
-                    <th>المكتملة</th>
-                    <th>التقدم</th>
-                    <th>الحالة</th>
-                    <th>
+                    </Th>
+                    <Th>نوع الإسناد</Th>
+                    <Th>العقارات</Th>
+                    <Th>المكتملة</Th>
+                    <Th>التقدم</Th>
+                    <Th>الحالة</Th>
+                    <Th>
                       <button
                         type="button"
-                        className="po-list-th-btn"
+                        className="inline-flex cursor-pointer items-center gap-0.5 border-none bg-transparent p-0 font-inherit text-inherit"
                         onClick={() => toggleSort("received")}
                       >
                         تاريخ الاستلام
                         <SortIcon />
                       </button>
-                    </th>
-                    <th>
+                    </Th>
+                    <Th>
                       <button
                         type="button"
-                        className="po-list-th-btn"
+                        className="inline-flex cursor-pointer items-center gap-0.5 border-none bg-transparent p-0 font-inherit text-inherit"
                         onClick={() => toggleSort("due")}
                       >
                         تاريخ الاستحقاق
                         <SortIcon />
                       </button>
-                    </th>
-                    <th>الأخصائي</th>
-                    <th aria-label="إجراءات" />
-                  </tr>
-                </thead>
-                <tbody>
+                    </Th>
+                    <Th>الأخصائي</Th>
+                    <Th aria-label="إجراءات" />
+                  </Tr>
+                </THead>
+                <TBody>
                   {statsReady && filtered.length === 0 ? (
-                    <tr className="empty-row">
-                      <td colSpan={10}>
+                    <Tr hoverable={false}>
+                      <Td
+                        colSpan={10}
+                        className="cursor-default py-10 text-center text-[13px] text-text-3"
+                      >
                         <InboxIcon />
                         {list.length === 0
                           ? viewOnly
@@ -480,8 +498,8 @@ export function PoListView() {
                               ? "لا توجد أوامر عمل — استلم أمر عمل جديداً من إنفاذ."
                               : "لا توجد أوامر عمل."
                           : "لا توجد نتائج مطابقة"}
-                      </td>
-                    </tr>
+                      </Td>
+                    </Tr>
                   ) : statsReady ? (
                     pageRows.map((p) => {
                       const pct =
@@ -490,77 +508,89 @@ export function PoListView() {
                           : 0;
                       const urgent = isDueUrgent(p.dueDate, p.status);
                       return (
-                        <tr
+                        <Tr
                           key={p.id}
+                          hoverable={false}
+                          className="group cursor-pointer transition-colors hover:bg-[#f5f7fb]"
                           onClick={() => router.push(poPropertiesPath(p.id))}
                         >
-                          <td>
+                          <Td>
                             <PoNumber
                               value={p.id}
                               link
-                              className="po-num"
+                              className="text-[13px] font-medium text-primary"
                             />
-                          </td>
-                          <td>{p.type}</td>
-                          <td>
+                          </Td>
+                          <Td className="whitespace-nowrap">{p.type}</Td>
+                          <Td className="whitespace-nowrap">
                             <strong>{p.count}</strong>
-                          </td>
-                          <td>{p.done}</td>
-                          <td>
-                            <div className="po-list-prog-wrap">
-                              <div className="po-list-prog-track">
+                          </Td>
+                          <Td className="whitespace-nowrap">{p.done}</Td>
+                          <Td className="whitespace-nowrap">
+                            <div className="flex min-w-[120px] items-center gap-2">
+                              <div className="h-[5px] min-w-[60px] flex-1 overflow-hidden rounded bg-surface-3">
                                 <div
-                                  className={`po-list-prog-fill ${progressClass(pct)}`}
+                                  className={cn(
+                                    "h-full rounded transition-[width] duration-300",
+                                    progressFillClass(pct),
+                                  )}
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
-                              <span className="po-list-prog-pct">{pct}%</span>
+                              <span className="min-w-7 text-end text-[11.5px] text-text-2">
+                                {pct}%
+                              </span>
                             </div>
-                          </td>
-                          <td>
+                          </Td>
+                          <Td className="whitespace-nowrap">
                             <PoListStatusBadge status={p.status} />
-                          </td>
-                          <td className="po-list-cell-muted">
+                          </Td>
+                          <Td className="whitespace-nowrap text-[12.5px] text-text-2">
                             {p.date ? (
-                              <bdi dir="ltr" className="po-property-detail-ltr-val">
+                              <bdi dir="ltr" className={ltrValueClass}>
                                 {formatDateAr(p.date)}
                               </bdi>
                             ) : (
                               "—"
                             )}
-                          </td>
-                          <td
-                            className={
+                          </Td>
+                          <Td
+                            className={cn(
+                              "whitespace-nowrap text-[12.5px]",
                               urgent
-                                ? "po-list-cell-urgent"
-                                : "po-list-cell-muted"
-                            }
+                                ? "font-medium text-red"
+                                : "text-text-2",
+                            )}
                           >
                             {p.dueDate ? (
-                              <bdi dir="ltr" className="po-property-detail-ltr-val">
+                              <bdi dir="ltr" className={ltrValueClass}>
                                 {formatDateAr(p.dueDate)}
                               </bdi>
                             ) : (
                               "—"
                             )}
-                          </td>
-                          <td className="po-list-cell-muted">{p.specialist}</td>
-                          <td className="po-list-cell-actions">
-                            <div
-                              className="row-actions"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                          </Td>
+                          <Td className="whitespace-nowrap text-[12.5px] text-text-2">
+                            {p.specialist}
+                          </Td>
+                          <Td
+                            className="w-px px-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                               {showEdit ? (
-                                <button
+                                <Button
                                   type="button"
-                                  className="icon-btn"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
                                   title="تعديل"
                                   onClick={() =>
                                     router.push(poHeaderEditPath(p.id))
                                   }
                                 >
                                   <EditIcon />
-                                </button>
+                                </Button>
                               ) : null}
                               <RowMoreMenu
                                 items={buildPoListRowMoreItems({
@@ -573,47 +603,58 @@ export function PoListView() {
                                 })}
                               />
                             </div>
-                          </td>
-                        </tr>
+                          </Td>
+                        </Tr>
                       );
                     })
                   ) : null}
-                </tbody>
-              </table>
+                </TBody>
+              </Table>
             </div>
 
-            <div className="pagination">
-              <span className="pag-info">
+            <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+              <span className="text-xs text-text-3">
                 {statsReady
                   ? `عرض ${rangeStart}–${rangeEnd} من ${filtered.length} نتيجة`
                   : "—"}
               </span>
-              <div className="pag-btns">
-                <button
+              <div className="flex gap-1">
+                <Button
                   type="button"
-                  className="pag-btn"
+                  size="sm"
+                  variant="default"
+                  className="h-[30px] w-[30px] p-0"
                   disabled={safePage <= 1}
                   onClick={() => setPage((n) => Math.max(1, n - 1))}
                   aria-label="الصفحة السابقة"
                 >
                   ›
-                </button>
-                <span className="pag-btn active" aria-current="page">
-                  {safePage}
-                </span>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="pag-btn"
+                  size="sm"
+                  variant="primary"
+                  className="h-[30px] w-[30px] p-0"
+                  aria-current="page"
+                  disabled
+                >
+                  {safePage}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="default"
+                  className="h-[30px] w-[30px] p-0"
                   disabled={safePage >= totalPages}
                   onClick={() => setPage((n) => Math.min(totalPages, n + 1))}
                   aria-label="الصفحة التالية"
                 >
                   ‹
-                </button>
+                </Button>
               </div>
             </div>
           </div>
-        </div>
+        </PageBody>
       </div>
     </>
   );

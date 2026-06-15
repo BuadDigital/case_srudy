@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { Note } from "@platform/design-system";
 import { PoHeaderEdit } from "@case-study/mfe/components/po-intake/PoHeaderEdit";
 import { poListPath } from "../../lib/po-routes";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
@@ -14,17 +15,15 @@ export function PoHeaderEditRoute({ poNumber }: { poNumber: string }) {
 
   if (isPending && !record) {
     return (
-      <p className="po-properties-loading" style={{ margin: 16 }}>
-        جاري تحميل أمر العمل…
-      </p>
+      <p className="m-4 text-xs text-text-3">جاري تحميل أمر العمل…</p>
     );
   }
 
   if (!record) {
     return (
-      <div className="note note-warn" style={{ margin: 16 }}>
+      <Note tone="warn" className="m-4">
         لم يُعثر على أمر العمل.
-      </div>
+      </Note>
     );
   }
 

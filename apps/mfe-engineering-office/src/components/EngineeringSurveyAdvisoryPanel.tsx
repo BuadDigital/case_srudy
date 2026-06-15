@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
+import { Button, Label, cn } from "@platform/design-system";
 import type { WorkflowTask } from "@case-study/mfe";
 import { findSurveyChildForParent } from "../lib/engineering-survey-task";
 import type { EngineeringSurveySubmission } from "../lib/engineering-survey-data";
@@ -19,6 +20,12 @@ function formatCoordsDisplay(lat: string, lng: string): string {
   if (latTrim && lngTrim) return `${latTrim}، ${lngTrim}`;
   return latTrim || lngTrim;
 }
+
+const noteWarnClass =
+  "mb-3 rounded-[var(--radius-DEFAULT)] border border-amber border-e-[3px] border-e-amber bg-amber-light px-3.5 py-2.5 text-xs leading-relaxed text-amber-text";
+
+const infoRowClass =
+  "flex items-baseline justify-between gap-3 border-b border-border py-2 text-xs last:border-b-0";
 
 export function EngineeringSurveyAdvisoryPanel({
   parentTask,
@@ -81,7 +88,7 @@ export function EngineeringSurveyAdvisoryPanel({
   if (!surveyTask) {
     return (
       <RegistrationFormCard title="بيانات المكتب الهندسي (استرشادي)">
-        <p className="po-properties-hint">
+        <p className="text-xs leading-relaxed text-text-3">
           لم تُسند مهمة الرفع المساحي بعد لهذا العقار.
         </p>
       </RegistrationFormCard>
@@ -91,7 +98,9 @@ export function EngineeringSurveyAdvisoryPanel({
   if (loadingSubmission) {
     return (
       <RegistrationFormCard title="بيانات المكتب الهندسي (استرشادي)">
-        <p className="po-properties-hint">جاري تحميل بيانات الرفع المساحي…</p>
+        <p className="text-xs leading-relaxed text-text-3">
+          جاري تحميل بيانات الرفع المساحي…
+        </p>
       </RegistrationFormCard>
     );
   }
@@ -99,7 +108,7 @@ export function EngineeringSurveyAdvisoryPanel({
   if (!submission || submission.status === "draft") {
     return (
       <RegistrationFormCard title="بيانات المكتب الهندسي (استرشادي)">
-        <p className="po-properties-hint">
+        <p className="text-xs leading-relaxed text-text-3">
           المكتب الهندسي لم يُرسل الرفع المساحي بعد.
         </p>
       </RegistrationFormCard>
@@ -136,40 +145,44 @@ export function EngineeringSurveyAdvisoryPanel({
 
   return (
     <RegistrationFormCard title="بيانات المكتب الهندسي (استرشادي — للقراءة فقط)">
-      <p className="evaluator-context-hint">
+      <p className="mb-3 text-[11px] leading-relaxed text-text-3">
         هذه البيانات من المكتب الهندسي — يمكنك إعادة الرفع للتصحيح مع ملاحظة
         إلزامية.
       </p>
 
       {submission.status === "reopened" && submission.returnNote?.trim() ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
-          <p>
+        <div className={noteWarnClass}>
+          <p className="m-0">
             <strong>مُعاد للتصحيح</strong> — {submission.returnNote.trim()}
           </p>
         </div>
       ) : null}
 
       {submission.status === "submitted" ? (
-        <div className="appraiser-submitted-actions" style={{ marginBottom: 12 }}>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           {!returnOpen ? (
-            <button
+            <Button
               type="button"
-              className="btn btn-sm btn-outline"
+              size="sm"
+              variant="outline"
               onClick={() => {
                 setReturnOpen(true);
                 setReturnError(null);
               }}
             >
               إعادة للتصحيح
-            </button>
+            </Button>
           ) : (
-            <div className="eng-office-return-form">
-              <label className="form-label" htmlFor="eng-return-note">
-                سبب الإرجاع للتصحيح <span className="req">*</span>
-              </label>
+            <div className="w-full">
+              <Label htmlFor="eng-return-note" className="text-xs">
+                سبب الإرجاع للتصحيح <span className="text-danger">*</span>
+              </Label>
               <textarea
                 id="eng-return-note"
-                className="form-control"
+                className={cn(
+                  "mt-1 min-h-[72px] w-full resize-y rounded-[var(--radius-DEFAULT)] border border-border bg-surface px-2.5 py-2 text-xs text-text outline-none",
+                  "focus:border-primary focus:ring-[3px] focus:ring-primary/12",
+                )}
                 rows={3}
                 value={returnNote}
                 placeholder="اذكر ما يجب على المكتب الهندسي تصحيحه…"
@@ -179,26 +192,23 @@ export function EngineeringSurveyAdvisoryPanel({
                 }}
               />
               {returnError ? (
-                <p className="form-error" style={{ marginTop: 6 }}>
-                  {returnError}
-                </p>
+                <p className="mt-1.5 text-[11px] text-danger">{returnError}</p>
               ) : null}
-              <div
-                className="appraiser-submitted-actions"
-                style={{ marginTop: 8 }}
-              >
-                <button
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Button
                   type="button"
-                  className="btn btn-sm btn-primary"
+                  size="sm"
+                  variant="primary"
                   onClick={() => {
                     void handleReturnForCorrection();
                   }}
                 >
                   تأكيد الإرجاع
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn btn-sm btn-ghost"
+                  size="sm"
+                  variant="ghost"
                   onClick={() => {
                     setReturnOpen(false);
                     setReturnNote("");
@@ -206,47 +216,49 @@ export function EngineeringSurveyAdvisoryPanel({
                   }}
                 >
                   إلغاء
-                </button>
+                </Button>
               </div>
             </div>
           )}
         </div>
       ) : null}
 
-      <div className="cs-info-row">
-        <span className="cs-info-label">الحالة</span>
-        <span className="cs-info-value">
+      <div className={infoRowClass}>
+        <span className="shrink-0 text-text-3">الحالة</span>
+        <span className="text-left font-medium text-text">
           {engineeringSurveyStatusLabel(submission.status)}
         </span>
       </div>
       {coords ? (
-        <div className="cs-info-row">
-          <span className="cs-info-label">الإحداثيات</span>
-          <span className="cs-info-value" dir="ltr">
+        <div className={infoRowClass}>
+          <span className="shrink-0 text-text-3">الإحداثيات</span>
+          <span className="text-left font-medium text-text" dir="ltr">
             {coords}
           </span>
         </div>
       ) : null}
       {submission.surveyReportFileName.trim() ? (
-        <div className="cs-info-row">
-          <span className="cs-info-label">تقرير الرفع المساحي</span>
-          <span className="cs-info-value">
+        <div className={infoRowClass}>
+          <span className="shrink-0 text-text-3">تقرير الرفع المساحي</span>
+          <span className="text-left font-medium text-text">
             {submission.surveyReportFileName.trim()}
           </span>
         </div>
       ) : null}
       {submission.siteLetterFileName.trim() ? (
-        <div className="cs-info-row">
-          <span className="cs-info-label">خطاب الموقع</span>
-          <span className="cs-info-value">
+        <div className={infoRowClass}>
+          <span className="shrink-0 text-text-3">خطاب الموقع</span>
+          <span className="text-left font-medium text-text">
             {submission.siteLetterFileName.trim()}
           </span>
         </div>
       ) : null}
       {answeredCount > 0 ? (
-        <div className="cs-info-row">
-          <span className="cs-info-label">البنود المكتملة</span>
-          <span className="cs-info-value">{answeredCount} / 13</span>
+        <div className={infoRowClass}>
+          <span className="shrink-0 text-text-3">البنود المكتملة</span>
+          <span className="text-left font-medium text-text">
+            {answeredCount} / 13
+          </span>
         </div>
       ) : null}
     </RegistrationFormCard>

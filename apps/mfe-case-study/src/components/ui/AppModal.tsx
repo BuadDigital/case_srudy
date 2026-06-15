@@ -2,6 +2,15 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useId, useRef } from "react";
+import {
+  ModalBody,
+  ModalCard,
+  ModalClose,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  ModalTitle,
+} from "@platform/design-system";
 
 export function AppModal({
   open,
@@ -48,36 +57,24 @@ export function AppModal({
   if (!open) return null;
 
   return (
-    <div
-      className="modal-overlay"
-      onClick={onClose}
-      role="presentation"
-    >
+    <ModalOverlay onClick={onClose} role="presentation">
       <div
         ref={panelRef}
-        className={`modal-card${wide ? " modal-card--wide" : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
         tabIndex={-1}
+        className="outline-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="modal-header">
-          <h2 id={titleId} className="modal-title">
-            {title}
-          </h2>
-          <button
-            type="button"
-            className="modal-close"
-            onClick={onClose}
-            aria-label="إغلاق"
-          >
+        <ModalCard wide={wide} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <ModalHeader>
+          <ModalTitle id={titleId}>{title}</ModalTitle>
+          <ModalClose onClick={onClose} aria-label="إغلاق">
             ×
-          </button>
-        </header>
-        <div className="modal-body">{children}</div>
-        {footer ? <footer className="modal-footer">{footer}</footer> : null}
+          </ModalClose>
+        </ModalHeader>
+        <ModalBody>{children}</ModalBody>
+        {footer ? <ModalFooter>{footer}</ModalFooter> : null}
+        </ModalCard>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

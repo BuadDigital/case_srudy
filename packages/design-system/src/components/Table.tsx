@@ -1,0 +1,69 @@
+import type { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import { cn } from "../lib/cn";
+
+export function Table({
+  className,
+  pending,
+  ...props
+}: TableHTMLAttributes<HTMLTableElement> & { pending?: boolean }) {
+  return (
+    <table
+      data-pending={pending ? "true" : undefined}
+      className={cn(
+        "w-full border-collapse",
+        pending && "[&_tbody]:opacity-55",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function THead(props: HTMLAttributes<HTMLTableSectionElement>) {
+  return <thead {...props} />;
+}
+
+export function TBody(props: HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody {...props} />;
+}
+
+export function Tr({
+  className,
+  hoverable = true,
+  ...props
+}: HTMLAttributes<HTMLTableRowElement> & { hoverable?: boolean }) {
+  return (
+    <tr
+      className={cn(
+        hoverable && "[&_td]:transition-colors [&:hover_td]:bg-surface-2 [&:hover_td]:cursor-pointer",
+        "[&:last-child_td]:border-b-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Th({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <th
+      className={cn(
+        "border-b border-border bg-surface-2 px-3 py-2 text-start text-[11px] font-medium text-text-2 whitespace-nowrap",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Td({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <td
+      className={cn(
+        "border-b border-border px-3 py-2.5 text-start text-xs text-text align-middle",
+        className,
+      )}
+      {...props}
+    />
+  );
+}

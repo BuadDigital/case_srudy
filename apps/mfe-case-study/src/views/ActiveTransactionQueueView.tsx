@@ -4,6 +4,18 @@ import type { MutableRefObject, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Badge,
+  cn,
+  PageShell,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+  type BadgeTone,
+} from "@platform/design-system";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
 import { RemainingTimeCell } from "@case-study/mfe/components/ui/RemainingTimeCell";
 import { RowMoreMenu } from "@case-study/mfe/components/ui/RowMoreMenu";
@@ -100,6 +112,19 @@ type PanelRenderProps = {
   onRefresh: () => void;
   onClose: () => void;
 };
+
+const ROW =
+  "cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--info-bg)_40%,var(--surface))]";
+const ROW_ACTIVE =
+  "bg-[color-mix(in_srgb,var(--warning-bg)_45%,var(--surface))]";
+
+function legacyBadgeTone(className: string): BadgeTone {
+  if (className.includes("done")) return "success";
+  if (className.includes("fail")) return "danger";
+  if (className.includes("prog")) return "warning";
+  if (className.includes("new")) return "info";
+  return "default";
+}
 
 export function ActiveTransactionQueueView({
   config,
@@ -262,7 +287,7 @@ export function ActiveTransactionQueueView({
       const badge = config.getTaskStatusBadge?.(task);
       if (badge) {
         return (
-          <span className={`badge ${badge.className}`}>{badge.label}</span>
+          <Badge tone={legacyBadgeTone(badge.className)}>{badge.label}</Badge>
         );
       }
       return <RemainingTimeCell state={remainingTime} />;
@@ -313,28 +338,30 @@ export function ActiveTransactionQueueView({
   );
 
   const hasRail = !useFullPage && !isLoading && listed.length > 0 && renderPanel;
-  const layoutClass = [
-    "po-primary-data-layout",
-    hasRail ? "po-primary-data-layout--has-rail" : "",
-    panelOpen && hasRail ? "po-primary-data-layout--panel-open" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
 
   return (
-    <div className="po-properties-page pd-page">
-      <div className={layoutClass}>
-        <article className="po-properties-shell po-properties-shell--compact po-bourse-queue-box">
-          <header className="po-properties-hero po-properties-hero--compact po-bourse-queue-hero">
-            <div className="po-properties-hero-main">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+      <div
+        className={cn(
+          "grid min-h-0 flex-1 gap-0",
+          hasRail && panelOpen
+            ? "grid-cols-[minmax(0,1.05fr)_minmax(300px,1fr)] items-stretch"
+            : "grid-cols-1 items-start content-start",
+        )}
+      >
+        <PageShell
+          className={cn(hasRail && panelOpen ? "flex-1" : "flex-none")}
+        >
+          <header className="grid items-center gap-1 border-b border-border bg-gradient-to-br from-surface-2 to-surface px-6 py-2.5">
+            <div className="flex min-w-0 flex-col gap-0.5">
               {!config.hidePageTitle ? (
-                <h1 className="po-properties-title">
+                <h1 className="m-0 text-base font-bold text-text">
                   <span>{config.pageTitle}</span>
                 </h1>
               ) : null}
-              <div className="po-properties-meta">
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-2">
                 {!isLoading && listed.length > 0 ? (
-                  <span className="po-properties-meta-count">
+                  <span className="font-medium text-text-2">
                     {listed.length}{" "}
                     {listed.length === 1 ? "معاملة" : "معاملات"}
                   </span>
@@ -348,63 +375,83 @@ export function ActiveTransactionQueueView({
             : null}
 
           {isLoading ? (
-            <p className="po-properties-loading">جاري تحميل المعاملات…</p>
+            <p className="px-6 py-5 text-xs text-text-3">جاري تحميل المعاملات…</p>
           ) : listed.length === 0 ? (
-            <div className="po-properties-empty">
-              <p>{config.emptyLine}</p>
-              <p className="po-properties-hint" style={{ marginTop: 8 }}>
-                {config.emptyHint}
-              </p>
+            <div className="px-6 py-8 text-center">
+              <p className="m-0 text-[13px] text-text-3">{config.emptyLine}</p>
+              <p className="mt-2 text-[11px] text-text-3">{config.emptyHint}</p>
             </div>
           ) : (
             <>
               <div
-                className={`po-properties-tbl-wrap${isDistributionTable ? " po-properties-tbl-wrap--scroll" : ""}`}
+                className={cn(
+                  "w-full px-6",
+                  isDistributionTable && "overflow-x-auto",
+                )}
               >
                 {isDistributionTable ? (
-                  <table
-                    className={`tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--distribution${showPartyColumns ? " po-properties-tbl--case-study" : ""}`}
-                    data-pending={isLoading}
+                  <Table
+                    className={cn(
+                      "table-fixed",
+                      showPartyColumns ? "min-w-0" : "min-w-[720px]",
+                    )}
+                    pending={isLoading}
                   >
                     <colgroup>
-                      <col className="po-dist-col-deed" />
-                      <col className="po-dist-col-po" />
-                      <col className="po-dist-col-city" />
-                      <col className="po-dist-col-district" />
-                      <col className="po-dist-col-type" />
-                      <col className="po-dist-col-class" />
-                      <col className="po-dist-col-area" />
+                      <col
+                        className={
+                          showPartyColumns ? "w-[4.25rem]" : "w-[12%]"
+                        }
+                      />
+                      <col
+                        className={showPartyColumns ? "w-[6.75rem]" : "w-[14%]"}
+                      />
+                      <col
+                        className={showPartyColumns ? "w-[3.75rem]" : "w-[14%]"}
+                      />
+                      <col
+                        className={showPartyColumns ? "w-[5rem]" : "w-[14%]"}
+                      />
+                      <col
+                        className={showPartyColumns ? "w-[4.25rem]" : "w-[15%]"}
+                      />
+                      <col
+                        className={showPartyColumns ? "w-[4.25rem]" : "w-[15%]"}
+                      />
+                      <col
+                        className={showPartyColumns ? "w-[3.75rem]" : "w-[16%]"}
+                      />
                       {showPartyColumns ? (
                         <>
-                          <col className="po-dist-col-party" />
-                          <col className="po-dist-col-party" />
-                          <col className="po-dist-col-party" />
-                          <col className="po-dist-col-party" />
+                          <col className="w-[7.5rem]" />
+                          <col className="w-[7.5rem]" />
+                          <col className="w-[7.5rem]" />
+                          <col className="w-[7.5rem]" />
                         </>
                       ) : null}
-                      <col className="po-col-more" />
+                      <col className="w-10" />
                     </colgroup>
-                    <thead>
-                      <tr>
-                        <th className="po-pd-th-center">رقم الصك</th>
-                        <th className="po-pd-th-center">أمر العمل</th>
-                        <th className="po-pd-th-center">المدينة</th>
-                        <th className="po-pd-th-center">الحي</th>
-                        <th className="po-pd-th-center">نوع العقار</th>
-                        <th className="po-pd-th-center">التصنيف</th>
-                        <th className="po-pd-th-center">المساحة</th>
+                    <THead>
+                      <Tr hoverable={false}>
+                        <Th className="text-center">رقم الصك</Th>
+                        <Th className="text-center">أمر العمل</Th>
+                        <Th className="text-center">المدينة</Th>
+                        <Th className="text-center">الحي</Th>
+                        <Th className="text-center">نوع العقار</Th>
+                        <Th className="text-center">التصنيف</Th>
+                        <Th className="text-center">المساحة</Th>
                         {showPartyColumns ? (
                           <>
-                            <th className="po-pd-th-center">المعاين</th>
-                            <th className="po-pd-th-center">المراجع الحكومي</th>
-                            <th className="po-pd-th-center">المقيم</th>
-                            <th className="po-pd-th-center">المكتب الهندسي</th>
+                            <Th className="text-center">المعاين</Th>
+                            <Th className="text-center">المراجع الحكومي</Th>
+                            <Th className="text-center">المقيم</Th>
+                            <Th className="text-center">المكتب الهندسي</Th>
                           </>
                         ) : null}
-                        <th className="po-properties-th-more" aria-label="المزيد" />
-                      </tr>
-                    </thead>
-                    <tbody>
+                        <Th className="w-10 px-1.5" aria-label="المزيد" />
+                      </Tr>
+                    </THead>
+                    <TBody>
                       {listed.map((task) => {
                         const record = poByNumber.get(task.poNumber.trim());
                         const property = findPropertyForTask(record, task);
@@ -419,14 +466,15 @@ export function ActiveTransactionQueueView({
                         const active = selectedId === task.id;
                         const moreItems = resolveRowMoreItems(task, property?.id);
                         return (
-                          <tr
+                          <Tr
                             key={task.id}
-                            className={`po-properties-row${active ? " po-bourse-row-active" : ""}`}
+                            hoverable={false}
+                            className={cn(ROW, active && ROW_ACTIVE)}
                             onClick={() =>
                               handleDistributionRowClick(task, property?.id)
                             }
                           >
-                            <td className="po-pd-td-center">
+                            <Td className="text-center">
                               {property?.id ? (
                                 <Link
                                   href={poPropertyDetailPath(
@@ -435,79 +483,77 @@ export function ActiveTransactionQueueView({
                                     "basic",
                                   )}
                                   dir="ltr"
-                                  className="id-cell po-num-ltr po-num-link"
+                                  className="relative z-[1] inline-block text-[11px] font-semibold text-primary no-underline hover:underline"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {row.deedLabel}
                                 </Link>
                               ) : (
-                                <span className="id-cell po-num-ltr">
+                                <span
+                                  dir="ltr"
+                                  className="inline-block text-[11px] font-semibold text-primary"
+                                >
                                   {row.deedLabel}
                                 </span>
                               )}
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
+                            </Td>
+                            <Td className="text-center text-text-2">
                               <PoNumber value={task.poNumber} link />
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
+                            </Td>
+                            <Td className="text-center text-text-2">
                               {row.city}
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
+                            </Td>
+                            <Td className="text-center text-text-2">
                               {row.district}
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
+                            </Td>
+                            <Td className="text-center text-text-2">
                               {row.propertyType}
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
+                            </Td>
+                            <Td className="text-center text-text-2">
                               {row.classification}
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
+                            </Td>
+                            <Td className="text-center text-text-2">
                               {row.area}
-                            </td>
+                            </Td>
                             {showPartyColumns
                               ? parties.map((party) => (
-                                  <td
+                                  <Td
                                     key={party.trackId}
-                                    className="po-properties-cell-muted po-pd-td-center"
+                                    className="overflow-hidden text-ellipsis text-center text-text-2"
                                   >
                                     <PartyAssigneeCell party={party} />
-                                  </td>
+                                  </Td>
                                 ))
                               : null}
-                            <td className="po-properties-cell-more">
+                            <Td className="w-10 px-1 text-center">
                               <RowMoreMenu items={moreItems} />
-                            </td>
-                          </tr>
+                            </Td>
+                          </Tr>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </TBody>
+                  </Table>
                 ) : (
-                  <table
-                    className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--primary-data"
-                    data-pending={isLoading}
-                  >
+                  <Table className="w-full table-fixed" pending={isLoading}>
                     <colgroup>
-                      <col className="po-col-property-slot" />
-                      <col className="po-col-po" />
-                      <col className="po-col-assign-type" />
-                      <col className="po-col-assign-spec" />
-                      <col className="po-col-remaining" />
-                      <col className="po-col-more" />
+                      <col className="w-[12%]" />
+                      <col className="w-[14%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[28%]" />
+                      <col className="w-[14%]" />
+                      <col className="w-10" />
                     </colgroup>
-                    <thead>
-                      <tr>
-                        <th className="po-pd-th-center">رقم الصك</th>
-                        <th className="po-pd-th-center">أمر العمل</th>
-                        <th className="po-pd-th-center">نوع الإسناد</th>
-                        <th className="po-pd-assign-spec">أخصائي الإسناد</th>
-                        <th className="po-pd-th-center">
-                          {config.statusColumnLabel ?? "المدة المتبقية"}
-                        </th>
-                        <th className="po-properties-th-more" aria-label="المزيد" />
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <THead>
+                      <Tr hoverable={false}>
+                        <Th>رقم الصك</Th>
+                        <Th>أمر العمل</Th>
+                        <Th>نوع الإسناد</Th>
+                        <Th>أخصائي الإسناد</Th>
+                        <Th>{config.statusColumnLabel ?? "المدة المتبقية"}</Th>
+                        <Th className="w-10 px-1.5 text-center" aria-label="المزيد" />
+                      </Tr>
+                    </THead>
+                    <TBody>
                       {listed.map((task) => {
                         const record = poByNumber.get(task.poNumber.trim());
                         const property = findPropertyForTask(record, task);
@@ -520,42 +566,44 @@ export function ActiveTransactionQueueView({
                         const active = selectedId === task.id;
                         const moreItems = resolveRowMoreItems(task, property?.id);
                         return (
-                          <tr
+                          <Tr
                             key={task.id}
-                            className={`po-properties-row${active ? " po-bourse-row-active" : ""}`}
+                            hoverable={false}
+                            className={cn(ROW, active && ROW_ACTIVE)}
                             onClick={() => handleRowClick(task.id)}
                           >
-                            <td className="po-pd-td-center">
-                              <span className="id-cell po-num-ltr">
+                            <Td className="whitespace-nowrap">
+                              <span
+                                dir="ltr"
+                                className="inline-block text-[11px] font-semibold text-primary"
+                              >
                                 {row.propertySlot}
                               </span>
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
+                            </Td>
+                            <Td className="text-text-2">
                               <PoNumber value={task.poNumber} link />
-                            </td>
-                            <td className="po-properties-cell-muted po-pd-td-center">
-                              {row.assignmentType}
-                            </td>
-                            <td
-                              className="po-properties-cell-muted po-pd-assign-spec"
+                            </Td>
+                            <Td className="text-text-2">{row.assignmentType}</Td>
+                            <Td
+                              className="max-w-0 overflow-hidden text-ellipsis text-text-2"
                               title={row.assignmentSpecialist}
                             >
                               {row.assignmentSpecialist}
-                            </td>
-                            <td className="po-pd-td-remaining">
+                            </Td>
+                            <Td className="align-middle">
                               {renderStatusOrRemaining(task, row.remainingTime)}
-                            </td>
-                            <td className="po-properties-cell-more">
+                            </Td>
+                            <Td className="w-10 px-1 text-center">
                               <RowMoreMenu items={moreItems} />
-                            </td>
-                          </tr>
+                            </Td>
+                          </Tr>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </TBody>
+                  </Table>
                 )}
               </div>
-              <p className="po-properties-hint">
+              <p className="px-6 py-2 pb-3 text-[11px] text-text-3">
                 {config.tableHint ??
                   (useFullPage
                     ? "اضغط الصف لفتح دراسة الحالة."
@@ -563,12 +611,16 @@ export function ActiveTransactionQueueView({
               </p>
             </>
           )}
-        </article>
+        </PageShell>
 
         {hasRail && renderPanel ? (
           <div
             id={config.panelId}
-            className={`po-primary-data-panel-slot${panelOpen ? " is-open" : ""}`}
+            className={cn(
+              "min-w-0 self-stretch overflow-hidden opacity-0 invisible",
+              panelOpen &&
+                "visible overflow-visible border-s border-border opacity-100",
+            )}
           >
             {panelOpen && selectedTask
               ? renderPanel({

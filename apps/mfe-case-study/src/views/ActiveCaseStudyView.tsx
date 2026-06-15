@@ -43,7 +43,7 @@ export function ActiveCaseStudyView() {
 
   if (legacyTask) {
     return (
-      <p className="po-properties-loading">جاري فتح دراسة الحالة…</p>
+      <p className="my-2 text-xs text-text-3">جاري فتح دراسة الحالة…</p>
     );
   }
 

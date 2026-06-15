@@ -260,9 +260,8 @@ property_study/
 │   ├── mfe-financial/           # @financial/mfe — التقارير المالية
 │   ├── mfe-kpi/                 # @kpi/mfe — مؤشرات الأداء
 │   ├── mfe-failures/          # @failures/mfe — إدارة التعذرات (localStorage until API)
-│   ├── mfe-settings/          # @settings/mfe — users, courts, info-roles, system-tools
+│   ├── mfe-settings/          # @settings/mfe — users, courts, info-roles, حقول النظام
 │   ├── mfe-valuation/         # @valuation/mfe — طلبات التقييم
-│   └── mfe-messages/            # @messages/mfe — المراسلة
 ├── packages/
 │   ├── app-shared/            # PrototypeContext, registration, nav/constants
 │   ├── design-system/         # prototype.css, badges
@@ -288,9 +287,8 @@ property_study/
 | **@kpi/mfe** | `/kpi` |
 | **@case-study/mfe** | `/po/*`, active transactions, bourse, distribution, active case study, field-form, party queues |
 | **@failures/mfe** | `/failures`, `/failure-types`, PO property failure form (localStorage prototype) |
-| **@settings/mfe** | `/users`, `/courts`, `/case-study-info-roles`, `/system-tools` |
+| **@settings/mfe** | `/users`, `/courts`, `/case-study-info-roles`, `/system-fields-catalog` |
 | **@valuation/mfe** | `/valuation-requests` |
-| **@messages/mfe** | `/messages` |
 
 ### Target backend (planned)
 
@@ -472,7 +470,7 @@ Future service split sketch: [docs/ARCHITECTURE_MICROFRONTENDS_AND_MICROSERVICES
 | Impediments | `/failures` | إدارة التعذرات |
 | Valuation requests | `/valuation-requests` | VR from case study |
 | Field form | `/field-form` | Inspector form |
-| Messages | `/messages` | Internal messaging |
+| System fields catalog | `/system-fields-catalog` | حقول النظام |
 | Financial | `/financial` | Financial reports |
 | KPI | `/kpi` | Performance indicators |
 | Users | `/users` | إدارة المستخدمين |
@@ -570,7 +568,7 @@ docker compose -f infra/docker-compose.yml down
 | Change labels, nav, mock tables | `packages/app-shared/src/prototype/constants.ts` |
 | Change a case-study / failures / settings screen | `apps/mfe-case-study/`, `apps/mfe-failures/`, `apps/mfe-settings/` |
 | Change dashboard / survey / keys / financial / KPI | `apps/mfe-dashboard/`, `apps/mfe-survey/`, `apps/mfe-keys/`, `apps/mfe-financial/`, `apps/mfe-kpi/` |
-| Change messages / valuation-requests | `apps/mfe-messages/`, `apps/mfe-valuation/` |
+| Change system fields catalog / valuation-requests | `apps/mfe-settings/`, `apps/mfe-valuation/` |
 | Change a shell-only screen | `apps/shell/src/components/views/AppShell.tsx`, `NavIcon.tsx`, `AppBreadcrumb.tsx` |
 | Map URL → screen | `apps/shell/src/app/(app)/[page]/page.tsx` |
 | Login page | `apps/shell/src/app/login/page.tsx` |

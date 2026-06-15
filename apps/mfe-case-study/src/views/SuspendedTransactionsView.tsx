@@ -2,6 +2,22 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import {
+  cn,
+  Note,
+  PageGutter,
+  PageShell,
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatValue,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@platform/design-system";
 import { getAuthSession } from "@platform/auth-client";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { PARTY_TASK_PAGES } from "@platform/app-shared/prototype/party-task-pages";
@@ -11,7 +27,6 @@ import { PoNumber } from "../components/ui/PoNumber";
 import { RemainingTimeCell } from "../components/ui/RemainingTimeCell";
 import { RowMoreMenu } from "../components/ui/RowMoreMenu";
 import type { RowMoreMenuItem } from "../components/ui/RowMoreMenu";
-import { StatValue } from "../components/ui/StatValue";
 import {
   formatPropertyDeedDisplay,
   type PoIntakeRecord,
@@ -29,6 +44,9 @@ import { useSuspendedTransactionsQuery } from "../query/suspended-transactions-q
 const PARTY_ASSIGNMENT_ROLE_IDS = new Set(
   Object.values(PARTY_TASK_PAGES).map((def) => def.roleId),
 );
+
+const ROW =
+  "cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--info-bg)_40%,var(--surface))]";
 
 function isCaseStudyStaff(role: RoleId) {
   return (
@@ -133,45 +151,50 @@ export function SuspendedTransactionsView() {
 
   return (
     <>
-      <div className="stat-grid">
-        <div className="stat-card red">
-          <div className="stat-label">معاملات معلقة</div>
-          <StatValue value={isFetched ? stats.suspended : undefined} />
-        </div>
-        <div className="stat-card warn">
-          <div className="stat-label">متأخرة عن الاستحقاق</div>
-          <StatValue value={isFetched ? stats.overdue : undefined} />
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">ضمن المهلة</div>
-          <StatValue value={isFetched ? stats.onTime : undefined} />
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">الإجمالي</div>
-          <StatValue value={isFetched ? stats.total : undefined} />
-        </div>
-      </div>
+      <PageGutter className="mb-4 grid grid-cols-2 gap-2.5 pt-4 md:grid-cols-4">
+        <StatGrid cols={4} className="col-span-full mb-0">
+          <StatCard accent="red">
+            <StatLabel>معاملات معلقة</StatLabel>
+            <StatValue value={isFetched ? stats.suspended : undefined} />
+          </StatCard>
+          <StatCard accent="amber">
+            <StatLabel>متأخرة عن الاستحقاق</StatLabel>
+            <StatValue value={isFetched ? stats.overdue : undefined} />
+          </StatCard>
+          <StatCard accent="default">
+            <StatLabel>ضمن المهلة</StatLabel>
+            <StatValue value={isFetched ? stats.onTime : undefined} />
+          </StatCard>
+          <StatCard accent="gray">
+            <StatLabel>الإجمالي</StatLabel>
+            <StatValue value={isFetched ? stats.total : undefined} />
+          </StatCard>
+        </StatGrid>
+      </PageGutter>
 
       {!staff ? (
-        <div className="note note-info">
+        <Note tone="info" className="mx-6">
           المعاملة معلّقة — لا يمكن متابعة العمل حتى رفع التعليق من مشرف دراسة
           الحالة.
-        </div>
+        </Note>
       ) : null}
       {staff ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
+        <Note
+          tone="default"
+          className="mx-6 border-r-primary bg-teal-light text-teal-text"
+        >
           مسار التعليق: مراجعة المشرف → تعليق المعاملة → إيقاف جميع الأطراف —
           المؤقت يستمر حتى موعد الاستحقاق.
-        </div>
+        </Note>
       ) : null}
 
-      <div className="po-properties-page pd-page">
-        <article className="po-properties-shell po-properties-shell--compact po-bourse-queue-box">
-          <header className="po-properties-hero po-properties-hero--compact po-bourse-queue-hero">
-            <div className="po-properties-hero-main">
-              <div className="po-properties-meta">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border bg-bg">
+        <PageShell>
+          <header className="grid items-center gap-1 border-b border-border bg-gradient-to-br from-surface-2 to-surface px-4 py-2.5">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-2">
                 {!isLoading && sortedItems.length > 0 ? (
-                  <span className="po-properties-meta-count">
+                  <span className="font-medium text-text-2">
                     {sortedItems.length}{" "}
                     {sortedItems.length === 1 ? "معاملة" : "معاملات"}
                   </span>
@@ -181,43 +204,37 @@ export function SuspendedTransactionsView() {
           </header>
 
           {isLoading ? (
-            <p className="po-properties-loading">جاري تحميل المعاملات…</p>
+            <p className="px-6 py-5 text-xs text-text-3">جاري تحميل المعاملات…</p>
           ) : sortedItems.length === 0 ? (
-            <div className="po-properties-empty">
-              <p>لا توجد معاملات معلقة.</p>
-              <p className="po-properties-hint" style={{ marginTop: 8 }}>
+            <div className="px-6 py-8 text-center">
+              <p className="m-0 text-[13px] text-text-3">لا توجد معاملات معلقة.</p>
+              <p className="mt-2 text-[11px] text-text-3">
                 تظهر هنا بعد تعليق المعاملة من إدارة التعذرات.
               </p>
             </div>
           ) : (
             <>
-              <div className="po-properties-tbl-wrap">
-                <table
-                  className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--primary-data"
-                  data-pending={isLoading}
-                >
+              <div className="w-full overflow-x-auto">
+                <Table className="table-fixed" pending={isLoading}>
                   <colgroup>
-                    <col className="po-col-property-slot" />
-                    <col className="po-col-po" />
-                    <col className="po-col-assign-type" />
-                    <col className="po-col-assign-spec" />
-                    <col className="po-col-remaining" />
-                    <col className="po-col-more" />
+                    <col className="w-[4.5rem]" />
+                    <col className="w-[7rem]" />
+                    <col className="w-[6rem]" />
+                    <col />
+                    <col className="w-[8rem]" />
+                    <col className="w-10" />
                   </colgroup>
-                  <thead>
-                    <tr>
-                      <th className="po-pd-th-center">رقم الصك</th>
-                      <th className="po-pd-th-center">أمر العمل</th>
-                      <th className="po-pd-th-center">نوع الإسناد</th>
-                      <th className="po-pd-assign-spec">أخصائي الإسناد</th>
-                      <th className="po-pd-th-center">الحالة</th>
-                      <th
-                        className="po-properties-th-more"
-                        aria-label="المزيد"
-                      />
-                    </tr>
-                  </thead>
-                  <tbody>
+                  <THead>
+                    <Tr hoverable={false}>
+                      <Th className="text-center">رقم الصك</Th>
+                      <Th className="text-center">أمر العمل</Th>
+                      <Th className="text-center">نوع الإسناد</Th>
+                      <Th className="text-center">أخصائي الإسناد</Th>
+                      <Th className="text-center">الحالة</Th>
+                      <Th className="w-10 px-1.5 text-center" aria-label="المزيد" />
+                    </Tr>
+                  </THead>
+                  <TBody>
                     {sortedItems.map((item) => {
                       const record = poByNumber.get(item.poNumber.trim());
                       const remaining = resolveRemainingTime(
@@ -231,9 +248,10 @@ export function SuspendedTransactionsView() {
                       const moreItems = buildSuspendedRowMoreItems(item, router);
 
                       return (
-                        <tr
+                        <Tr
                           key={item.id}
-                          className="po-properties-row"
+                          hoverable={false}
+                          className={ROW}
                           onClick={() =>
                             router.push(
                               poPropertyPath(
@@ -243,42 +261,45 @@ export function SuspendedTransactionsView() {
                             )
                           }
                         >
-                          <td className="po-pd-td-center">
-                            <span className="id-cell po-num-ltr">
+                          <Td className="whitespace-nowrap text-center">
+                            <span
+                              dir="ltr"
+                              className="inline-block text-[11px] font-semibold text-primary"
+                            >
                               {deedLabel(item, record)}
                             </span>
-                          </td>
-                          <td className="po-properties-cell-muted po-pd-td-center">
+                          </Td>
+                          <Td className="text-center text-text-2">
                             <PoNumber value={item.poNumber} link />
-                          </td>
-                          <td className="po-properties-cell-muted po-pd-td-center">
+                          </Td>
+                          <Td className="text-center text-text-2">
                             {assignmentType}
-                          </td>
-                          <td
-                            className="po-properties-cell-muted po-pd-assign-spec"
+                          </Td>
+                          <Td
+                            className="overflow-hidden text-ellipsis text-center text-text-2"
                             title={assignmentSpecialist}
                           >
                             {assignmentSpecialist}
-                          </td>
-                          <td className="po-pd-td-remaining">
+                          </Td>
+                          <Td className="text-center align-middle">
                             <RemainingTimeCell state={remaining} />
-                          </td>
-                          <td className="po-properties-cell-more">
+                          </Td>
+                          <Td className="w-10 px-1 text-center">
                             <RowMoreMenu items={moreItems} />
-                          </td>
-                        </tr>
+                          </Td>
+                        </Tr>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TBody>
+                </Table>
               </div>
-              <p className="po-properties-hint">
+              <p className="px-6 py-2 pb-3 text-[11px] text-text-3">
                 اضغط الصف لعرض تفاصيل العقار — ⋮ عقارات أمر العمل · تفاصيل
                 العقار.
               </p>
             </>
           )}
-        </article>
+        </PageShell>
       </div>
     </>
   );

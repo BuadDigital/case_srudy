@@ -2,6 +2,22 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  cn,
+  Note,
+  PageGutter,
+  PageShell,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@platform/design-system";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { ROLES } from "@platform/app-shared/prototype/constants";
 import {
@@ -35,6 +51,11 @@ import {
   validatePropertyBourseFields,
 } from "@case-study/mfe/components/po-intake/po-property-bourse-validation";
 import type { PendingBoursePropertyDto } from "@platform/api-client";
+
+const ROW =
+  "cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--info-bg)_40%,var(--surface))]";
+const ROW_ACTIVE =
+  "bg-[color-mix(in_srgb,var(--warning-bg)_45%,var(--surface))]";
 
 export function BourseInquiryView() {
   const { role } = usePrototype();
@@ -194,82 +215,86 @@ export function BourseInquiryView() {
   const obstructionPath = deedVitality === "inactive";
 
   const pendingCount = items.length;
-  const showSplit =
-    !!selected || (!loading && items.length > 0);
-  const layoutClass = showSplit
-    ? "po-bourse-inquiry-layout po-bourse-inquiry-layout--split"
-    : "po-bourse-inquiry-layout po-bourse-inquiry-layout--solo";
+  const showSplit = !!selected || (!loading && items.length > 0);
 
   return (
-    <div className="po-bourse-inquiry-page pd-page">
-      <div className="note note-info po-bourse-intro">
-        <strong>مسار العمل:</strong> اختر صكاً من قائمة الانتظار، أكمل المدينة
-        والتصنيف ونوع العقار وبيانات الحدود من البورصة، ثم احفظ — يُزال الصك
-        من القائمة ويُحدَّث في شاشة العقارات.
-      </div>
+    <div className="flex min-h-0 w-full flex-1 flex-col bg-bg">
+      <PageGutter className="mt-4 shrink-0">
+        <Note tone="info">
+          <strong>مسار العمل:</strong> اختر صكاً من قائمة الانتظار، أكمل المدينة
+          والتصنيف ونوع العقار وبيانات الحدود من البورصة، ثم احفظ — يُزال الصك
+          من القائمة ويُحدَّث في شاشة العقارات.
+        </Note>
+      </PageGutter>
 
-      <div className={layoutClass}>
-        <article className="po-properties-shell po-properties-shell--compact po-bourse-queue-box">
-          <header className="po-properties-hero po-properties-hero--compact po-bourse-queue-hero">
-            <div className="po-properties-hero-main">
-              <h2 className="po-properties-title">
+      <div
+        className={cn(
+          "grid min-h-0 flex-1 items-stretch gap-0",
+          showSplit
+            ? "grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
+            : "grid-cols-1",
+        )}
+      >
+        <PageShell>
+          <header className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-br from-surface-2 to-surface px-4 py-3">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h2 className="m-0 text-base font-bold text-text">
                 <span>قائمة الانتظار</span>
               </h2>
-              <div className="po-properties-meta">
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-2">
                 {!loading && pendingCount > 0 ? (
-                  <span className="po-properties-meta-count">
+                  <span className="font-medium text-text-2">
                     {pendingCount}{" "}
                     {pendingCount === 1 ? "صك" : "صكوك"} بانتظار إكمال البورصة
                   </span>
                 ) : null}
               </div>
             </div>
-            <button
+            <Button
               type="button"
-              className="btn btn-sm po-properties-add"
+              size="sm"
+              variant="default"
+              className="shrink-0"
               disabled={loading}
               onClick={() => void refresh()}
             >
               تحديث
-            </button>
+            </Button>
           </header>
 
           {loading ? (
-            <p className="po-properties-loading">جاري تحميل قائمة الانتظار…</p>
+            <p className="px-6 py-5 text-xs text-text-3">جاري تحميل قائمة الانتظار…</p>
           ) : items.length === 0 ? (
-            <div className="po-properties-empty">
-              <p>لا توجد صكوك بانتظار البورصة</p>
-              <p className="po-properties-hint" style={{ marginTop: 8 }}>
+            <div className="px-6 py-8 text-center">
+              <p className="m-0 text-[13px] text-text-3">لا توجد صكوك بانتظار البورصة</p>
+              <p className="mt-2 text-[11px] text-text-3">
                 عند تسجيل عقار جديد من إنفاذ دون إكمال بيانات البورصة، يظهر هنا
                 تلقائياً.
               </p>
             </div>
           ) : (
             <>
-              <div className="po-properties-tbl-wrap">
-                <table
-                  className="tbl po-properties-tbl po-properties-tbl--compact po-properties-tbl--bourse-queue"
-                  data-pending={loading}
-                >
+              <div className="w-full overflow-x-auto">
+                <Table className="table-fixed" pending={loading}>
                   <colgroup>
-                    <col className="po-bq-col-deed" />
-                    <col className="po-bq-col-deed-date" />
-                    <col className="po-bq-col-po" />
-                    <col className="po-bq-col-task" />
-                    <col className="po-bq-col-owner" />
-                    <col className="po-bq-col-due" />
+                    <col className="w-36" />
+                    <col className="w-32" />
+                    <col className="w-28" />
+                    <col className="w-28" />
+                    <col />
+                    <col className="w-36" />
                   </colgroup>
-                  <thead>
-                    <tr>
-                      <th>رقم الصك</th>
-                      <th>تاريخ الصك</th>
-                      <th>أمر العمل</th>
-                      <th>رقم المهمة</th>
-                      <th>المالك</th>
-                      <th>الاستحقاق</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                  <THead>
+                    <Tr hoverable={false}>
+                      <Th>رقم الصك</Th>
+                      <Th>تاريخ الصك</Th>
+                      <Th>أمر العمل</Th>
+                      <Th>رقم المهمة</Th>
+                      <Th>المالك</Th>
+                      <Th>الاستحقاق</Th>
+                    </Tr>
+                  </THead>
+                  <TBody>
                     {items.map((item) => {
                       const active =
                         selected?.poNumber === item.poNumber &&
@@ -277,63 +302,73 @@ export function BourseInquiryView() {
                       const deedLabel = formatPendingBourseDeedDisplay(item);
 
                       return (
-                        <tr
+                        <Tr
                           key={`${item.poNumber}-${item.propertyId}`}
-                          className={`po-properties-row${active ? " po-bourse-row-active" : ""}`}
+                          hoverable={false}
+                          className={cn(ROW, active && ROW_ACTIVE)}
                           onClick={() => void openItem(item)}
                         >
-                          <td>
-                            <span className="id-cell po-num-ltr">
+                          <Td>
+                            <span
+                              dir="ltr"
+                              className="inline-block text-[11px] font-semibold text-primary"
+                            >
                               {deedLabel}
                             </span>
-                          </td>
-                          <td className="po-properties-cell-muted">
+                          </Td>
+                          <Td className="text-text-2">
                             {item.deedDate?.trim()
                               ? formatDateAr(item.deedDate)
                               : "—"}
-                          </td>
-                          <td className="po-properties-cell-muted">
+                          </Td>
+                          <Td className="text-text-2">
                             <PoNumber value={item.poNumber} link />
-                          </td>
-                          <td className="po-properties-cell-muted">
-                            <span className="id-cell po-num-ltr">
+                          </Td>
+                          <Td className="text-text-2">
+                            <span
+                              dir="ltr"
+                              className="inline-block text-[11px] font-semibold text-primary"
+                            >
                               {item.taskNumber?.trim() || "—"}
                             </span>
-                          </td>
-                          <td className="po-properties-cell-muted">
+                          </Td>
+                          <Td className="text-text-2">
                             {item.ownerName || "—"}
-                          </td>
-                          <td className="po-properties-cell-muted">
+                          </Td>
+                          <Td className="text-text-2">
                             {formatDateAr(item.dueDateAt)}
-                          </td>
-                        </tr>
+                          </Td>
+                        </Tr>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TBody>
+                </Table>
               </div>
-              <p className="po-properties-hint">
+              <p className="px-6 py-2 pb-3 text-[11px] text-text-3">
                 اضغط الصف لفتح نموذج إكمال البورصة.
               </p>
             </>
           )}
-        </article>
+        </PageShell>
 
         {selected ? (
-          <div className="po-bourse-form-panel">
-            <div className="card-header">
-              <span className="card-title">
+          <Card className="sticky top-3 self-start overflow-hidden rounded-none border-none shadow-none lg:border-s lg:border-border">
+            <CardHeader className="px-4 py-3">
+              <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-text">
                 بيانات البورصة
-                <span className="po-bourse-form-deed" dir="ltr">
+                <span
+                  className="rounded-full bg-info-bg px-2 py-0.5 text-[11px] font-semibold text-primary"
+                  dir="ltr"
+                >
                   {formatPendingBourseDeedDisplay(selected)}
                 </span>
               </span>
-              <button type="button" className="btn btn-sm" onClick={closeForm}>
+              <Button type="button" size="sm" variant="default" onClick={closeForm}>
                 إغلاق
-              </button>
-            </div>
-            <div className="card-body">
-              <div className="po-bourse-form-meta">
+              </Button>
+            </CardHeader>
+            <CardBody className="px-4">
+              <div className="mb-3.5 flex flex-wrap gap-x-5 gap-y-2 rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-xs text-text-2">
                 <span>
                   أمر العمل:{" "}
                   <strong dir="ltr">{formatPoDisplay(selected.poNumber)}</strong>
@@ -346,9 +381,9 @@ export function BourseInquiryView() {
               </div>
 
               {formError ? (
-                <div className="note note-warn" style={{ marginBottom: 12 }}>
+                <Note tone="warn" className="mb-3">
                   {formError}
-                </div>
+                </Note>
               ) : null}
 
               <RegistrationFormCard
@@ -371,10 +406,10 @@ export function BourseInquiryView() {
                 />
               </RegistrationFormCard>
 
-              <div className="po-bourse-form-actions">
-                <button
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
+                <Button
                   type="button"
-                  className="btn btn-primary"
+                  variant="primary"
                   disabled={saving}
                   onClick={() => void handleSubmit()}
                 >
@@ -383,14 +418,17 @@ export function BourseInquiryView() {
                     : obstructionPath
                       ? "إرسال للمشرف — إدارة التعذرات"
                       : "حفظ وإكمال البورصة"}
-                </button>
+                </Button>
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         ) : items.length > 0 ? (
-          <aside className="po-bourse-hint-panel">
-            <div className="po-bourse-hint-inner">
-              <div className="po-bourse-hint-icon" aria-hidden>
+          <aside className="hidden min-h-[280px] items-center justify-center border-s border-border bg-surface lg:flex">
+            <div className="max-w-[280px] px-6 py-7 text-center">
+              <div
+                className="mx-auto mb-3.5 inline-flex h-14 w-14 items-center justify-center rounded-full bg-surface-2 text-primary"
+                aria-hidden
+              >
                 <svg
                   width="32"
                   height="32"
@@ -405,15 +443,21 @@ export function BourseInquiryView() {
                   <line x1="16" y1="17" x2="8" y2="17" />
                 </svg>
               </div>
-              <h3 className="po-bourse-hint-title">اختر صكاً من القائمة</h3>
-              <p className="po-bourse-hint-text">
+              <h3 className="m-0 mb-2 text-sm font-bold text-text">
+                اختر صكاً من القائمة
+              </h3>
+              <p className="m-0 mb-4 text-xs leading-relaxed text-text-3">
                 يفتح نموذج إكمال بيانات البورصة هنا — المدينة، التصنيف، نوع
                 العقار، والحدود.
               </p>
-              <ul className="po-bourse-hint-steps">
-                <li>1 — اختر صفاً من قائمة الانتظار</li>
-                <li>2 — أكمل حقول البورصة</li>
-                <li>3 — احفظ لإزالة الصك من القائمة</li>
+              <ul className="m-0 list-none p-0 text-end text-[11px] leading-loose text-text-2">
+                <li className="border-b border-border py-1">
+                  1 — اختر صفاً من قائمة الانتظار
+                </li>
+                <li className="border-b border-border py-1">
+                  2 — أكمل حقول البورصة
+                </li>
+                <li className="py-1">3 — احفظ لإزالة الصك من القائمة</li>
               </ul>
             </div>
           </aside>

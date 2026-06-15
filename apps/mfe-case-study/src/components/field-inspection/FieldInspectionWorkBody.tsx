@@ -1,5 +1,6 @@
 "use client";
 
+import { Note } from "@platform/design-system";
 import { useCallback, useEffect, useState, type RefObject } from "react";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import {
@@ -148,21 +149,19 @@ export function FieldInspectionWorkBody({
   }, [hostRef, submit, saveDraft]);
 
   if (!draft) {
-    return <p className="po-properties-loading">جاري تحميل نموذج المعاينة…</p>;
+    return <p className="text-xs text-text-3">جاري تحميل نموذج المعاينة…</p>;
   }
 
   return (
     <>
       {locked ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
-          تم إرسال المعاينة — النموذج للقراءة فقط.
-        </div>
+        <Note tone="success">تم إرسال المعاينة — النموذج للقراءة فقط.</Note>
       ) : null}
 
       {formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
+        <Note tone="warn" role="alert">
           {formError}
-        </div>
+        </Note>
       ) : null}
 
       <FieldFormView

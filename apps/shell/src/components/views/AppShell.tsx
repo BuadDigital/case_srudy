@@ -41,6 +41,10 @@ import {
   type SystemFieldsNavItem,
   isInSystemFieldsSection,
 } from "@platform/app-shared/prototype/system-fields-nav";
+import {
+  SYSTEM_FIELDS_CATALOG_NAV_ITEM,
+  isSystemFieldsCatalogPage,
+} from "@platform/app-shared/prototype/system-fields-catalog-nav";
 import { isPartyTaskPage } from "@platform/app-shared/prototype/party-task-pages";
 import { decodeTaskParam, isPartyTaskWorkPath } from "@case-study/mfe";
 import { findPropertyForTask } from "@case-study/mfe";
@@ -60,6 +64,7 @@ import { ActiveTransactionsSituationBar } from "@case-study/mfe";
 import { useActiveTransactionNavBadges } from "@/lib/query/use-active-transaction-nav-badges";
 import { useFailuresNavBadge } from "@/lib/query/use-failures-nav-badge";
 import { PoNumber } from "@case-study/mfe/components/ui/PoNumber";
+import { cn, Select } from "@platform/design-system";
 
 /** Must match `group` on every entry in ROLE_OPTIONS (constants.ts). */
 const GROUP_ORDER = [
@@ -71,6 +76,43 @@ const GROUP_ORDER = [
   "المالية والعقود",
   "مزود خارجي",
 ];
+
+function navItemClasses({
+  active = false,
+  sub = false,
+  locked = false,
+  dummy = false,
+  toggle = false,
+}: {
+  active?: boolean;
+  sub?: boolean;
+  locked?: boolean;
+  dummy?: boolean;
+  toggle?: boolean;
+} = {}) {
+  return cn(
+    "relative flex cursor-pointer items-center gap-[9px] rounded-none border-e-[3px] border-transparent py-[9px] px-3.5 text-[12.5px] text-sidebar-muted no-underline transition-[background,color] duration-150",
+    "hover:bg-white/5 hover:text-sidebar-muted-strong",
+    "[&>svg]:size-4 [&>svg]:shrink-0",
+    sub && "gap-[7px] ps-8 text-[11px] [&>svg]:size-3",
+    toggle && "w-full border-0 bg-transparent font-inherit",
+    active &&
+      !dummy &&
+      "bg-primary/18 font-medium text-white before:absolute before:inset-y-0 before:start-0 before:w-[3px] before:rounded-e-sm before:bg-primary before:content-['']",
+    dummy && "text-red-400 hover:bg-red-400/10",
+    dummy &&
+      active &&
+      "bg-red-500/14 font-medium text-red-300 before:bg-red",
+    locked && "cursor-default opacity-35",
+  );
+}
+
+function navBadgeClasses(teal?: boolean) {
+  return cn(
+    "ms-auto inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full px-[5px] text-[10px] font-semibold text-white",
+    teal ? "bg-primary" : "bg-red",
+  );
+}
 
 type NavRun = { label: string | null; items: (typeof NAV)[number][] };
 
@@ -121,19 +163,21 @@ function NavRow({
   onPrefetch: (page: PageId) => void;
   badgeCount?: number;
 }) {
-  const cls = `nav-item${active ? " active" : ""}${item.placeholder ? " nav-item-dummy" : ""}`;
   const badgeValue =
     badgeCount != null && badgeCount > 0
       ? String(badgeCount)
       : item.badge;
   const badgeTeal = item.id === "po";
   const badge = badgeValue ? (
-    <span className={`nav-badge${badgeTeal ? " teal" : ""}`}>{badgeValue}</span>
+    <span className={navBadgeClasses(badgeTeal)}>{badgeValue}</span>
   ) : null;
   return (
     <Link
       href={`/${item.id}`}
-      className={cls}
+      className={navItemClasses({
+        active,
+        dummy: item.placeholder,
+      })}
       prefetch
       onMouseEnter={() => onPrefetch(item.id)}
       onFocus={() => onPrefetch(item.id)}
@@ -164,17 +208,20 @@ function ActiveTransactionNavRow({
   active: boolean;
   onPrefetch: (page: PageId) => void;
 }) {
-  const cls = `nav-item nav-item-sub${active ? " active" : ""}${!available ? " locked" : ""}${placeholder ? " nav-item-dummy" : ""}`;
+  const cls = navItemClasses({
+    active,
+    sub: true,
+    locked: !available,
+    dummy: placeholder,
+  });
   const inner = (
     <>
       <NavIcon d={icon} size={12} />
       <span>{label}</span>
       {badgeCount != null && badgeCount > 0 ? (
-        <span className="nav-badge">{badgeCount}</span>
+        <span className={navBadgeClasses()}>{badgeCount}</span>
       ) : !available ? (
-        <span className="nav-badge" style={{ opacity: 0.7 }}>
-          قريباً
-        </span>
+        <span className={cn(navBadgeClasses(), "opacity-70")}>قريباً</span>
       ) : null}
     </>
   );
@@ -194,10 +241,13 @@ function ActiveTransactionNavRow({
   );
 }
 
-function NavDropdownChevron() {
+function NavDropdownChevron({ open }: { open: boolean }) {
   return (
     <svg
-      className="nav-dropdown-chevron"
+      className={cn(
+        "ms-auto shrink-0 opacity-45 transition-transform duration-200 ease-in-out",
+        open && "-rotate-90 opacity-70",
+      )}
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -245,22 +295,25 @@ function ActiveTransactionsNavDropdown({
       onTaskWork);
 
   return (
-    <div className={`nav-dropdown${open ? " open" : ""}`}>
+    <div className="my-0.5">
       <button
         type="button"
-        className={`nav-item nav-dropdown-toggle nav-active-tx-group${inSection ? " active" : ""}`}
+        className={navItemClasses({
+          active: inSection,
+          toggle: true,
+        })}
         aria-expanded={open}
         aria-controls="nav-active-transactions"
         onClick={() => setOpen((v) => !v)}
       >
         <NavIcon d={ACTIVE_TRANSACTIONS_GROUP_ICON} size={16} />
         <span>{ACTIVE_TRANSACTIONS_GROUP}</span>
-        <NavDropdownChevron />
+        <NavDropdownChevron open={open} />
       </button>
       {open ? (
         <div
           id="nav-active-transactions"
-          className="nav-dropdown-items"
+          className="ms-3 flex flex-col border-s border-white/[0.06] py-0.5 pb-1"
           role="group"
           aria-label={ACTIVE_TRANSACTIONS_GROUP}
         >
@@ -286,7 +339,6 @@ function ActiveTransactionsNavDropdown({
 function FooterNavDropdown({
   groupLabel,
   groupIcon,
-  groupClass,
   panelId,
   items,
   currentPage,
@@ -295,7 +347,6 @@ function FooterNavDropdown({
 }: {
   groupLabel: string;
   groupIcon: string;
-  groupClass: string;
   panelId: string;
   items: (SettingsNavItem | SystemFieldsNavItem)[];
   currentPage: PageId;
@@ -309,22 +360,25 @@ function FooterNavDropdown({
   }, [inSection]);
 
   return (
-    <div className={`nav-dropdown nav-dropdown-settings${open ? " open" : ""}`}>
+    <div className="my-0">
       <button
         type="button"
-        className={`nav-item nav-dropdown-toggle ${groupClass}${inSection ? " active" : ""}`}
+        className={navItemClasses({
+          active: inSection,
+          toggle: true,
+        })}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
       >
         <NavIcon d={groupIcon} size={16} />
         <span>{groupLabel}</span>
-        <NavDropdownChevron />
+        <NavDropdownChevron open={open} />
       </button>
       {open ? (
         <div
           id={panelId}
-          className="nav-dropdown-items"
+          className="ms-3 flex flex-col border-s border-white/[0.06] py-0.5 pb-1"
           role="group"
           aria-label={groupLabel}
         >
@@ -336,6 +390,11 @@ function FooterNavDropdown({
               icon={item.icon}
               available={item.available}
               placeholder={item.placeholder}
+              badgeCount={
+                "badge" in item && item.badge
+                  ? Number(item.badge) || undefined
+                  : undefined
+              }
               active={currentPage === item.id}
               onPrefetch={onPrefetch}
             />
@@ -363,6 +422,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => systemFieldsNavForRole(rolePages),
     [rolePages],
   );
+
+  const showSystemFieldsCatalog = rolePages.includes(
+    SYSTEM_FIELDS_CATALOG_NAV_ITEM.id,
+  );
+  const showGeneralGroup = showSystemFieldsCatalog;
 
   const showSystemFieldsGroup = systemFieldsNavItems.some((i) => i.available);
   const showSettingsGroup = settingsNavItems.some((i) => i.available);
@@ -633,6 +697,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   let activeTransactionsInserted = false;
+  let generalNavInserted = false;
 
   const onPoPropertyDetail = Boolean(poChrome?.propertyDetail);
   const onActiveSurveyPropertyDetail = onActiveSurveyWorkspace;
@@ -677,10 +742,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   })();
 
   return (
-    <div id="app">
-      <div id="sidebar">
-        <div className="sb-brand">
-          <div className="sb-brand-icon" aria-hidden>
+    <div id="app" className="flex h-svh bg-bg">
+      <div
+        id="sidebar"
+        className="flex w-sidebar shrink-0 flex-col overflow-hidden border-s border-white/[0.06] bg-sidebar text-white [color-scheme:dark]"
+      >
+        <div className="flex items-center gap-2 border-b border-sidebar-border px-3.5 py-4">
+          <div
+            className="flex shrink-0 items-center justify-center text-primary [&>svg]:size-[18px]"
+            aria-hidden
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -699,11 +770,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
             </svg>
           </div>
-          <span className="sb-brand-title">إجادة للتقييم</span>
+          <span className="text-[13px] font-semibold leading-snug text-white">
+            إجادة للتقييم
+          </span>
         </div>
-        <div className="sb-role">
-          <div className="sb-role-lbl">تبديل الدور</div>
-          <select
+        <div className="border-b border-sidebar-border px-3.5 py-2.5">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-label">
+            تبديل الدور
+          </div>
+          <Select
+            variant="sidebar"
             value={personaId}
             onChange={onPersonaChange}
             aria-label="تبديل الدور"
@@ -717,20 +793,51 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ))}
               </optgroup>
             ))}
-          </select>
+          </Select>
         </div>
-        <nav id="nav" className="sb-nav" aria-label="التنقل الرئيسي">
+        <nav
+          id="nav"
+          className="min-h-0 flex-1 overflow-y-auto pb-1"
+          aria-label="التنقل الرئيسي"
+        >
           {navRuns.map((run, ri) => {
             const blocks: React.ReactNode[] = [];
             blocks.push(
               <div key={`run-${ri}`}>
                 {run.label ? (
-                  <div className="sb-grp">
-                    <div className="sb-grp-lbl">{run.label}</div>
+                  <div>
+                    <div className="px-3.5 pb-1.5 pt-3.5 text-[10px] font-medium uppercase tracking-wider text-sidebar-label">
+                      {run.label}
+                    </div>
                   </div>
                 ) : null}
                 {run.items.map((item) => {
-                  const nodes: React.ReactNode[] = [
+                  const nodes: React.ReactNode[] = [];
+                  const shouldInsertGeneral =
+                    !generalNavInserted &&
+                    showGeneralGroup &&
+                    item.id === "financial";
+                  if (shouldInsertGeneral) {
+                    generalNavInserted = true;
+                    nodes.push(
+                      <div key="general-grp">
+                        <div className="px-3.5 pb-1.5 pt-3.5 text-[10px] font-medium uppercase tracking-wider text-sidebar-label">
+                          عام
+                        </div>
+                      </div>,
+                    );
+                    if (showSystemFieldsCatalog) {
+                      nodes.push(
+                        <NavRow
+                          key={SYSTEM_FIELDS_CATALOG_NAV_ITEM.id}
+                          item={SYSTEM_FIELDS_CATALOG_NAV_ITEM}
+                          active={isSystemFieldsCatalogPage(currentPage)}
+                          onPrefetch={prefetchPage}
+                        />,
+                      );
+                    }
+                  }
+                  nodes.push(
                     <NavRow
                       key={item.id}
                       item={item}
@@ -743,7 +850,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         item.id === "failures" ? failuresNavBadge : undefined
                       }
                     />,
-                  ];
+                  );
                   const shouldInsertActiveTx =
                     !activeTransactionsInserted &&
                     showActiveTransactionsGroup &&
@@ -780,13 +887,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               badges={activeTxBadges}
             />
           ) : null}
+          {!generalNavInserted && showGeneralGroup ? (
+            <>
+              <div key="general-grp-fallback">
+                <div className="px-3.5 pb-1.5 pt-3.5 text-[10px] font-medium uppercase tracking-wider text-sidebar-label">
+                  عام
+                </div>
+              </div>
+              {showSystemFieldsCatalog ? (
+                <NavRow
+                  key={SYSTEM_FIELDS_CATALOG_NAV_ITEM.id}
+                  item={SYSTEM_FIELDS_CATALOG_NAV_ITEM}
+                  active={isSystemFieldsCatalogPage(currentPage)}
+                  onPrefetch={prefetchPage}
+                />
+              ) : null}
+            </>
+          ) : null}
         </nav>
-        <div className="sb-nav-footer" aria-label="قوائم النظام">
+        <div
+          className="shrink-0 border-t border-sidebar-border bg-sidebar px-0 py-1.5 pb-2.5"
+          aria-label="قوائم النظام"
+        >
           {showSystemFieldsGroup ? (
             <FooterNavDropdown
               groupLabel={SYSTEM_FIELDS_GROUP}
               groupIcon={SYSTEM_FIELDS_GROUP_ICON}
-              groupClass="nav-system-fields-group"
               panelId="nav-system-fields"
               items={systemFieldsNavItems}
               currentPage={currentPage}
@@ -798,7 +924,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <FooterNavDropdown
               groupLabel={SETTINGS_GROUP}
               groupIcon={SETTINGS_GROUP_ICON}
-              groupClass="nav-settings-group"
               panelId="nav-settings"
               items={settingsNavItems}
               currentPage={currentPage}
@@ -808,18 +933,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </div>
       </div>
-      <div id="main">
-        <div id="topbar">
-          <div className="tb-left">
+      <div id="main" className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
+        <div
+          id="topbar"
+          className="flex h-topbar shrink-0 items-center justify-between gap-3 border-b border-border/50 bg-surface px-6"
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <AppBreadcrumb segments={displayBreadcrumbSegments} />
             {!onPoPropertyDetail && !onActiveSurveyPropertyDetail
               ? (() => {
                   if (!resolvedPageTitle && !poChrome?.titlePo) return null;
                   return (
-                    <div className="tb-title" id="page-title">
+                    <div
+                      className="text-sm font-semibold text-text"
+                      id="page-title"
+                    >
                       {poChrome?.titlePo ? (
-                        <span className="po-heading-with-num">
-                          <span className="po-heading-ar">{poChrome.title}</span>
+                        <span className="inline-flex flex-row flex-wrap items-baseline gap-[0.4em]">
+                          <span className="[unicode-bidi:embed]">
+                            {poChrome.title}
+                          </span>
                           <PoNumber value={poChrome.titlePo} />
                         </span>
                       ) : (
@@ -830,7 +963,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 })()
               : null}
           </div>
-          <div className="tb-right">
+          <div className="flex shrink-0 items-center gap-2.5">
             {onPoList ? <PoListTopbarActions /> : null}
             {poChrome?.propertyDetail ? (
               <PoPropertyDetailTopbarActions
@@ -841,26 +974,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {onActiveSurveyPropertyDetail ? (
               <EngineeringSurveyTopbarActions />
             ) : null}
-            <div className="user-chip">
+            <div className="flex items-center gap-[7px] rounded-[20px] border border-border bg-surface-2 py-1 ps-1.5 pe-2.5">
               <div
-                className="avatar"
+                className="flex size-[26px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
                 id="uav"
                 style={{ background: def.bg, color: def.tc }}
               >
                 {def.init}
               </div>
               <div>
-                <div id="uname" style={{ fontSize: 12, fontWeight: 500 }}>
+                <div className="text-xs font-medium" id="uname">
                   {chipName}
                 </div>
-                <div id="udept" style={{ fontSize: 10, color: "var(--text3)" }}>
+                <div className="text-[10px] text-text-3" id="udept">
                   {def.dept}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div id="content" className="content content--flush">
+        <div
+          id="content"
+          className="flex min-h-0 flex-1 flex-col items-stretch overflow-y-auto bg-bg p-0"
+        >
           {showActiveTransactionsSituation &&
           currentPage !== "active-survey" &&
           !onActiveSurveyWorkspace &&

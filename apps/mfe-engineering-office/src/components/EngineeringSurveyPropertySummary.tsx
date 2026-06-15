@@ -8,6 +8,7 @@ import {
   showsCourtFields,
   type PoIntakeRecord,
 } from "@case-study/mfe";
+import { Badge } from "@platform/design-system";
 import {
   FieldBox,
   FieldsGrid,
@@ -45,7 +46,9 @@ export function EngineeringSurveyPropertySummary({
         <FieldBox label="تاريخ الصك" value={property.deedDate} ltr />
         <FieldBox label="حالة الصك">
           {property.deedStatus.trim() ? (
-            <span className="pd-badge pd-badge-teal">{property.deedStatus}</span>
+            <Badge tone="primary" className="border-0 text-[11px] font-normal">
+              {property.deedStatus}
+            </Badge>
           ) : null}
         </FieldBox>
         <FieldBox label="اسم المالك" value={property.ownerName} />

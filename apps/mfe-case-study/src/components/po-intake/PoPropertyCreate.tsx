@@ -5,6 +5,7 @@ import { addPropertyToPo, deedExistsInPo } from "../../lib/prototype/po-intake-s
 import { usePoRecordQuery } from "@case-study/mfe/query/case-study-queries";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import { hasFieldErrors,type FieldErrors,} from "@platform/app-shared/registration/registration-utils";
+import { Button, Label, Note, cn } from "@platform/design-system";
 import { PoIntakeWizardShell } from "./PoIntakeWizardShell";
 import { PoPropertyEnfathForm } from "./PoPropertyEnfathForm";
 import { PoPropertyStackCard } from "./PoPropertyStackCard";
@@ -251,7 +252,7 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
         onPrev={() => {}}
         onNext={onBackAction}
       >
-        <p style={{ color: "var(--text3)" }}>جاري التحميل…</p>
+        <p className="text-xs text-text-3">جاري التحميل…</p>
       </PoIntakeWizardShell>
     );
   }
@@ -269,7 +270,7 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
         onPrev={() => {}}
         onNext={onBackAction}
       >
-        <div className="note note-warn">لم يُعثر على أمر العمل.</div>
+        <Note tone="warn">لم يُعثر على أمر العمل.</Note>
       </PoIntakeWizardShell>
     );
   }
@@ -288,10 +289,10 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
         onPrev={() => {}}
         onNext={onBackAction}
       >
-        <div className="note note-info">
+        <Note tone="info">
           تم تسجيل {alreadyRegistered} من {expectedTotal} عقارات حسب التعميد.
           لا يتبقى عقارات لإضافتها من هذه الشاشة.
-        </div>
+        </Note>
       </PoIntakeWizardShell>
     );
   }
@@ -311,35 +312,36 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
       onPrev={() => {}}
       onNext={() => void handleSaveAll()}
     >
-      {formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
-          {formError}
-        </div>
-      ) : null}
+      {formError ? <Note tone="warn">{formError}</Note> : null}
 
-      <div className="note note-info" style={{ marginBottom: 14 }}>
+      <Note tone="info">
         بيانات مرحلة إنفاذ — تُكمّل بيانات البورصة لاحقاً من «استعلام البورصة».
         مسجّل مسبقاً: {alreadyRegistered} من {expectedTotal}.
-      </div>
+      </Note>
 
-      <div className="po-property-stack">
-        <div className="reg-sp2 po-count-field po-property-count-summary">
-          <label className="reg-fl" htmlFor="po_property_count_display">
+      <div className="flex flex-col gap-5">
+        <div className="col-span-full mb-3.5 sm:col-span-2">
+          <Label className="text-[11px]" htmlFor="po_property_count_display">
             عدد العقارات في هذه الجلسة
-          </label>
+          </Label>
           <div
             id="po_property_count_display"
-            className="po-count-box"
+            className="flex min-h-[38px] w-full items-center gap-2.5 rounded-[var(--radius-DEFAULT)] border border-border bg-surface-2 px-3 py-2 text-xs text-text-2"
             aria-live="polite"
             aria-label={`${enteredCount} من ${remainingSlots} في هذه الجلسة`}
           >
             <span
-              className={`po-count-box-value${enteredCount === 0 ? " is-zero" : ""}`}
+              className={cn(
+                "text-[15px] font-bold leading-none tabular-nums",
+                enteredCount === 0 ? "font-semibold text-text-3" : "text-primary",
+              )}
             >
               {enteredCount}
             </span>
-            <span className="po-count-box-unit">من {remainingSlots}</span>
-            <span className="po-count-box-tag">يتغيّر أثناء التسجيل</span>
+            <span className="text-xs text-text-2">من {remainingSlots}</span>
+            <span className="ms-auto whitespace-nowrap rounded-[10px] bg-info-bg px-2.5 py-0.5 text-[10px] font-semibold text-info">
+              يتغيّر أثناء التسجيل
+            </span>
           </div>
         </div>
 
@@ -356,7 +358,7 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
           />
         ))}
 
-        <div ref={activePropertyRef} className="po-property-stack-active">
+        <div ref={activePropertyRef} className="scroll-mt-3">
           <RegistrationFormCard
             title={`عقار ${propertyOrdinal} — بيانات إنفاذ`}
             subtitle="البيانات الواردة من منصة إنفاذ"
@@ -374,14 +376,10 @@ export function PoPropertyCreate({ poNumber, onBackAction,onSavedAction,}: {
         </div>
 
         {canAddAnother ? (
-          <div className="po-intake-add-property">
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={startAnotherProperty}
-            >
+          <div className="flex justify-center px-0 py-1">
+            <Button type="button" size="sm" onClick={startAnotherProperty}>
               + إضافة عقار آخر
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>

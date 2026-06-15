@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { Input, Label, Select, Textarea, cn } from "@platform/design-system";
+
 function FieldWrap({
   label,
   required,
@@ -20,18 +22,22 @@ function FieldWrap({
   const hintId = hint && fieldId ? `${fieldId}-hint` : undefined;
   return (
     <div className={className}>
-      <label className="reg-fl" htmlFor={fieldId}>
+      <Label htmlFor={fieldId} className="mb-1 text-[11px] font-semibold text-text-2">
         {label}
-        {required ? <span className="reg-req"> *</span> : null}
-      </label>
+        {required ? <span className="text-danger"> *</span> : null}
+      </Label>
       {children}
       {hint ? (
-        <p className="reg-field-hint" id={hintId}>
+        <p className="mt-1 text-[10px] text-text-3" id={hintId}>
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p className="reg-field-error" role="alert" id={fieldId ? `${fieldId}-error` : undefined}>
+        <p
+          className="mt-1 text-[10px] text-danger"
+          role="alert"
+          id={fieldId ? `${fieldId}-error` : undefined}
+        >
           {error}
         </p>
       ) : null}
@@ -78,9 +84,9 @@ export function RegField({
       hint={hint}
       fieldId={id}
     >
-      <input
+      <Input
         id={id}
-        className={`reg-fi${error ? " reg-fi--error" : ""}`}
+        hasError={Boolean(error)}
         type={type}
         placeholder={placeholder}
         inputMode={inputMode}
@@ -90,6 +96,7 @@ export function RegField({
         autoComplete="off"
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
+        className="text-xs"
       />
     </FieldWrap>
   );
@@ -97,7 +104,9 @@ export function RegField({
 
 export type RegSelectOption = string | { value: string; label: string };
 
-function regSelectEntries(options: RegSelectOption[]): { value: string; label: string }[] {
+function regSelectEntries(
+  options: readonly RegSelectOption[],
+): { value: string; label: string }[] {
   return options.map((o) =>
     typeof o === "string" ? { value: o, label: o } : o,
   );
@@ -138,15 +147,16 @@ export function RegTextarea({
       hint={hint}
       fieldId={id}
     >
-      <textarea
+      <Textarea
         id={id}
-        className={`reg-fi reg-fi--textarea${error ? " reg-fi--error" : ""}`}
+        hasError={Boolean(error)}
         rows={rows}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
+        className="text-xs"
       />
     </FieldWrap>
   );
@@ -167,7 +177,7 @@ export function RegSelect({
   id: string;
   label: string;
   required?: boolean;
-  options: RegSelectOption[];
+  options: readonly RegSelectOption[];
   value: string;
   onChange: (value: string) => void;
   className?: string;
@@ -178,13 +188,14 @@ export function RegSelect({
   const entries = regSelectEntries(options);
   return (
     <FieldWrap label={label} required={required} className={className} error={error}>
-      <select
+      <Select
         id={id}
-        className={`reg-fi${error ? " reg-fi--error" : ""}${disabled ? " reg-fi--disabled" : ""}`}
+        hasError={Boolean(error)}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
+        className="text-xs disabled:cursor-not-allowed disabled:opacity-65"
       >
         <option value="">{placeholder ?? "اختر..."}</option>
         {entries.map((o) => (
@@ -192,8 +203,7 @@ export function RegSelect({
             {o.label}
           </option>
         ))}
-      </select>
+      </Select>
     </FieldWrap>
   );
 }
-

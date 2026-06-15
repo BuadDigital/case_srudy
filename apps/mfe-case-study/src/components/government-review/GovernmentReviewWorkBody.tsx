@@ -1,6 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState, type RefObject } from "react";
+import { FormGroup, FormRow, Label, Note } from "@platform/design-system";
+import {
+  RegField,
+  RegTextarea,
+} from "@platform/app-shared/registration/FormFields";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import { usePoRecordQuery } from "../../query/case-study-queries";
@@ -29,6 +34,12 @@ export type GovernmentReviewWorkHostRef = {
   onSubmitted?: () => void;
   onSavingChange?: (saving: boolean) => void;
 };
+
+const RADIO_GROUP = "mt-1 flex flex-wrap gap-3";
+const RADIO_OPT =
+  "inline-flex cursor-pointer items-center gap-1.5 text-xs text-text-2";
+const CHECKBOX_OPT =
+  "flex cursor-pointer items-start gap-2 text-sm text-text-2";
 
 const VISIT_OPTIONS: {
   value: GovernmentReviewVisitStatus;
@@ -127,7 +138,7 @@ export function GovernmentReviewWorkBody({
   }, [hostRef, submit]);
 
   if (!draft) {
-    return <p className="po-properties-loading">جاري تحميل نموذج المراجعة…</p>;
+    return <p className="text-xs text-text-3">جاري تحميل نموذج المراجعة…</p>;
   }
 
   const showVisitDate = draft.visitStatus === "completed";
@@ -139,76 +150,68 @@ export function GovernmentReviewWorkBody({
   return (
     <>
       {locked ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
+        <Note tone="success">
           تم إرسال نتيجة المراجعة — النموذج للقراءة فقط.
-        </div>
+        </Note>
       ) : null}
 
       {formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
+        <Note tone="warn" role="alert">
           {formError}
-        </div>
+        </Note>
       ) : null}
 
-      <RegistrationFormCard title="زيارة المحكمة">
-        <div className="form-group">
-          <span className="form-label">حالة الزيارة</span>
-          <div className="radio-group">
-            {VISIT_OPTIONS.map((opt) => (
-              <label key={opt.value} className="radio-opt">
-                <input
-                  type="radio"
-                  name="gov-visit"
-                  checked={draft.visitStatus === opt.value}
-                  disabled={formDisabled}
-                  onChange={() => {
-                    persist({ visitStatus: opt.value });
-                    setFieldErrors((prev) => {
-                      const next = { ...prev };
-                      delete next.visitStatus;
-                      delete next.visitDate;
-                      delete next.accessBlockReason;
-                      return next;
-                    });
-                  }}
-                />{" "}
-                {opt.label}
-              </label>
-            ))}
-          </div>
-          {fieldErrors.visitStatus ? (
-            <p className="reg-field-error">{fieldErrors.visitStatus}</p>
-          ) : null}
-        </div>
+      <fieldset disabled={formDisabled} className="contents">
+        <RegistrationFormCard title="زيارة المحكمة">
+          <FormGroup className="mb-3 flex flex-col gap-1">
+            <Label className="text-[11px] font-semibold text-text-2">حالة الزيارة</Label>
+            <div className={RADIO_GROUP}>
+              {VISIT_OPTIONS.map((opt) => (
+                <label key={opt.value} className={RADIO_OPT}>
+                  <input
+                    type="radio"
+                    name="gov-visit"
+                    checked={draft.visitStatus === opt.value}
+                    onChange={() => {
+                      persist({ visitStatus: opt.value });
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.visitStatus;
+                        delete next.visitDate;
+                        delete next.accessBlockReason;
+                        return next;
+                      });
+                    }}
+                  />{" "}
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+            {fieldErrors.visitStatus ? (
+              <p className="mt-1 text-[10px] text-danger" role="alert">
+                {fieldErrors.visitStatus}
+              </p>
+            ) : null}
+          </FormGroup>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="gov-court">
-              المحكمة
-            </label>
-            <input
+          <FormRow className="grid-cols-1 sm:grid-cols-2">
+            <RegField
               id="gov-court"
-              className="form-control"
+              label="المحكمة"
               value={draft.courtName}
-              readOnly={formDisabled}
               placeholder="اسم المحكمة"
-              onChange={(e) => persist({ courtName: e.target.value })}
+              onChange={(v) => persist({ courtName: v })}
             />
-          </div>
-          {showVisitDate ? (
-            <div className="form-group">
-              <label className="form-label" htmlFor="gov-visit-date">
-                تاريخ الزيارة
-              </label>
-              <input
+            {showVisitDate ? (
+              <RegField
                 id="gov-visit-date"
-                className="form-control"
+                label="تاريخ الزيارة"
                 type="date"
                 dir="ltr"
                 value={draft.visitDate}
-                disabled={formDisabled}
-                onChange={(e) => {
-                  persist({ visitDate: e.target.value });
+                error={fieldErrors.visitDate}
+                onChange={(v) => {
+                  persist({ visitDate: v });
                   setFieldErrors((prev) => {
                     const next = { ...prev };
                     delete next.visitDate;
@@ -216,59 +219,54 @@ export function GovernmentReviewWorkBody({
                   });
                 }}
               />
-              {fieldErrors.visitDate ? (
-                <p className="reg-field-error">{fieldErrors.visitDate}</p>
-              ) : null}
+            ) : null}
+          </FormRow>
+        </RegistrationFormCard>
+
+        <RegistrationFormCard title="جمع المفاتيح">
+          <FormGroup className="mb-3 flex flex-col gap-1">
+            <Label className="text-[11px] font-semibold text-text-2">
+              حالة استلام المفاتيح
+            </Label>
+            <div className={RADIO_GROUP}>
+              {KEYS_OPTIONS.map((opt) => (
+                <label key={opt.value} className={RADIO_OPT}>
+                  <input
+                    type="radio"
+                    name="gov-keys-status"
+                    checked={draft.keysStatus === opt.value}
+                    onChange={() => {
+                      persist({ keysStatus: opt.value });
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.keysStatus;
+                        delete next.keysDescription;
+                        delete next.accessBlockReason;
+                        return next;
+                      });
+                    }}
+                  />{" "}
+                  {opt.label}
+                </label>
+              ))}
             </div>
-          ) : null}
-        </div>
-      </RegistrationFormCard>
+            {fieldErrors.keysStatus ? (
+              <p className="mt-1 text-[10px] text-danger" role="alert">
+                {fieldErrors.keysStatus}
+              </p>
+            ) : null}
+          </FormGroup>
 
-      <RegistrationFormCard title="جمع المفاتيح">
-        <div className="form-group">
-          <span className="form-label">حالة استلام المفاتيح</span>
-          <div className="radio-group">
-            {KEYS_OPTIONS.map((opt) => (
-              <label key={opt.value} className="radio-opt">
-                <input
-                  type="radio"
-                  name="gov-keys-status"
-                  checked={draft.keysStatus === opt.value}
-                  disabled={formDisabled}
-                  onChange={() => {
-                    persist({ keysStatus: opt.value });
-                    setFieldErrors((prev) => {
-                      const next = { ...prev };
-                      delete next.keysStatus;
-                      delete next.keysDescription;
-                      delete next.accessBlockReason;
-                      return next;
-                    });
-                  }}
-                />{" "}
-                {opt.label}
-              </label>
-            ))}
-          </div>
-          {fieldErrors.keysStatus ? (
-            <p className="reg-field-error">{fieldErrors.keysStatus}</p>
-          ) : null}
-        </div>
-
-        {showKeysDescription ? (
-          <div className="form-group">
-            <label className="form-label" htmlFor="gov-keys">
-              المفاتيح المستلمة / موقع الحفظ
-            </label>
-            <textarea
+          {showKeysDescription ? (
+            <RegTextarea
               id="gov-keys"
-              className="form-control"
+              label="المفاتيح المستلمة / موقع الحفظ"
               rows={3}
-              disabled={formDisabled}
               placeholder="وصف المفاتيح، عددها، أو موقع تسليمها لقسم المفاتيح…"
               value={draft.keysDescription}
-              onChange={(e) => {
-                persist({ keysDescription: e.target.value });
+              error={fieldErrors.keysDescription}
+              onChange={(v) => {
+                persist({ keysDescription: v });
                 setFieldErrors((prev) => {
                   const next = { ...prev };
                   delete next.keysDescription;
@@ -276,26 +274,18 @@ export function GovernmentReviewWorkBody({
                 });
               }}
             />
-            {fieldErrors.keysDescription ? (
-              <p className="reg-field-error">{fieldErrors.keysDescription}</p>
-            ) : null}
-          </div>
-        ) : null}
+          ) : null}
 
-        {showBlockReason ? (
-          <div className="form-group">
-            <label className="form-label" htmlFor="gov-block-reason">
-              سبب التعذر / المتابعة
-            </label>
-            <textarea
+          {showBlockReason ? (
+            <RegTextarea
               id="gov-block-reason"
-              className="form-control"
+              label="سبب التعذر / المتابعة"
               rows={2}
-              disabled={formDisabled}
               placeholder="اذكر سبب تعذر الوصول أو عدم استلام المفاتيح والإجراء التالي…"
               value={draft.accessBlockReason}
-              onChange={(e) => {
-                persist({ accessBlockReason: e.target.value });
+              error={fieldErrors.accessBlockReason}
+              onChange={(v) => {
+                persist({ accessBlockReason: v });
                 setFieldErrors((prev) => {
                   const next = { ...prev };
                   delete next.accessBlockReason;
@@ -303,51 +293,63 @@ export function GovernmentReviewWorkBody({
                 });
               }}
             />
-            {fieldErrors.accessBlockReason ? (
-              <p className="reg-field-error">{fieldErrors.accessBlockReason}</p>
-            ) : null}
-          </div>
-        ) : null}
-      </RegistrationFormCard>
+          ) : null}
+        </RegistrationFormCard>
 
-      <RegistrationFormCard title="ملاحظات المراجعة">
-        <div className="form-group">
-          <label className="form-label" htmlFor="gov-review-notes">
-            ملاحظات إضافية
-          </label>
-          <textarea
+        <RegistrationFormCard title="بيانات الرفع لإنفاذ (المراجع)">
+          <RegField
+            id="gov-zone"
+            label="حالة منطقة العقار"
+            placeholder="مثال: غير موقوفة"
+            value={draft.propertyZoneStatus}
+            onChange={(v) => persist({ propertyZoneStatus: v })}
+          />
+          {showKeysDescription ? (
+            <RegField
+              id="gov-keys-proof"
+              label="إثبات استلام المفتاح (خطاب أو صورة)"
+              placeholder="اسم الملف المرفوع"
+              value={draft.keysProofFileName}
+              onChange={(v) => persist({ keysProofFileName: v })}
+            />
+          ) : null}
+        </RegistrationFormCard>
+
+        <RegistrationFormCard title="ملاحظات المراجعة">
+          <RegTextarea
             id="gov-review-notes"
-            className="form-control"
+            label="ملاحظات إضافية"
             rows={3}
-            disabled={formDisabled}
             placeholder="أي ملاحظات حول زيارة المحكمة أو حالة العقار…"
             value={draft.reviewNotes}
-            onChange={(e) => persist({ reviewNotes: e.target.value })}
+            onChange={(v) => persist({ reviewNotes: v })}
           />
-        </div>
 
-        <div className="form-group">
-          <label className="gov-delegation-property-opt">
-            <input
-              type="checkbox"
-              checked={draft.confirmed}
-              disabled={formDisabled}
-              onChange={(e) => {
-                persist({ confirmed: e.target.checked });
-                setFieldErrors((prev) => {
-                  const next = { ...prev };
-                  delete next.confirmed;
-                  return next;
-                });
-              }}
-            />
-            <span>أؤكد اكتمال المراجعة الحكومية لهذا العقار</span>
-          </label>
-          {fieldErrors.confirmed ? (
-            <p className="reg-field-error">{fieldErrors.confirmed}</p>
-          ) : null}
-        </div>
-      </RegistrationFormCard>
+          <FormGroup className="mb-3 mt-3 flex flex-col gap-1">
+            <label className={CHECKBOX_OPT}>
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={draft.confirmed}
+                onChange={(e) => {
+                  persist({ confirmed: e.target.checked });
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.confirmed;
+                    return next;
+                  });
+                }}
+              />
+              <span>أؤكد اكتمال المراجعة الحكومية لهذا العقار</span>
+            </label>
+            {fieldErrors.confirmed ? (
+              <p className="mt-1 text-[10px] text-danger" role="alert">
+                {fieldErrors.confirmed}
+              </p>
+            ) : null}
+          </FormGroup>
+        </RegistrationFormCard>
+      </fieldset>
     </>
   );
 }

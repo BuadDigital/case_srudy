@@ -18,6 +18,12 @@ import { RegistrationWizardShell } from "./RegistrationWizardShell";
 import { SummaryGrid } from "./SummaryGrid";
 import { TypePills } from "./TypePills";
 import {
+  RegErrorAlert,
+  RegGrid2,
+  RegInfoBox,
+  RegSectionDivider,
+} from "./registration-layout";
+import {
   REG_CONFIRM_SAVE,
   REG_NEXT,
   REG_SAVE,
@@ -243,6 +249,7 @@ export function CrmRegistrationFlow({
             subtitle="تحدد دورة حياة العميل في النظام"
           >
             <TypePills
+              source="crm"
               options={[
                 { value: "lead", label: "عميل محتمل (Lead)" },
                 { value: "active", label: "عميل فعلي" },
@@ -257,14 +264,15 @@ export function CrmRegistrationFlow({
               }
             />
             {clientStatus === "lead" ? (
-              <div className="reg-info-box warn">
+              <RegInfoBox tone="warn">
                 العميل المحتمل يتحول تلقائياً لعميل فعلي عند شراء الخدمة
-              </div>
+              </RegInfoBox>
             ) : null}
             {clientStatus === "active" ? (
               <>
-                <div className="reg-sec-div">تصنيف العميل الفعلي</div>
+                <RegSectionDivider>تصنيف العميل الفعلي</RegSectionDivider>
                 <TypePills
+              source="crm"
                   options={[
                     { value: "direct", label: "عميل مباشر — عرض سعر" },
                     { value: "contract", label: "عميل بعقد — خدمة مستمرة" },
@@ -277,6 +285,7 @@ export function CrmRegistrationFlow({
           </RegistrationFormCard>
           <RegistrationFormCard title="نوع الكيان" subtitle="فرد أو شركة">
             <TypePills
+              source="crm"
               options={[
                 { value: "individual", label: "فرد" },
                 { value: "company", label: "شركة / مؤسسة" },
@@ -292,7 +301,7 @@ export function CrmRegistrationFlow({
         <RegistrationFormCard
           title={`البيانات الأساسية — ${isCompany ? "شركة / مؤسسة" : "فرد"}`}
         >
-          <div className="reg-fg2">
+          <RegGrid2>
             {isCompany ? (
               <>
                 <RegField
@@ -373,14 +382,14 @@ export function CrmRegistrationFlow({
               error={fieldErrors.crm_pwd2}
               onChange={(v) => patch("crm_pwd2", v)}
             />
-          </div>
+          </RegGrid2>
         </RegistrationFormCard>
       ) : null}
 
       {step === 3 ? (
         <>
           <RegistrationFormCard title="البيانات الإضافية">
-            <div className="reg-fg2">
+            <RegGrid2>
               <RegSelect
                 id="crm_region"
                 label="المدينة / المنطقة"
@@ -416,11 +425,11 @@ export function CrmRegistrationFlow({
                   onChange={(v) => patch("crm_vatreg", v)}
                 />
               ) : null}
-            </div>
+            </RegGrid2>
           </RegistrationFormCard>
           {isCompany ? (
             <RegistrationFormCard title="جهة التواصل في الشركة">
-              <div className="reg-fg2">
+              <RegGrid2>
                 <RegField
                   id="crm_contactPerson"
                   label="اسم المسؤول"
@@ -443,7 +452,7 @@ export function CrmRegistrationFlow({
                   value={data.crm_contactPhone ?? ""}
                   onChange={(v) => patch("crm_contactPhone", v)}
                 />
-              </div>
+              </RegGrid2>
             </RegistrationFormCard>
           ) : null}
         </>
@@ -471,15 +480,15 @@ export function CrmRegistrationFlow({
               { l: "المنطقة", v: data.crm_region ?? "" },
             ]}
           />
-          <div className="reg-info-box gold" style={{ marginTop: 12 }}>
+          <RegInfoBox tone="gold" className="mt-3">
             سيتم إرسال بيانات الدخول إلى{" "}
             <strong>{data.crm_email || "—"}</strong> بعد الحفظ
-          </div>
+          </RegInfoBox>
         </RegistrationFormCard>
         </>
       ) : null}
 
-      {error ? <div className="reg-w-alert on">{error}</div> : null}
+      <RegErrorAlert error={error} />
     </RegistrationWizardShell>
   );
 }

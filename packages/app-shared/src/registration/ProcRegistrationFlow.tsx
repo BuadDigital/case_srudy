@@ -25,6 +25,11 @@ import { RegistrationWizardShell } from "./RegistrationWizardShell";
 import { SummaryGrid } from "./SummaryGrid";
 import { TypePills } from "./TypePills";
 import {
+  RegErrorAlert,
+  RegGrid2,
+  RegInfoBox,
+} from "./registration-layout";
+import {
   REG_CONFIRM_SAVE,
   REG_NEXT,
   REG_SAVE,
@@ -286,19 +291,19 @@ export function ProcRegistrationFlow({
             }}
           />
           {data.subtype === "individual" ? (
-            <div className="reg-info-box">حساب شخصي واحد — الفوترة مباشرة للفرد</div>
+            <RegInfoBox>حساب شخصي واحد — الفوترة مباشرة للفرد</RegInfoBox>
           ) : null}
           {data.subtype === "org" ? (
-            <div className="reg-info-box">
+            <RegInfoBox>
               حساب واحد للجهة — الفوترة على مستوى المؤسسة
-            </div>
+            </RegInfoBox>
           ) : null}
         </RegistrationFormCard>
       ) : null}
 
       {step === 2 && !isOrg ? (
         <RegistrationFormCard title="بيانات الفرد المستقل">
-          <div className="reg-fg2">
+          <RegGrid2>
             <RegField
               id="pc_name"
               label="الاسم الكامل"
@@ -353,13 +358,13 @@ export function ProcRegistrationFlow({
               value={data.pc_pwd2 ?? ""}
               onChange={(v) => patch("pc_pwd2", v)}
             />
-          </div>
+          </RegGrid2>
         </RegistrationFormCard>
       ) : null}
 
       {step === 2 && isOrg ? (
         <RegistrationFormCard title="بيانات الجهة">
-          <div className="reg-fg2">
+          <RegGrid2>
             <RegField
               id="pc_orgname"
               label="اسم الجهة / المؤسسة"
@@ -448,7 +453,7 @@ export function ProcRegistrationFlow({
               label="العنوان الرئيسي"
               value={data.pc_address ?? ""}
               onChange={(v) => patch("pc_address", v)}
-              className="reg-sp2"
+              className="col-span-2 max-sm:col-span-1"
             />
             <RegSelect
               id="pc_region"
@@ -457,13 +462,13 @@ export function ProcRegistrationFlow({
               value={data.pc_region ?? ""}
               onChange={(v) => patch("pc_region", v)}
             />
-          </div>
+          </RegGrid2>
         </RegistrationFormCard>
       ) : null}
 
       {step === 3 && !isOrg ? (
         <RegistrationFormCard title="الخدمة والتغطية والفوترة">
-          <div className="reg-fg2">
+          <RegGrid2>
             <RegSelect
               id="pc_service"
               label="نوع الخدمة"
@@ -492,7 +497,7 @@ export function ProcRegistrationFlow({
               value={data.pc_iban ?? ""}
               onChange={(v) => patch("pc_iban", v)}
             />
-          </div>
+          </RegGrid2>
         </RegistrationFormCard>
       ) : null}
 
@@ -507,7 +512,7 @@ export function ProcRegistrationFlow({
 
       {step === 4 && isOrg ? (
         <RegistrationFormCard title="بيانات الفوترة">
-          <div className="reg-fg2">
+          <RegGrid2>
             <RegField
               id="pc_bankname"
               label="اسم البنك"
@@ -534,7 +539,7 @@ export function ProcRegistrationFlow({
               value={data.pc_vatreg ?? ""}
               onChange={(v) => patch("pc_vatreg", v)}
             />
-          </div>
+          </RegGrid2>
         </RegistrationFormCard>
       ) : null}
 
@@ -547,7 +552,7 @@ export function ProcRegistrationFlow({
         </>
       ) : null}
 
-      {error ? <div className="reg-w-alert on">{error}</div> : null}
+      <RegErrorAlert error={error} />
     </RegistrationWizardShell>
   );
 }

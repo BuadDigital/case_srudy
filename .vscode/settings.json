@@ -6,5 +6,6 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "eslint.workingDirectories": [
     { "directory": "apps/shell", "changeProcessCWD": true }
-  ]
+  ],
+  "files.autoSave": "onFocusChange"
 }

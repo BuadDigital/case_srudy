@@ -4,6 +4,7 @@ import { AppModal } from "@case-study/mfe/components/ui/AppModal";
 import { RegField, RegSelect } from "@platform/app-shared/registration/FormFields";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
 import { UNSAVED_CONFIRM_MSG } from "@platform/app-shared/registration/registration-utils";
+import { Button, Note } from "@platform/design-system";
 import {
   ASSIGNMENT_TYPE_OPTIONS,
   type AssignmentType,
@@ -35,28 +36,24 @@ export function PoIntakeModal({
       onClose={requestClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={requestClose}>
+          <Button type="button" onClick={requestClose}>
             إلغاء
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn-primary"
+            variant="primary"
             disabled={form.saving}
             onClick={() => void form.save()}
           >
             {form.saving ? "جارٍ الحفظ..." : "حفظ أمر العمل"}
-          </button>
+          </Button>
         </>
       }
     >
-      {form.formError ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
-          {form.formError}
-        </div>
-      ) : null}
+      {form.formError ? <Note tone="warn">{form.formError}</Note> : null}
 
       <RegistrationFormCard>
-        <div className="reg-fg2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <RegField
             id="po_number_modal"
             label="رقم التعميد (PO)"

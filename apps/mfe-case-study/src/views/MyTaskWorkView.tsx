@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DistributionPartiesForm } from "@case-study/mfe/components/distribution/DistributionPartiesForm";
 import { RegistrationFormCard } from "@platform/app-shared/registration/RegistrationFormCard";
@@ -68,8 +67,11 @@ import {
   usePoRecordQuery,
   useWorkflowTasksQuery,
 } from "@case-study/mfe/query/case-study-queries";
+import { Button, Note, cn } from "@platform/design-system";
 import { useQueryClient } from "@tanstack/react-query";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
+
+const LOADING_TEXT = "text-xs text-text-3";
 
 function useWorkflowTask(taskId: string): WorkflowTask | null {
   const { data: tasks } = useWorkflowTasksQuery();
@@ -467,7 +469,7 @@ export function CaseStudyTaskWork({
         saveLabel="رجوع"
         showFooter={false}
       >
-        <p className="po-properties-loading">جاري التحميل…</p>
+        <p className={LOADING_TEXT}>جاري التحميل…</p>
       </TaskWorkChrome>
     );
   }
@@ -486,27 +488,27 @@ export function CaseStudyTaskWork({
         showFooter={false}
       >
       <RegistrationFormCard title="تعذر — بانتظار المشرف">
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
+        <Note tone="warn" className="mb-3">
           {task.obstructionReason || "تم تسجيل تعذر على هذا العقار."}
-        </div>
+        </Note>
         {isSupervisor ? (
-          <div className="po-edit-foot-actions">
-            <button
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
               type="button"
-              className="btn btn-primary"
+              variant="primary"
               onClick={() => {
                 void resolveTaskObstruction(task.id, task);
                 onRefresh();
               }}
             >
               إعادة للأخصائي
-            </button>
-            <Link href="/failures" className="btn">
+            </Button>
+            <Button type="button" variant="default" onClick={() => router.push("/failures")}>
               مراجعة التعذرات
-            </Link>
+            </Button>
           </div>
         ) : (
-          <p style={{ color: "var(--text3)", fontSize: 13 }}>
+          <p className="m-0 text-[13px] text-text-3">
             المهمة لدى المشرف حتى يُبت في التعذر.
           </p>
         )}
@@ -529,10 +531,10 @@ export function CaseStudyTaskWork({
         showFooter={false}
       >
         <RegistrationFormCard title="دراسة حالة العقار">
-          <div className="note note-success" style={{ marginBottom: 12 }}>
+          <Note tone="success" className="mb-3">
             تم تأكيد التوزيع وإرسال المهام للأطراف. المعاملة في مرحلة دراسة
             الحالة.
-          </div>
+          </Note>
           <DistributionPartiesForm
             distribution={migrateDistribution(task.distribution)}
             onPatch={() => {}}
@@ -562,9 +564,9 @@ export function CaseStudyTaskWork({
         showFooter={false}
       >
         <RegistrationFormCard title="المهمة مكتملة">
-          <div className="note note-success">
+          <Note tone="success">
             اكتملت مهمة العقار. تم إرسال مهام فرعية للأطراف المختارين (إن وُجد).
-          </div>
+          </Note>
         </RegistrationFormCard>
       </TaskWorkChrome>
     );
@@ -583,7 +585,7 @@ export function CaseStudyTaskWork({
         variant="detail"
         showFooter={false}
       >
-        <p className="field-team-empty">
+        <p className="w-full py-4 text-center text-xs text-text-3">
           هذه المهمة مخصصة لأخصائي دراسة الحالة.
         </p>
       </TaskWorkChrome>
@@ -603,20 +605,24 @@ export function CaseStudyTaskWork({
       footerExtra={
         <>
           {task.propertyId && (showBourseStep || showDistribution) ? (
-            <Link
-              href={poPropertyFailurePath(task.poNumber, task.propertyId)}
-              className="btn btn-danger-outline"
+            <Button
+              type="button"
+              variant="dangerOutline"
+              size="sm"
+              onClick={() =>
+                router.push(poPropertyFailurePath(task.poNumber, task.propertyId!))
+              }
             >
               تسجيل تعذر
-            </Link>
+            </Button>
           ) : null}
         </>
       }
     >
       {formError ? (
-        <div className="note note-warn" role="alert" style={{ marginBottom: 12 }}>
+        <Note tone="warn" className="mb-3" role="alert">
           {formError}
-        </div>
+        </Note>
       ) : null}
 
       {showEnfathStep ? (
@@ -663,7 +669,7 @@ export function CaseStudyTaskWork({
             />
           ) : null}
           {bourseInquiryFastPath ? (
-            <hr className="my-tasks-bourse-divider" aria-hidden />
+            <hr className="my-4 border-0 border-t border-border" aria-hidden />
           ) : null}
           <PoPropertyBourseForm
             property={property}
@@ -711,19 +717,20 @@ export function MyTaskWorkView({ taskId }: { taskId: string }) {
 
   if (!task) {
     return (
-      <div className="po-properties-page">
-        <div className="note note-warn">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+        <Note tone="warn" className="m-6">
           لم تُعثر على المهمة.
-          <div className="po-properties-empty-actions">
-            <button
+          <div className="mt-3">
+            <Button
               type="button"
-              className="btn btn-sm"
+              size="sm"
+              variant="default"
               onClick={() => router.push(myTasksPath())}
             >
               رجوع للمعاملات النشطة
-            </button>
+            </Button>
           </div>
-        </div>
+        </Note>
       </div>
     );
   }
@@ -744,9 +751,9 @@ export function MyTaskWorkView({ taskId }: { taskId: string }) {
       >
         <RegistrationFormCard title={task.title}>
           {task.status === "completed" ? (
-            <div className="note note-success">تم إنجاز هذه المهمة.</div>
+            <Note tone="success">تم إنجاز هذه المهمة.</Note>
           ) : (
-            <p style={{ margin: 0, color: "var(--text2)", fontSize: 13 }}>
+            <p className="m-0 text-[13px] text-text-2">
               أكمل الإجراء المطلوب ثم احفظ لتأشير المهمة كمكتملة.
             </p>
           )}

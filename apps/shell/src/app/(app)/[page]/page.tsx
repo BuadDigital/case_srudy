@@ -18,10 +18,9 @@ import { KpiView } from "@kpi/mfe";
 import {
   CaseStudyInfoRolesView,
   CourtsView,
-  SystemToolsView,
+  SystemFieldsCatalogView,
   UsersView,
 } from "@settings/mfe";
-import { MessagesView } from "@messages/mfe";
 import { SurveyView } from "@survey/mfe";
 import { ValuationRequestsView } from "@valuation/mfe";
 import { PartyActiveTaskViewHost } from "@/components/party-tasks/PartyActiveTaskViewHost";
@@ -34,8 +33,8 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   "active-primary-data": (
     <Suspense
       fallback={
-        <div className="po-properties-page">
-          <p className="po-properties-loading">جاري تحميل المعاملات…</p>
+        <div className="flex min-h-0 w-full flex-1 flex-col">
+          <p className="my-2 px-6 text-xs text-text-3">جاري تحميل المعاملات…</p>
         </div>
       }
     >
@@ -46,8 +45,8 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   "active-distribution": (
     <Suspense
       fallback={
-        <div className="po-properties-page">
-          <p className="po-properties-loading">جاري تحميل المعاملات…</p>
+        <div className="flex min-h-0 w-full flex-1 flex-col">
+          <p className="my-2 px-6 text-xs text-text-3">جاري تحميل المعاملات…</p>
         </div>
       }
     >
@@ -57,8 +56,8 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   "active-case-study": (
     <Suspense
       fallback={
-        <div className="po-properties-page">
-          <p className="po-properties-loading">جاري تحميل المعاملات…</p>
+        <div className="flex min-h-0 w-full flex-1 flex-col">
+          <p className="my-2 px-6 text-xs text-text-3">جاري تحميل المعاملات…</p>
         </div>
       }
     >
@@ -78,8 +77,8 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
         <Suspense
           key={pageId}
           fallback={
-            <div className="po-properties-page">
-              <p className="po-properties-loading">جاري تحميل المهام…</p>
+            <div className="flex min-h-0 w-full flex-1 flex-col">
+              <p className="my-2 px-6 text-xs text-text-3">جاري تحميل المهام…</p>
             </div>
           }
         >
@@ -91,21 +90,20 @@ const VIEWS: Partial<Record<PageId, ReactNode>> = {
   "government-review": (
     <Suspense
       fallback={
-        <div className="po-properties-page">
-          <p className="po-properties-loading">جاري تحميل المراجعة الحكومية…</p>
+        <div className="flex min-h-0 w-full flex-1 flex-col">
+          <p className="my-2 px-6 text-xs text-text-3">جاري تحميل المراجعة الحكومية…</p>
         </div>
       }
     >
       <GovernmentReviewView />
     </Suspense>
   ),
-  messages: <MessagesView />,
+  "system-fields-catalog": <SystemFieldsCatalogView />,
   financial: <FinancialView />,
   kpi: <KpiView />,
   users: <UsersView />,
   courts: <CourtsView />,
   "failure-types": <FailureTypesView />,
-  "system-tools": <SystemToolsView />,
   "case-study-info-roles": <CaseStudyInfoRolesView />,
 };
 

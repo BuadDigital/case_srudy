@@ -1,36 +1,40 @@
+import { Badge, type BadgeTone } from "./components/Badge";
+
 /** Mirrors `sb()` in system_prototype_4.html */
-const STATUS_MAP: Record<
-  string,
-  readonly [string, "b-new" | "b-prog" | "b-done" | "b-fail" | "b-cancel"]
-> = {
-  new: ["جديد", "b-new"],
-  progress: ["قيد التنفيذ", "b-prog"],
-  done: ["مكتمل", "b-done"],
-  fail: ["متعذر", "b-fail"],
-  incomplete: ["ناقص", "b-prog"],
-  review: ["قيد المراجعة", "b-prog"],
-  approved: ["معتمد", "b-done"],
-  pending: ["معلّق", "b-new"],
-  under_study: ["قيد الدراسة", "b-prog"],
+const STATUS_MAP: Record<string, readonly [string, BadgeTone]> = {
+  new: ["جديد", "info"],
+  progress: ["قيد التنفيذ", "warning"],
+  done: ["مكتمل", "success"],
+  fail: ["متعذر", "danger"],
+  incomplete: ["ناقص", "warning"],
+  review: ["قيد المراجعة", "warning"],
+  approved: ["معتمد", "success"],
+  pending: ["معلّق", "info"],
+  under_study: ["قيد الدراسة", "warning"],
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const [label, cls] = STATUS_MAP[status] ?? ["—", "b-cancel"];
-  return <span className={`badge ${cls}`}>{label}</span>;
+  const [label, tone] = STATUS_MAP[status] ?? ["—", "default"];
+  return (
+    <Badge tone={tone} className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+      {label}
+    </Badge>
+  );
 }
 
 /** Mirrors `tb()` in system_prototype_4.html — مراحل مسار العقار (رفع / تقييم / دراسة). */
-const WORKFLOW_MAP: Record<
-  string,
-  readonly [string, "b-new" | "b-prog" | "b-done" | "b-fail" | "b-cancel"]
-> = {
-  new: ["لم يبدأ", "b-cancel"],
-  progress: ["جارٍ", "b-prog"],
-  done: ["مكتمل", "b-done"],
-  fail: ["متعذر", "b-fail"],
+const WORKFLOW_MAP: Record<string, readonly [string, BadgeTone]> = {
+  new: ["لم يبدأ", "default"],
+  progress: ["جارٍ", "warning"],
+  done: ["مكتمل", "success"],
+  fail: ["متعذر", "danger"],
 };
 
 export function WorkflowStageBadge({ stage }: { stage: string }) {
-  const [label, cls] = WORKFLOW_MAP[stage] ?? ["—", "b-cancel"];
-  return <span className={`badge ${cls}`}>{label}</span>;
+  const [label, tone] = WORKFLOW_MAP[stage] ?? ["—", "default"];
+  return (
+    <Badge tone={tone} className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+      {label}
+    </Badge>
+  );
 }

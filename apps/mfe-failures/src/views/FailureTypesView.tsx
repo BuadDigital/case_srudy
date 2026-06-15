@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { RegField, RegSelect } from "@platform/app-shared/registration/FormFields";
+import { Button, cn } from "@platform/design-system";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 import type { RoleId } from "@platform/types";
@@ -18,7 +19,9 @@ function canManageFailureTypes(role: RoleId): boolean {
   return isSuperAdmin(role) || role === "section-supervisor";
 }
 
-/** §4 — إدارة قائمة أنواع التعذرات (قابلة للتوسع دون تعديل في الكود). */
+const noteBase =
+  "mb-3 rounded-[var(--radius-DEFAULT)] border border-e-[3px] px-3.5 py-2.5 text-xs leading-relaxed";
+
 export function FailureTypesView() {
   const queryClient = useQueryClient();
   const { role } = usePrototype();
@@ -76,9 +79,7 @@ export function FailureTypesView() {
 
   if (!catalog) {
     return (
-      <p className="po-properties-loading page-gutter" style={{ paddingTop: 16 }}>
-        جاري التحميل…
-      </p>
+      <p className="px-6 pt-4 text-xs text-text-3">جاري التحميل…</p>
     );
   }
 
@@ -88,27 +89,31 @@ export function FailureTypesView() {
 
   return (
     <>
-      {toast ? <div className="note note-success">{toast}</div> : null}
+      {toast ? (
+        <div className={cn(noteBase, "border-success bg-success-bg text-success")}>
+          {toast}
+        </div>
+      ) : null}
 
       {!canEdit ? (
-        <div className="note note-info">
+        <div className={cn(noteBase, "border-info bg-info-bg text-info")}>
           وضع الاطلاع — صلاحية التعديل للمشرف ومسؤول النظام.
         </div>
       ) : null}
 
-      <div className="note note-warn">
+      <div className={cn(noteBase, "border-amber bg-amber-light text-amber-text")}>
         القائمة مبدئية وقابلة للتوسع — تُضاف أنواع جديدة دون الحاجة لتعديل في الكود
         (§4 وثيقة التعذرات).
       </div>
 
       {canEdit ? (
-        <article className="page-shell">
-          <header className="po-subpage-hd">
-            <div className="po-subpage-titles">
-              <h2 className="po-subpage-title">إضافة نوع تعذر</h2>
+        <article className="mb-0 w-full overflow-hidden rounded-none border-none bg-surface shadow-none">
+          <header className="mb-0 flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3.5">
+            <div className="min-w-0 flex-1">
+              <h2 className="m-0 mb-1 text-base font-bold text-text">إضافة نوع تعذر</h2>
             </div>
           </header>
-          <div className="reg-form-grid page-gutter" style={{ paddingBottom: 12 }}>
+          <div className="grid gap-3 px-6 pb-3">
             <RegSelect
               id="failure_type_category"
               label="التصنيف"
@@ -132,21 +137,13 @@ export function FailureTypesView() {
               onChange={setDescription}
             />
           </div>
-          <div className="page-gutter" style={{ display: "flex", gap: 8, paddingBottom: 16 }}>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => void handleAdd()}
-            >
+          <div className="flex gap-2 px-6 pb-4">
+            <Button type="button" variant="primary" size="sm" onClick={() => void handleAdd()}>
               إضافة
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => void handleReset()}
-            >
+            </Button>
+            <Button type="button" size="sm" onClick={() => void handleReset()}>
               استعادة القائمة الافتراضية
-            </button>
+            </Button>
           </div>
         </article>
       ) : null}
@@ -156,52 +153,41 @@ export function FailureTypesView() {
           .filter((t) => t.categoryId === category.id)
           .sort((a, b) => a.order - b.order);
         return (
-          <article key={category.id} className="page-shell">
-            <header className="po-subpage-hd">
-              <div className="po-subpage-titles">
-                <h2 className="po-subpage-title">{category.label}</h2>
+          <article
+            key={category.id}
+            className="mb-0 w-full overflow-hidden rounded-none border-none bg-surface shadow-none"
+          >
+            <header className="mb-0 flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3.5">
+              <div className="min-w-0 flex-1">
+                <h2 className="m-0 mb-1 text-base font-bold text-text">{category.label}</h2>
               </div>
             </header>
-            <div className="page-gutter" style={{ paddingBlock: 12 }}>
+            <div className="px-6 py-3">
               {types.length === 0 ? (
-                <p style={{ color: "var(--text3)", fontSize: 13 }}>لا أنواع.</p>
+                <p className="text-[13px] text-text-3">لا أنواع.</p>
               ) : (
                 types.map((type) => (
                   <div
                     key={type.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      padding: "8px 0",
-                      borderBottom: "1px dashed var(--border)",
-                    }}
+                    className="flex items-start justify-between gap-3 border-b border-dashed border-border py-2"
                   >
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 500 }}>
-                        {type.label}
-                      </div>
+                      <div className="text-[13px] font-medium">{type.label}</div>
                       {type.description ? (
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: "var(--text3)",
-                            marginTop: 2,
-                          }}
-                        >
+                        <div className="mt-0.5 text-xs text-text-3">
                           {type.description}
                         </div>
                       ) : null}
                     </div>
                     {canEdit && type.id.startsWith("custom-") ? (
-                      <button
+                      <Button
                         type="button"
-                        className="btn btn-sm btn-danger"
+                        size="sm"
+                        variant="danger"
                         onClick={() => void handleRemove(type.id)}
                       >
                         حذف
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                 ))

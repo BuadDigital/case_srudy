@@ -39,7 +39,7 @@ export function PrototypeAppGate({ children }: { children: React.ReactNode }) {
 
   if (ok === null) {
     return (
-      <div className="flex h-screen items-center justify-center text-[var(--text3)]">
+      <div className="flex h-screen items-center justify-center text-text-3">
         جاري التحميل…
       </div>
     );

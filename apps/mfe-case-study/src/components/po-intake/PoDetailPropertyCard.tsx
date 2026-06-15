@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@platform/design-system";
 import {
   boundariesAvailabilityLabel,
   formatPropertyDeedDisplay,
@@ -55,66 +56,92 @@ export function PoDetailPropertyCard({
   }
 
   return (
-    <article className="po-detail-property-card">
-      <header className="po-detail-property-hd">
-        <div className="po-detail-property-hd-main">
-          <span className="po-detail-property-num">عقار {index}</span>
-          <span className="po-detail-property-deed" dir="ltr">
+    <article className="rounded-[var(--radius-DEFAULT)] border border-border bg-surface px-3.5 py-3">
+      <header className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+          <span className="text-[11px] font-bold tracking-wide text-text-3 uppercase">
+            عقار {index}
+          </span>
+          <span className="text-sm font-bold text-primary" dir="ltr">
             {deedDisplay}
           </span>
           {needsBourse && boursePending ? (
-            <span className="badge b-prog">بانتظار البورصة</span>
+            <Badge tone="warning" className="text-[11px] font-normal">
+              بانتظار البورصة
+            </Badge>
           ) : null}
           {needsBourse && !boursePending ? (
-            <span className="badge b-done">بورصة مكتملة</span>
+            <Badge tone="success" className="text-[11px] font-normal">
+              بورصة مكتملة
+            </Badge>
           ) : null}
         </div>
         {property.deedStatus ? (
-          <span className="badge b-prog">{property.deedStatus}</span>
+          <Badge tone="warning" className="text-[11px] font-normal">
+            {property.deedStatus}
+          </Badge>
         ) : null}
       </header>
 
-      <div className="po-detail-property-meta">
-        <div className="po-detail-meta-item">
-          <span className="po-detail-meta-lbl">الموقع</span>
-          <span className="po-detail-meta-val">{location || "—"}</span>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[10px] font-semibold text-text-3">الموقع</span>
+          <span className="text-xs leading-snug text-text">
+            {location || "—"}
+          </span>
         </div>
-        <div className="po-detail-meta-item">
-          <span className="po-detail-meta-lbl">التصنيف / النوع</span>
-          <span className="po-detail-meta-val">{typeLine || "—"}</span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[10px] font-semibold text-text-3">
+            التصنيف / النوع
+          </span>
+          <span className="text-xs leading-snug text-text">
+            {typeLine || "—"}
+          </span>
         </div>
         {hasBourseDetailFields(property) ? (
           <>
-            <div className="po-detail-meta-item">
-              <span className="po-detail-meta-lbl">المساحة</span>
-              <span className="po-detail-meta-val">{property.area || "—"}</span>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-text-3">
+                المساحة
+              </span>
+              <span className="text-xs leading-snug text-text">
+                {property.area || "—"}
+              </span>
             </div>
-            <div className="po-detail-meta-item">
-              <span className="po-detail-meta-lbl">القيود</span>
-              <span className="po-detail-meta-val">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-text-3">
+                القيود
+              </span>
+              <span className="text-xs leading-snug text-text">
                 {restrictionsPresentLabel(property.restrictionsPresent) || "—"}
               </span>
             </div>
-            <div className="po-detail-meta-item">
-              <span className="po-detail-meta-lbl">توفر الحدود</span>
-              <span className="po-detail-meta-val">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-text-3">
+                توفر الحدود
+              </span>
+              <span className="text-xs leading-snug text-text">
                 {boundariesAvailabilityLabel(property.boundariesAvailability) ||
                   "—"}
               </span>
             </div>
           </>
         ) : null}
-        <div className="po-detail-meta-item">
-          <span className="po-detail-meta-lbl">ضباط اتصال</span>
-          <span className="po-detail-meta-val">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[10px] font-semibold text-text-3">
+            ضباط اتصال
+          </span>
+          <span className="text-xs leading-snug text-text">
             {contactCount} {contactCount === 1 ? "ضابط" : "ضباط"}
           </span>
         </div>
         {showsCourtFields(assignmentType) &&
           (property.court || property.circuit) && (
-            <div className="po-detail-meta-item">
-              <span className="po-detail-meta-lbl">المحكمة / الدائرة</span>
-              <span className="po-detail-meta-val">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-text-3">
+                المحكمة / الدائرة
+              </span>
+              <span className="text-xs leading-snug text-text">
                 {[property.court, property.circuit].filter(Boolean).join(" · ")}
               </span>
             </div>
@@ -122,8 +149,10 @@ export function PoDetailPropertyCard({
       </div>
 
       {showDecree ? (
-        <div className="po-detail-property-attach">
-          <span className="po-detail-meta-lbl">مرفق قرار الإسناد</span>
+        <div className="mt-2.5 flex flex-col gap-1.5 border-t border-border pt-2.5">
+          <span className="text-[10px] font-semibold text-text-3">
+            مرفق قرار الإسناد
+          </span>
           <AssignmentDocAttachment
             poNumber={poNumber}
             propertyId={property.id}

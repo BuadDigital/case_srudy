@@ -91,6 +91,8 @@ export async function updateGovernmentReviewDraft(
       | "accessBlockReason"
       | "reviewNotes"
       | "confirmed"
+      | "propertyZoneStatus"
+      | "keysProofFileName"
     >
   >,
 ): Promise<GovernmentReviewSubmission | null> {

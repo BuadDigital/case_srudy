@@ -6,8 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./tokens.css": "./src/styles/tokens.css",
-    "./prototype.css": "./src/styles/prototype.css",
-    "./registration.css": "./src/styles/registration.css"
+    "./tailwind-theme.css": "./src/styles/tailwind-theme.css"
   },
   "peerDependencies": {
     "react": "^19"

@@ -1,3 +1,19 @@
+import {
+  Badge,
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatValue,
+  SubpageHeader,
+  SubpagePanel,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@platform/design-system";
+
 const REVENUE_ROWS = [
   { po: "PO-2024-014", billed: 8, excluded: 0, value: "18,400 ر", status: "done" as const },
   { po: "PO-2024-015", billed: 1, excluded: 0, value: "2,200 ر", status: "done" as const },
@@ -12,121 +28,106 @@ const COST_ROWS = [
 ];
 
 function ContractBadge({ type }: { type: "ext" | "int" | "free" }) {
-  if (type === "ext")
-    return <span className="badge b-ext">خارجي</span>;
-  if (type === "int")
-    return <span className="badge b-int">داخلي</span>;
-  return <span className="badge b-free">متعاون</span>;
+  const tone = type === "ext" ? "default" : type === "int" ? "info" : "warning";
+  const label = type === "ext" ? "خارجي" : type === "int" ? "داخلي" : "متعاون";
+  return (
+    <Badge tone={tone} className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+      {label}
+    </Badge>
+  );
 }
 
 export function FinancialView() {
   return (
     <>
-      <div className="stat-grid">
-        <div className="stat-card blue">
-          <div className="stat-label">إيرادات يناير</div>
-          <div className="stat-value" style={{ fontSize: 20 }}>
-            312,400
-          </div>
-          <div className="stat-sub">ريال سعودي</div>
-        </div>
-        <div className="stat-card red">
-          <div className="stat-label">تكاليف خارجية</div>
-          <div className="stat-value" style={{ fontSize: 20 }}>
-            87,600
-          </div>
-          <div className="stat-sub">مكاتب + متعاونون</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">هامش الربح</div>
-          <div className="stat-value" style={{ fontSize: 20 }}>
-            224,800
-          </div>
-          <div className="stat-sub">72% من الإيرادات</div>
-        </div>
-        <div className="stat-card warn">
-          <div className="stat-label">مستحقات معلقة</div>
-          <div className="stat-value" style={{ fontSize: 20 }}>
-            43,200
-          </div>
-          <div className="stat-sub">ريال سعودي</div>
-        </div>
-      </div>
-      <div className="grid-2">
-        <article className="page-shell">
-          <header className="po-subpage-hd">
-            <div className="po-subpage-titles">
-              <h2 className="po-subpage-title">إيرادات إنفاذ</h2>
-            </div>
-          </header>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>PO</th>
-                <th>مُفوتَرة</th>
-                <th>مستثنيات</th>
-                <th>القيمة</th>
-                <th>الحالة</th>
-              </tr>
-            </thead>
-            <tbody>
+      <StatGrid>
+        <StatCard accent="blue">
+          <StatLabel>إيرادات يناير</StatLabel>
+          <StatValue value="312,400" className="text-xl" />
+          <div className="mt-1 text-[10px] text-text-3">ريال سعودي</div>
+        </StatCard>
+        <StatCard accent="red">
+          <StatLabel>تكاليف خارجية</StatLabel>
+          <StatValue value="87,600" className="text-xl" />
+          <div className="mt-1 text-[10px] text-text-3">مكاتب + متعاونون</div>
+        </StatCard>
+        <StatCard accent="green">
+          <StatLabel>هامش الربح</StatLabel>
+          <StatValue value="224,800" className="text-xl" />
+          <div className="mt-1 text-[10px] text-text-3">72% من الإيرادات</div>
+        </StatCard>
+        <StatCard accent="warn">
+          <StatLabel>مستحقات معلقة</StatLabel>
+          <StatValue value="43,200" className="text-xl" />
+          <div className="mt-1 text-[10px] text-text-3">ريال سعودي</div>
+        </StatCard>
+      </StatGrid>
+      <div className="grid grid-cols-2 gap-3">
+        <SubpagePanel>
+          <SubpageHeader title="إيرادات إنفاذ" />
+          <Table>
+            <THead>
+              <Tr hoverable={false}>
+                <Th>PO</Th>
+                <Th>مُفوتَرة</Th>
+                <Th>مستثنيات</Th>
+                <Th>القيمة</Th>
+                <Th>الحالة</Th>
+              </Tr>
+            </THead>
+            <TBody>
               {REVENUE_ROWS.map((r) => (
-                <tr key={r.po}>
-                  <td className="id-cell">{r.po}</td>
-                  <td>{r.billed}</td>
-                  <td>{r.excluded}</td>
-                  <td>{r.value}</td>
-                  <td>
+                <Tr key={r.po} hoverable={false}>
+                  <Td className="text-[11px] font-semibold text-primary-light">{r.po}</Td>
+                  <Td>{r.billed}</Td>
+                  <Td>{r.excluded}</Td>
+                  <Td>{r.value}</Td>
+                  <Td>
                     {r.status === "done" ? (
-                      <span className="badge b-done">مُفوتَر</span>
+                      <Badge tone="success" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+                        مُفوتَر
+                      </Badge>
                     ) : (
-                      <span className="badge b-prog">جزئي</span>
+                      <Badge tone="warning" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+                        جزئي
+                      </Badge>
                     )}
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
-              <tr style={{ background: "var(--surface2)", fontWeight: 600 }}>
-                <td colSpan={3}>الإجمالي</td>
-                <td>55,800 ر</td>
-                <td />
-              </tr>
-            </tbody>
-          </table>
-        </article>
-        <article className="page-shell">
-          <header className="po-subpage-hd">
-            <div className="po-subpage-titles">
-              <h2 className="po-subpage-title">تكاليف مزودي الخدمة</h2>
-            </div>
-          </header>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>المزود</th>
-                <th>النوع</th>
-                <th>التكلفة</th>
-                <th>الفئة</th>
-              </tr>
-            </thead>
-            <tbody>
+              <Tr hoverable={false} className="bg-surface-2 font-semibold">
+                <Td colSpan={3}>الإجمالي</Td>
+                <Td>55,800 ر</Td>
+                <Td />
+              </Tr>
+            </TBody>
+          </Table>
+        </SubpagePanel>
+        <SubpagePanel>
+          <SubpageHeader title="تكاليف مزودي الخدمة" />
+          <Table>
+            <THead>
+              <Tr hoverable={false}>
+                <Th>المزود</Th>
+                <Th>النوع</Th>
+                <Th>التكلفة</Th>
+                <Th>الفئة</Th>
+              </Tr>
+            </THead>
+            <TBody>
               {COST_ROWS.map((r) => (
-                <tr key={r.name}>
-                  <td style={{ fontWeight: 500 }}>{r.name}</td>
-                  <td>
+                <Tr key={r.name} hoverable={false}>
+                  <Td className="font-medium">{r.name}</Td>
+                  <Td>
                     <ContractBadge type={r.type} />
-                  </td>
-                  <td>{r.cost}</td>
-                  <td>{r.cat}</td>
-                </tr>
+                  </Td>
+                  <Td>{r.cost}</Td>
+                  <Td>{r.cat}</Td>
+                </Tr>
               ))}
-              <tr style={{ background: "var(--surface2)", fontWeight: 600 }}>
-                <td colSpan={2}>الإجمالي</td>
-                <td>33,600 ر</td>
-                <td />
-              </tr>
-            </tbody>
-          </table>
-        </article>
+            </TBody>
+          </Table>
+        </SubpagePanel>
       </div>
     </>
   );

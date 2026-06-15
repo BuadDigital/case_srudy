@@ -20,6 +20,7 @@ import {
 } from "../../lib/prototype/tasks-storage";
 import { caseStudyWorkspacePath } from "../../lib/my-task-routes";
 import { useWorkflowTasksQuery } from "@case-study/mfe/query/case-study-queries";
+import { Badge, cn, type BadgeTone } from "@platform/design-system";
 
 function DetailField({
   label,
@@ -32,11 +33,13 @@ function DetailField({
 }) {
   if (!value || value === "—") return null;
   return (
-    <div className="po-property-detail-field">
-      <span className="po-property-detail-field-lbl">{label}</span>
-      <span className="po-property-detail-field-val">
+    <div className="flex min-w-0 flex-col items-stretch gap-1">
+      <span className="block w-full text-start text-[10px] font-semibold text-text-3">
+        {label}
+      </span>
+      <span className="block w-full break-words text-start text-[13px] font-medium leading-snug text-text">
         {ltr ? (
-          <bdi dir="ltr" className="po-property-detail-ltr-val">
+          <bdi dir="ltr" className="inline isolate text-primary-mid">
             {value}
           </bdi>
         ) : (
@@ -64,6 +67,21 @@ function currentStepLabel(draft: CaseStudyFormDraft): string {
   const step = CASE_STUDY_FORM_STEPS[draft.currentStep];
   return step ? `الخطوة ${step.id} — ${step.label}` : "—";
 }
+
+function taskBadgeTone(task: {
+  status: string;
+  phase: string;
+}): BadgeTone {
+  if (task.status === "completed" || task.phase === "done") return "success";
+  if (task.status === "blocked") return "default";
+  return "warning";
+}
+
+const linkButtonSmClass = cn(
+  "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border font-normal whitespace-nowrap transition-colors",
+  "px-2 py-1 text-[11px]",
+  "border-border-md bg-surface text-text hover:bg-surface-2",
+);
 
 export function PoDetailCaseStudySection({
   poNumber,
@@ -102,19 +120,12 @@ export function PoDetailCaseStudySection({
 
   if (!task) {
     return (
-      <p className="po-property-detail-empty-contacts">
+      <p className="m-0 text-xs text-text-3">
         لم تُنشأ بعد مهمة دراسة حالة لهذا العقار — تظهر بعد ربط الخانة
         بأمر العمل.
       </p>
     );
   }
-
-  const taskBadge =
-    task.status === "completed" || task.phase === "done"
-      ? "b-done"
-      : task.status === "blocked"
-        ? "b-cancel"
-        : "b-prog";
 
   return (
     <>
@@ -160,18 +171,18 @@ export function PoDetailCaseStudySection({
           ) : null}
         </>
       ) : (
-        <p className="po-property-detail-empty-contacts">
+        <p className="m-0 text-xs text-text-3">
           لم يُبدأ نموذج دراسة الحالة بعد — افتح مسار دراسة حالة العقارات
           لإكماله.
         </p>
       )}
-      <p style={{ marginTop: 12 }}>
-        <span className={`badge ${taskBadge}`} style={{ marginInlineEnd: 8 }}>
+      <p className="mt-3">
+        <Badge tone={taskBadgeTone(task)} className="me-2 text-[11px]">
           {task.phase === "case-study"
             ? "دراسة الحالة"
             : taskPhaseLabel(task.phase)}
-        </span>
-        <Link href={caseStudyWorkspacePath(task.id)} className="btn btn-sm">
+        </Badge>
+        <Link href={caseStudyWorkspacePath(task.id)} className={linkButtonSmClass}>
           فتح دراسة الحالة
         </Link>
       </p>

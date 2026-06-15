@@ -3,6 +3,22 @@
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 import { MOCK_SURVEY_OFFICES } from "@platform/app-shared/prototype/constants";
+import {
+  Badge,
+  Button,
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatValue,
+  SubpageHeader,
+  SubpagePanel,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@platform/design-system";
 
 export function SurveyView() {
   const { role } = usePrototype();
@@ -10,68 +26,71 @@ export function SurveyView() {
 
   return (
     <>
-      <div className="stat-grid">
-        <div className="stat-card blue">
-          <div className="stat-label">إجمالي طلبات الرفع</div>
-          <div className="stat-value">43</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">مكتملة</div>
-          <div className="stat-value">18</div>
-        </div>
-        <div className="stat-card warn">
-          <div className="stat-label">قيد التنفيذ</div>
-          <div className="stat-value">21</div>
-        </div>
-        <div className="stat-card red">
-          <div className="stat-label">لم تُسند</div>
-          <div className="stat-value">4</div>
-        </div>
-      </div>
-      <article className="page-shell">
-        <header className="po-subpage-hd">
-          <div className="po-subpage-titles">
-            <h2 className="po-subpage-title">المكاتب الهندسية المعتمدة</h2>
-          </div>
+      <StatGrid>
+        <StatCard accent="blue">
+          <StatLabel>إجمالي طلبات الرفع</StatLabel>
+          <StatValue value={43} />
+        </StatCard>
+        <StatCard accent="green">
+          <StatLabel>مكتملة</StatLabel>
+          <StatValue value={18} />
+        </StatCard>
+        <StatCard accent="warn">
+          <StatLabel>قيد التنفيذ</StatLabel>
+          <StatValue value={21} />
+        </StatCard>
+        <StatCard accent="red">
+          <StatLabel>لم تُسند</StatLabel>
+          <StatValue value={4} />
+        </StatCard>
+      </StatGrid>
+      <SubpagePanel>
+        <SubpageHeader title="المكاتب الهندسية المعتمدة">
           {!viewOnly ? (
-            <button type="button" className="btn btn-sm btn-primary">
+            <Button size="sm" variant="primary">
               + إضافة مكتب
-            </button>
+            </Button>
           ) : null}
-        </header>
-        <table className="tbl">
-          <thead>
-            <tr>
-              <th>اسم المكتب</th>
-              <th>نشطة</th>
-              <th>مكتملة هذا الشهر</th>
-              <th>متوسط الإنجاز</th>
-              <th>آلية التعاقد</th>
-              <th>الحالة</th>
-            </tr>
-          </thead>
-          <tbody>
+        </SubpageHeader>
+        <Table>
+          <THead>
+            <Tr hoverable={false}>
+              <Th>اسم المكتب</Th>
+              <Th>نشطة</Th>
+              <Th>مكتملة هذا الشهر</Th>
+              <Th>متوسط الإنجاز</Th>
+              <Th>آلية التعاقد</Th>
+              <Th>الحالة</Th>
+            </Tr>
+          </THead>
+          <TBody>
             {MOCK_SURVEY_OFFICES.map((row) => (
-              <tr key={row.name}>
-                <td style={{ fontWeight: 500 }}>{row.name}</td>
-                <td>{row.active}</td>
-                <td>{row.doneMonth}</td>
-                <td>{row.avgDays}</td>
-                <td>
-                  <span className="badge b-cancel">{row.contract}</span>
-                </td>
-                <td>
+              <Tr key={row.name} hoverable={false}>
+                <Td className="font-medium">{row.name}</Td>
+                <Td>{row.active}</Td>
+                <Td>{row.doneMonth}</Td>
+                <Td>{row.avgDays}</Td>
+                <Td>
+                  <Badge tone="default" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+                    {row.contract}
+                  </Badge>
+                </Td>
+                <Td>
                   {row.statusBusy ? (
-                    <span className="badge b-prog">مشغول</span>
+                    <Badge tone="warning" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+                      مشغول
+                    </Badge>
                   ) : (
-                    <span className="badge b-done">نشط</span>
+                    <Badge tone="success" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+                      نشط
+                    </Badge>
                   )}
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ))}
-          </tbody>
-        </table>
-      </article>
+          </TBody>
+        </Table>
+      </SubpagePanel>
     </>
   );
 }

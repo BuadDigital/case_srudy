@@ -1,6 +1,13 @@
 "use client";
 
 import type { OrgDepartment, OrgPerson } from "@platform/types";
+import {
+  Badge,
+  Note,
+  PageGutter,
+  SubpageHeader,
+  SubpagePanel,
+} from "@platform/design-system";
 import { useOrganizationQuery } from "../../query/settings-queries";
 
 function roleLabel(systemRole: string) {
@@ -19,17 +26,21 @@ function PersonCard({
   badge?: string;
 }) {
   return (
-    <div className="users-org-person">
-      <div className="users-org-person-head">
-        <span className="users-org-person-name">{person.displayName}</span>
-        {badge ? <span className="badge b-int">{badge}</span> : null}
+    <div className="mb-3 rounded-lg border border-border bg-surface-2 p-3">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-text">{person.displayName}</span>
+        {badge ? (
+          <Badge tone="info" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+            {badge}
+          </Badge>
+        ) : null}
       </div>
-      <div className="users-org-person-role">{roleLabel(person.systemRole)}</div>
-      <div className="users-org-person-meta" dir="ltr">
+      <div className="text-xs text-text-2">{roleLabel(person.systemRole)}</div>
+      <div className="text-[11px] text-text-3" dir="ltr">
         {person.email}
       </div>
       {person.jobTitle ? (
-        <div className="users-org-person-sub">{person.jobTitle}</div>
+        <div className="mt-1 text-[11px] text-text-2">{person.jobTitle}</div>
       ) : null}
     </div>
   );
@@ -37,26 +48,27 @@ function PersonCard({
 
 function DepartmentCard({ dept }: { dept: OrgDepartment }) {
   return (
-    <section className="users-org-dept page-shell">
-      <header className="po-subpage-hd">
-        <div className="po-subpage-titles">
-          <h2 className="po-subpage-title">{dept.title}</h2>
-        </div>
+    <SubpagePanel className="mb-0">
+      <SubpageHeader title={dept.title}>
         {dept.isActive ? (
-          <span className="badge b-done">مفعّل</span>
+          <Badge tone="success" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+            مفعّل
+          </Badge>
         ) : (
-          <span className="badge b-prog">مرحلة مستقبلية</span>
+          <Badge tone="warning" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+            مرحلة مستقبلية
+          </Badge>
         )}
-      </header>
-      <div className="page-gutter" style={{ paddingBottom: 16 }}>
-        <p className="users-org-dept-desc">{dept.description}</p>
+      </SubpageHeader>
+      <PageGutter className="pb-4">
+        <p className="mb-3 text-xs leading-relaxed text-text-2">{dept.description}</p>
         {dept.admin ? (
           <PersonCard person={dept.admin} />
         ) : (
-          <p className="users-org-empty">لم يُعيَّن مدير بعد.</p>
+          <p className="text-xs text-text-3">لم يُعيَّن مدير بعد.</p>
         )}
-      </div>
-    </section>
+      </PageGutter>
+    </SubpagePanel>
   );
 }
 
@@ -67,43 +79,42 @@ export function UsersOrganizationView() {
 
   return (
     <>
-      <div className="note users-org-banner">
+      <Note className="mb-4 flex flex-col gap-1">
         <strong>هيكل الإدارات ومديري الأنظمة</strong>
         <span>
           عرض فقط — إنشاء الموظفين والموردين والعملاء يتم من قبل مدير كل إدارة، وليس
           من شاشة CDO.
         </span>
-      </div>
+      </Note>
 
       {loadError ? (
-        <div className="note note-danger" style={{ marginBottom: 12 }}>
+        <Note tone="danger" className="mb-3">
           {loadError}
-        </div>
+        </Note>
       ) : null}
 
-      <article className="page-shell">
-        <header className="po-subpage-hd">
-          <div className="po-subpage-titles">
-            <h2 className="po-subpage-title">مسؤول التحول الرقمي (CDO)</h2>
-          </div>
-          <span className="badge b-cancel">اطلاع فقط</span>
-        </header>
-        <div className="page-gutter" style={{ paddingBottom: 16 }} data-pending={isPending}>
+      <SubpagePanel className="mb-4">
+        <SubpageHeader title="مسؤول التحول الرقمي (CDO)">
+          <Badge tone="default" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+            اطلاع فقط
+          </Badge>
+        </SubpageHeader>
+        <PageGutter className="pb-4" data-pending={isPending}>
           {overview?.cdo ? (
             <PersonCard person={overview.cdo} badge="USR-001" />
           ) : !isPending ? (
-            <p className="users-org-empty">—</p>
+            <p className="text-xs text-text-3">—</p>
           ) : null}
-        </div>
-      </article>
+        </PageGutter>
+      </SubpagePanel>
 
-      <div className="users-org-tree-label page-gutter">الإدارات الفرعية</div>
+      <div className="px-6 pb-2 text-[11px] font-semibold uppercase tracking-wide text-text-3">
+        الإدارات الفرعية
+      </div>
       {isPending && !overview ? (
-        <article className="page-shell">
-          <p className="page-gutter" style={{ margin: 0, paddingBlock: 16, color: "var(--text3)", fontSize: 12 }}>
-            جاري التحميل…
-          </p>
-        </article>
+        <SubpagePanel>
+          <p className="px-6 py-4 text-xs text-text-3">جاري التحميل…</p>
+        </SubpagePanel>
       ) : (
         overview?.departments.map((dept) => (
           <DepartmentCard key={dept.code} dept={dept} />

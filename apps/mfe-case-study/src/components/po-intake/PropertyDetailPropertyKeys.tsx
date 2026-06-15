@@ -10,15 +10,16 @@ import {
 import type { PropertyDetailPartySubmission } from "../../lib/prototype/property-detail-party-submissions";
 import type { PropertyDetailPartyCard } from "../../lib/prototype/property-detail-parties";
 import type { PoPropertyIntake } from "../../lib/prototype/po-intake-data";
+import { Badge, type BadgeTone } from "@platform/design-system";
 
-function keysStatusBadgeClass(
+function keysStatusBadgeTone(
   submission: PropertyDetailPartySubmission | null,
-): string {
+): BadgeTone {
   const statusField = submission?.fields.find((f) => f.label === "حالة المفاتيح");
   const value = statusField?.value ?? "";
-  if (value.includes("استلام")) return "pd-badge-teal";
-  if (value.includes("لم")) return "pd-badge-amber";
-  return "pd-badge-gray";
+  if (value.includes("استلام")) return "primary";
+  if (value.includes("لم")) return "warning";
+  return "default";
 }
 
 export function PropertyDetailPropertyKeys({
@@ -61,7 +62,7 @@ export function PropertyDetailPropertyKeys({
       <SectionHeader>مفاتيح العقار</SectionHeader>
 
       {loading ? (
-        <p className="pd-party-detail-loading">جاري تحميل بيانات المفاتيح…</p>
+        <p className="m-0 text-xs text-text-3">جاري تحميل بيانات المفاتيح…</p>
       ) : !governmentCard?.enabled ? (
         <EmptyState
           icon="🔑"
@@ -84,14 +85,12 @@ export function PropertyDetailPropertyKeys({
         </>
       ) : (
         <>
-          <div className="pd-keys-summary">
-            <span
-              className={`pd-badge ${keysStatusBadgeClass(submission)}`}
-            >
+          <div className="mb-3.5 flex flex-wrap items-center gap-2.5">
+            <Badge tone={keysStatusBadgeTone(submission)}>
               {keysStatus || "—"}
-            </span>
+            </Badge>
             {governmentCard.name && !governmentCard.unassigned ? (
-              <span className="pd-keys-reviewer">
+              <span className="text-xs text-text-2">
                 المراجع الحكومي: {governmentCard.name}
               </span>
             ) : null}

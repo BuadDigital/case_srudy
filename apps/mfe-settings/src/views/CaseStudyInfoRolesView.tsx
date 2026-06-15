@@ -1,6 +1,14 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Button,
+  Note,
+  ProgressBar,
+  Textarea,
+  cn,
+} from "@platform/design-system";
 import {
   CASE_STUDY_INFO_PARTIES,
   CASE_STUDY_INFO_ROLE_TYPES,
@@ -19,7 +27,13 @@ import {
   setCaseStudyInfoRolesCache,
   useCaseStudyInfoRolesQuery,
 } from "../query/settings-queries";
-import { useQueryClient } from "@tanstack/react-query";
+
+const ROLE_BTN_SELECTED: Record<string, string> = {
+  primary: "border-[#C4B5FD] bg-[#F3EEFF] text-[#5B21B6]",
+  secondary: "border-[#6EE7B7] bg-[#ECFDF5] text-[#065F46]",
+  verify: "border-[#FCD34D] bg-[#FFF7ED] text-[#92400E]",
+  none: "border-border bg-surface-2 text-text-3",
+};
 
 function setMatrixRole(
   config: CaseStudyInfoRolesConfig,
@@ -63,13 +77,13 @@ export function CaseStudyInfoRolesView() {
     async (next: CaseStudyInfoRolesConfig) => {
       setSaving(true);
       setSaveError(null);
-      const saved = await saveCaseStudyInfoRolesConfig(next);
+      const savedConfig = await saveCaseStudyInfoRolesConfig(next);
       setSaving(false);
-      if (!saved) {
+      if (!savedConfig) {
         setSaveError(apiErrorMessage("server", "تعذّر حفظ المصفوفة"));
         return;
       }
-      setCaseStudyInfoRolesCache(queryClient, saved);
+      setCaseStudyInfoRolesCache(queryClient, savedConfig);
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2500);
     },
@@ -77,7 +91,7 @@ export function CaseStudyInfoRolesView() {
   );
 
   const summary = useMemo(() => {
-    if (!config) return { done: 0, partial: 0, empty: 0, pct: 0 };
+    if (!config) return { done: 0, partial: 0, empty: 0, pct: 0, total: 0 };
     let done = 0;
     let partial = 0;
     let empty = 0;
@@ -93,7 +107,7 @@ export function CaseStudyInfoRolesView() {
   }, [config]);
 
   if (!isFetched || !config) {
-    return <p className="po-properties-loading">جاري التحميل…</p>;
+    return <p className="my-2 text-xs text-text-3">جاري التحميل…</p>;
   }
 
   const secQuestions = CASE_STUDY_QUESTION_CATALOG.filter(
@@ -101,107 +115,113 @@ export function CaseStudyInfoRolesView() {
   );
 
   return (
-    <div className="csir-page">
-      <header className="csir-hero">
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="csir-title">علاقة المستخدم بالمعلومة</h2>
-          <p className="csir-sub">
+          <h2 className="mb-1.5 text-base font-semibold text-primary">
+            علاقة المستخدم بالمعلومة
+          </h2>
+          <p className="m-0 max-w-[640px] text-xs leading-snug text-text-2">
             حدّد لكل سؤال في نموذج دراسة الحالة: من الأطراف المعنيين وما دوره (أصيل /
             ثانوي / معتمد). تُطبَّق القواعد على تبويب «نموذج الدراسة» في معاملات
             الأطراف.
           </p>
         </div>
-        <div className="csir-hero-actions">
+        <div className="flex items-center gap-2.5">
           {saving ? (
-            <span className="note note-info csir-saved">جاري الحفظ…</span>
+            <Note tone="info" className="m-0 px-2.5 py-1.5 text-[11px]">
+              جاري الحفظ…
+            </Note>
           ) : null}
           {saved ? (
-            <span className="note note-success csir-saved">تم الحفظ</span>
+            <Note tone="success" className="m-0 px-2.5 py-1.5 text-[11px]">
+              تم الحفظ
+            </Note>
           ) : null}
           {saveError ? (
-            <span className="note note-warn csir-saved">{saveError}</span>
+            <Note tone="warn" className="m-0 px-2.5 py-1.5 text-[11px]">
+              {saveError}
+            </Note>
           ) : null}
-          <button
+          <Button
             type="button"
-            className="btn btn-outline btn-sm"
+            variant="outline"
+            size="sm"
             onClick={() => {
               if (!window.confirm("إعادة تعيين جميع الاختيارات؟")) return;
               persist(emptyCaseStudyInfoRolesConfig());
             }}
           >
             إعادة تعيين
-          </button>
+          </Button>
         </div>
       </header>
 
-      <div className="csir-summary">
-        <div className="csir-sum-item">
-          <span className="csir-sum-val">{summary.total}</span>
-          <span className="csir-sum-lbl">إجمالي الأسئلة</span>
+      <div className="flex flex-wrap items-center gap-4 rounded-[var(--radius-lg)] border border-border bg-surface px-4 py-3.5">
+        <div className="min-w-16 text-center">
+          <span className="block text-[22px] font-bold text-primary">{summary.total}</span>
+          <span className="mt-0.5 text-[10px] text-text-3">إجمالي الأسئلة</span>
         </div>
-        <div className="csir-sum-item">
-          <span className="csir-sum-val csir-sum-val--ok">{summary.done}</span>
-          <span className="csir-sum-lbl">مكتملة</span>
+        <div className="min-w-16 text-center">
+          <span className="block text-[22px] font-bold text-success">{summary.done}</span>
+          <span className="mt-0.5 text-[10px] text-text-3">مكتملة</span>
         </div>
-        <div className="csir-sum-item">
-          <span className="csir-sum-val csir-sum-val--warn">{summary.partial}</span>
-          <span className="csir-sum-lbl">جزئية</span>
+        <div className="min-w-16 text-center">
+          <span className="block text-[22px] font-bold text-warning">{summary.partial}</span>
+          <span className="mt-0.5 text-[10px] text-text-3">جزئية</span>
         </div>
-        <div className="csir-sum-item">
-          <span className="csir-sum-val">{summary.empty}</span>
-          <span className="csir-sum-lbl">فارغة</span>
+        <div className="min-w-16 text-center">
+          <span className="block text-[22px] font-bold text-primary">{summary.empty}</span>
+          <span className="mt-0.5 text-[10px] text-text-3">فارغة</span>
         </div>
-        <div className="csir-sum-progress">
-          <div className="csir-sum-prog-head">
+        <div className="min-w-[200px] flex-1">
+          <div className="mb-1.5 flex justify-between text-[11px] text-text-2">
             <span>نسبة الاكتمال</span>
             <span>{summary.pct}%</span>
           </div>
-          <div className="prog-wrap">
-            <div
-              className="prog-bar"
-              style={{ width: `${summary.pct}%` }}
-            />
-          </div>
+          <ProgressBar value={summary.pct} tone="primary" />
         </div>
       </div>
 
-      <div className="csir-layout">
-        <aside className="csir-aside">
-          <div className="csir-legend">
-            <p className="csir-legend-title">الأطراف</p>
+      <div className="grid items-start gap-4 [grid-template-columns:240px_1fr]">
+        <aside className="sticky top-3 rounded-[var(--radius-lg)] border border-border bg-surface py-0">
+          <div className="mb-3 border-b border-border px-3.5 pb-3 pt-0">
+            <p className="mb-2 text-[11px] font-semibold text-text-2">الأطراف</p>
             {CASE_STUDY_INFO_PARTIES.map((p) => (
-              <div key={p.id} className="csir-party">
+              <div key={p.id} className="flex items-center gap-2 py-1 text-[11px]">
                 <span
-                  className="csir-party-dot"
+                  className="size-2 shrink-0 rounded-full"
                   style={{ background: p.color }}
                 />
                 <span>{p.name}</span>
               </div>
             ))}
           </div>
-          <div className="csir-legend">
-            <p className="csir-legend-title">أنواع الأدوار</p>
+          <div className="mb-3 border-b border-border px-3.5 pb-3">
+            <p className="mb-2 text-[11px] font-semibold text-text-2">أنواع الأدوار</p>
             {CASE_STUDY_INFO_ROLE_TYPES.map((r) => (
-              <div key={r.id} className="csir-role-item">
+              <div key={r.id} className="mb-1.5 flex items-center gap-2">
                 <span
-                  className="csir-role-pill"
+                  className="rounded-lg px-2 py-0.5 text-[10px] font-semibold"
                   style={{ background: r.bg, color: r.color }}
                 >
                   {r.label}
                 </span>
-                <span className="csir-role-desc">
+                <span className="text-[10px] text-text-2">
                   {r.id === "primary"
-                  ? "المسؤول الأساسي عن المعلومة"
-                  : r.id === "secondary"
-                    ? "مساهم — قد يكون مصدراً أولاً دون أن يكون المسؤول الأساسي"
-                    : r.id === "verify"
-                      ? "يراجع ويعتمد صحة المعلومة (ليس معتمد التقرير)"
-                      : "بدون صلاحية إجابة"}
+                    ? "المسؤول الأساسي عن المعلومة"
+                    : r.id === "secondary"
+                      ? "مساهم — قد يكون مصدراً أولاً دون أن يكون المسؤول الأساسي"
+                      : r.id === "verify"
+                        ? "يراجع ويعتمد صحة المعلومة (ليس معتمد التقرير)"
+                        : "بدون صلاحية إجابة"}
                 </span>
               </div>
             ))}
           </div>
-          <p className="csir-aside-lbl">الأقسام</p>
+          <p className="px-3.5 pb-1 pt-2 text-[10px] font-semibold tracking-wide text-text-3">
+            الأقسام
+          </p>
           {CASE_STUDY_INFO_SECTIONS.map((sec) => {
             const qs = CASE_STUDY_QUESTION_CATALOG.filter(
               (q) => q.section === sec.id,
@@ -209,19 +229,29 @@ export function CaseStudyInfoRolesView() {
             const filled = qs.filter(
               (q) => questionStatus(config, q.key) !== "empty",
             ).length;
+            const active = activeSec === sec.id;
             return (
               <button
                 key={sec.id}
                 type="button"
-                className={`csir-sec-nav${activeSec === sec.id ? " active" : ""}`}
+                className={cn(
+                  "flex w-full cursor-pointer items-center gap-2 border-none border-e-[3px] border-transparent bg-transparent px-3.5 py-2 text-right font-[inherit] text-xs",
+                  "hover:bg-surface-2",
+                  active && "border-e-primary bg-[#EFF6FF]",
+                )}
                 onClick={() => setActiveSec(sec.id)}
               >
                 <span
-                  className="csir-sec-dot"
+                  className="size-2 shrink-0 rounded-full"
                   style={{ background: sec.color }}
                 />
                 <span>{sec.label}</span>
-                <span className="csir-sec-cnt">
+                <span
+                  className={cn(
+                    "ms-auto rounded-lg px-1.5 py-px text-[10px] text-text-3",
+                    active ? "bg-[#DBEAFE] text-primary" : "bg-surface-2",
+                  )}
+                >
                   {filled}/{qs.length}
                 </span>
               </button>
@@ -229,7 +259,7 @@ export function CaseStudyInfoRolesView() {
           })}
         </aside>
 
-        <div className="csir-main">
+        <div className="min-w-0">
           {secQuestions.map((q) => {
             const globalNum =
               CASE_STUDY_QUESTION_CATALOG.findIndex((x) => x.key === q.key) + 1;
@@ -243,22 +273,29 @@ export function CaseStudyInfoRolesView() {
             return (
               <div
                 key={q.key}
-                className={`csir-q-card${chips.length ? " has-sel" : ""}${open ? " open" : ""}`}
+                className={cn(
+                  "mb-2.5 overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface",
+                  chips.length > 0 && "border-[#BFDBFE]",
+                )}
               >
                 <button
                   type="button"
-                  className="csir-q-head"
+                  className="flex w-full cursor-pointer items-start gap-2.5 border-none bg-transparent px-3.5 py-3 text-right font-[inherit]"
                   onClick={() => setOpenId(open ? null : q.key)}
                 >
-                  <span className="csir-q-num">{globalNum}</span>
-                  <span className="csir-q-text">{q.text}</span>
+                  <span className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px] border border-border text-[11px] font-bold text-text-3">
+                    {globalNum}
+                  </span>
+                  <span className="flex-1 text-[13px] leading-snug text-text">
+                    {q.text}
+                  </span>
                 </button>
                 {chips.length > 0 ? (
-                  <div className="csir-chips">
+                  <div className="flex flex-wrap gap-1.5 px-3.5 pb-2.5">
                     {chips.map(({ party, role }) => (
                       <span
                         key={party.id}
-                        className="csir-chip"
+                        className="rounded-[10px] px-2 py-0.5 text-[10px] font-medium"
                         style={{ background: role.bg, color: role.color }}
                       >
                         {party.name} · {role.label}
@@ -267,23 +304,26 @@ export function CaseStudyInfoRolesView() {
                   </div>
                 ) : null}
                 {open ? (
-                  <div className="csir-grid-wrap">
-                    <p className="csir-grid-lbl">
+                  <div className="border-t border-border bg-surface-2 p-3.5">
+                    <p className="mb-2.5 text-[11px] font-semibold text-text-2">
                       حدّد دور كل طرف في هذه المعلومة:
                     </p>
-                    <div className="csir-parties-grid">
+                    <div className="grid grid-cols-3 gap-2">
                       {CASE_STUDY_INFO_PARTIES.map((party) => (
-                        <div key={party.id} className="csir-party-card">
-                          <div className="csir-party-card-top">
+                        <div
+                          key={party.id}
+                          className="rounded-[var(--radius-DEFAULT)] border-[1.5px] border-border bg-surface p-2.5"
+                        >
+                          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold">
                             <span
-                              className="csir-party-av"
+                              className="flex size-7 items-center justify-center rounded-full text-[10px] font-bold text-white"
                               style={{ background: party.color }}
                             >
                               {party.abbr}
                             </span>
                             <span>{party.name}</span>
                           </div>
-                          <div className="csir-role-btns">
+                          <div className="flex flex-col gap-1">
                             {CASE_STUDY_INFO_ROLE_TYPES.map((rt) => {
                               const sel =
                                 config.matrix[q.key]?.[party.id] === rt.id;
@@ -291,7 +331,11 @@ export function CaseStudyInfoRolesView() {
                                 <button
                                   key={rt.id}
                                   type="button"
-                                  className={`csir-role-btn${sel ? ` sel-${rt.id}` : ""}`}
+                                  className={cn(
+                                    "flex w-full cursor-pointer items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2 py-1.5 text-right font-[inherit] text-[11px] text-text-2",
+                                    "hover:border-[#BFDBFE] hover:bg-[#EFF6FF] hover:text-primary",
+                                    sel && ROLE_BTN_SELECTED[rt.id],
+                                  )}
                                   onClick={() => {
                                     const cur =
                                       config.matrix[q.key]?.[party.id];
@@ -307,7 +351,7 @@ export function CaseStudyInfoRolesView() {
                                     );
                                   }}
                                 >
-                                  <span className="csir-role-icon">{rt.icon}</span>
+                                  <span>{rt.icon}</span>
                                   {rt.label}
                                 </button>
                               );
@@ -316,10 +360,10 @@ export function CaseStudyInfoRolesView() {
                         </div>
                       ))}
                     </div>
-                    <label className="csir-note-lbl">
+                    <label className="mt-3 block text-[11px] text-text-2">
                       ملاحظة (اختياري)
-                      <textarea
-                        className="reg-fi cs-form-textarea"
+                      <Textarea
+                        className="mt-1"
                         rows={2}
                         value={config.notes[q.key] ?? ""}
                         onChange={(e) =>

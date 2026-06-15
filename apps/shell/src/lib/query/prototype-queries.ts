@@ -139,10 +139,8 @@ export function prefetchPrototypePage(
         ...opts,
       });
       break;
-    case "messages":
     case "financial":
     case "kpi":
-    case "system-tools":
       break;
     default:
       break;

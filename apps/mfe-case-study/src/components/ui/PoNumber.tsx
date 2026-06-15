@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@platform/design-system";
 import { formatPoDisplay } from "@case-study/mfe";
 import { poPropertiesPath } from "@case-study/mfe";
 import { prefetchPoRecord } from "../../query/case-study-queries";
 
+const poNumBase =
+  "inline-block font-mono text-[11px] font-semibold [unicode-bidi:isolate]";
+
 /** PO number isolated for correct display in RTL (Arabic label + LTR code). */
 export function PoNumber({
   value,
-  className = "",
+  className,
   link = false,
 }: {
   value: string;
@@ -19,7 +23,11 @@ export function PoNumber({
 }) {
   const queryClient = useQueryClient();
   const display = formatPoDisplay(value);
-  const cls = `po-num-ltr${link ? " po-num-link" : ""}${className ? ` ${className}` : ""}`;
+  const cls = cn(
+    poNumBase,
+    link && "text-primary underline decoration-primary hover:text-primary-mid",
+    className,
+  );
 
   const warmCache = () => {
     if (value.trim()) prefetchPoRecord(queryClient, value);

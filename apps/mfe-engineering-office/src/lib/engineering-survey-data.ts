@@ -41,6 +41,17 @@ export type EngineeringSurveySubmission = {
   siteConfirmed: boolean;
   checklist: EngineeringSurveyChecklistRow[];
   returnNote?: string;
+  /** حقول الرفع لإنفاذ — المكتب الهندسي */
+  onSiteAreaSqm: string;
+  northBoundary: string;
+  northBoundaryLengthM: string;
+  southBoundary: string;
+  southBoundaryLengthM: string;
+  eastBoundary: string;
+  eastBoundaryLengthM: string;
+  westBoundary: string;
+  westBoundaryLengthM: string;
+  surveyNotes: string;
   updatedAtUtc: string;
   submittedAtUtc?: string;
 };
@@ -64,6 +75,16 @@ export function createEngineeringSurveyDraft(input: {
       answer: null,
       note: "",
     })),
+    onSiteAreaSqm: "",
+    northBoundary: "",
+    northBoundaryLengthM: "",
+    southBoundary: "",
+    southBoundaryLengthM: "",
+    eastBoundary: "",
+    eastBoundaryLengthM: "",
+    westBoundary: "",
+    westBoundaryLengthM: "",
+    surveyNotes: "",
     updatedAtUtc: now,
   };
 }

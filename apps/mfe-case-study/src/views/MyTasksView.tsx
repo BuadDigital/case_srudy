@@ -26,6 +26,8 @@ const PRIMARY_DATA_QUEUE: ActiveTransactionQueueConfig = {
   emptyLine: "لا توجد معاملات في «البيانات الأولية».",
   emptyHint:
     "تُنشأ خانات البيانات الأولية عند تسجيل أمر عمل بعدد العقارات المتوقع.",
+  tableHint:
+    "اضغط الصف لفتح البيانات الأولية — اضغط نفس الصف مرة أخرى للإغلاق.",
   panelId: "primary-data-panel",
   getBasePath: myTasksPath,
   getTaskPath: primaryDataTaskPath,

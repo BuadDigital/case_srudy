@@ -8,6 +8,7 @@ import { ROLES } from "@platform/app-shared/prototype/constants";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 import type { RoleId } from "@platform/types";
+import { Badge, Button, cn } from "@platform/design-system";
 import { StatValue } from "@case-study/mfe";
 import { formatDateAr, formatPoDisplay } from "@case-study/mfe";
 import { poPropertyPath } from "@case-study/mfe/lib/po-routes";
@@ -28,6 +29,14 @@ function isSupervisor(role: RoleId) {
 }
 
 type ResolveDraft = { reason: string; instructions: string };
+
+const noteBase =
+  "mb-3 rounded-[var(--radius-DEFAULT)] border border-e-[3px] px-3.5 py-2.5 text-xs leading-relaxed";
+
+const fieldTextareaClass = cn(
+  "min-h-[72px] w-full resize-y rounded-[var(--radius-DEFAULT)] border border-border bg-surface px-2.5 py-2 text-xs text-text outline-none",
+  "focus:border-primary focus:ring-[3px] focus:ring-primary/12",
+);
 
 export function FailuresView() {
   const queryClient = useQueryClient();
@@ -132,31 +141,31 @@ export function FailuresView() {
 
   return (
     <>
-      <div className="stat-grid">
-        <div className="stat-card red">
-          <div className="stat-label">تعذرات مفتوحة</div>
+      <div className="mb-[18px] grid grid-cols-4 gap-2.5">
+        <div className="flex flex-col items-start rounded-lg border border-border border-t-[3px] border-t-danger bg-surface px-4 py-3.5">
+          <div className="mb-[7px] w-full text-start text-[11px] text-text-3">تعذرات مفتوحة</div>
           <StatValue value={isFetched ? stats.open : undefined} />
         </div>
-        <div className="stat-card warn">
-          <div className="stat-label">عند مشرف دراسة الحالة</div>
+        <div className="flex flex-col items-start rounded-lg border border-border border-t-[3px] border-t-amber bg-surface px-4 py-3.5">
+          <div className="mb-[7px] w-full text-start text-[11px] text-text-3">عند مشرف دراسة الحالة</div>
           <StatValue value={isFetched ? stats.review : undefined} />
         </div>
-        <div className="stat-card green">
-          <div className="stat-label">معتمدة / تم الحل</div>
+        <div className="flex flex-col items-start rounded-lg border border-border border-t-[3px] border-t-success bg-surface px-4 py-3.5">
+          <div className="mb-[7px] w-full text-start text-[11px] text-text-3">معتمدة / تم الحل</div>
           <StatValue
             value={
               isFetched ? stats.approved + stats.resolved : undefined
             }
           />
         </div>
-        <div className="stat-card">
-          <div className="stat-label">الإجمالي</div>
+        <div className="flex flex-col items-start rounded-lg border border-border border-t-[3px] border-t-primary bg-surface px-4 py-3.5">
+          <div className="mb-[7px] w-full text-start text-[11px] text-text-3">الإجمالي</div>
           <StatValue value={isFetched ? items.length : undefined} />
         </div>
       </div>
 
       {!ce && !ca ? (
-        <div className="note note-info">
+        <div className={cn(noteBase, "border-info bg-info-bg text-info")}>
           {role === "general-manager"
             ? "أنت في وضع الاطلاع — صلاحية التعديل للمشرف والأخصائي"
             : role === "cdo"
@@ -165,18 +174,15 @@ export function FailuresView() {
         </div>
       ) : null}
       {ca ? (
-        <div className="note note-success">
+        <div className={cn(noteBase, "border-success bg-success-bg text-success")}>
           مسار التعذر: رفع (احتمال / داخلي) → معالجة الأخصائي → مراجعة المشرف
           مع أخصائي الإسناد → اعتماد التعذر أو تعليق المعاملة.
         </div>
       ) : null}
 
       {sortedItems.length === 0 ? (
-        <article className="page-shell">
-          <p
-            className="page-gutter"
-            style={{ paddingBlock: 24, textAlign: "center", color: "var(--text3)" }}
-          >
+        <article className="mb-0 w-full overflow-hidden rounded-none border-none bg-surface shadow-none">
+          <p className="px-6 py-6 text-center text-text-3">
             لا توجد تعذرات — سجّل تعذراً من شاشة العقارات.
           </p>
         </article>
@@ -195,56 +201,43 @@ export function FailuresView() {
           return (
             <div
               key={f.id}
-              className="fail-card"
+              className="mb-2.5 rounded-lg border border-border border-e-[3px] border-e-danger bg-surface p-3.5"
               style={active ? undefined : { opacity: 0.72 }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 6,
-                  flexWrap: "wrap",
-                  gap: 8,
-                }}
-              >
-                <span style={{ fontSize: 13, fontWeight: 500 }}>
+              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[13px] font-medium">
                   {f.deedNumber || displayTitle}{" "}
-                  <span style={{ fontSize: 11, color: "var(--text3)" }}>
+                  <span className="text-[11px] text-text-3">
                     · {formatPoDisplay(f.poNumber)}
                   </span>
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span className="badge b-cancel">
+                <div className="flex items-center gap-2">
+                  <Badge tone="default" className="border-0 text-[11px] font-normal">
                     {failureSeverityLabel(f.severity)}
-                  </span>
-                  <span className="badge b-cancel">
+                  </Badge>
+                  <Badge tone="default" className="border-0 text-[11px] font-normal">
                     {failureStatusLabel(f.status)}
-                  </span>
-                  <span style={{ fontSize: 11, color: "var(--text3)" }}>
-                    <bdi dir="ltr" className="po-property-detail-ltr-val">
+                  </Badge>
+                  <span className="text-[11px] text-text-3">
+                    <bdi dir="ltr" className="[direction:ltr] [unicode-bidi:isolate]">
                       {formatDateAr(f.updatedAt.slice(0, 10))}
                     </bdi>
                   </span>
                 </div>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-                {displayTitle}
-              </div>
+              <div className="mb-1 text-[13px] font-semibold">{displayTitle}</div>
               {f.internalNote ? (
-                <div
-                  style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6 }}
-                >
+                <div className="text-xs leading-relaxed text-text-2">
                   <strong>ملاحظات:</strong> {f.internalNote}
                 </div>
               ) : null}
               {f.finalNote ? (
-                <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 4 }}>
+                <div className="mt-1 text-xs text-text-2">
                   <strong>قرار المشرف:</strong> {f.finalNote}
                 </div>
               ) : null}
               {f.resolutionReason ? (
-                <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 4 }}>
+                <div className="mt-1 text-xs text-text-2">
                   <strong>سبب الحل:</strong> {f.resolutionReason}
                   {f.continueInstructions ? (
                     <>
@@ -255,7 +248,7 @@ export function FailuresView() {
                   ) : null}
                 </div>
               ) : null}
-              <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 5 }}>
+              <div className="mt-1 text-[11px] text-text-3">
                 الرافع: {f.raisedByRole || "—"} · الأخصائي: {f.specialist}
                 {f.status === "review" ? (
                   <>
@@ -266,10 +259,10 @@ export function FailuresView() {
                 ) : null}
               </div>
               {f.propertyId ? (
-                <div style={{ marginTop: 8 }}>
+                <div className="mt-2">
                   <Link
                     href={poPropertyPath(f.poNumber, f.propertyId)}
-                    className="btn btn-sm"
+                    className="inline-flex items-center justify-center rounded-[var(--radius-DEFAULT)] border border-border-md bg-surface px-2 py-1 text-[11px] text-text no-underline transition-colors hover:bg-surface-2"
                   >
                     عرض العقار
                   </Link>
@@ -277,47 +270,43 @@ export function FailuresView() {
               ) : null}
 
               {canSpecialistAct ? (
-                <div
-                  style={{
-                    marginTop: 10,
-                    display: "flex",
-                    gap: 6,
-                    flexWrap: "wrap",
-                  }}
-                >
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {f.severity === "suspected" ? (
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-accent"
+                      size="sm"
+                      variant="primary"
                       onClick={() => handleUpgrade(f.id)}
                     >
                       تأكيد تعذر داخلي
-                    </button>
+                    </Button>
                   ) : (
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-primary"
+                      size="sm"
+                      variant="primary"
                       onClick={() => handleSubmit(f.id)}
                     >
                       تصعيد على المشرف
-                    </button>
+                    </Button>
                   )}
                   {canResolve ? (
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-success"
+                      size="sm"
+                      variant="success"
                       onClick={() => toggleResolve(f.id)}
                     >
                       {resolveOpen[f.id] ? "إلغاء الحل" : "تم الحل"}
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
               ) : null}
 
               {canSupervisorAct ? (
-                <div style={{ marginTop: 10 }}>
+                <div className="mt-2.5">
                   <textarea
-                    className="form-control"
+                    className={fieldTextareaClass}
                     rows={2}
                     placeholder="ملاحظة الاعتماد أو الإعادة"
                     value={supervisorNote[f.id] ?? ""}
@@ -327,95 +316,82 @@ export function FailuresView() {
                         [f.id]: e.target.value,
                       }))
                     }
-                    style={{ width: "100%", marginBottom: 8, fontSize: 12 }}
                   />
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 6,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <button
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-success"
+                      size="sm"
+                      variant="success"
                       onClick={() => handleApprove(f.id)}
                     >
                       اعتماد التعذر
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-danger"
+                      size="sm"
+                      variant="danger"
                       onClick={() => handleReturn(f.id)}
                     >
                       إعادة للأخصائي
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      className="btn btn-sm btn-accent"
+                      size="sm"
+                      variant="primary"
                       onClick={() => void handleSuspend(f.id)}
                     >
                       تعليق المعاملة
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : null}
 
               {resolveOpen[f.id] && canResolve && !canSupervisorAct ? (
-                <div
-                  style={{
-                    marginTop: 10,
-                    padding: 12,
-                    border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    background: "#FAFBFC",
-                  }}
-                >
-                  <div className="reg-fg-full" style={{ marginBottom: 8 }}>
-                    <label className="reg-fl" htmlFor={`resolve_reason_${f.id}`}>
-                      سبب الحل *
-                    </label>
-                    <textarea
-                      id={`resolve_reason_${f.id}`}
-                      className="form-control"
-                      rows={2}
-                      value={draft.reason}
-                      onChange={(e) =>
-                        patchResolveDraft(f.id, { reason: e.target.value })
-                      }
-                      style={{ width: "100%", fontSize: 12 }}
-                    />
-                  </div>
-                  <div className="reg-fg-full" style={{ marginBottom: 8 }}>
-                    <label
-                      className="reg-fl"
-                      htmlFor={`resolve_instructions_${f.id}`}
-                    >
-                      توجيه استمرار العمل *
-                    </label>
-                    <textarea
-                      id={`resolve_instructions_${f.id}`}
-                      className="form-control"
-                      rows={2}
-                      value={draft.instructions}
-                      onChange={(e) =>
-                        patchResolveDraft(f.id, {
-                          instructions: e.target.value,
-                        })
-                      }
-                      style={{ width: "100%", fontSize: 12 }}
-                    />
-                  </div>
-                  <button
+                <div className="mt-2.5 rounded-lg border border-border bg-[#FAFBFC] p-3">
+                  <label
+                    className="mb-1 block text-[11px] font-semibold text-text-2"
+                    htmlFor={`resolve_reason_${f.id}`}
+                  >
+                    سبب الحل *
+                  </label>
+                  <textarea
+                    id={`resolve_reason_${f.id}`}
+                    className={fieldTextareaClass}
+                    rows={2}
+                    value={draft.reason}
+                    onChange={(e) =>
+                      patchResolveDraft(f.id, { reason: e.target.value })
+                    }
+                  />
+                  <label
+                    className="mb-1 mt-2 block text-[11px] font-semibold text-text-2"
+                    htmlFor={`resolve_instructions_${f.id}`}
+                  >
+                    توجيه استمرار العمل *
+                  </label>
+                  <textarea
+                    id={`resolve_instructions_${f.id}`}
+                    className={fieldTextareaClass}
+                    rows={2}
+                    value={draft.instructions}
+                    onChange={(e) =>
+                      patchResolveDraft(f.id, {
+                        instructions: e.target.value,
+                      })
+                    }
+                  />
+                  <Button
                     type="button"
-                    className="btn btn-sm btn-success"
+                    size="sm"
+                    variant="success"
+                    className="mt-2"
                     disabled={
                       !draft.reason.trim() || !draft.instructions.trim()
                     }
                     onClick={() => handleResolve(f.id)}
                   >
                     تأكيد الحل وإغلاق التعذر
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </div>

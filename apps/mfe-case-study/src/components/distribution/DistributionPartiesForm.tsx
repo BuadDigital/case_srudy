@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { RegSelect } from "@platform/app-shared/registration/FormFields";
+import { Card, CardBody, Note, cn } from "@platform/design-system";
 import {
   getEngineeringOffices,
   getFieldInspectors,
@@ -35,28 +36,40 @@ function PartyBlock({
   children: ReactNode;
 }) {
   return (
-    <section
-      className={`my-tasks-party-block${enabled ? " my-tasks-party-block--on" : ""}`}
+    <Card
+      className={cn(
+        "overflow-hidden shadow-none transition-[border-color,box-shadow]",
+        enabled &&
+          "border-primary/45 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_12%,transparent)]",
+      )}
     >
-      <label className="my-tasks-party-block-hd">
+      <label className="m-0 flex cursor-pointer items-start gap-3 px-3.5 pb-2.5 pt-3.5">
         <input
           type="checkbox"
+          className="mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer accent-primary"
           checked={enabled}
           disabled={readOnly}
           onChange={(e) => onEnabledChange(e.target.checked)}
         />
-        <div className="my-tasks-party-body">
-          <p className="my-tasks-party-title">{title}</p>
-          <p className="my-tasks-party-desc">{description}</p>
+        <div className="min-w-0 flex-1 text-start">
+          <p className="m-0 mb-1 text-[13px] font-bold leading-snug text-text">
+            {title}
+          </p>
+          <p className="m-0 text-[11px] leading-normal text-text-3">
+            {description}
+          </p>
         </div>
       </label>
       <div
-        className="my-tasks-party-assign"
+        className={cn(
+          "border-t border-border bg-surface-2 px-3.5 pb-3.5",
+          !enabled && "pointer-events-none opacity-55",
+        )}
         aria-disabled={!enabled}
       >
         {children}
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -76,9 +89,9 @@ export function DistributionPartiesForm({
   readOnly = false,
 }: Props) {
   return (
-    <div className="my-tasks-party-stack">
+    <div className="flex flex-col gap-3">
       {!readOnly ? (
-        <p className="my-tasks-party-intro">
+        <p className="m-0 mb-1 text-start text-xs leading-snug text-text-2">
           فعّل الطرف ثم اختر المسؤول من القائمة. الطرف غير المفعّل لن يُسند إليه
           أي جزء من المعاملة.
         </p>
@@ -98,17 +111,18 @@ export function DistributionPartiesForm({
           })
         }
       >
-        <RegSelect
-          id="dist_gov_auditor"
-          label="المسؤول"
-          className="reg-fg"
-          required={distribution.governmentAuditor}
-          disabled={readOnly || !distribution.governmentAuditor}
-          options={toOptions(getGovernmentAuditors())}
-          value={distribution.governmentAuditorId}
-          placeholder="اختر المراجع الحكومي…"
-          onChange={(v) => onPatch({ governmentAuditorId: v })}
-        />
+        <div className="pt-3">
+          <RegSelect
+            id="dist_gov_auditor"
+            label="المسؤول"
+            required={distribution.governmentAuditor}
+            disabled={readOnly || !distribution.governmentAuditor}
+            options={toOptions(getGovernmentAuditors())}
+            value={distribution.governmentAuditorId}
+            placeholder="اختر المراجع الحكومي…"
+            onChange={(v) => onPatch({ governmentAuditorId: v })}
+          />
+        </div>
       </PartyBlock>
 
       <PartyBlock
@@ -127,11 +141,10 @@ export function DistributionPartiesForm({
           })
         }
       >
-        <div className="my-tasks-party-assign-grid">
+        <div className="grid grid-cols-1 gap-2.5 pt-3 sm:grid-cols-3">
           <RegSelect
             id="dist_val_coordinator"
             label="منسق عمليات التقييم"
-            className="reg-fg"
             required={distribution.valuationDepartment}
             disabled={readOnly || !distribution.valuationDepartment}
             options={toOptions(getValuationCoordinators())}
@@ -142,7 +155,6 @@ export function DistributionPartiesForm({
           <RegSelect
             id="dist_val_inspector"
             label="المعاين الميداني"
-            className="reg-fg"
             required={distribution.valuationDepartment}
             disabled={readOnly || !distribution.valuationDepartment}
             options={toOptions(getFieldInspectors())}
@@ -153,7 +165,6 @@ export function DistributionPartiesForm({
           <RegSelect
             id="dist_val_appraiser"
             label="المقيم العقاري"
-            className="reg-fg"
             required={distribution.valuationDepartment}
             disabled={readOnly || !distribution.valuationDepartment}
             options={toOptions(getValuators())}
@@ -179,20 +190,23 @@ export function DistributionPartiesForm({
             })
           }
         >
-          <RegSelect
-            id="dist_engineering_office"
-            label="المكتب"
-            className="reg-fg"
-            required={distribution.engineeringOffice}
-            disabled={readOnly || !distribution.engineeringOffice}
-            options={toOptions(getEngineeringOffices())}
-            value={distribution.engineeringOfficeId}
-            placeholder="اختر المكتب الهندسي…"
-            onChange={(v) => onPatch({ engineeringOfficeId: v })}
-          />
+          <div className="pt-3">
+            <RegSelect
+              id="dist_engineering_office"
+              label="المكتب"
+              required={distribution.engineeringOffice}
+              disabled={readOnly || !distribution.engineeringOffice}
+              options={toOptions(getEngineeringOffices())}
+              value={distribution.engineeringOfficeId}
+              placeholder="اختر المكتب الهندسي…"
+              onChange={(v) => onPatch({ engineeringOfficeId: v })}
+            />
+          </div>
         </PartyBlock>
       ) : engineeringHint ? (
-        <p className="my-tasks-party-hint">{engineeringHint}</p>
+        <Note tone="default" className="border border-border bg-surface-2 text-[11px]">
+          {engineeringHint}
+        </Note>
       ) : null}
     </div>
   );

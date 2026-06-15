@@ -1,4 +1,4 @@
-/** @settings/mfe — الإعدادات + جميع حقول النظام (users, courts, info-roles, system-tools). */
+/** @settings/mfe — الإعدادات + جميع حقول النظام (users, courts, info-roles, حقول النظام). */
 
 export {
   SETTINGS_MFE_PAGE_IDS,
@@ -9,7 +9,7 @@ export { CourtsView } from "./views/CourtsView";
 export { UsersView } from "./views/UsersView";
 export { UsersOrganizationView } from "./views/users/UsersOrganizationView";
 export { CaseStudyInfoRolesView } from "./views/CaseStudyInfoRolesView";
-export { SystemToolsView } from "./views/SystemToolsView";
+export { SystemFieldsCatalogView } from "./views/SystemFieldsCatalogView";
 
 export * from "./lib/settings-api-config";
 export * from "./lib/settings-roles";

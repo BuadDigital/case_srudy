@@ -4,6 +4,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RegistrationPortal } from "@platform/app-shared/registration/RegistrationPortal";
 import { RegisterUserFlow } from "@platform/app-shared/registration/RegisterUserFlow";
+import {
+  Badge,
+  Button,
+  Note,
+  SubpageHeader,
+  SubpagePanel,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@platform/design-system";
 import type { StaffUser } from "@platform/app-shared/prototype/constants";
 import type { RegistrationSource } from "@platform/app-shared/prototype/registration-data";
 import { submitRegistration } from "../lib/users-api";
@@ -17,9 +30,9 @@ type UsersMode = "list" | "portal" | "register";
 function UsersToast({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="note note-success reg-users-toast" role="status">
+    <Note tone="success" role="status">
       {message}
-    </div>
+    </Note>
   );
 }
 
@@ -167,18 +180,13 @@ function UsersStaffListView({
     <>
       <UsersToast message={toast} />
 
-      <article className="page-shell">
-        <header className="po-subpage-hd">
-          <div className="po-subpage-titles">
-            <h2 className="po-subpage-title">
-              {usersTitleForSource(preferredSource)}
-              {dataReady ? ` (${staff.length})` : null}
-            </h2>
-          </div>
+      <SubpagePanel>
+        <SubpageHeader title={`${usersTitleForSource(preferredSource)}${dataReady ? ` (${staff.length})` : ""}`}>
           {!viewOnly ? (
-            <button
+            <Button
               type="button"
-              className="btn btn-sm btn-primary"
+              size="sm"
+              variant="primary"
               onClick={() => {
                 if (preferredSource) {
                   setRegisterSource(preferredSource);
@@ -189,41 +197,40 @@ function UsersStaffListView({
               }}
             >
               {addButtonLabel(preferredSource)}
-            </button>
+            </Button>
           ) : (
-            <span className="badge b-cancel">اطلاع فقط</span>
+            <Badge tone="default" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+              اطلاع فقط
+            </Badge>
           )}
-        </header>
+        </SubpageHeader>
         {loadError ? (
-          <div className="note note-danger page-gutter" style={{ marginBottom: 12 }}>
+          <Note tone="danger" className="mx-6 mb-3">
             {loadError}
-          </div>
+          </Note>
         ) : null}
-        <table className="tbl users-tbl" data-pending={!dataReady}>
-          <thead>
-            <tr>
-              <th>الاسم</th>
-              <th>المسمى / نوع التوظيف</th>
-              <th>البريد الإلكتروني</th>
-              <th>رقم الجوال</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table pending={!dataReady}>
+          <THead>
+            <Tr hoverable={false}>
+              <Th>الاسم</Th>
+              <Th>المسمى / نوع التوظيف</Th>
+              <Th>البريد الإلكتروني</Th>
+              <Th>رقم الجوال</Th>
+            </Tr>
+          </THead>
+          <TBody>
             {dataReady && loadError ? (
-              <tr className="tbl-empty">
-                <td colSpan={4} style={{ textAlign: "center", color: "var(--text3)" }}>
+              <Tr hoverable={false}>
+                <Td colSpan={4} className="text-center text-text-3">
                   —
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ) : dataReady && staff.length === 0 ? (
-              <tr className="tbl-empty">
-                <td
-                  colSpan={4}
-                  style={{ textAlign: "center", color: "var(--text3)" }}
-                >
+              <Tr hoverable={false}>
+                <Td colSpan={4} className="text-center text-text-3">
                   {usersEmptyForSource(preferredSource)}
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ) : dataReady ? (
               staff.map((u) => {
                 const empType = u.details?.find(
@@ -231,36 +238,22 @@ function UsersStaffListView({
                 )?.value;
                 const roleLabel = empType ? `${u.role} · ${empType}` : u.role;
                 return (
-                <tr key={u.id} className="users-row-main">
-                  <td style={{ fontSize: 11, fontWeight: 600 }}>{u.name}</td>
-                  <td style={{ fontSize: 11, color: "var(--text2)" }}>{roleLabel}</td>
-                  <td
-                    style={{
-                      direction: "ltr",
-                      textAlign: "right",
-                      fontSize: 11,
-                      color: "var(--primary-light)",
-                    }}
-                  >
+                <Tr key={u.id} hoverable={false}>
+                  <Td className="text-[11px] font-semibold">{u.name}</Td>
+                  <Td className="text-[11px] text-text-2">{roleLabel}</Td>
+                  <Td className="text-[11px] text-primary-light [direction:ltr] text-right">
                     {u.email}
-                  </td>
-                  <td
-                    style={{
-                      direction: "ltr",
-                      textAlign: "right",
-                      fontSize: 11,
-                      color: "var(--text2)",
-                    }}
-                  >
+                  </Td>
+                  <Td className="text-[11px] text-text-2 [direction:ltr] text-right">
                     {u.phone ?? "—"}
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
                 );
               })
             ) : null}
-          </tbody>
-        </table>
-      </article>
+          </TBody>
+        </Table>
+      </SubpagePanel>
     </>
   );
 }

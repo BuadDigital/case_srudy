@@ -36,6 +36,12 @@ export type CaseStudyFormDraft = {
   sigDate: string;
   /** اعتماد الأخصائي بعد مراجعة إجابات الأطراف — questionKey → true */
   specialistReviewApproved?: Record<string, boolean>;
+  /** حقول الرفع لإنفاذ — أخصائي */
+  infathLinkedAssets?: "" | "yes" | "no";
+  infathLinkedDeedNumbers?: string;
+  infathLinkedAssetsNotes?: string;
+  infathOtherNotes?: string;
+  infathClosingNotes?: string;
   savedAtUtc?: string;
 };
 
@@ -130,6 +136,11 @@ export function emptyCaseStudyFormDraft(
     sigApprover: "",
     sigDate: today,
     specialistReviewApproved: {},
+    infathLinkedAssets: "",
+    infathLinkedDeedNumbers: "",
+    infathLinkedAssetsNotes: "",
+    infathOtherNotes: "",
+    infathClosingNotes: "",
   };
 }
 

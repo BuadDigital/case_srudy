@@ -9,6 +9,7 @@ import {
 } from "./PropertyDetailFields";
 import type { PropertyDetailPartySubmission } from "../../lib/prototype/property-detail-party-submissions";
 import type { PropertyDetailPartyCard } from "../../lib/prototype/property-detail-parties";
+import { cn } from "@platform/design-system";
 
 export function PartyRoleDetailPanel({
   card,
@@ -21,19 +22,19 @@ export function PartyRoleDetailPanel({
 }) {
   return (
     <div
-      className="pd-party-detail"
+      className="mt-4 rounded-[var(--radius-DEFAULT)] border border-border bg-surface p-4"
       role="region"
       aria-label={`بيانات ${card.role}`}
     >
       <SectionHeader>
         بيانات {card.role}
         {card.name && !card.unassigned ? (
-          <span className="pd-party-detail-assignee"> — {card.name}</span>
+          <span className="text-xs font-normal text-text-2"> — {card.name}</span>
         ) : null}
       </SectionHeader>
 
       {loading ? (
-        <p className="pd-party-detail-loading">جاري التحميل…</p>
+        <p className="m-0 text-xs text-text-3">جاري التحميل…</p>
       ) : !submission || !submission.hasData ? (
         <EmptyState
           icon="📋"
@@ -80,14 +81,20 @@ export function PartyRoleDetailPanel({
             <>
               <SectionDivider />
               <SectionHeader>الإجابات المقدّمة</SectionHeader>
-              <div className="pd-party-answers">
+              <div className="flex flex-col gap-0 overflow-hidden rounded-[var(--radius-DEFAULT)] border border-border">
                 {submission.answers.map((row, index) => (
                   <div
                     key={`${row.question}-${index}`}
-                    className="pd-party-answer-row"
+                    className={cn(
+                      "grid grid-cols-[1fr_auto] items-start gap-3 border-b border-border bg-surface-2 px-3 py-2.5 last:border-b-0",
+                    )}
                   >
-                    <div className="pd-party-answer-q">{row.question}</div>
-                    <div className="pd-party-answer-a">{row.answer}</div>
+                    <div className="text-xs leading-snug text-text">
+                      {row.question}
+                    </div>
+                    <div className="whitespace-nowrap text-xs font-medium text-success">
+                      {row.answer}
+                    </div>
                   </div>
                 ))}
               </div>

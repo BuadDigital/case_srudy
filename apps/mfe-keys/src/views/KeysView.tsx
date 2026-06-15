@@ -3,6 +3,23 @@
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { MOCK_PROPERTIES } from "@platform/app-shared/prototype/constants";
 import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
+import {
+  Badge,
+  Button,
+  Note,
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatValue,
+  SubpageHeader,
+  SubpagePanel,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@platform/design-system";
 
 export function KeysView() {
   const { role } = usePrototype();
@@ -11,72 +28,76 @@ export function KeysView() {
 
   return (
     <>
-      <div className="stat-grid">
-        <div className="stat-card blue">
-          <div className="stat-label">إجمالي المفاتيح</div>
-          <div className="stat-value">{kp.length}</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">مستلمة</div>
-          <div className="stat-value">1</div>
-        </div>
-        <div className="stat-card warn">
-          <div className="stat-label">بانتظار الاستلام</div>
-          <div className="stat-value">{Math.max(0, kp.length - 1)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">مندوبو المحكمة</div>
-          <div className="stat-value">2</div>
-        </div>
-      </div>
-      <div className="note note-warn">مندوبا المحكمة المعتمدان: فراس كمرين — خالد الشريف</div>
-      <article className="page-shell">
-        <header className="po-subpage-hd">
-          <div className="po-subpage-titles">
-            <h2 className="po-subpage-title">العقارات التي تحتاج مفاتيح</h2>
-          </div>
-        </header>
-        <table className="tbl">
-          <thead>
-            <tr>
-              <th>رقم العقار</th>
-              <th>PO</th>
-              <th>المنطقة</th>
-              <th>المحكمة</th>
-              <th>حالة المفتاح</th>
-              <th>المندوب</th>
-              <th>إجراء</th>
-            </tr>
-          </thead>
-          <tbody>
+      <StatGrid>
+        <StatCard accent="blue">
+          <StatLabel>إجمالي المفاتيح</StatLabel>
+          <StatValue value={kp.length} />
+        </StatCard>
+        <StatCard accent="green">
+          <StatLabel>مستلمة</StatLabel>
+          <StatValue value={1} />
+        </StatCard>
+        <StatCard accent="warn">
+          <StatLabel>بانتظار الاستلام</StatLabel>
+          <StatValue value={Math.max(0, kp.length - 1)} />
+        </StatCard>
+        <StatCard>
+          <StatLabel>مندوبو المحكمة</StatLabel>
+          <StatValue value={2} />
+        </StatCard>
+      </StatGrid>
+      <Note tone="warn" className="mb-4">
+        مندوبا المحكمة المعتمدان: فراس كمرين — خالد الشريف
+      </Note>
+      <SubpagePanel>
+        <SubpageHeader title="العقارات التي تحتاج مفاتيح" />
+        <Table>
+          <THead>
+            <Tr hoverable={false}>
+              <Th>رقم العقار</Th>
+              <Th>PO</Th>
+              <Th>المنطقة</Th>
+              <Th>المحكمة</Th>
+              <Th>حالة المفتاح</Th>
+              <Th>المندوب</Th>
+              <Th>إجراء</Th>
+            </Tr>
+          </THead>
+          <TBody>
             {kp.map((p) => (
-              <tr key={p.id}>
-                <td className="id-cell">{p.id}</td>
-                <td style={{ fontSize: 11, color: "var(--primary-light)" }}>{p.po}</td>
-                <td>{p.area}</td>
-                <td>محكمة {p.area}</td>
-                <td>
+              <Tr key={p.id} hoverable={false}>
+                <Td className="text-[11px] font-semibold text-primary-light">
+                  {p.id}
+                </Td>
+                <Td className="text-[11px] text-primary-light">{p.po}</Td>
+                <Td>{p.area}</Td>
+                <Td>محكمة {p.area}</Td>
+                <Td>
                   {p.id === "E-4403" ? (
-                    <span className="badge b-done">مستلم</span>
+                    <Badge tone="success" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+                      مستلم
+                    </Badge>
                   ) : (
-                    <span className="badge b-prog">بانتظار الاستلام</span>
+                    <Badge tone="warning" className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal">
+                      بانتظار الاستلام
+                    </Badge>
                   )}
-                </td>
-                <td>فراس كمرين</td>
-                <td>
+                </Td>
+                <Td>فراس كمرين</Td>
+                <Td>
                   {p.id === "E-4403" || viewOnly ? (
                     "—"
                   ) : (
-                    <button type="button" className="btn btn-sm btn-primary">
+                    <Button size="sm" variant="primary">
                       تسجيل الاستلام
-                    </button>
+                    </Button>
                   )}
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ))}
-          </tbody>
-        </table>
-      </article>
+          </TBody>
+        </Table>
+      </SubpagePanel>
     </>
   );
 }

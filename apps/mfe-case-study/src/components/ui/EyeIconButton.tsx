@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { cn } from "@platform/design-system";
 
 function EyeIcon() {
   return (
@@ -21,6 +22,12 @@ function EyeIcon() {
   );
 }
 
+const eyeBtnClass = (active?: boolean) =>
+  cn(
+    "inline-flex h-[30px] w-[30px] items-center justify-center rounded-[var(--radius-DEFAULT)] border border-border bg-surface text-text-2 transition-colors hover:bg-info-bg hover:border-info hover:text-info",
+    active && "bg-info-bg border-info text-info",
+  );
+
 export function EyeIconButton({
   href,
   active,
@@ -32,7 +39,7 @@ export function EyeIconButton({
   label: string;
   onClick?: () => void;
 }) {
-  const className = `tbl-eye-btn${active ? " is-active" : ""}`;
+  const className = eyeBtnClass(active);
 
   if (href) {
     return (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { Button, cn } from "@platform/design-system";
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { canEditProperty } from "../../lib/prototype/po-roles";
 import {
@@ -11,6 +12,14 @@ import {
 import { caseStudyWorkspacePath } from "../../lib/my-task-routes";
 import { caseStudyTaskForProperty } from "../../lib/prototype/tasks-storage";
 import { usePoRecordQuery, useWorkflowTasksQuery } from "../../query/case-study-queries";
+
+const linkButtonClass = (variant: "default" | "primary" = "default") =>
+  cn(
+    "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-DEFAULT)] border font-normal whitespace-nowrap no-underline transition-colors px-2 py-1 text-[11px]",
+    variant === "primary"
+      ? "border-primary bg-primary text-white hover:border-primary-mid hover:bg-primary-mid"
+      : "border-border-md bg-surface text-text hover:bg-surface-2",
+  );
 
 export function PoPropertyDetailTopbarActions({
   poNumber,
@@ -40,25 +49,28 @@ export function PoPropertyDetailTopbarActions({
   const needsBourse = !property.bourseDataCompleted;
 
   return (
-    <div className="topbar-actions" aria-label="إجراءات العقار">
+    <div
+      className="flex shrink-0 flex-wrap items-center justify-end gap-2"
+      aria-label="إجراءات العقار"
+    >
       {showEdit ? (
-        <button
+        <Button
           type="button"
-          className="btn btn-sm"
+          size="sm"
           onClick={() => router.push(poPropertyEditPath(poNumber, property.id))}
         >
           تعديل العقار
-        </button>
+        </Button>
       ) : null}
       {needsBourse ? (
-        <Link href="/bourse-inquiry" className="btn btn-sm">
+        <Link href="/bourse-inquiry" className={linkButtonClass()}>
           استعلام البورصة
         </Link>
       ) : null}
       {task ? (
         <Link
           href={caseStudyWorkspacePath(task.id)}
-          className="btn btn-sm btn-primary"
+          className={linkButtonClass("primary")}
         >
           فتح دراسة الحالة
         </Link>

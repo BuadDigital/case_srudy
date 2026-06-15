@@ -18,6 +18,16 @@ import {
 import { findPriorDeedFull } from "../../lib/prototype/po-intake-storage";
 import { RegField, RegSelect } from "@platform/app-shared/registration/FormFields";
 import type { FieldErrors } from "@platform/app-shared/registration/registration-utils";
+import {
+  Badge,
+  Card,
+  CardBody,
+  cn,
+  FormRow,
+  Input,
+  Label,
+  Note,
+} from "@platform/design-system";
 import { AssignmentDocAttachment } from "./AssignmentDocAttachment";
 import { PoContactEditor } from "./PoContactEditor";
 
@@ -38,6 +48,14 @@ type Props = {
   /** When set, only render identifier type selector (for bourse-inquiry fast path). */
   fieldsMode?: "all" | "identifier-only" | "bourse-inquiry-primary";
 };
+
+const pillClass = (selected: boolean) =>
+  cn(
+    "inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--radius-DEFAULT)] border-2 px-4 py-2 font-[inherit] text-xs font-semibold transition-all",
+    selected
+      ? "border-primary bg-primary text-white shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-primary)_20%,transparent)]"
+      : "border-border bg-surface text-text-2 hover:border-primary-light hover:text-primary",
+  );
 
 function selectIdentifierType(
   onPatch: Props["onPatch"],
@@ -118,33 +136,33 @@ export function PoPropertyEnfathForm({
   return (
     <>
       {showStageNote ? (
-        <div className="note note-info" style={{ marginBottom: 12 }}>
+        <Note tone="info" className="mb-3">
           {isBourseId
             ? "مسار استعلام البورصة — أدخل البيانات الأولية وبيانات البورصة معاً."
             : "بيانات مرحلة إنفاذ — تُكمّل بيانات البورصة (المدينة، التصنيف، الحدود) لاحقاً من «استعلام البورصة»."}
-        </div>
+        </Note>
       ) : null}
 
-      <div className="reg-fg-full po-data-source-field" style={{ marginBottom: 12 }}>
-        <span className="reg-fl po-data-source-label">مصدر البيانات</span>
-        <div className="po-id-type-pills">
+      <div className="mb-3 w-full">
+        <Label className="mb-1 text-[11px]">مصدر البيانات</Label>
+        <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
-            className={`reg-type-pill${property.identifierType === "deed" ? " sel" : ""}`}
+            className={pillClass(property.identifierType === "deed")}
             onClick={() => selectIdentifierType(onPatch, "deed")}
           >
             صك ملكية
           </button>
           <button
             type="button"
-            className={`reg-type-pill${property.identifierType === "real_estate_reg" ? " sel" : ""}`}
+            className={pillClass(property.identifierType === "real_estate_reg")}
             onClick={() => selectIdentifierType(onPatch, "real_estate_reg")}
           >
             تسجيل عيني
           </button>
           <button
             type="button"
-            className={`reg-type-pill${property.identifierType === "bourse_inquiry" ? " sel" : ""}`}
+            className={pillClass(property.identifierType === "bourse_inquiry")}
             onClick={() => selectIdentifierType(onPatch, "bourse_inquiry")}
           >
             البورصة العقاريه
@@ -153,40 +171,38 @@ export function PoPropertyEnfathForm({
       </div>
 
       {isBourseId && !hideBoursePathStatus && !showBoursePrimary ? (
-        <div className="po-bourse-id-status card" style={{ marginBottom: 14 }}>
-          <div className="card-body" style={{ padding: "14px 16px" }}>
-            <span className="reg-fl" style={{ display: "block", marginBottom: 8 }}>
-              حالة المسار
-            </span>
-            <span className="badge b-prog" style={{ fontSize: 13 }}>
+        <Card className="mb-3.5">
+          <CardBody className="px-4 py-3.5">
+            <Label className="mb-2 block text-[11px]">حالة المسار</Label>
+            <Badge tone="warning" className="text-[13px] font-normal">
               {BOURSE_INQUIRY_IDENTIFIER_STATUS}
-            </span>
-          </div>
-        </div>
+            </Badge>
+          </CardBody>
+        </Card>
       ) : property.identifierType === "real_estate_reg" ? (
-        <div className="note note-warn" style={{ marginBottom: 12 }}>
+        <Note tone="warn" className="mb-3">
           لا يمكن الاستعلام من بورصة العقارات — يطلب الأخصائي السجل العقاري من
           أطراف التنفيذ ويرفعه كمرفق.
-        </div>
+        </Note>
       ) : null}
 
       {isIdentifierOnly ? null : (
       <>
       {!isBourseId && priorPoNotice ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
+        <Note tone="success" className="mb-3">
           هذا الصك مسجّل سابقاً في أمر العمل «{priorPoNotice}» — يمكن استخدام بيانات
           الاتصال السابقة.
-        </div>
+        </Note>
       ) : null}
 
       {isBourseId && priorPoNotice ? (
-        <div className="note note-success" style={{ marginBottom: 12 }}>
+        <Note tone="success" className="mb-3">
           هذا الصك مسجّل سابقاً في أمر العمل «{priorPoNotice}».
-        </div>
+        </Note>
       ) : null}
 
       {showBoursePrimary ? (
-        <div className="reg-fg2">
+        <FormRow>
           <RegField
             id="deed_number_bourse"
             label="رقم الصك"
@@ -238,9 +254,9 @@ export function PoPropertyEnfathForm({
             error={fieldErrors.circuit}
             onChange={(v) => onPatch("circuit", v)}
           />
-        </div>
+        </FormRow>
       ) : showDeedFields ? (
-      <div className="reg-fg2">
+      <FormRow>
         <RegField
           id="deed_number"
           label={
@@ -296,19 +312,19 @@ export function PoPropertyEnfathForm({
             />
           </>
         ) : null}
-      </div>
+      </FormRow>
       ) : null}
 
       {!isBourseId && fieldsMode === "all" ? (
-      <div className="reg-fg-full" style={{ marginTop: 8 }}>
-        <label className="reg-fl" htmlFor={`delegation_${property.id}`}>
+      <div className="mt-2 w-full">
+        <Label className="mb-1 text-[11px]" htmlFor={`delegation_${property.id}`}>
           خطاب التفويض *
-        </label>
-        <input
+        </Label>
+        <Input
           id={`delegation_${property.id}`}
           type="file"
-          className="reg-fi"
           accept=".pdf,.jpg,.jpeg,.png"
+          className="text-xs"
           onChange={(e) => {
             const file = e.target.files?.[0];
             onPatch("delegationLetterFileName", file?.name ?? "");
@@ -318,51 +334,55 @@ export function PoPropertyEnfathForm({
           }}
         />
         {fieldErrors.delegationLetterFileName ? (
-          <p className="reg-field-error" role="alert">
+          <p className="mt-1 text-[10px] text-danger" role="alert">
             {fieldErrors.delegationLetterFileName}
           </p>
         ) : property.delegationLetterFileName ? (
-          <p className="reg-field-hint">{property.delegationLetterFileName}</p>
+          <p className="mt-1 text-[10px] text-text-3">
+            {property.delegationLetterFileName}
+          </p>
         ) : null}
       </div>
       ) : null}
 
       {property.identifierType === "real_estate_reg" && fieldsMode === "all" ? (
-        <div className="reg-fg-full" style={{ marginTop: 8 }}>
-          <label className="reg-fl" htmlFor={`real_estate_reg_${property.id}`}>
+        <div className="mt-2 w-full">
+          <Label className="mb-1 text-[11px]" htmlFor={`real_estate_reg_${property.id}`}>
             السجل العقاري (مرفق) *
-          </label>
-          <input
+          </Label>
+          <Input
             id={`real_estate_reg_${property.id}`}
             type="file"
-            className="reg-fi"
             accept=".pdf,.jpg,.jpeg,.png"
+            className="text-xs"
             onChange={(e) => {
               const file = e.target.files?.[0];
               onPatch("realEstateRegFileName", file?.name ?? "");
             }}
           />
           {fieldErrors.realEstateRegFileName ? (
-            <p className="reg-field-error" role="alert">
+            <p className="mt-1 text-[10px] text-danger" role="alert">
               {fieldErrors.realEstateRegFileName}
             </p>
           ) : property.realEstateRegFileName ? (
-            <p className="reg-field-hint">{property.realEstateRegFileName}</p>
+            <p className="mt-1 text-[10px] text-text-3">
+              {property.realEstateRegFileName}
+            </p>
           ) : null}
         </div>
       ) : null}
 
       {showAssignmentDecree && showExtended ? (
-        <div className="reg-fg-full" style={{ marginTop: 8 }}>
-          <label className="reg-fl" htmlFor={`assignment_doc_${property.id}`}>
+        <div className="mt-2 w-full">
+          <Label className="mb-1 text-[11px]" htmlFor={`assignment_doc_${property.id}`}>
             قرار الإسناد
             {propertyOrdinal ? ` (${propertyOrdinal})` : ""} *
-          </label>
-          <input
+          </Label>
+          <Input
             id={`assignment_doc_${property.id}`}
             type="file"
-            className="reg-fi"
             accept=".pdf,.jpg,.jpeg,.png"
+            className="text-xs"
             onChange={(e) => {
               const file = e.target.files?.[0];
               onPatch("assignmentDocFileName", file?.name ?? "");
@@ -379,7 +399,7 @@ export function PoPropertyEnfathForm({
               variant="inline"
             />
           ) : fieldErrors.assignmentDocFileName ? (
-            <p className="reg-field-error" role="alert">
+            <p className="mt-1 text-[10px] text-danger" role="alert">
               {fieldErrors.assignmentDocFileName}
             </p>
           ) : null}
@@ -387,23 +407,23 @@ export function PoPropertyEnfathForm({
       ) : null}
 
       {fieldsMode === "all" ? (
-      <div className="reg-fg-full" style={{ marginTop: 8 }}>
-        <label className="reg-fl" htmlFor={`other_docs_${property.id}`}>
+      <div className="mt-2 w-full">
+        <Label className="mb-1 text-[11px]" htmlFor={`other_docs_${property.id}`}>
           مستندات أخرى (اختياري)
-        </label>
-        <input
+        </Label>
+        <Input
           id={`other_docs_${property.id}`}
           type="file"
-          className="reg-fi"
           accept=".pdf,.jpg,.jpeg,.png"
           multiple
+          className="text-xs"
           onChange={(e) => {
             const names = Array.from(e.target.files ?? []).map((f) => f.name);
             onPatch("otherDocumentFileNames", names);
           }}
         />
         {property.otherDocumentFileNames.length > 0 ? (
-          <p className="reg-field-hint">
+          <p className="mt-1 text-[10px] text-text-3">
             {property.otherDocumentFileNames.join("، ")}
           </p>
         ) : null}
@@ -411,14 +431,12 @@ export function PoPropertyEnfathForm({
       ) : null}
 
       {showExtended ? (
-      <div style={{ marginTop: 20 }}>
-        <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
-          ضباط الاتصال
-        </h3>
+      <div className="mt-5">
+        <h3 className="mb-2.5 text-[13px] font-bold">ضباط الاتصال</h3>
         {fieldErrors._contacts ? (
-          <div className="note note-warn" style={{ marginBottom: 12 }}>
+          <Note tone="warn" className="mb-3">
             {fieldErrors._contacts}
-          </div>
+          </Note>
         ) : null}
         <PoContactEditor
           contacts={property.contacts}

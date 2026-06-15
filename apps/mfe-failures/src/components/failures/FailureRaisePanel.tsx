@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardBody, CardHeader, Button, cn } from "@platform/design-system";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import { failureProblemTypeLabel } from "../../lib/failure-types-data";
 import { createFailure } from "../../lib/failures-repository";
@@ -16,7 +17,10 @@ import { isActiveFailureStatus } from "../../lib/failures-types";
 import { useFailuresQuery } from "../../query/failures-queries";
 import { FailureRaiseFields } from "./FailureRaiseFields";
 
-/** §2 — رفع تعذر من واجهة الطرف (معاين، مقيم، …). */
+const noteWarnClass = cn(
+  "rounded-[var(--radius-DEFAULT)] border border-amber border-e-[3px] border-e-amber bg-amber-light px-3.5 py-2.5 text-xs leading-relaxed text-amber-text",
+);
+
 export function FailureRaisePanel({
   poNumber,
   propertyId,
@@ -77,14 +81,17 @@ export function FailureRaisePanel({
     );
     return (
       <FailureCard>
-        <div className="note note-warn" style={{ marginBottom: 0 }}>
+        <div className={noteWarnClass}>
           <strong>تعذر مسجّل على هذا العقار:</strong> {title}
-          <div style={{ fontSize: 12, marginTop: 6, color: "var(--text2)" }}>
+          <div className="mt-1.5 text-xs text-text-2">
             {failureSeverityLabel(activeFailure.severity)} ·{" "}
             {failureStatusLabel(activeFailure.status)}
           </div>
-          <div style={{ marginTop: 10 }}>
-            <Link href="/failures" className="btn btn-sm">
+          <div className="mt-2.5">
+            <Link
+              href="/failures"
+              className="inline-flex items-center justify-center rounded-[var(--radius-DEFAULT)] border border-border-md bg-surface px-2 py-1 text-[11px] text-text no-underline transition-colors hover:bg-surface-2"
+            >
               إدارة التعذرات
             </Link>
           </div>
@@ -96,31 +103,21 @@ export function FailureRaisePanel({
   return (
     <FailureCard>
       {!open ? (
-        <button
+        <Button
           type="button"
-          className="btn btn-danger-outline btn-sm"
+          variant="dangerOutline"
+          size="sm"
           onClick={() => setOpen(true)}
         >
           تسجيل تعذر على العقار
-        </button>
+        </Button>
       ) : (
         <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 600 }}>رفع تعذر</span>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setOpen(false)}
-            >
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-[13px] font-semibold">رفع تعذر</span>
+            <Button type="button" size="sm" onClick={() => setOpen(false)}>
               إلغاء
-            </button>
+            </Button>
           </div>
           <FailureRaiseFields
             idPrefix={`raise-${propertyId}`}
@@ -131,14 +128,15 @@ export function FailureRaisePanel({
             note={note}
             onNoteChange={setNote}
           />
-          <button
+          <Button
             type="button"
-            className="btn btn-primary btn-sm"
+            variant="primary"
+            size="sm"
             disabled={!problemTypeId}
             onClick={handleSubmit}
           >
             {severity === "internal" ? "حفظ تعذر داخلي" : "تسجيل احتمال تعذر"}
-          </button>
+          </Button>
         </div>
       )}
     </FailureCard>
@@ -147,11 +145,11 @@ export function FailureRaisePanel({
 
 function FailureCard({ children }: { children: ReactNode }) {
   return (
-    <div className="card" style={{ marginTop: 16 }}>
-      <div className="card-header">
-        <span className="card-title">التعذرات</span>
-      </div>
-      <div style={{ padding: 16 }}>{children}</div>
-    </div>
+    <Card className="mt-4 overflow-hidden shadow-none">
+      <CardHeader>
+        <span className="text-[13px] font-semibold text-text">التعذرات</span>
+      </CardHeader>
+      <CardBody>{children}</CardBody>
+    </Card>
   );
 }

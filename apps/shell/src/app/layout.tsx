@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
-import "@platform/design-system/prototype.css";
-import "@platform/design-system/registration.css";
 
 const arabic = IBM_Plex_Sans_Arabic({
   weight: ["300", "400", "500", "600", "700"],

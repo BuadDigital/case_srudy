@@ -24,6 +24,10 @@ import {
   type WorkflowTaskStatus,
 } from "./tasks-storage";
 import { formatDateAr } from "./po-intake-data";
+import {
+  INFATH_FIELD_LABELS,
+  infathYesNoLabel,
+} from "./infath-field-labels";
 import { getPartyTaskSubmission, type PartyTaskSubmissionDto } from "@platform/api-client";
 import { workOrdersApiConfig } from "../work-orders-api-config";
 import { fetchGovernmentReviewSubmission } from "./government-review-work-storage";
@@ -81,6 +85,18 @@ type EvaluatorSubmissionSnapshot = {
   reportFileName: string | null;
   submittedAtUtc: string | null;
   checklist: EvaluatorChecklist;
+  appraisalDate?: string;
+  valuationMethod?: string;
+  valueBasis?: string;
+  demandLevel?: string;
+  landValue?: string;
+  buildingValue?: string;
+  forcedSaleDiscountPct?: string;
+  searchScopeNotes?: string;
+  planImageFileName?: string | null;
+  appraiserAddress?: string;
+  appraiserPhone?: string;
+  reportIssueDate?: string;
 };
 
 type EngineeringSurveyChecklistAnswer = "yes" | "no" | null;
@@ -99,6 +115,16 @@ type EngineeringSurveySubmissionSnapshot = {
   siteConfirmed: boolean;
   checklist: EngineeringSurveyChecklistRow[];
   returnNote?: string;
+  onSiteAreaSqm: string;
+  northBoundary: string;
+  northBoundaryLengthM: string;
+  southBoundary: string;
+  southBoundaryLengthM: string;
+  eastBoundary: string;
+  eastBoundaryLengthM: string;
+  westBoundary: string;
+  westBoundaryLengthM: string;
+  surveyNotes: string;
   updatedAtUtc: string;
   submittedAtUtc?: string;
 };
@@ -112,6 +138,8 @@ type GovernmentReviewSubmissionSnapshot = {
   keysDescription: string;
   accessBlockReason: string;
   reviewNotes: string;
+  propertyZoneStatus?: string;
+  keysProofFileName?: string;
   submittedAtUtc: string | null;
   updatedAtUtc: string;
 };
@@ -276,6 +304,16 @@ async function loadEngineeringSurveySubmissionSnapshot(
       typeof payload.returnNote === "string"
         ? payload.returnNote
         : result.data.returnNote,
+    onSiteAreaSqm: String(payload.onSiteAreaSqm ?? ""),
+    northBoundary: String(payload.northBoundary ?? ""),
+    northBoundaryLengthM: String(payload.northBoundaryLengthM ?? ""),
+    southBoundary: String(payload.southBoundary ?? ""),
+    southBoundaryLengthM: String(payload.southBoundaryLengthM ?? ""),
+    eastBoundary: String(payload.eastBoundary ?? ""),
+    eastBoundaryLengthM: String(payload.eastBoundaryLengthM ?? ""),
+    westBoundary: String(payload.westBoundary ?? ""),
+    westBoundaryLengthM: String(payload.westBoundaryLengthM ?? ""),
+    surveyNotes: String(payload.surveyNotes ?? ""),
     updatedAtUtc:
       typeof payload.updatedAtUtc === "string"
         ? payload.updatedAtUtc
@@ -468,9 +506,28 @@ function buildFromEngineeringSurvey(
   if (coords) {
     fields.push({ label: "الإحداثيات", value: coords, ltr: true });
   }
+  if (submission.onSiteAreaSqm?.trim()) {
+    fields.push({
+      label: INFATH_FIELD_LABELS.onSiteArea,
+      value: `${submission.onSiteAreaSqm.trim()} م²`,
+      ltr: true,
+    });
+  }
+  const pushEng = (label: string, value: string | undefined, ltr?: boolean) => {
+    const v = value?.trim() ?? "";
+    if (v) fields.push({ label, value: v, ltr });
+  };
+  pushEng(INFATH_FIELD_LABELS.northBoundary, submission.northBoundary);
+  pushEng(INFATH_FIELD_LABELS.northLength, submission.northBoundaryLengthM, true);
+  pushEng(INFATH_FIELD_LABELS.southBoundary, submission.southBoundary);
+  pushEng(INFATH_FIELD_LABELS.southLength, submission.southBoundaryLengthM, true);
+  pushEng(INFATH_FIELD_LABELS.eastBoundary, submission.eastBoundary);
+  pushEng(INFATH_FIELD_LABELS.eastLength, submission.eastBoundaryLengthM, true);
+  pushEng(INFATH_FIELD_LABELS.westBoundary, submission.westBoundary);
+  pushEng(INFATH_FIELD_LABELS.westLength, submission.westBoundaryLengthM, true);
   if (submission.surveyReportFileName.trim()) {
     fields.push({
-      label: "تقرير الرفع المساحي",
+      label: INFATH_FIELD_LABELS.surveyFile,
       value: submission.surveyReportFileName.trim(),
     });
   }
@@ -517,7 +574,13 @@ function buildFromEngineeringSurvey(
   const returnNote = submission.returnNote?.trim() ?? "";
   const remarks = returnNote
     ? [{ label: "ملاحظة الإرجاع", value: returnNote }, ...checklistRemarks]
-    : checklistRemarks;
+    : [...checklistRemarks];
+  if (submission.surveyNotes?.trim()) {
+    remarks.unshift({
+      label: INFATH_FIELD_LABELS.surveyNotes,
+      value: submission.surveyNotes.trim(),
+    });
+  }
 
   const hasData =
     submission.status !== "draft" ||
@@ -581,6 +644,36 @@ function buildFromFormDraft(
         ltr: true,
       });
     }
+    if (draft.infathLinkedAssets) {
+      fields.push({
+        label: INFATH_FIELD_LABELS.linkedAssets,
+        value: draft.infathLinkedAssets === "yes" ? "نعم" : "لا",
+      });
+    }
+    if (draft.infathLinkedDeedNumbers?.trim()) {
+      fields.push({
+        label: INFATH_FIELD_LABELS.linkedDeedNumbers,
+        value: draft.infathLinkedDeedNumbers.trim(),
+      });
+    }
+    if (draft.infathLinkedAssetsNotes?.trim()) {
+      remarks.push({
+        label: INFATH_FIELD_LABELS.linkedAssetsNotes,
+        value: draft.infathLinkedAssetsNotes.trim(),
+      });
+    }
+    if (draft.infathOtherNotes?.trim()) {
+      remarks.push({
+        label: INFATH_FIELD_LABELS.otherNotes,
+        value: draft.infathOtherNotes.trim(),
+      });
+    }
+    if (draft.infathClosingNotes?.trim()) {
+      remarks.push({
+        label: INFATH_FIELD_LABELS.closingNotes,
+        value: draft.infathClosingNotes.trim(),
+      });
+    }
   }
 
   if (childTask) {
@@ -635,9 +728,49 @@ function buildFromEvaluator(
     });
   }
 
+  const pushEval = (label: string, value: string | undefined, ltr?: boolean) => {
+    const v = value?.trim() ?? "";
+    if (v) fields.push({ label, value: v, ltr });
+  };
+  if (submission.appraisalDate?.trim()) {
+    pushEval(
+      INFATH_FIELD_LABELS.appraisalDate,
+      formatDateAr(submission.appraisalDate),
+      true,
+    );
+  }
+  pushEval(INFATH_FIELD_LABELS.valuationMethod, submission.valuationMethod);
+  pushEval(INFATH_FIELD_LABELS.valueBasis, submission.valueBasis);
+  pushEval(INFATH_FIELD_LABELS.demandLevel, submission.demandLevel);
+  pushEval(INFATH_FIELD_LABELS.landValue, submission.landValue, true);
+  pushEval(INFATH_FIELD_LABELS.buildingValue, submission.buildingValue, true);
+  pushEval(INFATH_FIELD_LABELS.forcedDiscount, submission.forcedSaleDiscountPct, true);
+  pushEval(INFATH_FIELD_LABELS.appraiserAddress, submission.appraiserAddress);
+  pushEval(INFATH_FIELD_LABELS.appraiserPhone, submission.appraiserPhone, true);
+  if (submission.reportIssueDate?.trim()) {
+    pushEval(
+      INFATH_FIELD_LABELS.reportIssueDate,
+      formatDateAr(submission.reportIssueDate),
+      true,
+    );
+  }
+  pushEval(INFATH_FIELD_LABELS.planPhoto, submission.planImageFileName ?? undefined);
+  if (submission.reportFileName?.trim()) {
+    fields.push({
+      label: INFATH_FIELD_LABELS.signedAppraisal,
+      value: submission.reportFileName.trim(),
+    });
+  }
+
   const remarks = notes
     ? [{ label: "ملاحظات المقيّم", value: notes }]
     : [];
+  if (submission.searchScopeNotes?.trim()) {
+    remarks.push({
+      label: INFATH_FIELD_LABELS.searchScope,
+      value: submission.searchScopeNotes.trim(),
+    });
+  }
 
   const hasData =
     submission.status !== "draft" ||
@@ -737,6 +870,69 @@ function buildFromFieldInspection(
       ltr: true,
     });
   }
+
+  const pushInspectionField = (label: string, value: string, ltr?: boolean) => {
+    const v = value.trim();
+    if (v) fields.push({ label, value: v, ltr });
+  };
+
+  if (submission.inspectionDate.trim()) {
+    pushInspectionField(
+      INFATH_FIELD_LABELS.inspectionDate,
+      formatDateAr(submission.inspectionDate),
+      true,
+    );
+  }
+  pushInspectionField(INFATH_FIELD_LABELS.assetSubject, submission.propertyType);
+  pushInspectionField(INFATH_FIELD_LABELS.facade, submission.facade);
+  pushInspectionField(INFATH_FIELD_LABELS.streetWidth, submission.streetWidthM, true);
+  pushInspectionField(INFATH_FIELD_LABELS.builtArea, submission.builtAreaSqm, true);
+  pushInspectionField(INFATH_FIELD_LABELS.propertyUsage, submission.propertyUsage);
+  pushInspectionField(INFATH_FIELD_LABELS.streetName, submission.streetName);
+  pushInspectionField(INFATH_FIELD_LABELS.mainStreet, submission.mainStreetName);
+  if (submission.mapLatitude.trim() || submission.mapLongitude.trim()) {
+    pushInspectionField(
+      INFATH_FIELD_LABELS.mapCoords,
+      `${submission.mapLatitude.trim()}, ${submission.mapLongitude.trim()}`,
+      true,
+    );
+  }
+  pushInspectionField(INFATH_FIELD_LABELS.roomCount, submission.roomCount, true);
+  pushInspectionField(INFATH_FIELD_LABELS.hallCount, submission.hallCount, true);
+  pushInspectionField(INFATH_FIELD_LABELS.unitCount, submission.unitCount, true);
+  pushInspectionField(INFATH_FIELD_LABELS.bathroomCount, submission.bathroomCount, true);
+  pushInspectionField(INFATH_FIELD_LABELS.propertyAge, submission.propertyAgeYears, true);
+  pushInspectionField(INFATH_FIELD_LABELS.showroomCount, submission.showroomCount, true);
+  pushInspectionField(INFATH_FIELD_LABELS.towerCount, submission.towerCount, true);
+  pushInspectionField(INFATH_FIELD_LABELS.wellCount, submission.wellCount, true);
+  pushInspectionField(INFATH_FIELD_LABELS.kitchen, infathYesNoLabel(submission.hasKitchen));
+  pushInspectionField(INFATH_FIELD_LABELS.carEntrance, infathYesNoLabel(submission.hasCarEntrance));
+  pushInspectionField(INFATH_FIELD_LABELS.hasBasement, infathYesNoLabel(submission.hasBasement));
+  pushInspectionField(INFATH_FIELD_LABELS.hasElevator, infathYesNoLabel(submission.hasElevator));
+  pushInspectionField(INFATH_FIELD_LABELS.hasPool, infathYesNoLabel(submission.hasPool));
+  pushInspectionField(INFATH_FIELD_LABELS.buildState, submission.structuralCondition);
+  if (submission.isCurrentlyRented) {
+    pushInspectionField(
+      INFATH_FIELD_LABELS.occupancyState,
+      fieldInspectionRentalStatusLabel(submission.isCurrentlyRented),
+    );
+  }
+  pushInspectionField(INFATH_FIELD_LABELS.districtState, submission.districtState);
+  if (submission.hasMovableItems !== null) {
+    pushInspectionField(
+      INFATH_FIELD_LABELS.movables,
+      fieldInspectionYesNoLabel(submission.hasMovableItems),
+    );
+  }
+  pushInspectionField(INFATH_FIELD_LABELS.services, submission.availableServices);
+  pushInspectionField(INFATH_FIELD_LABELS.amenities, submission.surroundingAmenities);
+  pushInspectionField(INFATH_FIELD_LABELS.buildingFloors, submission.buildingFloors, true);
+  pushInspectionField(INFATH_FIELD_LABELS.basementTotal, submission.basementTotalSqm, true);
+  pushInspectionField(INFATH_FIELD_LABELS.annexTotal, submission.annexTotalSqm, true);
+  pushInspectionField(INFATH_FIELD_LABELS.buildingsTotal, submission.buildingsTotalSqm, true);
+  pushInspectionField(INFATH_FIELD_LABELS.exteriorPhotos, submission.exteriorPhotosPdf);
+  pushInspectionField(INFATH_FIELD_LABELS.interiorPhotos, submission.interiorPhotosPdf);
+
   if (childTask) {
     fields.push({
       label: "حالة المهمة",
@@ -750,6 +946,30 @@ function buildFromFieldInspection(
   }
   if (submission.generalNotes.trim()) {
     remarks.push({ label: "ملاحظات عامة", value: submission.generalNotes.trim() });
+  }
+  if (submission.propertyDescription.trim()) {
+    remarks.push({
+      label: INFATH_FIELD_LABELS.propertyDescription,
+      value: submission.propertyDescription.trim(),
+    });
+  }
+  if (submission.districtProsCons.trim()) {
+    remarks.push({
+      label: INFATH_FIELD_LABELS.districtProsCons,
+      value: submission.districtProsCons.trim(),
+    });
+  }
+  if (submission.accessRouteDescription.trim()) {
+    remarks.push({
+      label: INFATH_FIELD_LABELS.accessRoute,
+      value: submission.accessRouteDescription.trim(),
+    });
+  }
+  if (submission.assetNotes.trim()) {
+    remarks.push({
+      label: INFATH_FIELD_LABELS.assetNotes,
+      value: submission.assetNotes.trim(),
+    });
   }
 
   const signedPhotos = submission.signedDocumentPhotos.filter((p) => p.trim());
@@ -830,8 +1050,29 @@ function buildFromGovernmentReview(
   }
   if (submission.keysStatus) {
     fields.push({
+      label: INFATH_FIELD_LABELS.keysReceived,
+      value:
+        submission.keysStatus === "received"
+          ? "نعم"
+          : submission.keysStatus === "pending"
+            ? "لا"
+            : keysLabels[submission.keysStatus] ?? submission.keysStatus,
+    });
+    fields.push({
       label: "حالة المفاتيح",
       value: keysLabels[submission.keysStatus] ?? submission.keysStatus,
+    });
+  }
+  if (submission.propertyZoneStatus?.trim()) {
+    fields.push({
+      label: INFATH_FIELD_LABELS.zoneStatus,
+      value: submission.propertyZoneStatus.trim(),
+    });
+  }
+  if (submission.keysProofFileName?.trim()) {
+    fields.push({
+      label: INFATH_FIELD_LABELS.keysProof,
+      value: submission.keysProofFileName.trim(),
     });
   }
   if (submission.submittedAtUtc) {

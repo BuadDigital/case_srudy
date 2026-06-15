@@ -21,6 +21,11 @@ import { RegistrationWizardShell } from "./RegistrationWizardShell";
 import { SummaryGrid } from "./SummaryGrid";
 import { TypePills } from "./TypePills";
 import {
+  RegErrorAlert,
+  RegGrid2,
+  RegInfoBox,
+} from "./registration-layout";
+import {
   REG_CONFIRM_SAVE,
   REG_NEXT,
   REG_SAVE,
@@ -245,6 +250,7 @@ export function HrRegistrationFlow({
             subtitle="يحدد آلية العقد والفوترة"
           >
             <TypePills
+              source="hr"
               options={EMP_TYPES.map((t) => ({ value: t, label: t }))}
               value={data.hr_empType ?? ""}
               error={fieldErrors.hr_empType}
@@ -256,7 +262,7 @@ export function HrRegistrationFlow({
             title="الهيكل التنظيمي"
             subtitle="الإدارة والقسم والمسمى الوظيفي"
           >
-            <div className="reg-fg2">
+            <RegGrid2>
               <RegSelect
                 id="hr_dept"
                 label="الإدارة"
@@ -273,16 +279,20 @@ export function HrRegistrationFlow({
                 value={section}
                 onChange={onSectionChange}
               />
-            </div>
+            </RegGrid2>
             {dept ? (
-              <OrgTreePreview selectedDept={dept} selectedSection={section} />
+              <OrgTreePreview
+                source="hr"
+                selectedDept={dept}
+                selectedSection={section}
+              />
             ) : null}
             {deptDef?.execOnly ? (
-              <div className="reg-info-box" style={{ marginTop: 10 }}>
+              <RegInfoBox className="mt-2.5">
                 الإدارة التنفيذية مخصصة للمدير التنفيذي فقط.
-              </div>
+              </RegInfoBox>
             ) : null}
-            <div className="reg-fg2" style={{ marginTop: 12 }}>
+            <RegGrid2 className="mt-3">
               <RegSelect
                 id="hr_jobTitle"
                 label="المسمى الوظيفي"
@@ -299,14 +309,14 @@ export function HrRegistrationFlow({
                 error={fieldErrors.hr_perms}
                 onChange={(v) => patch("hr_perms", v)}
               />
-            </div>
+            </RegGrid2>
           </RegistrationFormCard>
         </>
       ) : null}
 
       {step === 2 ? (
         <RegistrationFormCard title="البيانات الشخصية">
-          <div className="reg-fg2">
+          <RegGrid2>
             <RegField
               id="hr_name"
               label="الاسم الكامل"
@@ -345,13 +355,13 @@ export function HrRegistrationFlow({
               value={data.hr_joinDate ?? ""}
               onChange={(v) => patch("hr_joinDate", v)}
             />
-          </div>
+          </RegGrid2>
         </RegistrationFormCard>
       ) : null}
 
       {step === 3 ? (
         <RegistrationFormCard title="بيانات حساب الدخول">
-          <div className="reg-fg2">
+          <RegGrid2>
             <RegField
               id="hr_email"
               label="البريد الإلكتروني"
@@ -390,10 +400,10 @@ export function HrRegistrationFlow({
               error={fieldErrors.hr_pwd2}
               onChange={(v) => patch("hr_pwd2", v)}
             />
-          </div>
-          <div className="reg-info-box" style={{ marginTop: 12 }}>
+          </RegGrid2>
+          <RegInfoBox className="mt-3">
             ستُرسل بيانات الدخول تلقائياً إلى البريد الإلكتروني بعد الحفظ.
-          </div>
+          </RegInfoBox>
         </RegistrationFormCard>
       ) : null}
 
@@ -420,15 +430,15 @@ export function HrRegistrationFlow({
                 { l: "اسم المستخدم", v: data.hr_username ?? "" },
               ]}
             />
-            <div className="reg-info-box reg-info-box--warn" style={{ marginTop: 12 }}>
+            <RegInfoBox tone="warn" className="mt-3">
               بعد الحفظ لا يمكن تغيير الإدارة المسؤولة — تواصل مع مدير النظام لأي
               تعديل جوهري.
-            </div>
+            </RegInfoBox>
           </RegistrationFormCard>
         </>
       ) : null}
 
-      {error ? <div className="reg-w-alert on">{error}</div> : null}
+      <RegErrorAlert error={error} />
     </RegistrationWizardShell>
   );
 }

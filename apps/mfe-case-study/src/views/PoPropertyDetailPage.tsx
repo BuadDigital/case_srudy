@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button, Note, PageGutter, PageShell } from "@platform/design-system";
 import { PoDetailPropertyCard } from "@case-study/mfe/components/po-intake/PoDetailPropertyCard";
 import { PropertyDetailHero } from "@case-study/mfe/components/po-intake/PropertyDetailHero";
 import {
@@ -16,6 +17,7 @@ export function PoPropertyDetailPage({
   poNumber: string;
   propertyId: string;
 }) {
+  const router = useRouter();
   const { data: record, isPending } = usePoRecordQuery(poNumber);
   const property =
     record?.properties.find((p) => p.id === propertyId) ?? null;
@@ -26,23 +28,30 @@ export function PoPropertyDetailPage({
 
   if (isPending && !record) {
     return (
-      <div className="po-property-detail-page pd-page">
-        <p className="po-properties-loading">جاري التحميل…</p>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+        <p className="p-6 text-xs text-text-3">جاري التحميل…</p>
       </div>
     );
   }
 
   if (!record) {
     return (
-      <div className="po-property-detail-page pd-page">
-        <div className="note note-warn">
-          لم يُعثر على أمر العمل.
-          <div className="po-properties-empty-actions">
-            <Link href={poListPath()} className="btn btn-sm">
-              رجوع لأوامر العمل
-            </Link>
-          </div>
-        </div>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+        <PageGutter className="py-6">
+          <Note tone="warn">
+            لم يُعثر على أمر العمل.
+            <div className="mt-3">
+              <Button
+                size="sm"
+                variant="default"
+                type="button"
+                onClick={() => router.push(poListPath())}
+              >
+                رجوع لأوامر العمل
+              </Button>
+            </div>
+          </Note>
+        </PageGutter>
       </div>
     );
   }
@@ -51,22 +60,29 @@ export function PoPropertyDetailPage({
 
   if (!property || index < 0) {
     return (
-      <div className="po-property-detail-page pd-page">
-        <div className="note note-warn">
-          لم يُعثر على العقار.
-          <div className="po-properties-empty-actions">
-            <Link href={poPropertiesPath(poNumber)} className="btn btn-sm">
-              رجوع لعقارات الأمر
-            </Link>
-          </div>
-        </div>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+        <PageGutter className="py-6">
+          <Note tone="warn">
+            لم يُعثر على العقار.
+            <div className="mt-3">
+              <Button
+                size="sm"
+                variant="default"
+                type="button"
+                onClick={() => router.push(poPropertiesPath(poNumber))}
+              >
+                رجوع لعقارات الأمر
+              </Button>
+            </div>
+          </Note>
+        </PageGutter>
       </div>
     );
   }
 
   return (
-    <div className="po-property-detail-page pd-page">
-      <article className="po-property-detail-shell">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-bg">
+      <PageShell>
         <PropertyDetailHero
           record={record}
           property={property}
@@ -82,7 +98,7 @@ export function PoPropertyDetailPage({
           showDecree={showDecree}
           record={record}
         />
-      </article>
+      </PageShell>
     </div>
   );
 }

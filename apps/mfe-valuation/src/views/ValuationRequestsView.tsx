@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
-import { StatusBadge } from "@platform/design-system";
+import { StatusBadge, Button, Note, StatCard, StatGrid, StatLabel, StatValue, SubpageHeader, SubpagePanel, Table, TBody, Td, Th, THead, Tr } from "@platform/design-system";
 import { MOCK_VR, type RoleId } from "@platform/app-shared/prototype/constants";
 import { isSuperAdmin } from "@platform/app-shared/prototype/prototype-role-access";
 
@@ -23,82 +23,76 @@ export function ValuationRequestsView() {
 
   return (
     <>
-      <div className="stat-grid">
-        <div className="stat-card blue">
-          <div className="stat-label">طلبات نشطة</div>
-          <div className="stat-value">{vr.length}</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-label">مكتملة</div>
-          <div className="stat-value">{done}</div>
-        </div>
-        <div className="stat-card warn">
-          <div className="stat-label">قيد التنفيذ</div>
-          <div className="stat-value">{prog}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">مقيمون متاحون</div>
-          <div className="stat-value">2</div>
-        </div>
-      </div>
-      <div className="note note-info">
+      <StatGrid>
+        <StatCard accent="blue">
+          <StatLabel>طلبات نشطة</StatLabel>
+          <StatValue value={vr.length} />
+        </StatCard>
+        <StatCard accent="green">
+          <StatLabel>مكتملة</StatLabel>
+          <StatValue value={done} />
+        </StatCard>
+        <StatCard accent="warn">
+          <StatLabel>قيد التنفيذ</StatLabel>
+          <StatValue value={prog} />
+        </StatCard>
+        <StatCard>
+          <StatLabel>مقيمون متاحون</StatLabel>
+          <StatValue value={2} />
+        </StatCard>
+      </StatGrid>
+      <Note tone="info">
         هذه الطلبات واردة من قسم دراسة الحالة — يتولى منسق التقييم توزيعها على المقيمين المؤهلين
-      </div>
-      <article className="page-shell">
-        <header className="po-subpage-hd">
-          <div className="po-subpage-titles">
-            <h2 className="po-subpage-title">طلبات التقييم الواردة من دراسة الحالة</h2>
-          </div>
-        </header>
-        <table className="tbl">
-          <thead>
-            <tr>
-              <th>رقم الطلب</th>
-              <th>العقار</th>
-              <th>المنطقة</th>
-              <th>النوع</th>
-              <th>المقيم المُسند</th>
-              <th>الحالة</th>
-              <th>التاريخ</th>
-              <th>إجراء</th>
-            </tr>
-          </thead>
-          <tbody>
+      </Note>
+      <SubpagePanel>
+        <SubpageHeader title="طلبات التقييم الواردة من دراسة الحالة" />
+        <Table>
+          <THead>
+            <Tr hoverable={false}>
+              <Th>رقم الطلب</Th>
+              <Th>العقار</Th>
+              <Th>المنطقة</Th>
+              <Th>النوع</Th>
+              <Th>المقيم المُسند</Th>
+              <Th>الحالة</Th>
+              <Th>التاريخ</Th>
+              <Th>إجراء</Th>
+            </Tr>
+          </THead>
+          <TBody>
             {vr.map((v) => (
-              <tr key={v.id}>
-                <td className="id-cell">{v.id}</td>
-                <td style={{ color: "var(--primary-light)", fontSize: 11 }}>{v.propId}</td>
-                <td>{v.area}</td>
-                <td>{v.type}</td>
-                <td style={{ fontSize: 11 }}>{v.appraiser}</td>
-                <td>
+              <Tr key={v.id} hoverable={false}>
+                <Td className="text-[11px] font-semibold text-primary-light">{v.id}</Td>
+                <Td className="text-[11px] text-primary-light">{v.propId}</Td>
+                <Td>{v.area}</Td>
+                <Td>{v.type}</Td>
+                <Td className="text-[11px]">{v.appraiser}</Td>
+                <Td>
                   <StatusBadge status={v.status} />
-                </td>
-                <td style={{ color: "var(--text3)", fontSize: 11 }}>{v.date}</td>
-                <td>
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                </Td>
+                <Td className="text-[11px] text-text-3">{v.date}</Td>
+                <Td>
+                  <div className="flex flex-wrap gap-1">
                     {isApp && v.status === "progress" ? (
                       <>
-                        <button type="button" className="btn btn-sm btn-accent">
+                        <Button size="sm" variant="accent">
                           رفع التقرير
-                        </button>
-                        <button type="button" className="btn btn-sm btn-danger">
+                        </Button>
+                        <Button size="sm" variant="danger">
                           تعذّر
-                        </button>
+                        </Button>
                       </>
                     ) : null}
                     {mgr && v.status === "progress" ? (
-                      <button type="button" className="btn btn-sm">
-                        عرض
-                      </button>
+                      <Button size="sm">عرض</Button>
                     ) : null}
                   </div>
-                </td>
-              </tr>
+                </Td>
+              </Tr>
             ))}
-          </tbody>
-        </table>
-      </article>
+          </TBody>
+        </Table>
+      </SubpagePanel>
     </>
   );
 }

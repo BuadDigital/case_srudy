@@ -1,6 +1,16 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Badge, cn } from "@platform/design-system";
+
+/** LTR-isolated value display for deeds, dates, phones, etc. */
+export const ltrValueClass = "inline [direction:ltr] [unicode-bidi:isolate]";
+
+const fieldsGridCols: Record<2 | 3 | 4, string> = {
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-2 lg:grid-cols-3",
+  4: "sm:grid-cols-2 lg:grid-cols-4",
+};
 
 export function FieldBox({
   label,
@@ -24,17 +34,26 @@ export function FieldBox({
 
   return (
     <div
-      className={`pd-field-box${span ? ` pd-field-box--span-${span}` : ""}`}
+      className={cn(
+        "min-w-0 rounded-[var(--radius-DEFAULT)] bg-surface-2 px-3 py-2.5",
+        span === 2 && "col-span-2",
+        span === 3 && "col-span-3",
+        span === 4 && "col-span-4",
+      )}
     >
-      <div className="pd-field-label">{label}</div>
+      <div className="mb-0.5 text-[11px] text-text-2">{label}</div>
       <div
-        className={`pd-field-val${isEmpty ? " pd-field-val--na" : ""}${link ? " pd-field-val--link" : ""}`}
+        className={cn(
+          "break-words text-[13px] font-medium text-text",
+          isEmpty && "font-normal text-text-3",
+          link && "cursor-pointer text-primary underline underline-offset-2",
+        )}
       >
         {children ??
           (isEmpty ? (
             emptyLabel
           ) : ltr ? (
-            <bdi dir="ltr" className="po-property-detail-ltr-val">
+            <bdi dir="ltr" className={ltrValueClass}>
               {trimmed}
             </bdi>
           ) : (
@@ -53,7 +72,14 @@ export function FieldsGrid({
   children: ReactNode;
 }) {
   return (
-    <div className={`pd-fields-grid pd-fields-grid--${cols}`}>{children}</div>
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-2 max-[560px]:grid-cols-1",
+        fieldsGridCols[cols],
+      )}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -65,16 +91,30 @@ export function SectionHeader({
   icon?: ReactNode;
 }) {
   return (
-    <h3 className="pd-section-hd">
-      {icon ? <span className="pd-section-hd-icon" aria-hidden>{icon}</span> : null}
+    <h3 className="my-5 mb-2.5 flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-text-3 uppercase first:mt-0">
+      {icon ? (
+        <span className="inline-flex items-center opacity-75" aria-hidden>
+          {icon}
+        </span>
+      ) : null}
       {children}
     </h3>
   );
 }
 
 export function SectionDivider() {
-  return <hr className="pd-section-divider" />;
+  return <hr className="my-[18px] border-0 border-t border-border" />;
 }
+
+const infoBoxTone: Record<
+  "default" | "teal" | "amber" | "red",
+  string
+> = {
+  default: "bg-surface-2 text-text-2",
+  teal: "bg-teal-light text-teal-text",
+  amber: "bg-amber-light text-amber-text",
+  red: "bg-danger-bg text-danger",
+};
 
 export function InfoBox({
   variant = "default",
@@ -86,13 +126,18 @@ export function InfoBox({
   children: ReactNode;
 }) {
   return (
-    <div className={`pd-info-box pd-info-box--${variant}`}>
+    <div
+      className={cn(
+        "mb-3 flex items-start gap-2.5 rounded-[var(--radius-DEFAULT)] px-4 py-3.5 text-[13px] leading-relaxed",
+        infoBoxTone[variant],
+      )}
+    >
       {icon ? (
-        <span className="pd-info-box-icon" aria-hidden>
+        <span className="mt-px shrink-0 text-base opacity-85" aria-hidden>
           {icon}
         </span>
       ) : null}
-      <span className="pd-info-box-text">{children}</span>
+      <span className="min-w-0 flex-1">{children}</span>
     </div>
   );
 }
@@ -107,14 +152,14 @@ export function EmptyState({
   icon?: ReactNode;
 }) {
   return (
-    <div className="pd-empty-state">
+    <div className="flex flex-col items-center justify-center gap-2 px-5 py-10 text-center text-text-3">
       {icon ? (
-        <span className="pd-empty-state-icon" aria-hidden>
+        <span className="mb-1 text-4xl leading-none" aria-hidden>
           {icon}
         </span>
       ) : null}
-      <div className="pd-empty-state-title">{title}</div>
-      {sub ? <div className="pd-empty-state-sub">{sub}</div> : null}
+      <div className="text-sm font-medium text-text-2">{title}</div>
+      {sub ? <div className="text-xs leading-snug">{sub}</div> : null}
     </div>
   );
 }
@@ -129,15 +174,22 @@ export function ProgressBar({
   tone?: "teal" | "amber" | "red";
 }) {
   const clamped = Math.max(0, Math.min(100, pct));
+  const fillClass =
+    tone === "amber"
+      ? "bg-warning"
+      : tone === "red"
+        ? "bg-danger"
+        : "bg-success";
+
   return (
-    <div className="pd-progress-bar-wrap">
-      <div className="pd-progress-row">
-        <span className="pd-progress-label">{label}</span>
-        <span className="pd-progress-pct">{clamped}%</span>
+    <div className="mb-2 rounded-[var(--radius-DEFAULT)] bg-surface-2 px-4 py-3.5">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-xs text-text">{label}</span>
+        <span className="text-xs text-text-2">{clamped}%</span>
       </div>
-      <div className="pd-progress-track">
+      <div className="h-1.5 overflow-hidden rounded bg-border">
         <div
-          className={`pd-progress-fill pd-progress-fill--${tone}`}
+          className={cn("h-full rounded transition-[width] duration-300", fillClass)}
           style={{ width: `${clamped}%` }}
         />
       </div>
@@ -159,7 +211,10 @@ export function DocIconButton({
   return (
     <button
       type="button"
-      className={`pd-icon-btn${danger ? " pd-icon-btn--danger" : ""}`}
+      className={cn(
+        "flex h-[30px] w-[30px] items-center justify-center rounded-[var(--radius-DEFAULT)] border border-border bg-surface p-0 text-sm text-text-2 transition-colors hover:bg-border hover:text-text",
+        danger && "text-danger",
+      )}
       title={label}
       aria-label={label}
       disabled={disabled}
@@ -195,12 +250,44 @@ export function DetailSection({
   badge?: ReactNode;
 }) {
   return (
-    <section className="po-property-detail-section">
-      <div className="po-property-detail-section-hd">
-        <h2 className="po-property-detail-section-title">{title}</h2>
+    <section className="border-b border-border pb-4 last:border-b-0 last:pb-0">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="m-0 text-[11px] font-medium tracking-wide text-text-3 uppercase">
+          {title}
+        </h2>
         {badge}
       </div>
-      <div className="po-property-detail-fields">{children}</div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {children}
+      </div>
     </section>
+  );
+}
+
+/** Small status badge used across property detail panels. */
+export function DetailBadge({
+  tone = "teal",
+  children,
+  className,
+}: {
+  tone?: "teal" | "amber" | "red" | "blue" | "gray";
+  children: ReactNode;
+  className?: string;
+}) {
+  const badgeTone =
+    tone === "teal"
+      ? "primary"
+      : tone === "amber"
+        ? "warning"
+        : tone === "red"
+          ? "danger"
+          : tone === "blue"
+            ? "info"
+            : "default";
+
+  return (
+    <Badge tone={badgeTone} className={cn("text-[11px] font-normal", className)}>
+      {children}
+    </Badge>
   );
 }

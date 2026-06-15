@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { cn } from "@platform/design-system";
 import { CaseStudyForm, findPropertyForTask } from "@case-study/mfe";
 import type { PartyTaskPageDef } from "@platform/app-shared/prototype/party-task-pages";
 import type { WorkflowTask } from "@case-study/mfe";
@@ -11,6 +12,10 @@ import {
   usePoRecordQuery,
   useWorkflowTasksQuery,
 } from "../../query/evaluator-queries";
+
+const noteWarnClass = cn(
+  "rounded-[var(--radius-DEFAULT)] border border-amber border-e-[3px] border-e-amber bg-amber-light px-3.5 py-2.5 text-xs leading-relaxed text-amber-text",
+);
 
 function resolveParentCaseStudyTask(
   task: WorkflowTask,
@@ -59,33 +64,33 @@ export function AppraiserUploadTab({
 
   if (!partyId) {
     return (
-      <div className="note note-warn">
+      <div className={noteWarnClass}>
         لا يوجد طرف مطابق لهذا الدور في مصفوفة علاقة المستخدم بالمعلومة.
       </div>
     );
   }
 
   if (recordLoading && !record) {
-    return <p className="po-properties-loading">جاري التحميل…</p>;
+    return <p className="my-2 text-xs text-text-3">جاري التحميل…</p>;
   }
 
   if (!parentTask) {
     return (
-      <div className="note note-warn">
+      <div className={noteWarnClass}>
         لم تُعثر على معاملة دراسة الحالة الأم لهذا العقار. أكمل التوزيع أولاً.
       </div>
     );
   }
 
   return (
-    <div className="appraiser-upload-tab">
+    <div className="flex flex-col gap-0">
       <EvaluatorWindow
         task={childTask}
         tasks={tasks ?? []}
         hostRef={hostRef}
       />
 
-      <div className="appraiser-upload-tab__questions">
+      <div className="mt-1 border-t border-border pt-5">
         <CaseStudyForm
           taskId={childTask.id}
           task={parentTask}

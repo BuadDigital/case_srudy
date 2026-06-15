@@ -6,6 +6,14 @@ import { usePrototype } from "@platform/app-shared/contexts/PrototypeContext";
 import { RegField, RegSelect } from "@platform/app-shared/registration/FormFields";
 import { prototypeKeys } from "@platform/app-shared/query/prototype-keys";
 import { CITY_OPTIONS } from "@case-study/mfe";
+import {
+  Badge,
+  Button,
+  Note,
+  PageGutter,
+  SubpageHeader,
+  SubpagePanel,
+} from "@platform/design-system";
 import { canManageCourts } from "../lib/settings-roles";
 import { saveCourtsCatalog } from "../lib/prototype/courts-storage";
 import { useCourtsCatalogQuery } from "../query/settings-queries";
@@ -106,23 +114,19 @@ export function CourtsView() {
   return (
     <>
       {toast ? (
-        <div className="note note-success reg-users-toast" role="status">
+        <Note tone="success" role="status">
           {toast}
-        </div>
+        </Note>
       ) : null}
 
       {!canEdit ? (
-        <div className="note note-info" style={{ marginBottom: 16 }}>
+        <Note tone="info" className="mb-4">
           عرض فقط — إدارة القائمة للمشرف.
-        </div>
+        </Note>
       ) : (
-        <article className="page-shell" style={{ marginBottom: 0 }}>
-          <header className="po-subpage-hd">
-            <div className="po-subpage-titles">
-              <h2 className="po-subpage-title">إضافة محكمة / دائرة</h2>
-            </div>
-          </header>
-          <div className="reg-fg2 page-gutter" style={{ paddingBottom: 16 }}>
+        <SubpagePanel className="mb-0">
+          <SubpageHeader title="إضافة محكمة / دائرة" />
+          <div className="grid grid-cols-2 gap-3 px-6 pb-4">
             <RegSelect
               id="court_city"
               label="المدينة"
@@ -142,33 +146,30 @@ export function CourtsView() {
               value={circuitInput}
               onChange={setCircuitInput}
             />
-            <div className="reg-sp2" style={{ display: "flex", alignItems: "flex-end" }}>
-              <button
+            <div className="flex items-end">
+              <Button
                 type="button"
-                className="btn btn-primary btn-sm"
+                variant="primary"
+                size="sm"
                 onClick={() => void handleAdd()}
               >
                 + إضافة
-              </button>
+              </Button>
             </div>
           </div>
-        </article>
+        </SubpagePanel>
       )}
 
-      <article className="page-shell">
-        <header className="po-subpage-hd">
-          <div className="po-subpage-titles">
-            <h2 className="po-subpage-title">قائمة المحاكم والدوائر</h2>
-          </div>
-        </header>
+      <SubpagePanel>
+        <SubpageHeader title="قائمة المحاكم والدوائر" />
         {grouped.length === 0 ? (
-          <p className="page-gutter" style={{ paddingBottom: 16, color: "var(--text3)", fontSize: 12 }}>
+          <p className="px-6 pb-4 text-xs text-text-3">
             لا توجد محاكم — يبدأ النظام بقائمة افتراضية عند أول فتح.
           </p>
         ) : (
           grouped.map(({ city: c, rows }) => (
-            <div key={c} className="page-gutter" style={{ paddingBlock: 12, borderTop: "1px solid var(--border)" }}>
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>{c}</div>
+            <PageGutter key={c} className="border-t border-border py-3">
+              <div className="mb-2 text-[13px] font-bold text-text">{c}</div>
               {rows.map((row) => (
                 <div key={row.id} style={{ marginBottom: 10 }}>
                   <div
@@ -181,18 +182,23 @@ export function CourtsView() {
                   >
                     <span style={{ fontSize: 12, fontWeight: 600 }}>{row.court}</span>
                     {canEdit ? (
-                      <button
+                      <Button
                         type="button"
-                        className="btn btn-sm btn-danger-outline"
+                        size="sm"
+                        variant="dangerOutline"
                         onClick={() => void handleRemove(row.id)}
                       >
                         حذف المحكمة
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {row.circuits.map((circuit) => (
-                      <span key={circuit} className="badge b-prog" style={{ fontSize: 11 }}>
+                      <Badge
+                        key={circuit}
+                        tone="warning"
+                        className="rounded-[20px] px-2.5 py-0.5 text-[11px] font-normal"
+                      >
                         {circuit}
                         {canEdit ? (
                           <button
@@ -210,15 +216,15 @@ export function CourtsView() {
                             ×
                           </button>
                         ) : null}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
               ))}
-            </div>
+            </PageGutter>
           ))
         )}
-      </article>
+      </SubpagePanel>
     </>
   );
 }
